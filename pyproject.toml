@@ -1,0 +1,24 @@
+# Workspace root: not a package itself, just a convenient place to install
+# `simulator` + `backend` together into a single .venv for local development.
+[project]
+name = "plant-an-agent"
+version = "0.1.0"
+description = "Autonomous, intermittently powered industrial plant: digital twin + control room."
+requires-python = ">=3.11"
+dependencies = ["plant-sim", "plant-backend"]
+
+[dependency-groups]
+dev = ["pytest>=8.0"]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["simulator", "backend"]
+
+[tool.uv.sources]
+plant-sim = { workspace = true }
+plant-backend = { workspace = true }
+
+[tool.pytest.ini_options]
+testpaths = ["simulator/tests"]

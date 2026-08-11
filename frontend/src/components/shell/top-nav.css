@@ -1,0 +1,71 @@
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  height: var(--nav-h);
+  padding: 0 20px;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.nav__mark svg {
+  display: block;
+  width: 26px;
+  height: 26px;
+}
+
+.nav__list {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nav__link {
+  position: relative;
+  display: block;
+  padding: 6px 12px;
+  border-radius: var(--r-pill);
+  font-size: 13.5px;
+  color: var(--text-dim);
+  text-decoration: none;
+  transition:
+    color 160ms ease,
+    background 160ms ease;
+}
+
+.nav__link:hover {
+  color: var(--text);
+}
+
+.nav__link.active {
+  color: var(--text);
+  background: rgba(226, 232, 216, 0.07);
+}
+
+.nav__link--locked,
+.nav__link--locked:hover {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-faint);
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* dot marking a view that is planned but not built */
+.nav__soon {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--solar);
+  opacity: 0.75;
+}
+
+.nav__status {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-left: auto;
+}

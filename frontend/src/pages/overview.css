@@ -1,0 +1,108 @@
+/* Definite height so the diagram row is bounded: without it the SVG's own
+   aspect ratio decides the page height and the deck falls off the bottom. */
+.overview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  height: 100%;
+  min-height: 640px;
+}
+
+.overview__metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--gap);
+}
+
+.overview__middle {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 290px);
+  gap: var(--gap);
+  flex: 1;
+  min-height: 0;
+}
+
+.overview__diagram {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: 16px 18px 14px;
+  animation: rise 460ms 120ms ease both;
+}
+
+.overview__diagram-head {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding-bottom: 4px;
+}
+
+.overview__diagram-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.overview__diagram-head .label {
+  margin-left: auto;
+}
+
+/* --- link states ------------------------------------------------------- */
+.overview__blank {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+  padding: 40px;
+  text-align: center;
+}
+
+.overview__hint {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 58ch;
+  margin: 0;
+  color: var(--text-dim);
+}
+
+.overview__hint code {
+  padding: 10px 14px;
+  border-radius: var(--r-inner);
+  background: var(--card-inset);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 300;
+  letter-spacing: -0.05em;
+  color: var(--accent);
+}
+
+.overview__error {
+  margin: 0;
+  font-size: 11px;
+  color: var(--alarm);
+}
+
+.overview__banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px;
+  border-radius: var(--r-card);
+  background: color-mix(in srgb, var(--alarm) 12%, var(--card));
+  font-size: 11.5px;
+  color: var(--text-dim);
+}
+
+@media (max-width: 1180px) {
+  .overview__metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .overview__middle {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

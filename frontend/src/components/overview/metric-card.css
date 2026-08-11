@@ -1,0 +1,59 @@
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 15px 18px 14px;
+  animation: rise 420ms ease both;
+}
+
+.metric__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.metric__gauge {
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.metric__trend {
+  height: 52px;
+  margin-bottom: -3px;
+}
+
+.trend {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.trend__bar {
+  fill: var(--text);
+}
+
+.metric__readout {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+}
+
+.metric__value {
+  font-size: 38px;
+  font-weight: 250;
+  line-height: 0.95;
+  color: var(--text);
+}
+
+.metric__unit {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+.metric__foot {
+  padding-top: 10px;
+  border-top: 1px solid var(--hairline);
+  font-size: 11.5px;
+  color: var(--text-dim);
+}

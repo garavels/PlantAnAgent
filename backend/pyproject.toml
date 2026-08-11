@@ -1,0 +1,20 @@
+[project]
+name = "plant-backend"
+version = "0.1.0"
+description = "Thin dev API in front of the plant simulator. Future home of agents and controllers."
+requires-python = ">=3.11"
+dependencies = [
+    "plant-sim",
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+]
+
+[tool.uv.sources]
+plant-sim = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/plant_backend"]

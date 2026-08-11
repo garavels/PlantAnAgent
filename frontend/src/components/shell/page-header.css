@@ -1,0 +1,39 @@
+.page-head {
+  display: flex;
+  align-items: baseline;
+  gap: 24px;
+  padding: 4px 4px 2px;
+}
+
+.page-head__title {
+  font-size: 26px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.page-head__aside {
+  display: flex;
+  align-items: baseline;
+  gap: 22px;
+  margin-left: auto;
+}
+
+.page-head__stat {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.page-head__value {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 300;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.05em;
+  color: var(--text);
+}
+
+.page-head__unit {
+  font-size: 11.5px;
+  color: var(--text-faint);
+}

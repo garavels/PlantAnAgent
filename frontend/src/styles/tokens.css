@@ -1,0 +1,62 @@
+/* Design tokens.
+ *
+ * Warm olive-charcoal console floating on sage, with bone panels for the
+ * surfaces an operator touches. Hue is rationed: data is mostly monochrome and
+ * each energy carrier gets one desaturated tint.
+ */
+
+:root {
+  /* --- room ------------------------------------------------------------ */
+  --sage: #d5dbca;
+  --sage-deep: #c6cdb9;
+
+  /* --- dark surfaces --------------------------------------------------- */
+  --ink: #0e120f;
+  --card: #161b17;
+  --card-raised: #1c221d;
+  --card-inset: #101410;
+  --hairline: rgba(226, 232, 216, 0.09);
+  --hairline-strong: rgba(226, 232, 216, 0.16);
+
+  /* --- light surfaces -------------------------------------------------- */
+  --bone: #e3e8db;
+  --bone-sunk: #d3d9c7;
+  --bone-line: rgba(23, 28, 24, 0.12);
+
+  /* --- text on dark ---------------------------------------------------- */
+  --text: #dfe5d6;
+  --text-dim: #8f978a;
+  --text-faint: #626a5f;
+
+  /* --- text on bone ---------------------------------------------------- */
+  --ink-text: #171c18;
+  --ink-dim: #5c6459;
+  --ink-faint: #838b7e;
+
+  /* --- energy carriers (desaturated on purpose) ------------------------ */
+  --solar: #dcc084;
+  --stored: #a6c496;
+  --feed: #aac6cb;
+  --h2: #eef2e6;
+  --waste: #6a7166;
+  --accent: #b3cb92;
+  --alarm: #d98c7a;
+
+  /* the same carriers, dark enough to read on bone */
+  --stored-ink: #7f9a6c;
+  --feed-ink: #7d9ba1;
+  --waste-ink: #a3a89b;
+
+  /* --- type ------------------------------------------------------------ */
+  --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Martian Mono', ui-monospace, monospace;
+
+  /* --- geometry -------------------------------------------------------- */
+  --shell-inset: 10px;
+  --nav-h: 58px;
+  --gap: 12px;
+  --r-shell: 20px;
+  --r-card: 14px;
+  --r-inner: 9px;
+  --r-pill: 999px;
+}

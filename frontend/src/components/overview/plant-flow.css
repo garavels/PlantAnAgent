@@ -1,0 +1,176 @@
+/* `flex: 1; min-height: 0` lets the diagram letterbox into whatever room is
+   left instead of forcing its own aspect ratio onto the page. */
+.flow {
+  display: block;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+
+/* --- conduits ---------------------------------------------------------- */
+.conduit__rail {
+  fill: none;
+  stroke: var(--hairline);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.conduit__rail--dashed {
+  stroke-width: 2;
+  stroke-dasharray: 1 6;
+}
+
+.conduit__flow {
+  fill: none;
+  stroke: currentColor;
+  stroke-dasharray: 1.5 11;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 3px color-mix(in srgb, currentColor 55%, transparent));
+  animation: conduit-run 1s linear infinite;
+  transition: opacity 340ms ease;
+}
+
+@keyframes conduit-run {
+  to {
+    stroke-dashoffset: -12.5;
+  }
+}
+
+.conduit__label {
+  font-size: 10.5px;
+  fill: var(--text-faint);
+}
+
+.conduit__label--live {
+  fill: currentColor;
+  opacity: 0.9;
+}
+
+.flow__junction {
+  fill: var(--text-faint);
+}
+
+.flow__axis,
+.flow__vent text {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  fill: var(--text-faint);
+}
+
+.flow__vent path {
+  fill: none;
+  stroke: var(--waste);
+  stroke-width: 1.2;
+  stroke-linecap: round;
+}
+
+/* --- legend ------------------------------------------------------------ */
+.legend__dot {
+  fill: currentColor;
+}
+
+.legend__name {
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  fill: var(--text-dim);
+}
+
+/* --- equipment nodes --------------------------------------------------- */
+.node__body {
+  fill: var(--card-raised);
+  stroke: var(--hairline);
+  stroke-width: 1;
+}
+
+.node__dot {
+  fill: currentColor;
+}
+
+.node__title {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  fill: var(--text);
+}
+
+.node__status {
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  fill: var(--text-faint);
+}
+
+.node__status--live {
+  fill: currentColor;
+}
+
+.node__value {
+  font-size: 32px;
+  font-weight: 250;
+  fill: var(--text);
+}
+
+.node__value--tank {
+  font-size: 26px;
+}
+
+.node__rate {
+  font-size: 19px;
+  font-weight: 300;
+  fill: currentColor;
+}
+
+.node__unit {
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  font-weight: 400;
+  letter-spacing: 0;
+  fill: var(--text-faint);
+}
+
+.node__foot {
+  font-size: 10.5px;
+  fill: var(--text-dim);
+}
+
+.node__bar-bg {
+  fill: var(--hairline);
+}
+
+.node__bar-fill {
+  fill: currentColor;
+  transition: width 260ms ease;
+}
+
+.node__marker path {
+  stroke: var(--text-faint);
+  stroke-width: 1;
+  stroke-dasharray: 1.5 2;
+}
+
+.node__marker text {
+  font-family: var(--font-sans);
+  font-size: 9.5px;
+  fill: var(--text-faint);
+}
+
+/* --- H2 vessel --------------------------------------------------------- */
+.tank__shell {
+  fill: var(--card-inset);
+  stroke: var(--hairline);
+  stroke-width: 1;
+}
+
+.tank__level {
+  fill: color-mix(in srgb, currentColor 82%, transparent);
+  transition:
+    y 260ms ease,
+    height 260ms ease;
+}
+
+.tank__tick {
+  stroke: var(--hairline-strong);
+  stroke-width: 1;
+}

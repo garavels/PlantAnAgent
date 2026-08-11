@@ -1,0 +1,217 @@
+@import './tokens.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--sage);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-optical-sizing: auto;
+  letter-spacing: -0.005em;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+button {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+/* --- shared primitives ------------------------------------------------- */
+
+/* Quiet secondary label. Sentence case, never shouty. */
+.label {
+  font-size: 11.5px;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--text-dim);
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 300;
+  letter-spacing: -0.05em;
+}
+
+/* Card: the only surface. `--bone` variant for anything the operator touches. */
+.card {
+  position: relative;
+  background: var(--card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+}
+
+.card--bone {
+  background: var(--bone);
+  border-color: transparent;
+  color: var(--ink-text);
+}
+
+.card--bone .label {
+  color: var(--ink-dim);
+}
+
+/* Pill: buttons, chips, segmented controls. */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 13px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--r-pill);
+  background: none;
+  font-size: 12.5px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  transition:
+    color 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease;
+}
+
+.pill:hover:not(:disabled) {
+  color: var(--text);
+  border-color: var(--text-faint);
+}
+
+.pill:disabled {
+  opacity: 0.4;
+}
+
+.pill--on {
+  color: var(--ink-text);
+  border-color: transparent;
+  background: var(--accent);
+}
+
+.pill--on:hover:not(:disabled) {
+  color: var(--ink-text);
+  border-color: transparent;
+  background: color-mix(in srgb, var(--accent) 88%, white);
+}
+
+.card--bone .pill {
+  border-color: var(--bone-line);
+  color: var(--ink-dim);
+}
+
+.card--bone .pill:hover:not(:disabled) {
+  color: var(--ink-text);
+  border-color: var(--ink-faint);
+}
+
+.card--bone .pill--on {
+  color: var(--bone);
+  border-color: transparent;
+  background: var(--ink-text);
+}
+
+.card--bone .pill--on:hover:not(:disabled) {
+  color: var(--bone);
+  background: #262e26;
+}
+
+/* Status dot + word. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.chip__led {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.chip--live {
+  color: var(--accent);
+}
+
+.chip--idle {
+  color: var(--text-faint);
+}
+
+.chip--warn {
+  color: var(--solar);
+}
+
+.chip--alarm {
+  color: var(--alarm);
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: var(--r-pill);
+  background-clip: content-box;
+  background-color: var(--hairline-strong);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
