@@ -8,6 +8,7 @@
 import type { ReactNode } from 'react'
 
 import { OverviewPage } from './pages/OverviewPage'
+import { Plant3DView } from './pages/Plant3DView'
 
 export interface ViewDef {
   path: string
@@ -43,7 +44,8 @@ export const VIEWS: ViewDef[] = [
   {
     path: '/plant-3d',
     label: '3D Plant',
-    ready: false,
+    ready: true,
+    element: <Plant3DView />,
     glyph: (
       <svg viewBox="0 0 20 20" {...stroke}>
         <path d="M10 2.5 17 6.3v7.4L10 17.5 3 13.7V6.3Z" />

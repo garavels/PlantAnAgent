@@ -3,7 +3,7 @@
 An autonomous, intermittently powered industrial plant — starting with the foundation:
 **a small working digital twin plus a control room that watches it.**
 
-This first iteration models one thing only:
+The plant today:
 
 ```text
 Solar
@@ -15,8 +15,9 @@ Power allocation
           H₂ Tank
 ```
 
-No agents, no RL, no methanation, no 3D plant yet. The point is the architecture those
-things will plug into.
+The control room has two views over the same live session: **Overview** (the concise
+operational summary) and **3D Plant** (a spatial digital twin of the site). No agents,
+no RL, no methanation yet. The point is the architecture those things will plug into.
 
 ---
 
@@ -47,8 +48,9 @@ things will plug into.
 ├── frontend/           the control room
 │   └── src/
 │       ├── views.tsx         view manifest -> drives router + top nav
-│       ├── pages/            Overview (the only page that exists yet)
+│       ├── pages/            Overview + 3D Plant (the twin)
 │       ├── components/       shell (top nav, page header) + overview widgets
+│       │   └── plant-3d/     the twin: scene, units, flow network
 │       ├── hooks/            usePlantSession: the clock and the link
 │       ├── state/            one shared session, read by every view
 │       ├── lib/api.ts        the only place that knows how to reach the plant
@@ -191,6 +193,53 @@ Dev API surface (all under `/api`, proxied from Vite):
 
 ---
 
+## The 3D twin
+
+The `3D Plant` view (`frontend/src/components/plant-3d/`, React Three Fiber) renders the
+site as a place: solar field, power hub, battery container, electrolyser skid and H₂
+vessel on a fenced pad, with cables and a gas pipe between them. It is a **visualization
+layer only** — no physics, no plant state of its own:
+
+```text
+PlantState + PlantConfig
+        ↓  deriveVisuals()          <- visuals.ts, the only file that knows field names
+PlantVisuals (normalised 0..1 intensities, levels, sun position)
+        ↓  one prop per unit
+SolarField / PowerHub / BatteryUnit / ElectrolyserUnit / HydrogenTank / FlowLine
+```
+
+State becomes sight like this:
+
+| Simulator field            | Visual                                                               |
+| -------------------------- | -------------------------------------------------------------------- |
+| `solar_available_kw`       | panel-face glow, sun position and sky (same half-sine as the model)  |
+| `battery_soc`              | light-column fill on the container                                   |
+| `battery_power_kw`         | roof lamp: sage while charging, mist while discharging, dim when idle |
+| `electrolyser_*`           | stack-seam glow ∝ load; dark and cold below min load                 |
+| `h2_fill`                  | the gas column inside the translucent vessel, meniscus ring on top   |
+| `*_kw` / `h2_production_*` | packet streams on each route: speed and opacity ∝ intensity          |
+| `solar_curtailed_kw`       | a quiet packet drip from the hub into a ground grate                 |
+
+Every motion is eased in the view (`damp()` in `visuals.ts`), so large steps and resets
+read as transitions rather than teleports. Pausing the clock freezes the packets with it;
+`prefers-reduced-motion` keeps the levels but stops ambient motion. Selection (clicking a
+unit to pin its live values) is the only state the scene owns.
+
+Files that matter:
+
+- `plant-3d/visuals.ts` — the adapter: `PlantState` → `PlantVisuals`. Start here.
+- `plant-3d/layout.ts` — where units stand and where flows run, in meters.
+- `plant-3d/PlantScene.tsx` — the Canvas composition; nothing else touches three.js setup.
+- `plant-3d/UnitChrome.tsx` — hover/pin behaviour and the floating value plates.
+- `pages/Plant3DPage.tsx` — the view: scene, HUD readouts, transport bar.
+
+To add a future unit (methanator, DAC, CH₄ tank): add its position and routes to
+`layout.ts`, extend `deriveVisuals()` with its descriptors, write one component that maps
+descriptors onto geometry, and drop it into `PlantScene`. The simulator never hears about
+any of it.
+
+---
+
 ## Extension points
 
 Everything below is *designed for* but deliberately **not built**.
@@ -224,9 +273,10 @@ the simulator, not inside it.
 top nav; the greyed-out entries (3D Plant, Agent, Metrics, Events, Scenarios) are
 placeholders pointing at it. Write a page, flip `ready: true`, and it appears.
 
-**3D plant.** A future `3D Plant` view reads the same `usePlant()` session as the Overview
-and maps `PlantState` onto meshes. The simulator stays completely independent of any visual
-representation — the single-line diagram already proves the state is enough to drive one.
+**3D plant.** Built. The `3D Plant` view reads the same `usePlant()` session as the
+Overview and maps `PlantState` onto meshes — see "The 3D twin" below. Adding a unit to
+the twin never touches the simulator: one entry in `plant-3d/layout.ts`, one component,
+one flow route.
 
 ---
 
@@ -246,3 +296,6 @@ representation — the single-line diagram already proves the state is enough to
 - **Design tokens live in one file.** `frontend/src/styles/tokens.css` holds the palette,
   type and geometry; `.card`, `.card--bone`, `.pill` and `.chip` in `global.css` are the only
   shared primitives. Retheming the console does not touch a component.
+- **The twin speaks the same language.** `plant-3d/palette.ts` mirrors those tokens as hex
+  for WebGL: same carriers, same rationing. The 3D view is lazy-loaded, so the Overview
+  never pays for three.js.
