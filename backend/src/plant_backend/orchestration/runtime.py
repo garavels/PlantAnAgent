@@ -21,9 +21,12 @@ supervisor that has to answer every 60 simulated seconds is not a supervisor; th
 clock offers it each batch of frames (`SupervisorAgent.observe`) and it decides
 whether anything is worth investigating.
 
-Where the RL controller will plug in: `self.controllers`. A policy that implements
-`Controller.compute_action` is registered there and selected with `set_controller`,
-and it inherits the envelope, the guard and the supervisor unchanged.
+Where the RL controller plugged in (V7): `self.controllers` is the registry and
+`self.rl` is the slot a checkpoint is loaded into. A loaded policy is registered
+under `rl` and selected with `set_controller`, and it inherits the envelope, the
+guard and the supervisor unchanged. With no checkpoint the registry holds the
+heuristic controller alone -- which is why the heuristic is the default: there is
+nothing else to select, and nothing is invented to fill the gap.
 """
 
 from __future__ import annotations
@@ -34,6 +37,7 @@ from plant_sim import Action, PlantConfig, PlantState, Scenario
 
 from ..agent import SupervisorAgent
 from ..controllers import Constraints, Controller, HeuristicController
+from ..controllers.rl import RL_CONTROLLER_ID, RLController, RLControllerSlot
 from ..safety import validate
 from ..session import PlantSession
 
@@ -69,6 +73,11 @@ class PlantRuntime:
             controller.id: controller for controller in (HeuristicController(),)
         }
         self.controller_id = HeuristicController.id
+        #: The RL checkpoint slot. Empty unless one is configured and loads cleanly.
+        self.rl = RLControllerSlot()
+        self.rl.autoload()
+        if self.rl.controller is not None:
+            self.controllers[RL_CONTROLLER_ID] = self.rl.controller
         self.mode: ControlMode = "auto"
         self.constraints = Constraints()
         #: Envelope fields the supervisor overwrote, and what they were before.
@@ -111,10 +120,31 @@ class PlantRuntime:
     def _decide(self, observation: PlantState) -> tuple[Action, tuple[str, ...]]:
         if self.mode == "manual":
             return self.manual_action, ("Manual control: operator allocation",)
+        controller = self.controller
+        decision = controller.compute_action(
+            observation, constraints=self.constraints, config=self.config
+        )
+        if isinstance(controller, RLController) and controller.failure is not None:
+            return self._after_rl_failure(observation, controller.failure)
+        return decision.action, decision.notes
+
+    def _after_rl_failure(
+        self, observation: PlantState, reason: str
+    ) -> tuple[Action, tuple[str, ...]]:
+        """A policy that cannot answer stops driving: back to the heuristic, loudly.
+
+        The failure is recorded on the slot, RL leaves the registry (so it cannot
+        be reselected until a checkpoint is loaded again) and the note says what
+        happened -- the plant keeps running on the controller that always can.
+        """
+        self.rl.mark_failed(reason)
+        self.controllers.pop(RL_CONTROLLER_ID, None)
+        self.controller_id = HeuristicController.id
         decision = self.controller.compute_action(
             observation, constraints=self.constraints, config=self.config
         )
-        return decision.action, decision.notes
+        note = f"RL inference failed ({reason}): reverted to heuristic"
+        return decision.action, (note, *decision.notes)
 
     # --- simulation controls ----------------------------------------------
     def play(self) -> None:
@@ -165,9 +195,29 @@ class PlantRuntime:
 
     def set_controller(self, controller_id: str) -> str:
         if controller_id not in self.controllers:
+            if controller_id == RL_CONTROLLER_ID:
+                # selectable only once a checkpoint is loaded; say why it is not
+                raise ValueError(f"RL controller unavailable: {self.rl.status.reason}")
             raise ValueError(f"unknown controller: {controller_id}")
         self.controller_id = controller_id
         return self.controller_id
+
+    def load_rl_checkpoint(self, path: str) -> dict[str, Any]:
+        """Load an RL checkpoint and make it selectable. Raises on a bad checkpoint.
+
+        Loading does not switch to it: selecting a controller stays a separate,
+        deliberate act, so a checkpoint arriving never changes who is driving.
+        """
+        controller = self.rl.load(path)
+        self.controllers[RL_CONTROLLER_ID] = controller
+        return self.rl.status.to_dict()
+
+    def unload_rl_checkpoint(self) -> dict[str, Any]:
+        """Drop the policy; if it was driving, the heuristic takes over immediately."""
+        self.controllers.pop(RL_CONTROLLER_ID, None)
+        if self.controller_id == RL_CONTROLLER_ID:
+            self.controller_id = HeuristicController.id
+        return self.rl.unload().to_dict()
 
     def configure_constraints(
         self, changes: dict[str, Any], *, by: Literal["operator", "agent"] = "operator"
@@ -208,7 +258,8 @@ class PlantRuntime:
         return {
             "mode": self.mode,
             "controller": self.controller.to_dict(),
-            "controllers": [controller.to_dict() for controller in self.controllers.values()],
+            "controllers": self._controller_catalogue(),
+            "rl": self.rl.status.to_dict(),
             "constraints": self.constraints.to_dict(),
             "manual_action": self.manual_action.to_dict(),
             "applied_action": self.applied_action.to_dict(),
@@ -218,6 +269,20 @@ class PlantRuntime:
             "speed": self.speed,
             "tick_ms": TICK_MS,
         }
+
+    def _controller_catalogue(self) -> list[dict[str, Any]]:
+        """Every controller the control room may offer, available or not.
+
+        RL appears even when it cannot be selected, carrying the reason: a
+        disabled option with an explanation is honest, a missing option is not.
+        """
+        catalogue = [
+            {**controller.to_dict(), "available": True, "state": "ready", "reason": ""}
+            for controller_id, controller in self.controllers.items()
+            if controller_id != RL_CONTROLLER_ID
+        ]
+        catalogue.append(self.rl.descriptor())
+        return catalogue
 
     def payload(
         self, frames: list[dict[str, Any]] | None = None, *, replace: bool = False

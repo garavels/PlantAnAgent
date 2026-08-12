@@ -83,6 +83,11 @@ export function setConstraints(constraints: Partial<Constraints>): Promise<Plant
   return post<PlantFrames>('/controller/config', { constraints })
 }
 
+/** Which controller drives in AUTO. RL is refused unless a checkpoint is loaded. */
+export function setController(controller: string): Promise<PlantFrames> {
+  return post<PlantFrames>('/controller/config', { controller })
+}
+
 // --- abnormal operation ----------------------------------------------------
 export function fetchScenarios(): Promise<ScenarioCatalogue> {
   return request<ScenarioCatalogue>('/scenarios')

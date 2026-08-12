@@ -1,11 +1,21 @@
 """Controllers: telemetry in, `Action` out.
 
-    heuristic   -- implemented here
-    RL policy   -- later, same interface
+    heuristic   -- the default, and the baseline everything else is read against
+    RL policy   -- V7, selectable once a checkpoint is loaded (`RLControllerSlot`)
     optimiser   -- later, same interface
 """
 
 from .base import Constraints, ControlDecision, Controller
 from .heuristic import HeuristicController
+from .rl import RL_CONTROLLER_ID, RLController, RLControllerSlot, RLStatus
 
-__all__ = ["Constraints", "ControlDecision", "Controller", "HeuristicController"]
+__all__ = [
+    "RL_CONTROLLER_ID",
+    "Constraints",
+    "ControlDecision",
+    "Controller",
+    "HeuristicController",
+    "RLController",
+    "RLControllerSlot",
+    "RLStatus",
+]

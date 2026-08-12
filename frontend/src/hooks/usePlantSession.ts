@@ -22,6 +22,7 @@ import {
   play as playRequest,
   resetPlant,
   setAgentEnabled as setAgentEnabledRequest,
+  setController as setControllerRequest,
   setControlMode as setControlModeRequest,
   setManualAction,
   setSpeed as setSpeedRequest,
@@ -80,6 +81,8 @@ export interface PlantSession {
   setAction: (action: PlantAction) => void
   setSpeed: (speed: number) => void
   setMode: (mode: ControlMode) => void
+  /** Pick the AUTO controller. Refused by the backend if RL has no checkpoint. */
+  setController: (controller: string) => void
   togglePlay: () => void
   stepOnce: () => void
   reset: () => void
@@ -236,6 +239,7 @@ export function usePlantSession(): PlantSession {
     setAction,
     setSpeed: (speed) => void ask(setSpeedRequest(speed)),
     setMode: (mode) => void ask(setControlModeRequest(mode)),
+    setController: (controller) => void ask(setControllerRequest(controller)),
     togglePlay,
     stepOnce: () => void ask(stepPlant(1)),
     reset: () => void ask(resetPlant()),

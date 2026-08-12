@@ -90,6 +90,12 @@ class ControllerConfigRequest(BaseModel):
     action: ActionModel | None = None
 
 
+class RLCheckpointRequest(BaseModel):
+    """Load an RL checkpoint, or unload the current one with a null path."""
+
+    checkpoint: str | None = None
+
+
 class FaultRequest(BaseModel):
     """A fault or disturbance to inject. See `plant_sim.faults.CATALOGUE`."""
 
@@ -228,6 +234,24 @@ async def post_controller_config(request: ControllerConfigRequest) -> dict[str, 
             runtime.configure_constraints(dict(request.constraints))
         if request.action is not None:
             runtime.set_manual_action(request.action.model_dump())
+    except ValueError as reason:
+        raise HTTPException(status_code=400, detail=str(reason)) from reason
+    return _publish(runtime.payload())
+
+
+@app.post("/api/controller/rl")
+async def post_controller_rl(request: RLCheckpointRequest) -> dict[str, Any]:
+    """Load or unload the RL checkpoint. Loading never switches controller by itself.
+
+    A checkpoint that is missing, corrupt or trained against a different
+    observation is a 400 with the reason: the plant carries on with the heuristic
+    controller rather than running something that cannot be verified.
+    """
+    try:
+        if request.checkpoint:
+            runtime.load_rl_checkpoint(request.checkpoint)
+        else:
+            runtime.unload_rl_checkpoint()
     except ValueError as reason:
         raise HTTPException(status_code=400, detail=str(reason)) from reason
     return _publish(runtime.payload())

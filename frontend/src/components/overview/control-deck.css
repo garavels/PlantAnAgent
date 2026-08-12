@@ -103,6 +103,62 @@
   color: var(--ink-faint);
 }
 
+/* --- controller choice (V7) --------------------------------------------- */
+.deck__controllers {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.deck__controller {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  font-size: 11.5px;
+  color: var(--ink-dim);
+  text-align: left;
+  transition: color 160ms ease;
+}
+
+.deck__controller:hover:not(:disabled) {
+  color: var(--ink-text);
+}
+
+.deck__controller:disabled {
+  color: var(--ink-faint);
+  cursor: not-allowed;
+}
+
+.deck__radio {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border: 1px solid var(--ink-faint);
+  border-radius: 50%;
+}
+
+.deck__controller--on {
+  color: var(--ink-text);
+}
+
+.deck__controller--on .deck__radio {
+  border-color: #7f9c68;
+  background: #7f9c68;
+  box-shadow: 0 0 0 2.5px rgba(127, 156, 104, 0.18);
+}
+
+/* why an option cannot be picked, e.g. no checkpoint loaded */
+.deck__controller em {
+  font-size: 10px;
+  font-style: normal;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
 /* --- readouts ---------------------------------------------------------- */
 .deck__row {
   display: flex;
