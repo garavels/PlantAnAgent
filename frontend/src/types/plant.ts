@@ -198,6 +198,75 @@ export interface PlantConfig {
   ch4_tank: { capacity_kg: number; initial_kg: number }
 }
 
+// --- V6: the supervisory agent ---------------------------------------------
+/** Mirror of `agent.trace.EntryKind`: the operational steps of one run. */
+export type AgentEntryKind =
+  | 'trigger'
+  | 'observation'
+  | 'tool'
+  | 'diagnosis'
+  | 'decision'
+  | 'action'
+  | 'result'
+  | 'error'
+
+export type AgentStatus = 'monitoring' | 'investigating' | 'attention' | 'disabled'
+export type Confidence = 'low' | 'medium' | 'high'
+
+/** One line of the supervisor's shift log. Never chain-of-thought. */
+export interface AgentTraceEntry {
+  seq: number
+  run: number
+  clock: string
+  time_s: number
+  kind: AgentEntryKind
+  message: string
+  detail: Record<string, unknown>
+}
+
+/** One situation the supervisor picked up, and what it made of it. */
+export interface AgentIncident {
+  id: string
+  run: number
+  opened_clock: string
+  opened_time_s: number
+  trigger: string
+  trigger_detail: string
+  key: string
+  category: string
+  component: string | null
+  confidence: Confidence
+  summary: string
+  /** Envelope changes actually applied, already validated by the backend. */
+  actions: string[]
+  human_intervention_required: boolean
+  resolved: boolean
+  closed_clock: string | null
+}
+
+/** Mirror of `SupervisorAgent.snapshot()`. */
+export interface AgentSnapshot {
+  enabled: boolean
+  status: AgentStatus
+  busy: boolean
+  /** Which supervisor answered: the model, or the rule book behind it. */
+  engine: string
+  runs: number
+  last_run_clock: string | null
+  last_error: string | null
+  cooldown_s: number
+  min_gap_s: number
+  human_intervention_required: boolean
+  incident: AgentIncident | null
+  incidents: AgentIncident[]
+  trace: AgentTraceEntry[]
+}
+
+export interface AgentTraceResponse {
+  trace: AgentTraceEntry[]
+  incidents: AgentIncident[]
+}
+
 /** One backend update: new frames plus everything that came with them. */
 export interface PlantFrames {
   state: PlantState
@@ -209,6 +278,8 @@ export interface PlantFrames {
   faults?: PlantFault[]
   scenario?: string | null
   control?: ControlStatus
+  /** The supervisory agent, as of this payload. */
+  agent?: AgentSnapshot
 }
 
 export interface ScenarioCatalogue {

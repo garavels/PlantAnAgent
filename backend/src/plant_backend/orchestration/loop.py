@@ -7,15 +7,24 @@ owned the clock.
 
 Simulated time therefore depends only on how many ticks were taken, never on how
 long the work took, so a slow machine produces the same trace as a fast one.
+
+The supervisory agent is offered each batch of frames after they are applied, and
+decides for itself whether to investigate (usually not). It thinks in a background
+task, so a slow or failing model delays nothing here: the tick that woke it has
+already been published by the time it has an opinion.
 """
 
 from __future__ import annotations
 
 import asyncio
 import contextlib
+import logging
+from typing import Any
 
 from .broadcast import Broadcaster
 from .runtime import TICK_MS, PlantRuntime
+
+log = logging.getLogger(__name__)
 
 #: How often a paused clock re-checks whether it should be running.
 IDLE_POLL_S = 0.05
@@ -61,3 +70,11 @@ class SimulationClock:
                 continue
             frames = self.runtime.advance(self.runtime.speed)
             self.broadcast.publish(self.runtime.payload(frames))
+            self._supervise(frames)
+
+    def _supervise(self, frames: list[dict[str, Any]]) -> None:
+        """Offer the batch to the supervisor. The plant outranks it: never raises."""
+        try:
+            self.runtime.supervisor.observe(frames)
+        except Exception:  # noqa: BLE001 - a broken supervisor must not stop the clock
+            log.warning("supervisor could not evaluate this tick", exc_info=True)

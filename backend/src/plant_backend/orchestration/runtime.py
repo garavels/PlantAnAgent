@@ -14,10 +14,16 @@ observes and it asks, it does not drive. Whether the action came from the
 heuristic controller or from a slider, it reaches the simulator by exactly one
 path, through exactly one guard.
 
-Where V6 plugs in: a supervisory agent watches the same telemetry and events the
+Where V6 plugged in: `self.supervisor` watches the same telemetry and events the
 control room does, and steers by calling `set_mode` and `configure_constraints` --
-the same two levers the operator has. It never gets a step-level hook, because a
-supervisor that has to answer every 60 simulated seconds is not a supervisor.
+the same two levers the operator has. It has no step-level hook, because a
+supervisor that has to answer every 60 simulated seconds is not a supervisor; the
+clock offers it each batch of frames (`SupervisorAgent.observe`) and it decides
+whether anything is worth investigating.
+
+Where the RL controller will plug in: `self.controllers`. A policy that implements
+`Controller.compute_action` is registered there and selected with `set_controller`,
+and it inherits the envelope, the guard and the supervisor unchanged.
 """
 
 from __future__ import annotations
@@ -26,6 +32,7 @@ from typing import Any, Literal
 
 from plant_sim import Action, PlantConfig, PlantState, Scenario
 
+from ..agent import SupervisorAgent
 from ..controllers import Constraints, Controller, HeuristicController
 from ..safety import validate
 from ..session import PlantSession
@@ -40,6 +47,8 @@ DEFAULT_SPEED = 4
 MAX_SPEED = 64
 #: Most timesteps one API call may advance.
 MAX_STEPS = 1000
+#: Trace entries carried in every payload. The full trace is a separate route.
+AGENT_TRACE_IN_PAYLOAD = 12
 
 #: Where the manual sliders start: the V1-V4 default allocation.
 DEFAULT_MANUAL_ACTION = Action(
@@ -63,6 +72,8 @@ class PlantRuntime:
         self.mode: ControlMode = "auto"
         self.constraints = Constraints()
         self.manual_action = DEFAULT_MANUAL_ACTION
+        #: The V6 supervisory agent. Disabled, the runtime behaves exactly as V5.
+        self.supervisor = SupervisorAgent(self)
 
         self.playing = False
         self.speed = DEFAULT_SPEED
@@ -127,6 +138,7 @@ class PlantRuntime:
         self.notes = ()
         self.adjustments = ()
         self.applied_action = Action.idle()
+        self.supervisor.reset()
         return self.session.reset()
 
     def load_scenario(self, scenario: Scenario | str) -> dict[str, Any]:
@@ -136,6 +148,7 @@ class PlantRuntime:
         self.notes = ()
         self.adjustments = ()
         self.applied_action = Action.idle()
+        self.supervisor.reset()
         return self.session.load_scenario(scenario)
 
     # --- control configuration --------------------------------------------
@@ -187,5 +200,6 @@ class PlantRuntime:
             "frames": new_frames,
             "replace": replace,
             "control": self.control_status(),
+            "agent": self.supervisor.snapshot(trace_limit=AGENT_TRACE_IN_PAYLOAD),
             **self.session.conditions(),
         }

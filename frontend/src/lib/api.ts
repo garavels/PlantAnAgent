@@ -10,6 +10,8 @@
  */
 
 import type {
+  AgentSnapshot,
+  AgentTraceResponse,
   Constraints,
   ControlMode,
   FaultCatalogue,
@@ -105,4 +107,26 @@ export function clearFaults(): Promise<PlantFrames> {
 
 export function clearFault(faultId: string): Promise<PlantFrames> {
   return request<PlantFrames>(`/faults/${faultId}`, { method: 'DELETE' })
+}
+
+// --- the supervisory agent -------------------------------------------------
+/** Agent status, latest incident and recent trace. Also arrives on the stream. */
+export function fetchAgent(trace = 60): Promise<AgentSnapshot> {
+  return request<AgentSnapshot>(`/agent?trace=${trace}`)
+}
+
+/** The full trace, or just one run of it. */
+export function fetchAgentTrace(run?: number, limit = 120): Promise<AgentTraceResponse> {
+  const query = run === undefined ? `limit=${limit}` : `limit=${limit}&run=${run}`
+  return request<AgentTraceResponse>(`/agent/trace?${query}`)
+}
+
+/** "Investigate current plant": one supervisor run, now, whatever the triggers say. */
+export function investigatePlant(): Promise<PlantFrames> {
+  return post<PlantFrames>('/agent/investigate')
+}
+
+/** Off leaves V5 behaviour exactly: controller, envelope, guard, nothing above. */
+export function setAgentEnabled(enabled: boolean): Promise<PlantFrames> {
+  return post<PlantFrames>('/agent/config', { enabled })
 }

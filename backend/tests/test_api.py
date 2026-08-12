@@ -145,3 +145,40 @@ def test_every_change_is_pushed_to_the_stream(client: TestClient) -> None:
         assert queue.get_nowait()["faults"]
     finally:
         app_module.broadcast.unsubscribe(queue)
+
+
+# --- V6: the supervisory agent -------------------------------------------
+def test_agent_status_is_exposed_for_the_control_room(client: TestClient) -> None:
+    payload = client.get("/api/agent").json()
+
+    assert payload["status"] == "monitoring"
+    assert payload["incident"] is None
+    assert payload["runs"] == 0
+    assert payload["trace"] == []
+
+
+def test_investigate_runs_the_supervisor_on_demand(client: TestClient) -> None:
+    client.post("/api/simulation/step", json={"repeat": 420})  # daylight
+    client.post("/api/faults", json={"type": "electrolyser_degradation", "severity": 0.5})
+    client.post("/api/simulation/step", json={"repeat": 30})
+
+    payload = client.post("/api/agent/investigate").json()
+
+    incident = payload["incident"]
+    assert incident["trigger"] == "manual"
+    assert incident["category"] == "electrolyser_degradation"
+    assert payload["agent"]["runs"] == 1
+    assert payload["control"]["constraints"]["electrolyser_max_kw"] is not None
+
+    trace = client.get("/api/agent/trace", params={"run": incident["run"]}).json()
+    assert [entry["kind"] for entry in trace["trace"]][0] == "trigger"
+    assert trace["incidents"][-1]["id"] == incident["id"]
+
+
+def test_the_agent_can_be_switched_off(client: TestClient) -> None:
+    assert client.post("/api/agent/config", json={"enabled": False}).json()["agent"]["status"] == (
+        "disabled"
+    )
+    assert client.post("/api/agent/config", json={"enabled": True}).json()["agent"]["status"] == (
+        "monitoring"
+    )

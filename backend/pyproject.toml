@@ -1,12 +1,13 @@
 [project]
 name = "plant-backend"
-version = "0.5.0"
-description = "Plant-control backend: owns the simulation loop, the controller and the action guard."
+version = "0.6.0"
+description = "Plant-control backend: owns the simulation loop, the controller, the action guard and the supervisory agent."
 requires-python = ">=3.11"
 dependencies = [
     "plant-sim",
     "fastapi>=0.115",
     "uvicorn[standard]>=0.30",
+    "openai-agents>=0.19.4,<0.20",
 ]
 
 [tool.uv.sources]

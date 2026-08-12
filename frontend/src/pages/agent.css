@@ -1,0 +1,222 @@
+.agent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  height: 100%;
+  min-height: 620px;
+}
+
+.agent__blank {
+  display: grid;
+  place-items: center;
+  min-height: 320px;
+}
+
+.agent__banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--r-card);
+  background: var(--card-raised);
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.agent__top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  gap: var(--gap);
+  align-items: stretch;
+}
+
+/* bound the row, or the two scrolling lists grow the page instead of scrolling */
+.agent__bottom {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 300px);
+  grid-template-rows: minmax(0, 1fr);
+  gap: var(--gap);
+  flex: 1;
+  min-height: 0;
+}
+
+.agent__incident-card,
+.agent__deck,
+.agent__trace,
+.agent__history {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  padding: 14px 16px 12px;
+  animation: rise 460ms ease both;
+}
+
+.agent__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.agent__title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.agent__note {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--text-dim);
+}
+
+.agent__error {
+  margin: 0;
+  font-size: 11px;
+  color: var(--alarm);
+  overflow-wrap: anywhere;
+}
+
+.agent__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: auto;
+}
+
+/* --- latest incident ----------------------------------------------------- */
+.agent__facts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px 16px;
+  margin: 0;
+}
+
+.agent__facts-wide {
+  grid-column: 1 / -1;
+}
+
+.agent__facts dd {
+  margin: 4px 0 0;
+}
+
+.agent__value {
+  font-size: 14px;
+  color: var(--text);
+  text-transform: capitalize;
+}
+
+.agent__summary {
+  font-size: 12px;
+  line-height: 1.65;
+  color: var(--text-dim);
+}
+
+.agent__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--text-dim);
+}
+
+.agent__action {
+  padding: 3px 8px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--r-pill);
+  font-size: 11px;
+  color: var(--accent);
+}
+
+/* --- trace and incident history ----------------------------------------- */
+.agent__lines,
+.agent__incidents {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.agent__empty {
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+
+.agent__line {
+  display: grid;
+  grid-template-columns: auto 80px minmax(0, 1fr);
+  align-items: baseline;
+  gap: 10px;
+  padding: 3px 0;
+  font-size: 11.5px;
+  color: var(--text-dim);
+}
+
+.agent__line + .agent__line,
+.agent__incident + .agent__incident {
+  border-top: 1px solid var(--hairline);
+}
+
+.agent__line--loud .agent__message {
+  color: var(--text);
+}
+
+.agent__clock {
+  font-size: 10.5px;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+.agent__kind {
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.agent__message {
+  overflow-wrap: anywhere;
+}
+
+.agent__incident {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 11.5px;
+  color: var(--text-dim);
+}
+
+.agent__category {
+  color: var(--text);
+  text-transform: capitalize;
+}
+
+.agent__state {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-faint);
+}
+
+.agent__state--open {
+  color: var(--solar);
+}
+
+@media (max-width: 1100px) {
+  .agent__top,
+  .agent__bottom {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .agent__facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

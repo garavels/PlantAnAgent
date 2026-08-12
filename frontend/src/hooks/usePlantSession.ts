@@ -16,10 +16,12 @@ import {
   fetchScenarios,
   fetchState,
   injectFault as injectFaultRequest,
+  investigatePlant,
   loadScenario as loadScenarioRequest,
   pause as pauseRequest,
   play as playRequest,
   resetPlant,
+  setAgentEnabled as setAgentEnabledRequest,
   setControlMode as setControlModeRequest,
   setManualAction,
   setSpeed as setSpeedRequest,
@@ -27,6 +29,7 @@ import {
   stepPlant,
 } from '../lib/api'
 import type {
+  AgentSnapshot,
   ControlMode,
   ControlStatus,
   FaultKind,
@@ -72,6 +75,8 @@ export interface PlantSession {
   scenarios: ScenarioDef[]
   scenario: string | null
   control: ControlStatus | null
+  /** The supervisory agent: status, latest incident, recent trace. */
+  agent: AgentSnapshot | null
   setAction: (action: PlantAction) => void
   setSpeed: (speed: number) => void
   setMode: (mode: ControlMode) => void
@@ -83,6 +88,9 @@ export interface PlantSession {
   clearFault: (faultId: string) => void
   clearFaults: () => void
   loadScenario: (scenario: string) => void
+  /** Ask for one supervisor run now, outside the trigger rules. */
+  investigate: () => void
+  setAgentEnabled: (enabled: boolean) => void
 }
 
 export function usePlantSession(): PlantSession {
@@ -98,6 +106,7 @@ export function usePlantSession(): PlantSession {
   const [scenarios, setScenarios] = useState<ScenarioDef[]>([])
   const [scenario, setScenario] = useState<string | null>(null)
   const [control, setControl] = useState<ControlStatus | null>(null)
+  const [agent, setAgent] = useState<AgentSnapshot | null>(null)
   const [generation, setGeneration] = useState(0)
 
   // payloads arrive twice for whoever asked for them (once as the response,
@@ -110,6 +119,7 @@ export function usePlantSession(): PlantSession {
     if (payload.events) setEvents(payload.events.slice(-MAX_EVENTS))
     if (payload.faults) setFaults(payload.faults)
     if (payload.scenario !== undefined) setScenario(payload.scenario)
+    if (payload.agent) setAgent(payload.agent)
     if (payload.control) {
       setControl(payload.control)
       // adopt the backend's setpoint until the operator touches a slider
@@ -222,6 +232,7 @@ export function usePlantSession(): PlantSession {
     scenarios,
     scenario,
     control,
+    agent,
     setAction,
     setSpeed: (speed) => void ask(setSpeedRequest(speed)),
     setMode: (mode) => void ask(setControlModeRequest(mode)),
@@ -233,5 +244,7 @@ export function usePlantSession(): PlantSession {
     clearFault: (faultId) => void ask(clearFaultRequest(faultId)),
     clearFaults: () => void ask(clearFaultsRequest()),
     loadScenario: (id) => void ask(loadScenarioRequest(id)),
+    investigate: () => void ask(investigatePlant()),
+    setAgentEnabled: (enabled) => void ask(setAgentEnabledRequest(enabled)),
   }
 }

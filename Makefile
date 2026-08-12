@@ -1,4 +1,4 @@
-.PHONY: help setup dev backend frontend sim test build clean
+.PHONY: help setup dev backend frontend sim test eval build clean
 
 help:             ## list targets
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*##/\t/'
@@ -15,6 +15,9 @@ frontend:         ## run the control room on :5173
 
 dev:              ## run both (ctrl-c stops both)
 	@$(MAKE) -j2 backend frontend
+
+eval:             ## run the supervisory agent against the five scenarios
+	uv run python -m plant_backend.agent.evaluation
 
 sim:              ## run one simulated day headless
 	uv run python -m plant_sim --hours 24
