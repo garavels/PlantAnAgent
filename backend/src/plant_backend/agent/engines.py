@@ -143,6 +143,48 @@ class RuleEngine:
         )
 
 
+def _tighten(
+    toolbox: AgentToolbox,
+    changes: dict[str, float],
+    current: dict[str, float],
+    *,
+    reason: str,
+) -> dict[str, Any]:
+    """Apply the changes that are genuine tightenings; report what took effect.
+
+    A summary claiming a cap the envelope already had is a lie an operator would
+    act on, so every rule below writes its prose from this return value rather
+    than from what it meant to do.
+    """
+    tightening = {
+        key: value for key, value in changes.items() if key not in current or value < current[key]
+    }
+    if not tightening:
+        return {}
+    result = toolbox.set_controller_constraints(dict(tightening), reason=reason)
+    return dict(result.get("applied") or {}) if result.get("ok") else {}
+
+
+#: How to say each envelope field out loud, for summaries.
+_PHRASES = {
+    "battery_min_soc": lambda value: f"battery reserve raised to {float(value):.0%}",
+    "electrolyser_max_kw": lambda value: f"stack capped at {float(value):.0f} kW",
+    "dac_max_kw": lambda value: f"capture capped at {float(value):.0f} kW",
+    "methanator_max_kw": lambda value: f"methanation capped at {float(value):.0f} kW",
+    "battery_support_max_kw": lambda value: f"battery support capped at {float(value):.0f} kW",
+}
+
+
+def _changed(applied: dict[str, Any]) -> str:
+    """Name what actually moved, in the words a shift log would use."""
+    parts = [_PHRASES[field](value) for field, value in applied.items() if field in _PHRASES]
+    if not parts:
+        return "the envelope was retuned"
+    if len(parts) == 1:
+        return parts[0]
+    return ", ".join(parts[:-1]) + f" and {parts[-1]}"
+
+
 def _sensor_inconsistency(
     toolbox: AgentToolbox,
     telemetry: dict[str, Any],
@@ -194,11 +236,13 @@ def _electrolyser(
         + (f", stack at {reading['temperature_c']:.0f} degC" if hot else ""),
         yield_ratio=ratio,
     )
-    if safe_kw < constraints["effective_kw"]["electrolyser"]:
-        toolbox.set_controller_constraints(
-            {"electrolyser_max_kw": safe_kw},
-            reason=f"stack yield at {ratio:.0%} of design; hold it at power it can convert",
-        )
+    effective_kw = constraints["effective_kw"]["electrolyser"]
+    applied = _tighten(
+        toolbox,
+        {"electrolyser_max_kw": safe_kw},
+        {"electrolyser_max_kw": effective_kw},
+        reason=f"stack yield at {ratio:.0%} of design; hold it at power it can convert",
+    )
     return Diagnosis(
         category="electrolyser_degradation",
         component="electrolyser",
@@ -206,8 +250,14 @@ def _electrolyser(
             f"Electrolyser is producing {ratio:.0%} of the hydrogen its power should give "
             f"({reading['observed_kwh_per_kg']} vs {reading['design_kwh_per_kg']} kWh/kg)"
             + (f" and running hot at {reading['temperature_c']} degC" if hot else "")
-            + f". Electrical input looks normal, so this is stack degradation. Capped stack power "
-            f"at {safe_kw:.0f} kW so the plant keeps running in a degraded mode."
+            + ". Electrical input looks normal, so this is stack degradation. "
+            + (
+                f"Capped stack power at {safe_kw:.0f} kW so the plant keeps running in a "
+                "degraded mode."
+                if applied
+                else f"The envelope already holds the stack at {effective_kw:.0f} kW, at or below "
+                "what it can convert, so it is left unchanged."
+            )
         ),
         confidence="high" if ratio < YIELD_SEVERE else "medium",
     )
@@ -230,19 +280,27 @@ def _dac(
             f"{reading['co2_capture_kg_h']:.1f} kg/h captured, {co2_kg:.0f} kg left in the buffer",
             co2_level_kg=co2_kg,
         )
-        if target_kw < constraints["effective_kw"]["methanator"]:
-            toolbox.set_controller_constraints(
-                {"methanator_max_kw": target_kw},
-                reason="no CO2 being captured; stretch the remaining buffer",
-            )
+        methanator_kw = constraints["effective_kw"]["methanator"]
+        applied = _tighten(
+            toolbox,
+            {"methanator_max_kw": target_kw},
+            {"methanator_max_kw": methanator_kw},
+            reason="no CO2 being captured; stretch the remaining buffer",
+        )
         return Diagnosis(
             category="dac_unavailable",
             component="dac",
             summary=(
                 f"The capture unit reports unavailable and CO2 capture has stopped, leaving "
-                f"{co2_kg:.0f} kg in the buffer as the only CO2 the plant has. Methanation capped "
-                f"at {target_kw:.0f} kW to stretch that inventory instead of burning through it; "
-                "hydrogen production is unaffected and continues."
+                f"{co2_kg:.0f} kg in the buffer as the only CO2 the plant has. "
+                + (
+                    f"Methanation capped at {target_kw:.0f} kW to stretch that inventory instead "
+                    "of burning through it; "
+                    if applied
+                    else f"Methanation is already held at {methanator_kw:.0f} kW, low enough to "
+                    "stretch that inventory, so the envelope is unchanged; "
+                )
+                + "hydrogen production is unaffected and continues."
             ),
             confidence="high",
             human_intervention_required=True,
@@ -271,18 +329,24 @@ def _methanator(
 ) -> Diagnosis | None:
     if telemetry["methanator_available"]:
         return None
-    if constraints["effective_kw"]["dac"] > constraints["rated_kw"]["dac"] * SHORTFALL_DAC_FRAC:
-        toolbox.set_controller_constraints(
-            {"dac_max_kw": round(constraints["rated_kw"]["dac"] * SHORTFALL_DAC_FRAC, -1)},
-            reason="reactor unavailable; no point filling the CO2 buffer at full rate",
-        )
+    applied = _tighten(
+        toolbox,
+        {"dac_max_kw": round(constraints["rated_kw"]["dac"] * SHORTFALL_DAC_FRAC, -1)},
+        {"dac_max_kw": constraints["effective_kw"]["dac"]},
+        reason="reactor unavailable; no point filling the CO2 buffer at full rate",
+    )
     return Diagnosis(
         category="methanator_unavailable",
         component="methanator",
         summary=(
             "The methanation reactor reports unavailable, so no CH4 is being made whatever the "
-            "feedstock situation. Capture rate reduced to stop the CO2 buffer filling pointlessly; "
-            "the reactor itself needs a human."
+            "feedstock situation. "
+            + (
+                "Capture rate reduced to stop the CO2 buffer filling pointlessly; "
+                if applied
+                else "Capture rate is already low enough that the buffer will not fill pointlessly; "
+            )
+            + "the reactor itself needs a human."
         ),
         confidence="high",
         human_intervention_required=True,
@@ -306,28 +370,40 @@ def _solar(
         output_ratio=ratio,
     )
     rated = constraints["rated_kw"]
-    changes: dict[str, float | None] = {}
-    if constraints["constraints"]["battery_min_soc"] < SHORTFALL_RESERVE_SOC:
-        changes["battery_min_soc"] = SHORTFALL_RESERVE_SOC
-    stack_cap_kw = round(rated["electrolyser"] * SHORTFALL_ELECTROLYSER_FRAC, -1)
-    if stack_cap_kw < constraints["effective_kw"]["electrolyser"]:
-        changes["electrolyser_max_kw"] = stack_cap_kw
-    dac_cap_kw = round(rated["dac"] * SHORTFALL_DAC_FRAC, -1)
-    if dac_cap_kw < constraints["effective_kw"]["dac"]:
-        changes["dac_max_kw"] = dac_cap_kw
-    if changes:
-        toolbox.set_controller_constraints(
-            changes, reason=f"generation at {ratio:.0%} of clear-sky; protect stored energy"
+    reserve_soc = constraints["constraints"]["battery_min_soc"] or 0.0
+    applied = _tighten(
+        toolbox,
+        {
+            "electrolyser_max_kw": round(rated["electrolyser"] * SHORTFALL_ELECTROLYSER_FRAC, -1),
+            "dac_max_kw": round(rated["dac"] * SHORTFALL_DAC_FRAC, -1),
+        },
+        {
+            "electrolyser_max_kw": constraints["effective_kw"]["electrolyser"],
+            "dac_max_kw": constraints["effective_kw"]["dac"],
+        },
+        reason=f"generation at {ratio:.0%} of clear-sky; protect stored energy",
+    )
+    # A reserve is raised, not tightened downwards, so it does not go through `_tighten`.
+    if reserve_soc < SHORTFALL_RESERVE_SOC:
+        result = toolbox.set_controller_constraints(
+            {"battery_min_soc": SHORTFALL_RESERVE_SOC},
+            reason=f"generation at {ratio:.0%} of clear-sky; hold more charge back",
         )
+        if result.get("ok"):
+            applied.update(result.get("applied") or {})
     return Diagnosis(
         category="energy_shortfall",
         component="solar",
         summary=(
             f"Generation is at {ratio:.0%} of clear-sky ({reading['available_kw']:.0f} of "
             f"{reading['clear_sky_kw']:.0f} kW) while every unit is performing to specification. "
-            "This is an energy-availability problem, not a component failure: battery reserve "
-            f"raised to {SHORTFALL_RESERVE_SOC:.0%} and discretionary load reduced until "
-            "generation recovers."
+            "This is an energy-availability problem, not a component failure: "
+            + (
+                f"{_changed(applied)} until generation recovers."
+                if applied
+                else "the envelope is already tight enough for the energy on hand, so it is left "
+                "unchanged."
+            )
         ),
         confidence="high",
     )
@@ -341,20 +417,25 @@ def _battery(
 ) -> Diagnosis | None:
     if telemetry["battery_soc"] > constraints["battery_reserve_soc"] + RESERVE_MARGIN:
         return None
-    dac_cap_kw = round(constraints["rated_kw"]["dac"] * SHORTFALL_DAC_FRAC, -1)
-    if dac_cap_kw < constraints["effective_kw"]["dac"]:
-        toolbox.set_controller_constraints(
-            {"dac_max_kw": dac_cap_kw},
-            reason="battery on its reserve; shed discretionary load",
-        )
+    applied = _tighten(
+        toolbox,
+        {"dac_max_kw": round(constraints["rated_kw"]["dac"] * SHORTFALL_DAC_FRAC, -1)},
+        {"dac_max_kw": constraints["effective_kw"]["dac"]},
+        reason="battery on its reserve; shed discretionary load",
+    )
     return Diagnosis(
         category="battery_low",
         component="battery",
         summary=(
             f"Battery is down to {telemetry['battery_soc']:.0%}, on top of its "
             f"{constraints['battery_reserve_soc']:.0%} reserve, so there is nothing left to lend "
-            "the stack overnight. Discretionary capture load reduced; the plant rides on solar "
-            "until the pack recovers."
+            "the stack overnight. "
+            + (
+                "Discretionary capture load reduced; "
+                if applied
+                else "Discretionary capture load is already reduced, so the envelope is unchanged; "
+            )
+            + "the plant rides on solar until the pack recovers."
         ),
         confidence="medium",
     )

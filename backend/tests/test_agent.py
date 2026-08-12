@@ -173,6 +173,49 @@ def test_safe_shutdown_needs_a_reason_and_stops_the_process(toolbox: AgentToolbo
     assert all(frame["electrolyser_power_kw"] == 0.0 for frame in frames)
 
 
+def test_a_summary_never_claims_a_change_the_envelope_already_had(runtime: PlantRuntime) -> None:
+    """The prose has to describe what happened, not what the rule intended.
+
+    With the stack already capped where a degradation diagnosis would put it,
+    there is nothing to apply -- and the summary must say so, because an
+    operator reads the summary and believes it.
+    """
+    runtime.session.inject_fault({"type": "electrolyser_degradation", "severity": 0.5})
+    runtime.advance(20)
+    reading = AgentToolbox(runtime, AgentTrace()).inspect_component("electrolyser")
+    runtime.configure_constraints({"electrolyser_max_kw": reading["min_load_kw"]})
+
+    incident = investigate(runtime.supervisor)
+
+    assert incident.category == "electrolyser_degradation"
+    assert incident.actions == []
+    assert "already holds" in incident.summary
+
+
+def test_an_agent_retune_does_not_survive_a_reset_but_the_operators_does(
+    runtime: PlantRuntime,
+) -> None:
+    """The envelope is the operator's configuration; a retune belongs to its incident."""
+    runtime.configure_constraints({"dac_max_kw": 700.0})
+    toolbox = AgentToolbox(runtime, AgentTrace())
+    toolbox.set_controller_constraints({"electrolyser_max_kw": 800.0}, reason="degraded stack")
+
+    runtime.reset()
+
+    assert runtime.constraints.electrolyser_max_kw is None
+    assert runtime.constraints.dac_max_kw == 700.0
+
+
+def test_the_operator_takes_a_field_back_from_the_supervisor(runtime: PlantRuntime) -> None:
+    toolbox = AgentToolbox(runtime, AgentTrace())
+    toolbox.set_controller_constraints({"electrolyser_max_kw": 800.0}, reason="degraded stack")
+    runtime.configure_constraints({"electrolyser_max_kw": 1_200.0})
+
+    runtime.reset()
+
+    assert runtime.constraints.electrolyser_max_kw == 1_200.0
+
+
 # --- when the supervisor thinks ------------------------------------------
 def test_triggers_fire_on_situations_not_on_ticks(runtime: PlantRuntime) -> None:
     watch = TriggerWatch()
@@ -293,6 +336,36 @@ def test_the_trace_is_operational_and_ordered(runtime: PlantRuntime) -> None:
     assert "tool" in kinds and "action" in kinds
     assert kinds[-2:] == ["diagnosis", "result"]
     assert incident.summary and incident.actions
+
+
+def test_a_second_look_at_one_situation_replaces_the_first(runtime: PlantRuntime) -> None:
+    """History is only useful if 'open' means 'still true', so a re-run supersedes."""
+    runtime.session.inject_fault({"type": "electrolyser_degradation", "severity": 0.5})
+    runtime.advance(10)
+
+    first = investigate(runtime.supervisor)
+    second = investigate(runtime.supervisor)
+
+    assert first.key == second.key
+    assert first.resolved is True and second.resolved is False
+    assert [incident.run for incident in runtime.supervisor.trace.unresolved] == [second.run]
+
+
+def test_the_status_chip_and_the_banner_cannot_disagree(runtime: PlantRuntime) -> None:
+    """One drifting sensor asks for a human; both chip and banner say so, and stop together."""
+    runtime.session.inject_fault({"type": "sensor_drift", "severity": 0.35, "channel": "h2_level_kg"})
+    runtime.advance(20)
+
+    investigate(runtime.supervisor)
+    flagged = runtime.supervisor.snapshot()
+    assert flagged["status"] == "attention"
+    assert flagged["human_intervention_required"] is True
+
+    runtime.reset()
+    cleared = runtime.supervisor.snapshot()
+
+    assert cleared["status"] == "monitoring"
+    assert cleared["human_intervention_required"] is False
 
 
 def test_the_payload_carries_the_agent_for_the_frontend(runtime: PlantRuntime) -> None:

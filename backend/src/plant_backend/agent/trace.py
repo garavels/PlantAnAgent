@@ -170,6 +170,12 @@ class AgentTrace:
         """Incidents nobody has declared over yet: the dedupe and status source."""
         return [incident for incident in self._incidents if not incident.resolved]
 
+    def resolve(self, incident: Incident) -> None:
+        """Declare one incident over, stamped with the current clock."""
+        if not incident.resolved:
+            incident.resolved = True
+            incident.closed_clock = self.clock
+
     def resolve_all(self) -> None:
         """Declare every open incident over, stamped with the current clock."""
         for incident in self.unresolved:

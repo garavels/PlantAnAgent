@@ -8,13 +8,20 @@ import pytest
 from fastapi.testclient import TestClient
 
 from plant_backend import app as app_module
+from plant_backend.agent import RuleEngine, SupervisorAgent
 from plant_backend.orchestration import PlantRuntime
 
 
 @pytest.fixture
 def client() -> Iterator[TestClient]:
-    """A fresh plant per test; the module-level runtime is swapped out."""
+    """A fresh plant per test; the module-level runtime is swapped out.
+
+    The supervisor is pinned to the rule engine: the contract under test is the
+    API's, and it must read the same whether or not this machine happens to have
+    model credentials.
+    """
     app_module.runtime = PlantRuntime()
+    app_module.runtime.supervisor = SupervisorAgent(app_module.runtime, RuleEngine())
     app_module.clock.runtime = app_module.runtime
     with TestClient(app_module.app) as test_client:
         yield test_client

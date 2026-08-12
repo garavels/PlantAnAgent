@@ -173,7 +173,7 @@ class AgentToolbox:
             return blocked
         before = self._runtime.constraints.to_dict()
         try:
-            after = self._runtime.configure_constraints(dict(changes)).to_dict()
+            after = self._runtime.configure_constraints(dict(changes), by="agent").to_dict()
         except ValueError as reason_text:
             return self._refuse("set_controller_constraints", str(reason_text))
         applied = {key: after[key] for key in changes if key in after and after[key] != before[key]}
@@ -238,7 +238,8 @@ class AgentToolbox:
                 "methanator_max_kw": 0.0,
                 "battery_support_max_kw": 0.0,
                 "battery_min_soc": max(before["battery_min_soc"], 0.4),
-            }
+            },
+            by="agent",
         ).to_dict()
         self._act("safe shutdown: all process loads capped at 0 kW", reason=reason)
         if not keep_running:

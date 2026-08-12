@@ -71,6 +71,8 @@ class PlantRuntime:
         self.controller_id = HeuristicController.id
         self.mode: ControlMode = "auto"
         self.constraints = Constraints()
+        #: Envelope fields the supervisor overwrote, and what they were before.
+        self._agent_envelope: dict[str, Any] = {}
         self.manual_action = DEFAULT_MANUAL_ACTION
         #: The V6 supervisory agent. Disabled, the runtime behaves exactly as V5.
         self.supervisor = SupervisorAgent(self)
@@ -130,7 +132,8 @@ class PlantRuntime:
 
         The operator's settings -- mode, controller, constraints, manual
         allocation -- are configuration and survive. Everything that describes a
-        run in progress does not.
+        run in progress does not, and that includes any envelope the supervisor
+        retuned for an incident that no longer exists.
         """
         self.pause()
         for controller in self.controllers.values():
@@ -138,6 +141,7 @@ class PlantRuntime:
         self.notes = ()
         self.adjustments = ()
         self.applied_action = Action.idle()
+        self.revert_agent_constraints()
         self.supervisor.reset()
         return self.session.reset()
 
@@ -148,6 +152,7 @@ class PlantRuntime:
         self.notes = ()
         self.adjustments = ()
         self.applied_action = Action.idle()
+        self.revert_agent_constraints()
         self.supervisor.reset()
         return self.session.load_scenario(scenario)
 
@@ -164,9 +169,33 @@ class PlantRuntime:
         self.controller_id = controller_id
         return self.controller_id
 
-    def configure_constraints(self, changes: dict[str, Any]) -> Constraints:
-        """Tighten or relax the envelope. This is V6's main lever."""
+    def configure_constraints(
+        self, changes: dict[str, Any], *, by: Literal["operator", "agent"] = "operator"
+    ) -> Constraints:
+        """Tighten or relax the envelope. This is V6's main lever.
+
+        Who asked matters for exactly one reason: the operator's envelope is
+        configuration and survives a reset, while a supervisor's retune belongs
+        to the incident that caused it. So an agent write remembers what it
+        replaced, and an operator write over the same field takes ownership back.
+        """
+        before = self.constraints.to_dict()
         self.constraints = self.constraints.merged(changes)
+        after = self.constraints.to_dict()
+        for field in changes:
+            if field not in after or after[field] == before[field]:
+                continue
+            if by == "agent":
+                self._agent_envelope.setdefault(field, before[field])
+            else:
+                self._agent_envelope.pop(field, None)
+        return self.constraints
+
+    def revert_agent_constraints(self) -> Constraints:
+        """Put back whatever the supervisor overwrote. Called on reset."""
+        if self._agent_envelope:
+            self.constraints = self.constraints.merged(dict(self._agent_envelope))
+            self._agent_envelope.clear()
         return self.constraints
 
     def set_manual_action(self, action: Action | dict[str, Any] | None) -> Action:

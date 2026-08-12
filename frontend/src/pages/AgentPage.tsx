@@ -96,7 +96,7 @@ export function AgentPage() {
             situations -- a warning, a critical event, a degraded plant, a collapse in
             output -- at most once every {Math.round(agent.min_gap_s / 60)} simulated
             minutes, and never twice for the same situation within{' '}
-            {Math.round(agent.cooldown_s / 60)}.
+            {Math.round(agent.cooldown_s / 60)} simulated minutes.
           </p>
           <div className="agent__buttons">
             <button className="pill pill--on" onClick={investigate} disabled={agent.busy}>

@@ -139,7 +139,7 @@ Individually:
 ```bash
 make backend        # uv run uvicorn plant_backend.app:app --reload --port 8000
 make frontend       # cd frontend && npm run dev
-make test           # simulator + backend test suite (114 tests)
+make test           # simulator + backend test suite (119 tests)
 make eval           # the supervisor against five scenarios, deterministically
 make sim            # one simulated day, headless, printed as a table
 ```
@@ -651,6 +651,12 @@ marking its own homework. `safety.validate()` stays authoritative — V6 also ti
 solar and battery support are now counted *together* against a component's cap rather than
 separately.
 
+One asymmetry is worth knowing: `configure_constraints(changes, by=...)` records who asked. The
+operator's envelope is configuration and survives a reset; a supervisor's retune belongs to the
+incident that caused it, so `reset()` and loading a scenario put back whatever the agent
+overwrote. An operator writing the same field afterwards takes ownership of it back. Without
+that, a fresh run would start silently capped by a fault that no longer exists.
+
 ### API and control room
 
 | Route | Purpose |
@@ -692,6 +698,14 @@ sensor_drift                  2  sensor_inconsistency           0  pass
 
 `sensor_drift` is new in the simulator's scenario catalogue; the other four already existed.
 Deliberately not a benchmark — it is regression coverage, and it runs without an API key.
+
+The same five cases also pass with `LLMEngine` against the real model (`gpt-4.1-mini`), which
+is how the brief was tuned: the model's own runs are what showed that it needed telling that a
+plant ramping up is `normal`, and that a degradation diagnosis has to be followed by the cap
+it implies. Those runs are not part of the suite, because a regression gate that costs money
+and answers differently each time is not a gate: `backend/tests/conftest.py` hides the key so
+every test takes the deterministic rule path — the same path the plant falls back to in
+production.
 
 ### Where the RL controller plugs in
 

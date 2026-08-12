@@ -206,18 +206,28 @@ class SupervisorAgent:
             # Nothing is wrong, so nothing is still open. The cooldowns stay:
             # a situation that looked normal once is not worth re-opening at the
             # next tick just because the trigger is still in the window.
-            incident.resolved = True
             self.trace.resolve_all()
+        else:
+            # An incident is only *open* while it still says something about the
+            # plant now: a later look at the same situation replaces the earlier
+            # one, and a run that ends with the plant normal and nobody needed
+            # is over as soon as it is written. Otherwise the history is all
+            # open incidents and tells the shift nothing.
+            for earlier in self.trace.unresolved:
+                same_situation = (earlier.category, earlier.component) == (
+                    incident.category,
+                    incident.component,
+                )
+                if earlier is not incident and same_situation:
+                    self.trace.resolve(earlier)
+            if status == "normal" and not diagnosis.human_intervention_required:
+                self.trace.resolve(incident)
         self._emit(
             "warning" if diagnosis.human_intervention_required else "info",
             f"agent.{diagnosis.category}",
             f"Supervisor: {diagnosis.summary}",
         )
-        needs_human = any(
-            open_incident.human_intervention_required
-            for open_incident in self.trace.unresolved
-        )
-        self.status = "attention" if needs_human else "monitoring"
+        self.status = "attention" if self.needs_human else "monitoring"
 
     def _failed(self, failure: BaseException) -> None:
         self.last_error = f"{type(failure).__name__}: {failure}"
@@ -256,6 +266,11 @@ class SupervisorAgent:
     def busy(self) -> bool:
         return self._task is not None and not self._task.done()
 
+    @property
+    def needs_human(self) -> bool:
+        """One source for both the status chip and the banner, so they agree."""
+        return any(incident.human_intervention_required for incident in self.trace.unresolved)
+
     # --- control and reporting --------------------------------------------
     def set_enabled(self, enabled: bool) -> bool:
         self.enabled = bool(enabled)
@@ -286,9 +301,7 @@ class SupervisorAgent:
             "last_error": self.last_error,
             "cooldown_s": self.cooldown_s,
             "min_gap_s": self.min_gap_s,
-            "human_intervention_required": bool(
-                incident and incident.human_intervention_required and not incident.resolved
-            ),
+            "human_intervention_required": self.needs_human,
             "incident": incident.to_dict() if incident else None,
             "incidents": self.trace.incidents(10),
             "trace": self.trace.recent(trace_limit),
