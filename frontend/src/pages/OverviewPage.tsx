@@ -40,6 +40,7 @@ export function OverviewPage() {
   const peakKw = config?.solar.peak_kw ?? 5000
   const ratedKw = config?.electrolyser.rated_kw ?? 3000
   const ratedKgH = ratedKw / (config?.electrolyser.specific_energy_kwh_per_kg ?? 52)
+  const metRatedKgH = (config?.methanator.rated_kw ?? 180) / (config?.methanator.specific_energy_kwh_per_kg ?? 1.2)
 
   return (
     <div className="overview">
@@ -51,6 +52,10 @@ export function OverviewPage() {
         <span className="page-head__stat">
           <span className="page-head__value">{kg(state.h2_produced_total_kg)}</span>
           <span className="page-head__unit">kg H₂ total</span>
+        </span>
+        <span className="page-head__stat">
+          <span className="page-head__value">{kg(state.ch4_produced_total_kg)}</span>
+          <span className="page-head__unit">kg CH₄ total</span>
         </span>
       </PageHeader>
 
@@ -111,6 +116,28 @@ export function OverviewPage() {
           footer={`${pct(state.h2_fill, 0)}% of ${kw(state.h2_capacity_kg)} kg capacity`}
           trend={frames.map((frame) => frame.h2_level_kg)}
           trendMax={state.h2_capacity_kg}
+        />
+        <MetricCard
+          index={4}
+          label="CO₂ storage"
+          unit="kg captured"
+          value={kg(state.co2_level_kg)}
+          fill={state.co2_fill}
+          footer={`DAC ${state.dac_online ? 'capturing' : 'idle'} · ${state.co2_capture_kg_h.toFixed(1)} kg/h`}
+          trend={frames.map((frame) => frame.co2_level_kg)}
+          trendMax={state.co2_capacity_kg}
+        />
+        <MetricCard
+          index={5}
+          label="CH₄ production"
+          unit="kg per hour"
+          value={state.ch4_production_kg_h.toFixed(1)}
+          fill={metRatedKgH > 0 ? state.ch4_production_kg_h / metRatedKgH : 0}
+          footer={`Methanator ${state.methanator_online ? 'running' : 'standby'} · ${kg(
+            state.ch4_level_kg,
+          )} kg stored`}
+          trend={frames.map((frame) => frame.ch4_production_kg_h)}
+          trendMax={metRatedKgH}
         />
       </section>
 

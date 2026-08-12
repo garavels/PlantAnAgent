@@ -7,7 +7,16 @@
 
 import { createContext, useContext } from 'react'
 
-export type UnitId = 'solar' | 'hub' | 'battery' | 'electrolyser' | 'tank'
+export type UnitId =
+  | 'solar'
+  | 'hub'
+  | 'battery'
+  | 'electrolyser'
+  | 'h2Tank'
+  | 'dac'
+  | 'co2Tank'
+  | 'methanator'
+  | 'ch4Tank'
 
 export interface UnitSelection {
   selected: UnitId | null

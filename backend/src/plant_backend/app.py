@@ -37,6 +37,8 @@ class ActionModel(BaseModel):
 
     battery_share: float = 0.5
     electrolyser_share: float = 0.5
+    dac_share: float = 0.0
+    methanator_share: float = 0.0
     battery_support_kw: float = 0.0
 
 

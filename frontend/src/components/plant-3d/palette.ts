@@ -10,6 +10,8 @@ export const CARRIER = {
   stored: '#a6c496',
   feed: '#aac6cb',
   h2: '#eef2e6',
+  co2: '#b7b1c6',
+  ch4: '#d9a878',
   waste: '#6a7166',
   accent: '#b3cb92',
 } as const

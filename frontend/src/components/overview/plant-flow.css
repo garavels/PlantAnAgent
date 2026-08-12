@@ -1,10 +1,19 @@
-/* `flex: 1; min-height: 0` lets the diagram letterbox into whatever room is
-   left instead of forcing its own aspect ratio onto the page. */
-.flow {
-  display: block;
+/* The frame takes whatever room the flex column leaves; the SVG fills it
+   absolutely and letterboxes inside via preserveAspectRatio, so the diagram
+   never forces its own aspect ratio onto the page. */
+.flow-frame {
+  position: relative;
   flex: 1;
   min-height: 0;
   width: 100%;
+}
+
+.flow {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 /* --- conduits ---------------------------------------------------------- */

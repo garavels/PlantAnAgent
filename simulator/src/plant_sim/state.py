@@ -31,32 +31,38 @@ def _clamp(value: float, low: float, high: float) -> float:
 class Action:
     """How the available power should be split this timestep.
 
-    `battery_share` + `electrolyser_share` are fractions of *currently available
-    solar power*. They are normalised down if they sum above 1.0; anything left
+    The four `*_share` fields are fractions of *currently available solar
+    power*, one per bus consumer: battery charging, electrolyser, DAC and
+    methanator. They are normalised down if they sum above 1.0; anything left
     unallocated is curtailed. `battery_support_kw` lets the caller pull stored
-    energy back out of the battery to feed the electrolyser -- which is the whole
-    point of having a battery on an intermittently powered plant.
+    energy back out of the battery to feed the electrolyser -- which is the
+    whole point of having a battery on an intermittently powered plant.
     """
 
     battery_share: float = 0.5
     electrolyser_share: float = 0.5
+    dac_share: float = 0.0
+    methanator_share: float = 0.0
     battery_support_kw: float = 0.0
 
     @classmethod
     def sanitised(cls, action: "Action | dict[str, Any] | None") -> "Action":
         """Never trust the caller: clamp shares to [0, 1] and support to >= 0."""
         if action is None:
-            return cls(battery_share=0.0, electrolyser_share=0.0)
+            return cls(battery_share=0.0, electrolyser_share=0.0, dac_share=0.0, methanator_share=0.0)
         raw = action if isinstance(action, dict) else asdict(action)
-        battery = _clamp(_finite(raw.get("battery_share")), 0.0, 1.0)
-        electrolyser = _clamp(_finite(raw.get("electrolyser_share")), 0.0, 1.0)
-        total = battery + electrolyser
-        if total > 1.0:  # oversubscribed bus -> scale both back proportionally
-            battery /= total
-            electrolyser /= total
+        shares = [
+            _clamp(_finite(raw.get(key)), 0.0, 1.0)
+            for key in ("battery_share", "electrolyser_share", "dac_share", "methanator_share")
+        ]
+        total = sum(shares)
+        if total > 1.0:  # oversubscribed bus -> scale all shares back proportionally
+            shares = [share / total for share in shares]
         return cls(
-            battery_share=battery,
-            electrolyser_share=electrolyser,
+            battery_share=shares[0],
+            electrolyser_share=shares[1],
+            dac_share=shares[2],
+            methanator_share=shares[3],
             battery_support_kw=max(0.0, _finite(raw.get("battery_support_kw"))),
         )
 
@@ -70,7 +76,7 @@ class Action:
 
     @classmethod
     def idle(cls) -> "Action":
-        return cls(battery_share=0.0, electrolyser_share=0.0)
+        return cls(battery_share=0.0, electrolyser_share=0.0, dac_share=0.0, methanator_share=0.0)
 
     def to_dict(self) -> dict[str, float]:
         return asdict(self)
@@ -91,6 +97,8 @@ class PlantState:
     solar_available_kw: float = 0.0
     solar_to_battery_kw: float = 0.0
     solar_to_electrolyser_kw: float = 0.0
+    solar_to_dac_kw: float = 0.0
+    solar_to_methanator_kw: float = 0.0
     solar_curtailed_kw: float = 0.0
 
     # --- battery ----------------------------------------------------------
@@ -110,10 +118,34 @@ class PlantState:
     h2_capacity_kg: float = 0.0
     h2_fill: float = 0.0
 
+    # --- direct-air capture -----------------------------------------------
+    dac_power_kw: float = 0.0
+    dac_load_frac: float = 0.0
+    dac_online: bool = False
+    co2_capture_kg_h: float = 0.0
+
+    # --- CO2 storage -------------------------------------------------------
+    co2_level_kg: float = 0.0
+    co2_capacity_kg: float = 0.0
+    co2_fill: float = 0.0
+
+    # --- methanation -------------------------------------------------------
+    methanator_power_kw: float = 0.0
+    methanator_load_frac: float = 0.0
+    methanator_online: bool = False
+    ch4_production_kg_h: float = 0.0
+
+    # --- methane storage ---------------------------------------------------
+    ch4_level_kg: float = 0.0
+    ch4_capacity_kg: float = 0.0
+    ch4_fill: float = 0.0
+
     # --- bookkeeping ------------------------------------------------------
     energy_produced_kwh: float = 0.0
     energy_curtailed_kwh: float = 0.0
     h2_produced_total_kg: float = 0.0
+    co2_captured_total_kg: float = 0.0
+    ch4_produced_total_kg: float = 0.0
     action: Action = field(default_factory=Action.idle)
 
     @property

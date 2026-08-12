@@ -20,8 +20,10 @@ const MAX_FRAMES = 1440
 export type LinkStatus = 'connecting' | 'online' | 'down'
 
 const DEFAULT_ACTION: PlantAction = {
-  battery_share: 0.4,
-  electrolyser_share: 0.6,
+  battery_share: 0.25,
+  electrolyser_share: 0.45,
+  dac_share: 0.2,
+  methanator_share: 0.1,
   battery_support_kw: 600,
 }
 

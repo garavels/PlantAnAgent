@@ -52,6 +52,7 @@ export function Plant3DPage() {
   }
 
   const peakKw = config?.solar.peak_kw ?? 5000
+  const metRatedKgH = (config?.methanator.rated_kw ?? 180) / (config?.methanator.specific_energy_kwh_per_kg ?? 1.2)
   const offline = link !== 'online'
 
   const readouts = [
@@ -90,6 +91,24 @@ export function Plant3DPage() {
       unit: 'kg',
       fill: state.h2_fill,
       note: `${pct(state.h2_fill, 0)}% full`,
+    },
+    {
+      id: 'co2',
+      label: 'CO₂ storage',
+      accent: 'var(--co2)',
+      value: kg(state.co2_level_kg),
+      unit: 'kg',
+      fill: state.co2_fill,
+      note: state.dac_online ? `capturing ${state.co2_capture_kg_h.toFixed(1)} kg/h` : 'DAC idle',
+    },
+    {
+      id: 'ch4',
+      label: 'CH₄ output',
+      accent: 'var(--ch4)',
+      value: state.ch4_production_kg_h.toFixed(1),
+      unit: 'kg/h',
+      fill: metRatedKgH > 0 ? state.ch4_production_kg_h / metRatedKgH : 0,
+      note: state.methanator_online ? `${kg(state.ch4_level_kg)} kg stored` : 'reactor standby',
     },
   ]
 

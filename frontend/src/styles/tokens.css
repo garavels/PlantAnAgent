@@ -38,6 +38,8 @@
   --stored: #a6c496;
   --feed: #aac6cb;
   --h2: #eef2e6;
+  --co2: #b7b1c6;
+  --ch4: #d9a878;
   --waste: #6a7166;
   --accent: #b3cb92;
   --alarm: #d98c7a;
@@ -45,6 +47,8 @@
   /* the same carriers, dark enough to read on bone */
   --stored-ink: #7f9a6c;
   --feed-ink: #7d9ba1;
+  --co2-ink: #8d87a3;
+  --ch4-ink: #b3814f;
   --waste-ink: #a3a89b;
 
   /* --- type ------------------------------------------------------------ */

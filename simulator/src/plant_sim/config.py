@@ -46,8 +46,37 @@ class ElectrolyserConfig:
 
 
 @dataclass(frozen=True)
+class DACConfig:
+    """Direct-air capture: power in, captured CO2 out.
+
+    A flat specific energy stands in for the real sorbent cycle. No minimum
+    load -- the unit modulates freely between off and rated power.
+    """
+
+    rated_kw: float = 1_200.0
+    #: Electricity needed per kg of captured CO2.
+    specific_energy_kwh_per_kg: float = 2.0
+
+
+@dataclass(frozen=True)
+class MethanatorConfig:
+    """Sabatier reactor: CO2 + 4 H2 -> CH4 + 2 H2O, plus some electrical power.
+
+    The stoichiometry is fixed and mass-based (per kg of CH4 produced):
+    real molar masses give 0.503 kg H2 and 2.744 kg CO2 per kg CH4; we round
+    to 0.5 and 2.75 and keep them here so the balance is easy to audit.
+    """
+
+    rated_kw: float = 180.0
+    #: Electrical energy needed per kg of CH4 (compression, controls, ...).
+    specific_energy_kwh_per_kg: float = 1.2
+    h2_kg_per_kg_ch4: float = 0.5
+    co2_kg_per_kg_ch4: float = 2.75
+
+
+@dataclass(frozen=True)
 class StorageConfig:
-    """Generic buffer tank. Reused later for CH4, CO2, water, ..."""
+    """Generic buffer tank. Reused for H2, CO2 and CH4."""
 
     capacity_kg: float = 2_000.0
     initial_kg: float = 120.0
@@ -63,6 +92,14 @@ class PlantConfig:
     battery: BatteryConfig = field(default_factory=BatteryConfig)
     electrolyser: ElectrolyserConfig = field(default_factory=ElectrolyserConfig)
     h2_tank: StorageConfig = field(default_factory=StorageConfig)
+    dac: DACConfig = field(default_factory=DACConfig)
+    co2_tank: StorageConfig = field(
+        default_factory=lambda: StorageConfig(capacity_kg=6_000.0, initial_kg=800.0)
+    )
+    methanator: MethanatorConfig = field(default_factory=MethanatorConfig)
+    ch4_tank: StorageConfig = field(
+        default_factory=lambda: StorageConfig(capacity_kg=3_000.0, initial_kg=0.0)
+    )
 
     @property
     def dt_h(self) -> float:

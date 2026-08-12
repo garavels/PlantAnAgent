@@ -13,11 +13,13 @@ import * as THREE from 'three'
 
 import type { PlantConfig, PlantState } from '../../types/plant'
 import { BatteryUnit } from './BatteryUnit'
+import { DacUnit } from './DacUnit'
 import { ElectrolyserUnit } from './ElectrolyserUnit'
 import { FlowLine } from './FlowLine'
+import { GasVessel } from './GasVessel'
 import { Ground } from './Ground'
-import { HydrogenTank } from './HydrogenTank'
-import { CAMERA, FLOW_ROUTES } from './layout'
+import { CAMERA, FLOW_ROUTES, UNIT_POSITIONS } from './layout'
+import { MethanatorUnit } from './MethanatorUnit'
 import { useReducedMotion } from './motion'
 import { CARRIER, SKY, SURFACE } from './palette'
 import { PowerHub } from './PowerHub'
@@ -72,17 +74,78 @@ export function PlantScene({ state, config, playing }: PlantSceneProps) {
         <PowerHub flows={visuals.flows} />
         <BatteryUnit battery={visuals.battery} />
         <ElectrolyserUnit electrolyser={visuals.electrolyser} minLoadFrac={minLoadFrac} />
-        <HydrogenTank tank={visuals.tank} />
+        <DacUnit dac={visuals.dac} />
+        <MethanatorUnit methanator={visuals.methanator} />
+        <GasVessel
+          id="h2Tank"
+          name="H₂ storage"
+          accent={CARRIER.h2}
+          at={UNIT_POSITIONS.h2Tank}
+          radius={1.5}
+          height={5.2}
+          tank={visuals.h2Tank}
+          plateOffset={[-4.4, 0]}
+        />
+        <GasVessel
+          id="co2Tank"
+          name="CO₂ storage"
+          accent={CARRIER.co2}
+          at={UNIT_POSITIONS.co2Tank}
+          radius={1.2}
+          height={3.6}
+          tank={visuals.co2Tank}
+          plateOffset={[0, -1.2]}
+        />
+        <GasVessel
+          id="ch4Tank"
+          name="CH₄ storage"
+          accent={CARRIER.ch4}
+          at={UNIT_POSITIONS.ch4Tank}
+          radius={1.35}
+          height={4.4}
+          tank={visuals.ch4Tank}
+          plateOffset={[1.4, 0]}
+        />
 
-        {/* the flow network: power in sand/sage/mist, gas in chalk */}
+        {/* the flow network: power in sand/sage/mist, gases in their carriers */}
         <FlowLine route={FLOW_ROUTES.solarToHub} flow={visuals.flows.solarToHub} accent={CARRIER.solar} />
         <FlowLine route={FLOW_ROUTES.hubToBattery} flow={visuals.flows.hubToBattery} accent={CARRIER.stored} />
         <FlowLine route={FLOW_ROUTES.hubToStack} flow={visuals.flows.hubToStack} accent={CARRIER.feed} />
         <FlowLine route={FLOW_ROUTES.batteryToStack} flow={visuals.flows.batteryToStack} accent={CARRIER.stored} />
+        <FlowLine route={FLOW_ROUTES.hubToDac} flow={visuals.flows.hubToDac} accent={CARRIER.co2} />
+        <FlowLine route={FLOW_ROUTES.hubToMethanator} flow={visuals.flows.hubToMethanator} accent={CARRIER.feed} />
         <FlowLine
           route={FLOW_ROUTES.stackToTank}
           flow={visuals.flows.stackToTank}
           accent={CARRIER.h2}
+          conduitRadius={0.09}
+          conduitColor={SURFACE.pipe}
+        />
+        <FlowLine
+          route={FLOW_ROUTES.dacToCo2}
+          flow={visuals.flows.dacToCo2}
+          accent={CARRIER.co2}
+          conduitRadius={0.09}
+          conduitColor={SURFACE.pipe}
+        />
+        <FlowLine
+          route={FLOW_ROUTES.h2ToMethanator}
+          flow={visuals.flows.h2ToMethanator}
+          accent={CARRIER.h2}
+          conduitRadius={0.09}
+          conduitColor={SURFACE.pipe}
+        />
+        <FlowLine
+          route={FLOW_ROUTES.co2ToMethanator}
+          flow={visuals.flows.co2ToMethanator}
+          accent={CARRIER.co2}
+          conduitRadius={0.09}
+          conduitColor={SURFACE.pipe}
+        />
+        <FlowLine
+          route={FLOW_ROUTES.methanatorToCh4}
+          flow={visuals.flows.methanatorToCh4}
+          accent={CARRIER.ch4}
           conduitRadius={0.09}
           conduitColor={SURFACE.pipe}
         />

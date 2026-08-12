@@ -3,6 +3,8 @@
 export interface PlantAction {
   battery_share: number
   electrolyser_share: number
+  dac_share: number
+  methanator_share: number
   battery_support_kw: number
 }
 
@@ -13,6 +15,8 @@ export interface PlantState {
   solar_available_kw: number
   solar_to_battery_kw: number
   solar_to_electrolyser_kw: number
+  solar_to_dac_kw: number
+  solar_to_methanator_kw: number
   solar_curtailed_kw: number
 
   battery_soc: number
@@ -29,9 +33,29 @@ export interface PlantState {
   h2_capacity_kg: number
   h2_fill: number
 
+  dac_power_kw: number
+  dac_load_frac: number
+  dac_online: boolean
+  co2_capture_kg_h: number
+
+  co2_level_kg: number
+  co2_capacity_kg: number
+  co2_fill: number
+
+  methanator_power_kw: number
+  methanator_load_frac: number
+  methanator_online: boolean
+  ch4_production_kg_h: number
+
+  ch4_level_kg: number
+  ch4_capacity_kg: number
+  ch4_fill: number
+
   energy_produced_kwh: number
   energy_curtailed_kwh: number
   h2_produced_total_kg: number
+  co2_captured_total_kg: number
+  ch4_produced_total_kg: number
 
   action: PlantAction
 
@@ -59,6 +83,15 @@ export interface PlantConfig {
   }
   electrolyser: { rated_kw: number; min_load_frac: number; specific_energy_kwh_per_kg: number }
   h2_tank: { capacity_kg: number; initial_kg: number }
+  dac: { rated_kw: number; specific_energy_kwh_per_kg: number }
+  co2_tank: { capacity_kg: number; initial_kg: number }
+  methanator: {
+    rated_kw: number
+    specific_energy_kwh_per_kg: number
+    h2_kg_per_kg_ch4: number
+    co2_kg_per_kg_ch4: number
+  }
+  ch4_tank: { capacity_kg: number; initial_kg: number }
 }
 
 export interface PlantFrames {

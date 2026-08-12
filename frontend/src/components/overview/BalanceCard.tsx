@@ -16,6 +16,8 @@ export function BalanceCard({ state }: { state: PlantState }) {
   const routes = [
     { name: 'To battery', power: state.solar_to_battery_kw, tint: 'var(--stored-ink)' },
     { name: 'To stack', power: state.electrolyser_power_kw, tint: 'var(--feed-ink)' },
+    { name: 'To DAC', power: state.dac_power_kw, tint: 'var(--co2-ink)' },
+    { name: 'To methanator', power: state.methanator_power_kw, tint: 'var(--ch4-ink)' },
     { name: 'Curtailed', power: state.solar_curtailed_kw, tint: 'var(--waste-ink)' },
   ]
   const routed = Math.max(1e-9, routes.reduce((total, route) => total + route.power, 0))
@@ -65,6 +67,14 @@ export function BalanceCard({ state }: { state: PlantState }) {
         <div>
           <dt>Hydrogen made</dt>
           <dd className="mono">{state.h2_produced_total_kg.toFixed(1)} kg</dd>
+        </div>
+        <div>
+          <dt>CO₂ captured</dt>
+          <dd className="mono">{state.co2_captured_total_kg.toFixed(1)} kg</dd>
+        </div>
+        <div>
+          <dt>Methane made</dt>
+          <dd className="mono">{state.ch4_produced_total_kg.toFixed(1)} kg</dd>
         </div>
       </dl>
     </section>

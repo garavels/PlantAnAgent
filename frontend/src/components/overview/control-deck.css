@@ -1,6 +1,6 @@
 .deck {
   display: grid;
-  grid-template-columns: auto minmax(240px, 1fr) minmax(220px, 0.8fr);
+  grid-template-columns: auto minmax(360px, 1.4fr) minmax(220px, 0.7fr);
   gap: 34px;
   align-items: start;
   padding: 16px 20px 18px;
@@ -110,6 +110,57 @@
   background: var(--feed-ink);
 }
 
+.deck__swatch--dac {
+  background: var(--co2-ink);
+}
+
+.deck__swatch--met {
+  background: var(--ch4-ink);
+}
+
+/* --- share sliders ------------------------------------------------------ */
+.deck__shares {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 26px;
+  row-gap: 8px;
+}
+
+.deck__share {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.deck__share-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.deck__share-head em {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 11.5px;
+  font-style: normal;
+  color: var(--ink-dim);
+}
+
+.deck__share-head b {
+  font-size: 12px;
+  font-weight: 300;
+  color: var(--ink-text);
+}
+
+.deck__applied {
+  font-style: normal;
+  font-size: 10px;
+  color: var(--ink-faint);
+}
+
 /* --- sliders ----------------------------------------------------------- */
 .slider {
   width: 100%;
@@ -125,8 +176,20 @@
   border-radius: var(--r-pill);
 }
 
-.slider--split::-webkit-slider-runnable-track {
-  background: linear-gradient(90deg, #a8bf93, var(--bone-sunk) 46% 54%, #9db9be);
+.slider--battery_share::-webkit-slider-runnable-track {
+  background: linear-gradient(90deg, var(--stored-ink), var(--bone-sunk));
+}
+
+.slider--electrolyser_share::-webkit-slider-runnable-track {
+  background: linear-gradient(90deg, var(--feed-ink), var(--bone-sunk));
+}
+
+.slider--dac_share::-webkit-slider-runnable-track {
+  background: linear-gradient(90deg, var(--co2-ink), var(--bone-sunk));
+}
+
+.slider--methanator_share::-webkit-slider-runnable-track {
+  background: linear-gradient(90deg, var(--ch4-ink), var(--bone-sunk));
 }
 
 .slider--support::-webkit-slider-runnable-track {

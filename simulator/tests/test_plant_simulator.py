@@ -7,9 +7,12 @@ import math
 import pytest
 
 from plant_sim import Action, PlantConfig, PlantSimulator, StorageConfig
-from plant_sim.config import BatteryConfig, SolarConfig
+from plant_sim.config import BatteryConfig, MethanatorConfig, SolarConfig
 
 NOON = SolarConfig().sunrise_h + (SolarConfig().sunset_h - SolarConfig().sunrise_h) / 2
+
+#: A balanced daytime split for the full four-consumer bus.
+FULL_MIX = Action(battery_share=0.2, electrolyser_share=0.45, dac_share=0.2, methanator_share=0.15)
 
 
 @pytest.fixture
@@ -113,7 +116,20 @@ def test_tank_never_overfills_and_throttles_the_stack() -> None:
 def test_invalid_actions_are_constrained(raw: dict, expected: tuple[float, float]) -> None:
     action = Action.sanitised(raw)
     assert (action.battery_share, action.electrolyser_share) == pytest.approx(expected)
-    assert action.battery_share + action.electrolyser_share <= 1.0 + 1e-9
+    total = action.battery_share + action.electrolyser_share + action.dac_share + action.methanator_share
+    assert total <= 1.0 + 1e-9
+
+
+def test_a_four_way_oversubscription_is_normalised() -> None:
+    action = Action.sanitised(
+        {"battery_share": 1.0, "electrolyser_share": 1.0, "dac_share": 1.0, "methanator_share": 1.0}
+    )
+    assert (action.battery_share, action.electrolyser_share, action.dac_share, action.methanator_share) == (
+        pytest.approx(0.25),
+        pytest.approx(0.25),
+        pytest.approx(0.25),
+        pytest.approx(0.25),
+    )
 
 
 def test_simulator_accepts_garbage_actions_without_breaking(sim: PlantSimulator) -> None:
@@ -127,8 +143,22 @@ def test_simulator_accepts_garbage_actions_without_breaking(sim: PlantSimulator)
 # --- invariants -----------------------------------------------------------
 def test_solar_is_always_fully_accounted_for(sim: PlantSimulator) -> None:
     for index in range(sim.config.steps_per_day):
-        state = sim.step(Action(battery_share=0.3, electrolyser_share=0.5, battery_support_kw=index % 400))
-        routed = state.solar_to_battery_kw + state.solar_to_electrolyser_kw + state.solar_curtailed_kw
+        state = sim.step(
+            Action(
+                battery_share=0.3,
+                electrolyser_share=0.5,
+                dac_share=0.2,
+                methanator_share=0.1,
+                battery_support_kw=index % 400,
+            )
+        )
+        routed = (
+            state.solar_to_battery_kw
+            + state.solar_to_electrolyser_kw
+            + state.solar_to_dac_kw
+            + state.solar_to_methanator_kw
+            + state.solar_curtailed_kw
+        )
         assert routed == pytest.approx(state.solar_available_kw, abs=1e-6)
         assert state.electrolyser_power_kw == pytest.approx(
             state.solar_to_electrolyser_kw + state.battery_to_electrolyser_kw, abs=1e-6
@@ -142,13 +172,18 @@ def test_battery_never_charges_and_discharges_at_once(sim: PlantSimulator) -> No
 
 
 def test_reset_restores_the_initial_condition(sim: PlantSimulator) -> None:
-    advance_to_hour(sim, 12.0, Action(battery_share=0.5, electrolyser_share=0.5))
+    advance_to_hour(sim, 12.0, FULL_MIX)
     state = sim.reset()
     assert state.step == 0
     assert state.time_s == 0.0
     assert state.battery_soc == pytest.approx(sim.config.battery.initial_soc)
     assert state.h2_level_kg == pytest.approx(sim.config.h2_tank.initial_kg)
+    assert state.co2_level_kg == pytest.approx(sim.config.co2_tank.initial_kg)
+    assert state.ch4_level_kg == pytest.approx(sim.config.ch4_tank.initial_kg)
     assert state.h2_produced_total_kg == 0.0
+    assert state.co2_captured_total_kg == 0.0
+    assert state.ch4_produced_total_kg == 0.0
+    assert not (state.electrolyser_online or state.dac_online or state.methanator_online)
 
 
 def test_runs_are_deterministic() -> None:
@@ -165,3 +200,115 @@ def test_a_full_day_actually_makes_hydrogen(sim: PlantSimulator) -> None:
     assert sim.state.h2_produced_total_kg > 100.0
     assert sim.state.day == 1
     assert sim.state.clock.startswith("D2 00:00")
+
+
+# --- DAC --------------------------------------------------------------------
+def test_dac_captures_in_proportion_to_power(sim: PlantSimulator) -> None:
+    advance_to_hour(sim, NOON, Action(battery_share=0.0, electrolyser_share=0.0, dac_share=0.5))
+    state = sim.step(Action(dac_share=0.5))
+    assert state.dac_online
+    assert state.dac_power_kw == pytest.approx(state.solar_to_dac_kw)
+    expected = state.dac_power_kw / sim.config.dac.specific_energy_kwh_per_kg
+    assert state.co2_capture_kg_h == pytest.approx(expected)
+
+
+def test_dac_never_exceeds_rated_power(sim: PlantSimulator) -> None:
+    advance_to_hour(sim, NOON, Action(battery_share=0.0, electrolyser_share=0.0, dac_share=1.0))
+    assert sim.state.dac_power_kw <= sim.config.dac.rated_kw + 1e-9
+
+
+def test_dac_throttles_when_co2_tank_is_full() -> None:
+    config = PlantConfig(co2_tank=StorageConfig(capacity_kg=50.0, initial_kg=50.0))
+    sim = PlantSimulator(config)
+    advance_to_hour(sim, NOON, Action(battery_share=0.0, electrolyser_share=0.0, dac_share=1.0))
+    assert sim.state.co2_level_kg <= config.co2_tank.capacity_kg + 1e-9
+    assert sim.state.dac_power_kw == 0.0  # nowhere to put the CO2
+    assert not sim.state.dac_online
+
+
+# --- methanation -------------------------------------------------------------
+def test_methanation_produces_ch4_from_stored_gases(sim: PlantSimulator) -> None:
+    # idle until noon so the morning sun does not drain the initial stocks
+    advance_to_hour(sim, NOON)
+    state = sim.step(Action(battery_share=0.0, electrolyser_share=0.0, methanator_share=0.5))
+    assert state.methanator_online
+    assert state.ch4_production_kg_h > 0.0
+    assert state.ch4_level_kg > sim.config.ch4_tank.initial_kg
+
+
+def test_methanation_stops_without_hydrogen() -> None:
+    config = PlantConfig(h2_tank=StorageConfig(capacity_kg=100.0, initial_kg=0.0))
+    sim = PlantSimulator(config)
+    advance_to_hour(sim, NOON, Action(battery_share=0.0, electrolyser_share=0.0, methanator_share=0.5))
+    assert sim.state.ch4_production_kg_h == 0.0
+    assert not sim.state.methanator_online
+    assert sim.state.methanator_power_kw == 0.0  # offered power is refused, not burned
+
+
+def test_methanation_stops_without_co2() -> None:
+    config = PlantConfig(co2_tank=StorageConfig(capacity_kg=100.0, initial_kg=0.0))
+    sim = PlantSimulator(config)
+    advance_to_hour(sim, NOON, Action(battery_share=0.0, electrolyser_share=0.0, methanator_share=0.5))
+    assert sim.state.ch4_production_kg_h == 0.0
+    assert not sim.state.methanator_online
+
+
+def test_methanation_is_limited_by_the_scarcest_gas() -> None:
+    # plenty of power and H2, almost no CO2: CO2 must set the pace
+    config = PlantConfig(
+        h2_tank=StorageConfig(capacity_kg=500.0, initial_kg=500.0),
+        co2_tank=StorageConfig(capacity_kg=100.0, initial_kg=27.5),
+        methanator=MethanatorConfig(rated_kw=1_000.0),
+    )
+    sim = PlantSimulator(config)
+    advance_to_hour(sim, NOON, Action(battery_share=0.0, electrolyser_share=0.0, methanator_share=1.0))
+    # 27.5 kg CO2 at 2.75 kg per kg CH4 -> exactly 10 kg CH4 before starvation
+    assert sim.state.ch4_produced_total_kg == pytest.approx(10.0, abs=1e-6)
+    assert sim.state.co2_level_kg == pytest.approx(0.0, abs=1e-9)
+    assert sim.state.ch4_production_kg_h == 0.0
+    assert sim.state.h2_level_kg == pytest.approx(500.0 - 5.0, abs=1e-6)
+
+
+def test_methanation_consumes_the_fixed_recipe(sim: PlantSimulator) -> None:
+    advance_to_hour(sim, NOON)
+    h2_before, co2_before = sim.h2_tank.level_kg, sim.co2_tank.level_kg
+    state = sim.step(Action(battery_share=0.0, electrolyser_share=0.0, methanator_share=0.4))
+    dt_h = sim.config.dt_h
+    ch4_kg = state.ch4_production_kg_h * dt_h
+    assert ch4_kg > 0.0
+    recipe = sim.config.methanator
+    assert h2_before - sim.h2_tank.level_kg == pytest.approx(ch4_kg * recipe.h2_kg_per_kg_ch4)
+    assert co2_before - sim.co2_tank.level_kg == pytest.approx(ch4_kg * recipe.co2_kg_per_kg_ch4)
+    expected_kw = ch4_kg * recipe.specific_energy_kwh_per_kg / dt_h
+    assert state.methanator_power_kw == pytest.approx(expected_kw)
+
+
+def test_ch4_tank_throttles_methanation() -> None:
+    config = PlantConfig(ch4_tank=StorageConfig(capacity_kg=20.0, initial_kg=20.0))
+    sim = PlantSimulator(config)
+    advance_to_hour(sim, NOON, Action(battery_share=0.0, electrolyser_share=0.0, methanator_share=0.5))
+    assert sim.state.ch4_level_kg <= config.ch4_tank.capacity_kg + 1e-9
+    assert sim.state.ch4_production_kg_h == 0.0
+
+
+# --- storage bounds under load ------------------------------------------------
+def test_gas_storages_stay_within_bounds_all_day(sim: PlantSimulator) -> None:
+    for _ in range(sim.config.steps_per_day):
+        state = sim.step(FULL_MIX)
+        assert 0.0 <= state.h2_level_kg <= state.h2_capacity_kg + 1e-9
+        assert 0.0 <= state.co2_level_kg <= state.co2_capacity_kg + 1e-9
+        assert 0.0 <= state.ch4_level_kg <= state.ch4_capacity_kg + 1e-9
+
+
+def test_a_full_day_actually_makes_methane(sim: PlantSimulator) -> None:
+    sim.run(
+        sim.config.steps_per_day,
+        Action(battery_share=0.2, electrolyser_share=0.5, dac_share=0.2, methanator_share=0.1, battery_support_kw=600.0),
+    )
+    state = sim.state
+    assert state.ch4_produced_total_kg > 100.0
+    assert state.co2_captured_total_kg > 0.0
+    # methane output never outruns what the feedstocks could have supplied
+    assert state.ch4_produced_total_kg * sim.config.methanator.h2_kg_per_kg_ch4 <= (
+        state.h2_produced_total_kg + sim.config.h2_tank.initial_kg + 1e-6
+    )

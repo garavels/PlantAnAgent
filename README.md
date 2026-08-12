@@ -3,21 +3,26 @@
 An autonomous, intermittently powered industrial plant — starting with the foundation:
 **a small working digital twin plus a control room that watches it.**
 
-The plant today:
+The plant today (V3 — the full simplified synthetic-methane chain):
 
 ```text
-Solar
-  ↓
-Power allocation
-  ├──→ Battery
-  └──→ Electrolyser
-             ↓
-          H₂ Tank
+                 Solar
+                   ↓
+            Power allocation (DC bus)
+             ├──→ Battery ─────────┐ (support)
+             ├──→ Electrolyser ──→ H₂ Tank ──┐
+             ├──→ DAC ──────────→ CO₂ Tank ──┤
+             │                               ↓
+             └──────────(power)──────→ Methanator ──→ CH₄ Tank
 ```
+
+Every arrow is a real dependency in the simulator: starve the DAC and the CO₂ tank
+drains until methanation stops; run the stack hard and the H₂ tank fills; methane only
+exists when H₂, CO₂ *and* power show up together.
 
 The control room has two views over the same live session: **Overview** (the concise
 operational summary) and **3D Plant** (a spatial digital twin of the site). No agents,
-no RL, no methanation yet. The point is the architecture those things will plug into.
+no RL yet. The point is the architecture those things will plug into.
 
 ---
 
@@ -36,7 +41,9 @@ no RL, no methanation yet. The point is the architecture those things will plug 
 │   │   │   ├── solar.py        SolarArray
 │   │   │   ├── battery.py      Battery
 │   │   │   ├── electrolyser.py Electrolyser
-│   │   │   └── storage.py      GasStorage (the H₂ tank, and later CH₄/CO₂)
+│   │   │   ├── dac.py          DirectAirCapture
+│   │   │   ├── methanator.py   Methanator (fixed Sabatier recipe)
+│   │   │   └── storage.py      GasStorage (the H₂, CO₂ and CH₄ tanks)
 │   │   └── __main__.py       headless run: python -m plant_sim
 │   └── tests/                behaviour, limits, conservation, determinism
 │
@@ -86,19 +93,18 @@ Individually:
 ```bash
 make backend        # uv run uvicorn plant_backend.app:app --reload --port 8000
 make frontend       # cd frontend && npm run dev
-make test           # simulator test suite (21 tests)
+make test           # simulator test suite (33 tests)
 make sim            # one simulated day, headless, printed as a table
 ```
 
 `make sim` is the fastest way to see the model work:
 
 ```text
-  clock    solar   ->batt   ->elz   batt%    elz    H2 kg/h   tank kg  state
- D1 09:46     3830      830    3000    13.7   3000       57.7     298.5  RUN
- D1 12:46     5000     2000    3000    71.6   3000       57.7     471.5  RUN
- D1 14:16     4698        0    3000   100.0   3000       57.7     558.1  RUN   <- battery full, solar curtailed
- D1 19:31        0        0       0    92.0    700       13.5     790.0  RUN   <- running on the battery
- D1 03:46        0        0       0     5.1      0        0.0     164.2  off   <- battery at min SOC, stack down
+  clock    solar   ->batt   ->elz   ->dac   ->met   batt%  H2 kg/h  H2 kg   CO2 kg/h  CO2 kg   CH4 kg/h  CH4 kg
+ D1 00:01        0        0       0       0       0    34.9     11.5   120.2       0.0    800.0       0.0      0.0   <- night: battery support runs the stack
+ D1 08:01     2244       49    1566     449     180     5.1     30.1   103.1     224.4    524.6     150.0    183.9   <- reactor burns the overnight H2
+ D1 12:01     4924      993    2816     985     130    33.2     54.2     0.0     492.4    515.4     108.3    750.6   <- H2-limited flow-through
+ D1 20:01        0        0       0       0       0    69.8     11.5     7.6       0.0   1368.8       0.0   1355.8   <- DAC/reactor off, H2 rebuilds
 ```
 
 ---
@@ -112,14 +118,18 @@ from plant_sim import Action, PlantSimulator
 
 sim = PlantSimulator()
 state = sim.reset()
-state = sim.step(Action(battery_share=0.3, electrolyser_share=0.7, battery_support_kw=600))
+state = sim.step(Action(battery_share=0.25, electrolyser_share=0.45, dac_share=0.2,
+                        methanator_share=0.1, battery_support_kw=600))
 ```
 
-- **`Action`** — how to split the power available *right now*. `battery_share` and
-  `electrolyser_share` are fractions of current solar; `battery_support_kw` discharges the
-  battery to feed the electrolyser. Anything unallocated is curtailed.
-- **`PlantState`** — everything observable: levels (`battery_soc`, `h2_level_kg`) describe
-  the plant now, flows (`*_kw`, `*_kg_h`) describe the timestep that just finished.
+- **`Action`** — how to split the power available *right now*. `battery_share`,
+  `electrolyser_share`, `dac_share` and `methanator_share` are fractions of current
+  solar, one per bus consumer; `battery_support_kw` discharges the battery to feed the
+  electrolyser. Anything unallocated is curtailed.
+- **`PlantState`** — everything observable: levels (`battery_soc`, `h2_level_kg`,
+  `co2_level_kg`, `ch4_level_kg`) describe the plant now, flows (`*_kw`, `*_kg_h`)
+  describe the timestep that just finished. Full field list in `state.py`; the frontend
+  mirror is `frontend/src/types/plant.ts`.
 - One `step()` advances `dt_s` seconds (default 60 s). Same actions in, same states out —
   the model is fully deterministic.
 
@@ -133,28 +143,44 @@ Simple and readable on purpose — no electrochemistry.
 | **Battery**      | charges/discharges within power limits, never past capacity or `min_soc`; efficiency applied both ways |
 | **Electrolyser** | linear kWh → kg; hard rated ceiling; **below its minimum load it shuts off entirely**                  |
 | **H₂ tank**      | stores up to capacity and *refuses* the rest, which throttles the stack rather than venting gas        |
+| **DAC**          | linear kWh → kg CO₂ (2.0 kWh/kg); no minimum load; a full CO₂ tank throttles it to zero                |
+| **CO₂ tank**     | same species-agnostic `GasStorage` as H₂: bounded, never negative, never above capacity                |
+| **Methanator**   | fixed recipe per kg CH₄: **0.5 kg H₂ + 2.75 kg CO₂ + 1.2 kWh**; limited by the scarcest input          |
+| **CH₄ tank**     | the product buffer; a full tank throttles the reactor                                                   |
 
-The minimum load is what makes the problem interesting: a trickle of solar is worthless to
-the stack, so something has to choose between buffering it or spending stored energy to
-lift the stack above its floor. That choice is exactly what an agent will make later.
+The methanator's recipe is the Sabatier reaction (CO₂ + 4 H₂ → CH₄ + 2 H₂O) collapsed
+to mass ratios from the molar masses (0.503 / 2.744, rounded to 0.5 / 2.75) plus a flat
+electrical intensity for compression and controls. It only ever draws the power its
+actual production needs — power offered beyond what the gases allow spills back to the
+battery instead of being burned.
+
+The electrolyser's minimum load is still what makes power allocation interesting, and V3
+adds the material version of the same tension: methane needs H₂, CO₂ *and* electricity
+in the same hour, so a locally good decision (all solar to the stack, none to the DAC)
+becomes a CO₂ shortage an hour later.
 
 ### Dispatch order (`allocation.py`)
 
 Every timestep, in this order:
 
-1. Split the solar bus by the action's shares; anything unallocated is curtailed.
+1. Split the solar bus by the action's four shares; anything unallocated is curtailed.
 2. Resolve battery support, clamped by what the stack can absorb *and* what the battery can
    deliver — never discharge into a wall.
 3. Net out simultaneous charge/discharge (that solar goes straight to the stack instead).
-4. Run the electrolyser, capped by rated power and by room left in the tank. Below minimum
-   load it stays off, support is retracted, and its solar spills back to the battery.
-5. Charge the battery with its share plus any spill; what it cannot absorb is curtailed.
+4. Run the electrolyser, capped by rated power and by room left in the H₂ tank. Below
+   minimum load it stays off, support is retracted, and its solar spills back to the battery.
+5. Run the DAC, capped by rated power and by room left in the CO₂ tank; refusal spills.
+6. Run the methanator: CH₄ output is the minimum of what power, H₂, CO₂ and CH₄ tank
+   headroom each allow; gases are withdrawn in the fixed ratio and unneeded power spills.
+7. Charge the battery with its share plus every spill; what it cannot absorb is curtailed.
 
-Energy is conserved by construction, and the tests assert it:
+Conservation holds by construction, and the tests assert it over a full day:
 
 ```text
-solar_available   = solar_to_battery + solar_to_electrolyser + solar_curtailed
+solar_available    = solar_to_battery + solar_to_electrolyser + solar_to_dac
+                   + solar_to_methanator + solar_curtailed
 electrolyser_power = solar_to_electrolyser + battery_to_electrolyser
+H₂ consumed        = 0.5  × CH₄ produced        (and likewise CO₂ at 2.75 ×)
 ```
 
 Invalid actions are never rejected, only constrained: shares clamp to `[0, 1]`, are
@@ -196,16 +222,18 @@ Dev API surface (all under `/api`, proxied from Vite):
 ## The 3D twin
 
 The `3D Plant` view (`frontend/src/components/plant-3d/`, React Three Fiber) renders the
-site as a place: solar field, power hub, battery container, electrolyser skid and H₂
-vessel on a fenced pad, with cables and a gas pipe between them. It is a **visualization
-layer only** — no physics, no plant state of its own:
+site as a place: solar field, power hub, battery container, electrolyser skid, DAC air
+contactors, reactor tower and three gas vessels on a fenced pad, with cables and pipes
+between them. It is a **visualization layer only** — no physics, no plant state of its
+own:
 
 ```text
 PlantState + PlantConfig
         ↓  deriveVisuals()          <- visuals.ts, the only file that knows field names
 PlantVisuals (normalised 0..1 intensities, levels, sun position)
         ↓  one prop per unit
-SolarField / PowerHub / BatteryUnit / ElectrolyserUnit / HydrogenTank / FlowLine
+SolarField / PowerHub / BatteryUnit / ElectrolyserUnit / DacUnit / MethanatorUnit
+GasVessel ×3 (H₂, CO₂, CH₄) / FlowLine
 ```
 
 State becomes sight like this:
@@ -216,8 +244,10 @@ State becomes sight like this:
 | `battery_soc`              | light-column fill on the container                                   |
 | `battery_power_kw`         | roof lamp: sage while charging, mist while discharging, dim when idle |
 | `electrolyser_*`           | stack-seam glow ∝ load; dark and cold below min load                 |
-| `h2_fill`                  | the gas column inside the translucent vessel, meniscus ring on top   |
-| `*_kw` / `h2_production_*` | packet streams on each route: speed and opacity ∝ intensity          |
+| `dac_*`                    | roof fans spin while capturing (speed ∝ load), intake grilles glow   |
+| `methanator_*`             | reactor sight-glass glows ∝ load; lamp turns alarm-tinted when starved |
+| `*_fill`                   | gas columns inside the translucent vessels, meniscus rings on top    |
+| `*_kw` / `*_kg_h`          | packet streams on each route: speed and opacity ∝ intensity          |
 | `solar_curtailed_kw`       | a quiet packet drip from the hub into a ground grate                 |
 
 Every motion is eased in the view (`damp()` in `visuals.ts`), so large steps and resets
@@ -231,12 +261,11 @@ Files that matter:
 - `plant-3d/layout.ts` — where units stand and where flows run, in meters.
 - `plant-3d/PlantScene.tsx` — the Canvas composition; nothing else touches three.js setup.
 - `plant-3d/UnitChrome.tsx` — hover/pin behaviour and the floating value plates.
+- `plant-3d/GasVessel.tsx` — the one vessel component, instanced per species.
 - `pages/Plant3DPage.tsx` — the view: scene, HUD readouts, transport bar.
 
-To add a future unit (methanator, DAC, CH₄ tank): add its position and routes to
-`layout.ts`, extend `deriveVisuals()` with its descriptors, write one component that maps
-descriptors onto geometry, and drop it into `PlantScene`. The simulator never hears about
-any of it.
+Adding a unit to the twin never touches the simulator: one entry in `plant-3d/layout.ts`,
+one component, one flow route — V3 added four units that way.
 
 ---
 
@@ -246,8 +275,9 @@ Everything below is *designed for* but deliberately **not built**.
 
 **More process units.** Subclass `Component` (`reset()` + `snapshot()`), give it domain
 verbs that clamp their own limits, instantiate it in `PlantSimulator.__init__`, and add it
-to the `components` registry — reset and telemetry come for free. DAC, methanation and a
-CH₄ tank are the intended next three; `GasStorage` is already species-agnostic.
+to the `components` registry — reset and telemetry come for free. V3 used exactly this
+path for the DAC, the methanator and the CO₂/CH₄ tanks (`GasStorage` is
+species-agnostic); a water tank or a second stack would follow it again.
 
 **Richer physics.** Each component names its own seams: efficiency curves and degradation in
 `electrolyser.py`, capacity fade in `battery.py`, weather and forecast noise behind
@@ -277,6 +307,53 @@ placeholders pointing at it. Write a page, flip `ready: true`, and it appears.
 Overview and maps `PlantState` onto meshes — see "The 3D twin" below. Adding a unit to
 the twin never touches the simulator: one entry in `plant-3d/layout.ts`, one component,
 one flow route.
+
+---
+
+## V3: what changed, and what it sets up
+
+**The chain.** V3 turned the hydrogen plant into the full simplified synthetic-methane
+plant: DAC → CO₂ storage → methanator → CH₄ storage, plus a four-way power bus. The
+simulator now enforces real material dependencies — methane cannot exist without H₂,
+CO₂ and power in the same timestep.
+
+Major files added:
+
+- `simulator/src/plant_sim/components/dac.py` — `DirectAirCapture`: linear kW → kg CO₂,
+  throttled by CO₂ tank headroom.
+- `simulator/src/plant_sim/components/methanator.py` — `Methanator`: fixed recipe
+  (0.5 kg H₂ + 2.75 kg CO₂ + 1.2 kWh per kg CH₄), limited by the scarcest input, draws
+  only the power its production needs.
+- `frontend/src/components/plant-3d/DacUnit.tsx`, `MethanatorUnit.tsx` — the new units.
+- `frontend/src/components/plant-3d/GasVessel.tsx` — one vessel component, instanced for
+  H₂/CO₂/CH₄ (replaces `HydrogenTank.tsx`).
+
+Major files changed:
+
+- `simulator/`: `config.py` (DAC/methanator/CO₂/CH₄ configs), `state.py` (4-share
+  `Action`, extended `PlantState`), `allocation.py` (7-step dispatch), `simulator.py`
+  (wiring + totals), `__main__.py`, tests (21 → 33).
+- `backend/src/plant_backend/app.py` — `ActionModel` gained `dac_share` /
+  `methanator_share`; nothing else moved.
+- `frontend/`: `types/plant.ts`, `usePlantSession.ts` (default action), `tokens.css` +
+  `palette.ts` (two new carrier tints), `OverviewPage.tsx` (six metrics), `PlantFlow.tsx`
+  (full-chain diagram), `BalanceCard.tsx`, `ControlDeck.tsx` (four share sliders),
+  `plant-3d/` (layout, visuals, scene), `Plant3DPage.tsx` (HUD).
+
+**Decisions that matter for V4 (faults) and beyond:**
+
+- *Components own their limits.* A fault is a component reporting degraded headroom —
+  `intake_limit_kw()` on the electrolyser/DAC and `max_power_kw()` on the methanator are
+  the exact seams where derating plugs in; `dispatch()` already handles refusal.
+- *Battery support still feeds only the electrolyser.* Deliberate V3 simplification:
+  DAC and methanator run on their solar shares, so the plant idles at night except for
+  the supported stack. Generalising support to all loads is a controller question, not
+  a physics one — do it in `allocation.py` step 2 when a controller needs it.
+- *No derived rates in state.* Feedstock consumption rates are not `PlantState` fields;
+  views derive them from `ch4_production_kg_h` × the recipe in `PlantConfig`. Keep it
+  that way: state carries levels and primary flows, not arithmetic.
+- *The simulator still knows nothing about its drivers.* The frontend clock steps it via
+  HTTP today; a heuristic controller or agent slots into `PlantSession.step()` tomorrow.
 
 ---
 
