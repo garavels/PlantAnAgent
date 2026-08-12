@@ -25,7 +25,7 @@
 }
 
 .log__list--coded .log__row {
-  grid-template-columns: 74px 62px 168px minmax(0, 1fr);
+  grid-template-columns: 74px 62px 216px minmax(0, 1fr);
 }
 
 .log__row + .log__row {

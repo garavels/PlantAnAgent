@@ -324,8 +324,8 @@ export function PlantFlow({ state, config }: { state: PlantState; config: PlantC
         reference={ratedKgH}
         accent="var(--h2)"
         label={`${state.h2_production_kg_h.toFixed(1)} kg/h`}
-        at={[706, 178]}
-        anchor="start"
+        at={[736, 178]}
+        anchor="end"
       />
       <Conduit
         d="M670 460 H 700 V 480 H 742"
@@ -333,8 +333,8 @@ export function PlantFlow({ state, config }: { state: PlantState; config: PlantC
         reference={dacRatedKgH}
         accent="var(--co2)"
         label={`${state.co2_capture_kg_h.toFixed(1)} kg/h`}
-        at={[706, 512]}
-        anchor="start"
+        at={[736, 512]}
+        anchor="end"
       />
       <Conduit
         d="M950 190 H 985 V 280 H 1022"
@@ -342,8 +342,8 @@ export function PlantFlow({ state, config }: { state: PlantState; config: PlantC
         reference={ratedKgH}
         accent="var(--h2)"
         label={`${h2ToMetKgH.toFixed(1)} kg/h`}
-        at={[993, 262]}
-        anchor="start"
+        at={[1018, 262]}
+        anchor="end"
       />
       <Conduit
         d="M950 480 H 990 V 345 H 1022"
@@ -351,8 +351,8 @@ export function PlantFlow({ state, config }: { state: PlantState; config: PlantC
         reference={dacRatedKgH}
         accent="var(--co2)"
         label={`${co2ToMetKgH.toFixed(1)} kg/h`}
-        at={[998, 424]}
-        anchor="start"
+        at={[1018, 424]}
+        anchor="end"
       />
       <Conduit
         d="M1260 280 H 1332"
