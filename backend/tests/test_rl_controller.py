@@ -130,6 +130,18 @@ def test_a_failed_load_leaves_the_slot_empty_with_the_reason(tmp_path: Path) -> 
     assert "no checkpoint at" in slot.status.reason
 
 
+def test_a_failed_load_does_not_disturb_the_loaded_policy(
+    mock_checkpoint: Path, tmp_path: Path
+) -> None:
+    """A bad path says nothing about the policy that already loaded cleanly."""
+    slot = RLControllerSlot()
+    controller = slot.load(mock_checkpoint)
+    with pytest.raises(checkpoints.CheckpointError):
+        slot.load(tmp_path / "absent")
+    assert slot.controller is controller
+    assert slot.available and slot.status.state == "ready"
+
+
 def test_loading_a_mock_marks_it_as_untrained(mock_checkpoint: Path) -> None:
     slot = RLControllerSlot()
     slot.load(mock_checkpoint)
@@ -225,6 +237,21 @@ def test_unloading_hands_the_plant_back_to_the_heuristic(mock_checkpoint: Path) 
     assert plant.controller_id == HeuristicController.id
     assert status["available"] is False
     plant.advance(2)  # and it keeps running
+
+
+def test_a_bad_checkpoint_never_strands_a_driving_policy(
+    mock_checkpoint: Path, tmp_path: Path
+) -> None:
+    """The status and the driver may never disagree about whether RL can drive."""
+    plant = PlantRuntime()
+    plant.load_rl_checkpoint(str(mock_checkpoint))
+    plant.set_controller("rl")
+    with pytest.raises(ValueError, match="no checkpoint at"):
+        plant.load_rl_checkpoint(str(tmp_path / "absent"))
+    assert plant.controller_id == "rl"
+    assert plant.rl.status.state == "ready"
+    assert plant.control_status()["rl"]["available"] is True
+    plant.advance(2)
 
 
 def test_a_broken_policy_reverts_the_runtime_to_the_heuristic(mock_checkpoint: Path) -> None:

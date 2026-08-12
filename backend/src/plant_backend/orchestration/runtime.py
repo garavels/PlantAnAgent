@@ -208,9 +208,24 @@ class PlantRuntime:
         Loading does not switch to it: selecting a controller stays a separate,
         deliberate act, so a checkpoint arriving never changes who is driving.
         """
-        controller = self.rl.load(path)
+        try:
+            controller = self.rl.load(path)
+        except ValueError:
+            # a bad checkpoint must not leave the registry and the slot disagreeing
+            # about whether RL can drive: whoever was driving carries on
+            self._reconcile_rl()
+            raise
         self.controllers[RL_CONTROLLER_ID] = controller
         return self.rl.status.to_dict()
+
+    def _reconcile_rl(self) -> None:
+        """Make the controller registry agree with the slot, and never strand RL."""
+        if self.rl.controller is not None:
+            self.controllers[RL_CONTROLLER_ID] = self.rl.controller
+            return
+        self.controllers.pop(RL_CONTROLLER_ID, None)
+        if self.controller_id == RL_CONTROLLER_ID:
+            self.controller_id = HeuristicController.id
 
     def unload_rl_checkpoint(self) -> dict[str, Any]:
         """Drop the policy; if it was driving, the heuristic takes over immediately."""

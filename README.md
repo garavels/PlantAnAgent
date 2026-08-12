@@ -158,7 +158,7 @@ Individually:
 ```bash
 make backend        # uv run uvicorn plant_backend.app:app --reload --port 8000
 make frontend       # cd frontend && npm run dev
-make test           # simulator + backend test suite (172 tests)
+make test           # simulator + backend test suite (174 tests)
 make eval           # the supervisor against five scenarios, deterministically
 make sim            # one simulated day, headless, printed as a table
 make rl-eval        # the heuristic baseline through PlantEnv (CHECKPOINT=<dir> adds a policy)

@@ -187,14 +187,18 @@ class RLControllerSlot:
     def load(self, path: Path | str) -> RLController:
         """Load a checkpoint, or raise `CheckpointError` with the reason.
 
-        A failed load leaves the slot empty and the reason on the status, so the
-        control room can say why RL is not selectable instead of nothing happening.
+        The load is atomic: a bad checkpoint never disturbs a policy that is
+        already loaded and possibly driving, because a failed *attempt* says
+        nothing about the policy that loaded cleanly earlier -- the caller gets
+        the reason from the exception. With an empty slot the reason is recorded
+        on the status instead, so the control room can say why RL is not
+        selectable rather than nothing appearing to happen.
         """
         try:
             loaded = load_policy(path)
         except checkpoints.CheckpointError as reason:
-            self.controller = None
-            self._status = RLStatus(state="failed", reason=str(reason), checkpoint=str(path))
+            if self.controller is None:
+                self._status = RLStatus(state="failed", reason=str(reason), checkpoint=str(path))
             raise
         self.controller = RLController(loaded)
         self._status = RLStatus(
