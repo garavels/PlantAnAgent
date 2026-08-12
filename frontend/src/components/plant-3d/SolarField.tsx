@@ -85,13 +85,22 @@ export function SolarField({ solar, peakKw }: SolarFieldProps) {
 
   const rows_out: InspectRow[] = [
     { label: 'Power', value: `${Math.round(solar.kw).toLocaleString('en-US')} kW` },
-    { label: 'Status', value: solar.daylight ? 'Generating' : 'Night' },
+    {
+      label: 'Status',
+      value: solar.status === 'nominal' ? (solar.daylight ? 'Generating' : 'Night') : 'Reduced irradiance',
+    },
     { label: 'Array peak', value: `${Math.round(peakKw).toLocaleString('en-US')} kW` },
   ]
+  if (solar.degradation > 0) {
+    rows_out.push({
+      label: 'Clear sky',
+      value: `${Math.round(solar.potentialKw).toLocaleString('en-US')} kW`,
+    })
+  }
 
   return (
     <group position={[centreX, 0, centreZ]}>
-      <UnitChrome id="solar" name="Solar array" accent={CARRIER.solar} plateHeight={3.2} rows={rows_out}>
+      <UnitChrome id="solar" name="Solar array" accent={CARRIER.solar} status={solar.status} plateHeight={3.2} rows={rows_out}>
         {() => (
           <group>
             <instancedMesh ref={northPostsRef} args={[undefined, undefined, panelCount]} castShadow>

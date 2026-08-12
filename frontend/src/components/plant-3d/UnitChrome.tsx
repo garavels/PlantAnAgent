@@ -4,13 +4,20 @@
  * wakes its name plate; click pins the plate open with live values; clicking
  * empty ground (or pressing Escape) clears the pin. Plates are DOM overlays
  * with pointer events disabled -- orbiting never fights the labels.
+ *
+ * A unit that is degraded or offline also gets a warning beacon floating over
+ * it and a tinted plate, so an abnormal plant reads at a glance from any
+ * camera angle.
  */
 
 import { Html, useCursor } from '@react-three/drei'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
-import type { ThreeEvent } from '@react-three/fiber'
+import { useFrame, type ThreeEvent } from '@react-three/fiber'
+import * as THREE from 'three'
 
+import type { UnitStatus } from '../../types/plant'
+import { statusTint } from './palette'
 import { useUnitSelection } from './selection'
 import type { UnitId } from './selection'
 
@@ -31,16 +38,38 @@ interface UnitChromeProps {
   plateOffset?: [number, number]
   /** Live rows revealed while hovered or pinned. */
   rows: InspectRow[]
+  /** Condition of the unit; anything but `nominal` raises a beacon. */
+  status?: UnitStatus
   children: (active: boolean) => ReactNode
 }
 
-export function UnitChrome({ id, name, accent, plateHeight, plateOffset, rows, children }: UnitChromeProps) {
+/** A slowly pulsing warning marker: amber when degraded, red when down. */
+function Beacon({ tint, height }: { tint: string; height: number }) {
+  const mat = useRef<THREE.MeshStandardMaterial>(null)
+  const mesh = useRef<THREE.Mesh>(null)
+
+  useFrame((clock) => {
+    const pulse = 0.55 + 0.45 * Math.sin(clock.clock.elapsedTime * 2.6)
+    if (mat.current) mat.current.emissiveIntensity = 1.4 + pulse * 2.6
+    if (mesh.current) mesh.current.rotation.y += 0.01
+  })
+
+  return (
+    <mesh ref={mesh} position={[0, height, 0]} raycast={() => null}>
+      <octahedronGeometry args={[0.42, 0]} />
+      <meshStandardMaterial ref={mat} color={tint} emissive={tint} emissiveIntensity={2} toneMapped={false} />
+    </mesh>
+  )
+}
+
+export function UnitChrome({ id, name, accent, plateHeight, plateOffset, rows, status = 'nominal', children }: UnitChromeProps) {
   const { selected, select } = useUnitSelection()
   const [hovered, setHovered] = useState(false)
   useCursor(hovered)
 
   const pinned = selected === id
   const active = hovered || pinned
+  const tint = statusTint(status)
 
   const onClick = (event: ThreeEvent<MouseEvent>) => {
     event.stopPropagation()
@@ -57,6 +86,7 @@ export function UnitChrome({ id, name, accent, plateHeight, plateOffset, rows, c
       onPointerOut={() => setHovered(false)}
     >
       {children(active)}
+      {tint && <Beacon tint={tint} height={plateHeight - 0.7} />}
       <Html
         position={[plateOffset?.[0] ?? 0, plateHeight, plateOffset?.[1] ?? 0]}
         center
@@ -65,12 +95,13 @@ export function UnitChrome({ id, name, accent, plateHeight, plateOffset, rows, c
         className="unit-plate-anchor"
       >
         <div
-          className={`unit-plate${active ? ' unit-plate--on' : ''}`}
-          style={{ '--unit-accent': accent } as CSSProperties}
+          className={`unit-plate${active ? ' unit-plate--on' : ''}${tint ? ` unit-plate--${status}` : ''}`}
+          style={{ '--unit-accent': tint ?? accent } as CSSProperties}
         >
           <span className="unit-plate__head">
             <i className="unit-plate__dot" />
             {name}
+            {tint && <em className="unit-plate__flag">{status}</em>}
           </span>
           <dl className={`unit-plate__rows${active ? ' unit-plate__rows--on' : ''}`}>
             {rows.map((row) => (

@@ -43,6 +43,10 @@ class ElectrolyserConfig:
     min_load_frac: float = 0.15
     #: Electricity needed per kg of H2 (a flat number stands in for a real curve).
     specific_energy_kwh_per_kg: float = 52.0
+    #: Stack temperature when idle, when healthy under load, and fully degraded.
+    ambient_temperature_c: float = 22.0
+    nominal_temperature_c: float = 62.0
+    fault_temperature_rise_c: float = 45.0
 
 
 @dataclass(frozen=True)

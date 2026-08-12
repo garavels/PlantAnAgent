@@ -10,7 +10,7 @@ import { useMemo, useRef } from 'react'
 import * as THREE from 'three'
 
 import { UNIT_POSITIONS } from './layout'
-import { CARRIER, SURFACE } from './palette'
+import { CARRIER, SURFACE, statusTint } from './palette'
 import { UnitChrome, type InspectRow } from './UnitChrome'
 import { damp, type PlantVisuals } from './visuals'
 
@@ -37,6 +37,7 @@ export function ElectrolyserUnit({ electrolyser, minLoadFrac }: ElectrolyserUnit
   const windowMatRef = useRef<THREE.MeshStandardMaterial>(null)
   const lampMatRef = useRef<THREE.MeshStandardMaterial>(null)
   const load = useRef(0)
+  const tint = statusTint(electrolyser.status)
 
   useFrame((_, delta) => {
     load.current = damp(load.current, electrolyser.online ? electrolyser.loadFrac : 0, delta, 4)
@@ -44,17 +45,20 @@ export function ElectrolyserUnit({ electrolyser, minLoadFrac }: ElectrolyserUnit
     seamMat.emissiveIntensity = 0.06 + l * 2.3
     if (windowMatRef.current) windowMatRef.current.emissiveIntensity = 0.05 + l * 1.1
     if (lampMatRef.current) {
-      lampMatRef.current.emissive.set(electrolyser.online ? CARRIER.feed : '#5a6156')
-      lampMatRef.current.emissiveIntensity = electrolyser.online ? 0.6 + l * 1.8 : 0.25
+      lampMatRef.current.emissive.set(tint ?? (electrolyser.online ? CARRIER.feed : '#5a6156'))
+      lampMatRef.current.emissiveIntensity = tint ? 1.4 : electrolyser.online ? 0.6 + l * 1.8 : 0.25
     }
   })
 
-  const status = electrolyser.online ? 'Running' : 'Standby'
+  const status =
+    electrolyser.status === 'offline' ? 'Offline' : electrolyser.online ? 'Running' : 'Standby'
   const rows: InspectRow[] = [
     { label: 'Power', value: `${Math.round(electrolyser.powerKw).toLocaleString('en-US')} kW` },
     { label: 'Status', value: status },
     { label: 'Load', value: `${Math.round(electrolyser.loadFrac * 100)} % of ${Math.round(electrolyser.ratedKw).toLocaleString('en-US')} kW` },
     { label: 'H₂ output', value: `${electrolyser.h2kgH.toFixed(1)} kg/h` },
+    { label: 'Efficiency', value: `${Math.round(electrolyser.efficiency * 100)} % of nameplate` },
+    { label: 'Stack temp', value: `${electrolyser.temperatureC.toFixed(0)} °C` },
     { label: 'Min load', value: `${Math.round(minLoadFrac * 100)} %` },
   ]
 
@@ -64,7 +68,7 @@ export function ElectrolyserUnit({ electrolyser, minLoadFrac }: ElectrolyserUnit
 
   return (
     <group position={[UNIT_POSITIONS.electrolyser.x, 0, UNIT_POSITIONS.electrolyser.z]}>
-      <UnitChrome id="electrolyser" name="Electrolyser" accent={CARRIER.feed} plateHeight={4.6} rows={rows}>
+      <UnitChrome id="electrolyser" name="Electrolyser" accent={CARRIER.feed} status={electrolyser.status} plateHeight={4.6} rows={rows}>
         {(active) => (
           <group>
             {/* skid base */}

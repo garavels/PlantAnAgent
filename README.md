@@ -3,7 +3,8 @@
 An autonomous, intermittently powered industrial plant — starting with the foundation:
 **a small working digital twin plus a control room that watches it.**
 
-The plant today (V3 — the full simplified synthetic-methane chain):
+The plant today (V4 — the full simplified synthetic-methane chain, and everything that
+can go wrong with it):
 
 ```text
                  Solar
@@ -20,9 +21,15 @@ Every arrow is a real dependency in the simulator: starve the DAC and the CO₂ 
 drains until methanation stops; run the stack hard and the H₂ tank fills; methane only
 exists when H₂, CO₂ *and* power show up together.
 
+Since V4 the plant can also *misbehave*: faults derate or trip individual units, cloud
+cover cuts generation, a sensor can report a level the plant does not actually have, and
+the simulator emits events as it notices the consequences. Scenarios replay those
+situations on demand.
+
 The control room has two views over the same live session: **Overview** (the concise
-operational summary) and **3D Plant** (a spatial digital twin of the site). No agents,
-no RL yet. The point is the architecture those things will plug into.
+operational summary, plus scenario/fault controls and the event feed) and **3D Plant**
+(a spatial digital twin, where faulted units turn amber or red under a warning beacon).
+No agents, no RL yet. The point is the architecture those things will plug into.
 
 ---
 
@@ -36,6 +43,10 @@ no RL yet. The point is the architecture those things will plug into.
 │   │   ├── state.py          Action (in) and PlantState (out)
 │   │   ├── config.py         plant design: sizing, limits, efficiencies
 │   │   ├── allocation.py     dispatch rules: where each kW goes
+│   │   ├── faults.py         fault catalogue, specs, registry, component effects
+│   │   ├── telemetry.py      truth -> observation: where sensor faults are applied
+│   │   ├── events.py         bounded event stream (info / warning / critical)
+│   │   ├── scenarios.py      repeatable situations: start state + fault schedule
 │   │   ├── components/       one file per piece of equipment
 │   │   │   ├── base.py         Component contract (reset + snapshot)
 │   │   │   ├── solar.py        SolarArray
@@ -93,7 +104,7 @@ Individually:
 ```bash
 make backend        # uv run uvicorn plant_backend.app:app --reload --port 8000
 make frontend       # cd frontend && npm run dev
-make test           # simulator test suite (33 tests)
+make test           # simulator test suite (56 tests)
 make sim            # one simulated day, headless, printed as a table
 ```
 
@@ -216,6 +227,15 @@ Dev API surface (all under `/api`, proxied from Vite):
 | `/state`  | GET    | current state + recent frames (a page reload redraws instantly) |
 | `/step`   | POST   | `{action, repeat}` → every frame produced                     |
 | `/reset`  | POST   | back to the initial condition                                 |
+| `/events` | GET    | recent simulator events                                       |
+| `/faults` | GET    | fault catalogue + what is scheduled or running                |
+| `/faults` | POST   | `{type, severity, start_s?, duration_s?, channel?}` — inject  |
+| `/faults` | DELETE | clear every fault (`/faults/{id}` clears one)                 |
+| `/scenarios` | GET | the scenario catalogue                                       |
+| `/scenarios` | POST | `{scenario}` — reset the plant into that situation          |
+
+Every state-carrying response also carries `faults`, `events` and the loaded `scenario`,
+and the `state` it returns is **telemetry**, not the simulator's private truth.
 
 ---
 
@@ -283,8 +303,8 @@ species-agnostic); a water tank or a second stack would follow it again.
 `electrolyser.py`, capacity fade in `battery.py`, weather and forecast noise behind
 `SolarArray.power_at`, pressure and offtake in `storage.py`.
 
-**Faults and events.** Components own their limits, so a fault is a component that reports
-degraded headroom. The dispatch order in `allocation.py` already handles refusal gracefully.
+**Faults and events.** Built in V4 — see below. Components own their limits, so a fault is
+just a component reporting degraded headroom, and `allocation.py` handles the refusal.
 
 **Agents and controllers.** `PlantSession.step()` is the seam:
 
@@ -307,6 +327,110 @@ placeholders pointing at it. Write a page, flip `ready: true`, and it appears.
 Overview and maps `PlantState` onto meshes — see "The 3D twin" below. Adding a unit to
 the twin never touches the simulator: one entry in `plant-3d/layout.ts`, one component,
 one flow route.
+
+---
+
+## V4: faults, disturbances, telemetry and scenarios
+
+V4 gives the plant situations worth reasoning about. It adds no controller and no
+recovery logic: the simulator creates problems and reports them, nothing solves them yet.
+
+### Faults are effects, not special cases
+
+A fault never branches the dispatch loop. Each active fault resolves into a small
+`ComponentEffect` — a derating and/or an outage — which the target component applies to
+its own physics through `Component.apply_effect()`:
+
+```python
+from plant_sim import FaultSpec, PlantSimulator
+
+sim = PlantSimulator()
+sim.inject_fault(FaultSpec(type="electrolyser_degradation", severity=0.4))
+sim.step(action)            # same kW into the stack, ~40% less H2 out
+```
+
+`FaultRegistry` owns the lifecycle (`start_s`, optional `duration_s`, active/cleared) and
+answers two questions per timestep: `effect_for(component)` and `sensor_biases()`. Adding
+a fault type means adding one `FaultKind` to `faults.CATALOGUE`.
+
+| Type | Target | What it actually does |
+| ---- | ------ | --------------------- |
+| `electrolyser_degradation` | electrolyser | specific energy rises by `1/health`: same power, less H₂, hotter stack |
+| `dac_degradation` | DAC | more kWh per kg of CO₂ captured |
+| `dac_outage` | DAC | draws no power, captures nothing — CO₂ inventory only falls |
+| `battery_degradation` | battery | effective capacity `= nominal × health`; stored energy is clamped to it and SOC stays consistent |
+| `methanator_outage` | methanator | no CH₄, and **no H₂/CO₂ consumed** while down |
+| `solar_drop` | solar | a disturbance, not a fault: generation `= clear-sky × (1 − severity)` |
+| `sensor_drift` | sensors | biases one telemetry channel; physics untouched |
+
+Degradation severity is clamped to 0.95, so no component divides by zero.
+
+### True state vs telemetry
+
+The simulator keeps the two apart:
+
+```python
+truth    = sim.state             # what is actually happening
+observed = sim.get_telemetry()   # what the instruments report
+```
+
+They are identical unless a sensor fault is active, in which case `telemetry.observe()`
+biases the affected channel and the fields derived from it — a biased `h2_level_kg`
+carries its `h2_fill` with it. **The backend, the control room and any future agent read
+telemetry only**; `state` exists so tests and scenario authors can check the truth the
+agent is supposed to work out for itself.
+
+### Events
+
+`EventLog` is a bounded stream (400 entries) of `info` / `warning` / `critical` lines with
+the simulated clock attached. Events come from simulator behaviour — fault activation and
+expiry, low battery, a reactor stopped for want of CO₂, a full tank, a plant-status
+change — and condition events are edge-triggered, so a six-hour outage is one line, not
+360.
+
+### Scenarios
+
+A scenario is data: a start hour, inventory overrides, and faults scheduled relative to
+that start. Loading one resets the plant first, so the same scenario plus the same actions
+always produces the same trace.
+
+| Scenario | What happens |
+| -------- | ------------ |
+| `clear_day` | nominal operation, no faults — the baseline |
+| `electrolyser_degradation` | three normal hours, then the stack loses 40% of its yield |
+| `cloud_cover` | generation drops 60% for three hours around midday |
+| `dac_failure` | the DAC trips; CO₂ inventory drains until methanation stops |
+| `multiple_problems` | cloud cover on top of an already degraded stack |
+
+```python
+sim.load_scenario("dac_failure")
+sim.run(360, action)
+sim.state.plant_status      # 'critical'
+```
+
+### Plant status
+
+`plant_status` is derived every timestep from components and inventories, never set by
+the UI: `normal` → `degraded` (something is derated, or the reactor is starved) →
+`critical` (a unit is out, or the battery is on its reserve) → `offline` (nothing can
+run). The frontend renders whatever the field says.
+
+### Control room
+
+The Overview gained one bone panel and one card: **Conditions** (scenario selector, one
+button per fault type, and the list of what is running, each clearable) and **Events**.
+In the twin, a degraded unit's plate turns amber and an offline unit's red, both under a
+pulsing beacon; flows thin out on their own because they are drawn from the physics.
+
+### What V5 can build on
+
+- **Observation**: `GET /api/state` (telemetry + per-unit `health` + `plant_status`),
+  `GET /api/events`, `GET /api/faults`. A controller needs nothing else to see the plant.
+- **Control**: `POST /api/step` with an `Action` — unchanged since V1.
+- **Situations**: `POST /api/scenarios` for reproducible episodes, `PlantSimulator.run()`
+  for headless ones.
+- **The seam**: `PlantSession.step()` still decides who drives. A supervisory agent reads
+  telemetry and events and returns an `Action`; the simulator does not change.
 
 ---
 

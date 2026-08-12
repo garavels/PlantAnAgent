@@ -1,10 +1,13 @@
 /** The only place that knows how to reach the plant.
  *
- * Swap these four calls for a websocket, an agent endpoint or an in-browser
- * WASM simulator and nothing else in the UI has to change.
+ * Swap these calls for a websocket, an agent endpoint or an in-browser WASM
+ * simulator and nothing else in the UI has to change.
+ *
+ * Everything returned here is *telemetry*: what the plant reports, which a
+ * sensor fault is allowed to distort. The UI never sees the simulator's truth.
  */
 
-import type { PlantAction, PlantFrames } from '../types/plant'
+import type { FaultCatalogue, PlantAction, PlantFrames, ScenarioCatalogue } from '../types/plant'
 
 const BASE = '/api'
 
@@ -32,4 +35,36 @@ export function stepPlant(action: PlantAction, repeat = 1): Promise<PlantFrames>
 
 export function resetPlant(): Promise<PlantFrames> {
   return request<PlantFrames>('/reset', { method: 'POST' })
+}
+
+// --- abnormal operation ----------------------------------------------------
+export function fetchScenarios(): Promise<ScenarioCatalogue> {
+  return request<ScenarioCatalogue>('/scenarios')
+}
+
+/** Reset the plant into a predefined, repeatable situation. */
+export function loadScenario(scenario: string): Promise<PlantFrames> {
+  return request<PlantFrames>('/scenarios', {
+    method: 'POST',
+    body: JSON.stringify({ scenario }),
+  })
+}
+
+export function fetchFaults(): Promise<FaultCatalogue> {
+  return request<FaultCatalogue>('/faults')
+}
+
+export function injectFault(type: string, severity?: number): Promise<PlantFrames> {
+  return request<PlantFrames>('/faults', {
+    method: 'POST',
+    body: JSON.stringify(severity === undefined ? { type } : { type, severity }),
+  })
+}
+
+export function clearFaults(): Promise<PlantFrames> {
+  return request<PlantFrames>('/faults', { method: 'DELETE' })
+}
+
+export function clearFault(faultId: string): Promise<PlantFrames> {
+  return request<PlantFrames>(`/faults/${faultId}`, { method: 'DELETE' })
 }

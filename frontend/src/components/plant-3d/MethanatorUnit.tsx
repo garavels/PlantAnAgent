@@ -12,7 +12,7 @@ import { useRef } from 'react'
 import * as THREE from 'three'
 
 import { UNIT_POSITIONS } from './layout'
-import { CARRIER, SURFACE } from './palette'
+import { CARRIER, SURFACE, statusTint } from './palette'
 import { UnitChrome, type InspectRow } from './UnitChrome'
 import { damp, type PlantVisuals } from './visuals'
 
@@ -29,6 +29,7 @@ export function MethanatorUnit({ methanator }: MethanatorUnitProps) {
   const windowMatRef = useRef<THREE.MeshStandardMaterial>(null)
   const lampMatRef = useRef<THREE.MeshStandardMaterial>(null)
   const load = useRef(0)
+  const tint = statusTint(methanator.status)
 
   useFrame((_, delta) => {
     load.current = damp(load.current, methanator.online ? methanator.loadFrac : 0, delta, 4)
@@ -36,12 +37,27 @@ export function MethanatorUnit({ methanator }: MethanatorUnitProps) {
     if (stripMatRef.current) stripMatRef.current.emissiveIntensity = 0.06 + l * 2.1
     if (windowMatRef.current) windowMatRef.current.emissiveIntensity = 0.05 + l * 1.1
     if (lampMatRef.current) {
-      lampMatRef.current.emissive.set(methanator.starved ? '#d98c7a' : methanator.online ? CARRIER.ch4 : '#5a6156')
-      lampMatRef.current.emissiveIntensity = methanator.online ? 0.6 + l * 1.8 : methanator.starved ? 0.9 : 0.25
+      lampMatRef.current.emissive.set(
+        tint ?? (methanator.starved ? '#d98c7a' : methanator.online ? CARRIER.ch4 : '#5a6156'),
+      )
+      lampMatRef.current.emissiveIntensity = tint
+        ? 1.4
+        : methanator.online
+          ? 0.6 + l * 1.8
+          : methanator.starved
+            ? 0.9
+            : 0.25
     }
   })
 
-  const status = methanator.online ? 'Running' : methanator.starved ? 'No feedstock' : 'Standby'
+  const status =
+    methanator.status === 'offline'
+      ? 'Offline'
+      : methanator.online
+        ? 'Running'
+        : methanator.starved
+          ? 'No feedstock'
+          : 'Standby'
   const rows: InspectRow[] = [
     { label: 'Power', value: `${Math.round(methanator.powerKw).toLocaleString('en-US')} kW` },
     { label: 'Status', value: status },
@@ -51,7 +67,14 @@ export function MethanatorUnit({ methanator }: MethanatorUnitProps) {
 
   return (
     <group position={[UNIT_POSITIONS.methanator.x, 0, UNIT_POSITIONS.methanator.z]}>
-      <UnitChrome id="methanator" name="Methanator" accent={CARRIER.ch4} plateHeight={5.4} rows={rows}>
+      <UnitChrome
+        id="methanator"
+        name="Methanator"
+        accent={CARRIER.ch4}
+        status={methanator.status}
+        plateHeight={5.4}
+        rows={rows}
+      >
         {(active) => (
           <group>
             {/* skid base */}

@@ -16,6 +16,17 @@ export const CARRIER = {
   accent: '#b3cb92',
 } as const
 
+/** Condition tints: the only colours that mean "something is wrong". */
+export const STATUS = {
+  degraded: '#e0a250',
+  offline: '#d9705f',
+} as const
+
+/** Warning tint for a unit, or null when it is healthy. */
+export function statusTint(status: 'nominal' | 'degraded' | 'offline'): string | null {
+  return status === 'nominal' ? null : STATUS[status]
+}
+
 export const SURFACE = {
   /** open ground beyond the pad */
   terrain: '#181c16',
