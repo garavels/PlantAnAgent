@@ -1,7 +1,7 @@
 [project]
 name = "plant-backend"
-version = "0.1.0"
-description = "Thin dev API in front of the plant simulator. Future home of agents and controllers."
+version = "0.5.0"
+description = "Plant-control backend: owns the simulation loop, the controller and the action guard."
 requires-python = ">=3.11"
 dependencies = [
     "plant-sim",

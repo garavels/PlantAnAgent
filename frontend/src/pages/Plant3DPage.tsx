@@ -12,13 +12,13 @@ import type { CSSProperties } from 'react'
 import { PlantStatusChip } from '../components/overview/PlantStatusChip'
 import { PlantScene } from '../components/plant-3d/PlantScene'
 import { PageHeader } from '../components/shell/PageHeader'
-import { SPEEDS, TICK_MS } from '../hooks/usePlantSession'
+import { SPEEDS } from '../hooks/usePlantSession'
 import { kg, kw, pct } from '../lib/format'
 import { usePlant } from '../state/plantContext'
 import './plant-3d.css'
 
 export function Plant3DPage() {
-  const { state, config, link, error, playing, speed, events, togglePlay, stepOnce, reset, reconnect, setSpeed } =
+  const { state, config, link, error, playing, speed, events, control, togglePlay, stepOnce, reset, reconnect, setSpeed } =
     usePlant()
 
   // the twin shows only what needs attention; the console owns the full stream
@@ -210,7 +210,10 @@ export function Plant3DPage() {
             </button>
           ))}
           <span className="plant3d__speedhint">
-            {((speed * (1000 / TICK_MS) * (config?.dt_s ?? 60)) / 60).toFixed(0)} sim-min per second
+            {((speed * (1000 / (control?.tick_ms ?? 200)) * (config?.dt_s ?? 60)) / 60).toFixed(0)} sim-min per second
+          </span>
+          <span className="plant3d__driver">
+            {control?.mode === 'manual' ? 'Manual — operator' : `Auto — ${control?.controller.label ?? 'Heuristic'}`}
           </span>
         </div>
       </section>

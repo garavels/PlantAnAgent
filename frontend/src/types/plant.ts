@@ -70,6 +70,40 @@ export interface ScenarioDef {
   }[]
 }
 
+export type ControlMode = 'auto' | 'manual'
+
+export interface ControllerInfo {
+  id: string
+  label: string
+  description: string
+}
+
+/** Mirror of `controllers.Constraints`: the envelope the backend enforces. */
+export interface Constraints {
+  electrolyser_max_kw: number | null
+  dac_max_kw: number | null
+  methanator_max_kw: number | null
+  battery_support_max_kw: number | null
+  battery_min_soc: number
+}
+
+/** How the plant is being driven right now, straight from the backend. */
+export interface ControlStatus {
+  mode: ControlMode
+  controller: ControllerInfo
+  controllers: ControllerInfo[]
+  constraints: Constraints
+  manual_action: PlantAction
+  applied_action: PlantAction
+  /** Why the last action looked the way it did. */
+  notes: string[]
+  /** What the backend had to clamp before applying it. */
+  adjustments: string[]
+  playing: boolean
+  speed: number
+  tick_ms: number
+}
+
 export interface PlantState {
   step: number
   time_s: number
@@ -164,13 +198,17 @@ export interface PlantConfig {
   ch4_tank: { capacity_kg: number; initial_kg: number }
 }
 
+/** One backend update: new frames plus everything that came with them. */
 export interface PlantFrames {
   state: PlantState
   frames: PlantState[]
+  /** True when the frames are a new history, not a continuation of it. */
+  replace?: boolean
   config?: PlantConfig
   events?: PlantEvent[]
   faults?: PlantFault[]
   scenario?: string | null
+  control?: ControlStatus
 }
 
 export interface ScenarioCatalogue {

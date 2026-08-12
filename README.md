@@ -3,8 +3,8 @@
 An autonomous, intermittently powered industrial plant — starting with the foundation:
 **a small working digital twin plus a control room that watches it.**
 
-The plant today (V4 — the full simplified synthetic-methane chain, and everything that
-can go wrong with it):
+The plant today (V5 — the full simplified synthetic-methane chain, everything that can go
+wrong with it, and a backend that runs it):
 
 ```text
                  Solar
@@ -25,6 +25,11 @@ Since V4 the plant can also *misbehave*: faults derate or trip individual units,
 cover cuts generation, a sensor can report a level the plant does not actually have, and
 the simulator emits events as it notices the consequences. Scenarios replay those
 situations on demand.
+
+Since V5 the plant runs itself. The backend owns the clock, a heuristic controller drives
+the whole chain unattended, and every action — its own or an operator's — passes one
+validation guard before the simulator sees it. The control room asks and watches; it no
+longer drives.
 
 The control room has two views over the same live session: **Overview** (the concise
 operational summary, plus scenario/fault controls and the event feed) and **3D Plant**
@@ -58,10 +63,20 @@ No agents, no RL yet. The point is the architecture those things will plug into.
 │   │   └── __main__.py       headless run: python -m plant_sim
 │   └── tests/                behaviour, limits, conservation, determinism
 │
-├── backend/            the seam. thin dev API today, agent layer later
-│   └── src/plant_backend/
-│       ├── app.py            FastAPI routes over one plant session
-│       └── session.py        holds the simulator + rolling history
+├── backend/            the plant-control backend: it drives the simulator
+│   ├── src/plant_backend/
+│   │   ├── app.py            FastAPI routes + the SSE stream
+│   │   ├── session.py        simulator lifecycle: reset/step/history/faults
+│   │   ├── orchestration/
+│   │   │   ├── runtime.py      PlantRuntime: the decide -> validate -> apply loop
+│   │   │   ├── loop.py         SimulationClock: wall-clock pacing, play/pause/speed
+│   │   │   └── broadcast.py    fan-out of updates to connected control rooms
+│   │   ├── controllers/
+│   │   │   ├── base.py         Controller contract + Constraints (the envelope)
+│   │   │   └── heuristic.py    the rule-based operator that runs the plant today
+│   │   └── safety/
+│   │       └── validation.py   the guard every action passes through
+│   └── tests/                controller, constraints, guard, loop, API contract
 │
 ├── frontend/           the control room
 │   └── src/
@@ -69,7 +84,7 @@ No agents, no RL yet. The point is the architecture those things will plug into.
 │       ├── pages/            Overview + 3D Plant (the twin)
 │       ├── components/       shell (top nav, page header) + overview widgets
 │       │   └── plant-3d/     the twin: scene, units, flow network
-│       ├── hooks/            usePlantSession: the clock and the link
+│       ├── hooks/            usePlantSession: the SSE link and the state adapter
 │       ├── state/            one shared session, read by every view
 │       ├── lib/api.ts        the only place that knows how to reach the plant
 │       └── types/plant.ts    mirror of PlantState / PlantConfig
@@ -83,8 +98,8 @@ Responsibilities stay strictly separated:
 | Layer       | Owns                                        | Never does                          |
 | ----------- | ------------------------------------------- | ----------------------------------- |
 | `simulator` | physical state and how it changes over time | decide what *should* happen; do I/O |
-| `backend`   | who drives the plant, and how it is exposed | model physics                       |
-| `frontend`  | showing state and collecting operator input | model physics; own plant state      |
+| `backend`   | the clock, who drives, what is allowed      | model physics                       |
+| `frontend`  | showing state and collecting operator input | model physics; own plant state; own the clock |
 
 ---
 
@@ -104,7 +119,7 @@ Individually:
 ```bash
 make backend        # uv run uvicorn plant_backend.app:app --reload --port 8000
 make frontend       # cd frontend && npm run dev
-make test           # simulator test suite (56 tests)
+make test           # simulator + backend test suite (86 tests)
 make sim            # one simulated day, headless, printed as a table
 ```
 
@@ -202,40 +217,59 @@ normalised if they oversubscribe the bus, and `NaN`/`inf`/garbage falls back to 
 ## How state flows through the system
 
 ```text
-  ┌──────────┐   action (JSON)     ┌──────────┐   Action      ┌────────────┐
-  │ Frontend │ ──────────────────> │ Backend  │ ────────────> │ Simulator  │
-  │ (browser │ <────────────────── │ (session)│ <──────────── │ (twin)     │
-  │  clock)  │   PlantState[]      └──────────┘   PlantState  └────────────┘
-  └──────────┘
+  ┌──────────┐   requests (REST)   ┌──────────────────────────┐   Action      ┌───────────┐
+  │ Frontend │ ──────────────────> │ Backend                  │ ────────────> │ Simulator │
+  │ (adapter)│ <────────────────── │ clock + controller + guard│ <──────────── │ (twin)    │
+  └──────────┘   updates (SSE)     └──────────────────────────┘   PlantState  └───────────┘
 ```
 
-1. The browser holds the clock. While playing, it ticks every 200 ms and asks the backend to
-   advance `speed` timesteps (`POST /api/step`).
-2. `PlantSession` passes the action to `PlantSimulator.step()` and appends the resulting
-   states to a rolling history.
-3. Every frame comes back to the frontend, which keeps the last ~24 simulated hours for the
-   trend charts and renders the newest one.
-4. Every number on screen — readouts, bar fills, tank level, conduit brightness and flow
-   speed — is a field of `PlantState`. The UI adds no physics of its own.
+The backend holds the clock. Every 200 ms, while playing, `SimulationClock` asks
+`PlantRuntime` to advance `speed` timesteps, and each timestep is the same six steps:
 
-Dev API surface (all under `/api`, proxied from Vite):
+1. **Read telemetry** — `session.telemetry`, the observation a sensor fault may distort.
+2. **Decide** — AUTO: the controller. MANUAL: the operator's stored setpoint.
+3. **Validate** — `safety.validate()` clamps the action into the operating envelope.
+4. **Apply** — `PlantSimulator.step(action)` advances the physics.
+5. **Collect** — state, telemetry, events, faults, scenario, control status.
+6. **Broadcast** — one self-contained payload to every SSE subscriber.
 
-| Route     | Method | Purpose                                                       |
-| --------- | ------ | ------------------------------------------------------------- |
-| `/health` | GET    | liveness + current step index                                 |
-| `/config` | GET    | plant design (sizing, limits) so the UI can scale its gauges  |
-| `/state`  | GET    | current state + recent frames (a page reload redraws instantly) |
-| `/step`   | POST   | `{action, repeat}` → every frame produced                     |
-| `/reset`  | POST   | back to the initial condition                                 |
-| `/events` | GET    | recent simulator events                                       |
-| `/faults` | GET    | fault catalogue + what is scheduled or running                |
-| `/faults` | POST   | `{type, severity, start_s?, duration_s?, channel?}` — inject  |
-| `/faults` | DELETE | clear every fault (`/faults/{id}` clears one)                 |
-| `/scenarios` | GET | the scenario catalogue                                       |
-| `/scenarios` | POST | `{scenario}` — reset the plant into that situation          |
+Paused, the loop advances nothing: simulated time stops. Simulated time depends only on
+the number of ticks taken, never on how long the work took, so a slow machine produces
+the same trace as a fast one.
 
-Every state-carrying response also carries `faults`, `events` and the loaded `scenario`,
-and the `state` it returns is **telemetry**, not the simulator's private truth.
+The frontend is the last link and the thinnest: `usePlantSession` opens `/api/stream`,
+appends frames (keeping ~24 simulated hours for the trend charts), and turns operator
+gestures into requests. Every number on screen — readouts, bar fills, tank level, conduit
+brightness and flow speed — is a field of `PlantState`. It owns no clock and no physics.
+
+API surface (all under `/api`, proxied from Vite):
+
+| Route                 | Method | Purpose                                                        |
+| --------------------- | ------ | -------------------------------------------------------------- |
+| `/health`             | GET    | liveness, step index, clock state, subscriber count            |
+| `/config`             | GET    | plant design (sizing, limits) so the UI can scale its gauges   |
+| `/state`              | GET    | current state + recent frames (a page reload redraws instantly) |
+| `/stream`             | GET    | **SSE**: a full payload per tick, and on every change          |
+| `/simulation/play`    | POST   | start the clock                                                |
+| `/simulation/pause`   | POST   | stop it; simulated time stops with it                          |
+| `/simulation/speed`   | POST   | `{speed}` — timesteps per tick (1…64)                          |
+| `/simulation/step`    | POST   | `{action?, repeat}` — advance by hand while paused              |
+| `/simulation/reset`   | POST   | back to the initial condition                                  |
+| `/controller`         | GET    | mode, controller, constraints, and the last decision's notes   |
+| `/controller/config`  | POST   | `{mode?, controller?, constraints?, action?}`                   |
+| `/events`             | GET    | recent simulator events                                        |
+| `/faults`             | GET    | fault catalogue + what is scheduled or running                 |
+| `/faults`             | POST   | `{type, severity, start_s?, duration_s?, channel?}` — inject   |
+| `/faults`             | DELETE | clear every fault (`/faults/{id}` clears one)                  |
+| `/scenarios`          | GET    | the scenario catalogue                                         |
+| `/scenarios`          | POST   | `{scenario}` — reset the plant into that situation             |
+
+`/api/step` and `/api/reset` still answer, unchanged, for anything built against V1–V4.
+
+Every state-carrying response is also broadcast to the stream, so a client that asks for
+something and a client that only watches see exactly the same thing. Each payload carries
+`state`, `frames`, `replace`, `faults`, `events`, `scenario` and `control`, and the
+`state` it returns is **telemetry**, not the simulator's private truth.
 
 ---
 
@@ -306,14 +340,9 @@ species-agnostic); a water tank or a second stack would follow it again.
 **Faults and events.** Built in V4 — see below. Components own their limits, so a fault is
 just a component reporting degraded headroom, and `allocation.py` handles the refusal.
 
-**Agents and controllers.** `PlantSession.step()` is the seam:
-
-```python
-action = request.action              # manual control (today)
-action = agent.decide(self.state)    # autonomous control (later)
-```
-
-The simulator never learns who is driving it.
+**Agents and controllers.** Built in V5 — the seam is `Controller.compute_action()` and
+the lever is `Constraints`. See "V5" below for exactly where V6 plugs in. The simulator
+never learns who is driving it.
 
 **RL environments.** `reset()` / `step(action)` / `PlantState.to_dict()` are already
 Gym-shaped. A `PlantEnv` wrapper adding an observation vector and a reward belongs beside
@@ -422,15 +451,129 @@ button per fault type, and the list of what is running, each clearable) and **Ev
 In the twin, a degraded unit's plate turns amber and an offline unit's red, both under a
 pulsing beacon; flows thin out on their own because they are drawn from the physics.
 
-### What V5 can build on
+---
 
-- **Observation**: `GET /api/state` (telemetry + per-unit `health` + `plant_status`),
-  `GET /api/events`, `GET /api/faults`. A controller needs nothing else to see the plant.
-- **Control**: `POST /api/step` with an `Action` — unchanged since V1.
-- **Situations**: `POST /api/scenarios` for reproducible episodes, `PlantSimulator.run()`
-  for headless ones.
-- **The seam**: `PlantSession.step()` still decides who drives. A supervisory agent reads
-  telemetry and events and returns an `Action`; the simulator does not change.
+## V5: the backend takes the plant
+
+V5 moves control out of the browser. The frontend used to hold the clock and post an
+action every 200 ms; now it asks the backend to run and watches what happens. Nothing in
+the simulator changed.
+
+```text
+Frontend  ──asks──>  Backend  ──drives──>  Simulator
+   (adapter)      (clock, controller, guard)     (physics)
+```
+
+### The controller interface
+
+One method, and it never sees the simulator:
+
+```python
+from plant_backend.controllers import Constraints, HeuristicController
+
+controller = HeuristicController()
+decision = controller.compute_action(
+    simulator.get_telemetry(),          # observation: telemetry, which may lie
+    constraints=Constraints(dac_max_kw=400.0),
+    config=simulator.config,            # the plant's design: ratings and recipe
+)
+decision.action                         # an Action the simulator accepts as-is
+decision.notes                          # why, in words, for the control room
+```
+
+Because a controller only takes telemetry, constraints and the design, a heuristic, an RL
+policy and an optimiser are interchangeable: `PlantRuntime.controllers` is a registry, and
+`POST /api/controller/config {"controller": "..."}` selects one. Only the heuristic exists
+today.
+
+### The heuristic
+
+Deliberately not optimal — it plans in kilowatts, in the order the plant cares about, and
+converts the plan into shares at the end:
+
+1. **Methanation first** whenever both feedstocks are in the tanks — it is the point of the
+   plant and the smallest load.
+2. **Then CO₂**: the DAC runs at its cap while the buffer is below 50%, and trickles at 30%
+   of it once comfortable. CO₂ starvation is what stops methanation.
+3. **Then hydrogen**: everything left goes to the stack. Below the stack's minimum load it
+   borrows from the battery to clear the floor, or gives up and charges instead — half a
+   stack is worth nothing.
+4. **The rest charges the battery**, and within 15 points of the reserve the battery takes
+   half the bus *first* instead of last.
+
+Full storage pauses the unit that fills it. Offline units are never commanded; degraded
+units still are — they simply produce less, which is the honest response to a derating.
+
+### Constraints: the envelope, and V6's lever
+
+```python
+Constraints(
+    electrolyser_max_kw=800.0,   # absolute kW caps; None means "whatever it is rated for"
+    dac_max_kw=400.0,
+    methanator_max_kw=None,
+    battery_support_max_kw=None,
+    battery_min_soc=0.20,        # reserve nothing may eat into, on top of the pack's own floor
+)
+```
+
+Constraints can only ever *tighten* what the equipment can do, and the SOC reserve is
+applied on top of the battery's configured floor, never below it. Both the controller and
+the guard read the same object, so a manual command and an automatic one live inside the
+same envelope.
+
+### AUTO and MANUAL
+
+| Mode | Who decides | What the operator does |
+| ---- | ----------- | ---------------------- |
+| `auto` | the controller, every timestep | watches; retunes constraints; switches mode |
+| `manual` | the operator's stored setpoint | moves the sliders (`POST /controller/config {action}`) |
+
+Either way the action goes through `safety.validate()` — there is no path from the browser
+to `PlantSimulator.step()` that skips it. Switching mode does not disturb the plant; the
+next timestep simply has a different author. Mode, controller and constraints are
+*configuration*, so they survive a reset; the run in progress does not.
+
+### The guard (`safety/validation.py`)
+
+An interface guard, not the future safety system. It clamps rather than rejects — the
+plant keeps running under a bad command and the adjustment is reported back:
+
+- shares clamped, oversubscription normalised, `NaN`/`inf`/negatives dropped
+- power beyond a component's rating or its constraint clamped to the limit
+- allocations to an offline unit dropped
+- battery support clamped to what the pack can deliver above the reserve, and dropped
+  entirely at it
+
+The simulator still enforces its own physical invariants — the guard exists so obviously
+invalid commands never reach it, and so the operator is told what changed.
+
+### Where V6 plugs in
+
+```text
+Supervisor (V6)                 reads: GET /api/state, /api/events  (telemetry only)
+      ↓                         writes: POST /api/controller/config
+constraints / mode / controller  \_ or in-process: runtime.configure_constraints(...)
+      ↓
+Controller                       PlantRuntime._decide()
+      ↓
+safety.validate()                unchanged, for every author
+      ↓
+Simulator
+```
+
+A supervisory agent belongs in `backend/src/plant_backend/agent/`, and it steers the same
+way an operator does: it changes the envelope, the mode or the controller. It deliberately
+gets **no** step-level hook — a supervisor that has to answer every 60 simulated seconds
+is not a supervisor, and keeping it out of the fast loop is what keeps that loop
+deterministic and cheap. `safety/` is where its authority gets bounded when it grows teeth.
+
+### Frontend changes
+
+Small, on purpose. `usePlantSession` lost its clock and gained an `EventSource`; the
+control deck gained an AUTO/MANUAL toggle, the driver's name, and a line of the
+controller's own reasoning. In AUTO the sliders show the controller's allocation and are
+read-only. Everything else in the control room was already reading `PlantState` and did
+not move.
 
 ---
 
@@ -476,8 +619,8 @@ Major files changed:
 - *No derived rates in state.* Feedstock consumption rates are not `PlantState` fields;
   views derive them from `ch4_production_kg_h` × the recipe in `PlantConfig`. Keep it
   that way: state carries levels and primary flows, not arithmetic.
-- *The simulator still knows nothing about its drivers.* The frontend clock steps it via
-  HTTP today; a heuristic controller or agent slots into `PlantSession.step()` tomorrow.
+- *The simulator still knows nothing about its drivers.* The frontend clock stepped it via
+  HTTP in V3–V4; since V5 the backend's own loop does, and the simulator did not notice.
 
 ---
 
@@ -487,8 +630,9 @@ Major files changed:
   a notebook, a training loop or a test with no setup.
 - **Units are fixed and documented:** kW, kWh, kg, seconds. Efficiency losses live inside
   components; powers quoted at the bus are always bus-side.
-- **The backend is a seam, not an application.** One in-memory session, no database, no auth,
-  no persistence. It exists so the frontend never imports the simulator.
+- **The backend is one application, not a fleet.** One in-memory session, one clock, no
+  database, no auth, no persistence, no message broker. It owns control; it does not model
+  physics, and the frontend never imports the simulator.
 - **The frontend is a control room, not an admin panel.** A warm olive-charcoal console inset
   on sage, with bone panels for the surfaces an operator touches (balance, controls). Quiet
   sentence-case labels in Instrument Sans, wide numerals in Martian Mono, monochrome

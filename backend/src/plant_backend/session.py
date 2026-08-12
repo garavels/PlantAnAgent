@@ -1,13 +1,9 @@
 """Owns the running plant: one simulator instance plus a rolling history.
 
-This is the layer that will later grow into the agent/controller stack. Today
-the action arrives from the UI and is passed straight through:
-
-    action = request.action              # manual control (today)
-    action = agent.decide(self.state)    # autonomous control (later)
-    state = self.simulator.step(action)
-
-The simulator itself stays unaware of who is driving it.
+This is simulator *lifecycle* only: reset, step, history, faults, scenarios.
+Who decides the action, when time advances and what an action is allowed to be
+live one layer up, in `orchestration.PlantRuntime`. The simulator itself stays
+unaware of who is driving it.
 
 What leaves this layer is *telemetry*, never the simulator's private truth:
 `PlantSimulator.get_telemetry()` is the observation a sensor fault is allowed
@@ -20,7 +16,7 @@ from __future__ import annotations
 from collections import deque
 from typing import Any
 
-from plant_sim import Action, PlantConfig, PlantSimulator, Scenario
+from plant_sim import Action, PlantConfig, PlantSimulator, PlantState, Scenario
 from plant_sim import faults as fault_library
 from plant_sim import scenarios as scenario_library
 
@@ -42,6 +38,11 @@ class PlantSession:
     def state(self) -> dict[str, Any]:
         """The observed plant: telemetry, not the simulator's hidden truth."""
         return self.simulator.get_telemetry().to_dict()
+
+    @property
+    def telemetry(self) -> PlantState:
+        """The same observation as `state`, as the object a controller reads."""
+        return self.simulator.get_telemetry()
 
     @property
     def config(self) -> dict[str, Any]:

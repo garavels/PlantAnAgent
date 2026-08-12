@@ -1,15 +1,18 @@
-/** Operator controls: run the clock, and split the available power.
+/** Operator controls: pick who drives, run the clock, split the power.
  *
- * Each share slider *is* the action: the fraction of available solar offered to
- * that consumer. Shares are independent; if they sum past 100% the simulator
- * scales them down proportionally (shown dimmed). What is left unallocated is
- * curtailed. When an agent takes over, this panel becomes its supervisor rather
- * than its driver.
+ * Since V5 the clock and the allocation both live in the backend, so this panel
+ * is a supervisor rather than a driver. In AUTO the sliders show what the
+ * controller chose and are read-only; in MANUAL they are the operator's
+ * setpoint, which the backend still validates before the simulator sees it.
+ *
+ * Each share is the fraction of available solar offered to that consumer.
+ * Shares are independent; past 100% they scale down proportionally (shown
+ * dimmed). What is left unallocated is curtailed.
  */
 
 import { useEffect } from 'react'
 
-import { SPEEDS, TICK_MS } from '../../hooks/usePlantSession'
+import { SPEEDS } from '../../hooks/usePlantSession'
 import { kw, pct } from '../../lib/format'
 import { usePlant } from '../../state/plantContext'
 import type { PlantAction } from '../../types/plant'
@@ -43,13 +46,19 @@ function normalised(action: PlantAction): PlantAction {
 }
 
 export function ControlDeck() {
-  const { config, action, playing, speed, link, setAction, setSpeed, togglePlay, stepOnce, reset } = usePlant()
+  const { config, action, playing, speed, link, control, setAction, setSpeed, setMode, togglePlay, stepOnce, reset } =
+    usePlant()
 
+  const auto = control?.mode !== 'manual'
   const maxSupportKw = config?.battery.max_discharge_kw ?? 2500
-  const simMinutesPerSecond = ((speed * (1000 / TICK_MS) * (config?.dt_s ?? 60)) / 60).toFixed(0)
+  const tickMs = control?.tick_ms ?? 200
+  const simMinutesPerSecond = ((speed * (1000 / tickMs) * (config?.dt_s ?? 60)) / 60).toFixed(0)
   const offline = link !== 'online'
-  const applied = normalised(action)
-  const oversubscribed = applied !== action
+  // in AUTO the sliders report the controller's own allocation
+  const shown = auto ? (control?.applied_action ?? action) : action
+  const applied = normalised(shown)
+  const oversubscribed = !auto && applied !== shown
+  const note = control?.adjustments[0] ?? control?.notes[0]
 
   // control-room reflexes: space runs, R resets
   useEffect(() => {
@@ -68,6 +77,35 @@ export function ControlDeck() {
 
   return (
     <section className="card card--bone deck">
+      <div className="deck__group">
+        <span className="label">Control mode</span>
+        <div className="deck__buttons">
+          <button
+            className={`pill${auto ? ' pill--on' : ''}`}
+            onClick={() => setMode('auto')}
+            disabled={offline}
+            aria-pressed={auto}
+          >
+            Auto
+          </button>
+          <button
+            className={`pill${auto ? '' : ' pill--on'}`}
+            onClick={() => setMode('manual')}
+            disabled={offline}
+            aria-pressed={!auto}
+          >
+            Manual
+          </button>
+        </div>
+        <div className="deck__mode">
+          <span className={`deck__driver${auto ? ' deck__driver--auto' : ''}`}>
+            <i className="deck__dot" />
+            {auto ? (control?.controller.label ?? 'Heuristic') : 'Operator'}
+          </span>
+          {note && <span className="deck__note">{note}</span>}
+        </div>
+      </div>
+
       <div className="deck__group">
         <span className="label">Clock</span>
         <div className="deck__buttons">
@@ -108,9 +146,15 @@ export function ControlDeck() {
       <div className="deck__group deck__group--wide">
         <div className="deck__row">
           <span className="label">Power allocation</span>
-          <span className="deck__hint">{oversubscribed ? 'Over 100% — shares scale down to fit' : 'Share of available solar'}</span>
+          <span className="deck__hint">
+            {auto
+              ? 'Chosen by the controller'
+              : oversubscribed
+                ? 'Over 100% — shares scale down to fit'
+                : 'Share of available solar'}
+          </span>
         </div>
-        <div className="deck__shares">
+        <div className={`deck__shares${auto ? ' deck__shares--auto' : ''}`}>
           {SHARES.map(({ key, label, swatch }) => (
             <div className="deck__share" key={key}>
               <span className="deck__share-head">
@@ -119,7 +163,7 @@ export function ControlDeck() {
                   {label}
                 </em>
                 <b className="mono">
-                  {pct(action[key], 0)}%{oversubscribed && <i className="deck__applied mono"> → {pct(applied[key], 0)}%</i>}
+                  {pct(shown[key], 0)}%{oversubscribed && <i className="deck__applied mono"> → {pct(applied[key], 0)}%</i>}
                 </b>
               </span>
               <input
@@ -128,7 +172,8 @@ export function ControlDeck() {
                 min={0}
                 max={100}
                 step={1}
-                value={Math.round(action[key] * 100)}
+                value={Math.round(shown[key] * 100)}
+                disabled={auto}
                 onChange={(event) => setAction({ ...action, [key]: Number(event.target.value) / 100 })}
                 aria-label={`Share of available solar power sent to the ${label.toLowerCase()}`}
               />
@@ -142,7 +187,7 @@ export function ControlDeck() {
           <span className="label">Battery support</span>
           <span className="deck__values">
             <em>
-              <b className="mono">{kw(action.battery_support_kw)}</b> kW
+              <b className="mono">{kw(shown.battery_support_kw)}</b> kW
             </em>
           </span>
         </div>
@@ -152,7 +197,8 @@ export function ControlDeck() {
           min={0}
           max={maxSupportKw}
           step={50}
-          value={action.battery_support_kw}
+          value={Math.min(shown.battery_support_kw, maxSupportKw)}
+          disabled={auto}
           onChange={(event) => setAction({ ...action, battery_support_kw: Number(event.target.value) })}
           aria-label="Battery discharge offered to the electrolyser"
         />
