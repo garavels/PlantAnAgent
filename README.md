@@ -3,8 +3,8 @@
 An autonomous, intermittently powered industrial plant — starting with the foundation:
 **a small working digital twin plus a control room that watches it.**
 
-The plant today (V5 — the full simplified synthetic-methane chain, everything that can go
-wrong with it, and a backend that runs it):
+The plant today (V6 — the full simplified synthetic-methane chain, everything that can go
+wrong with it, a backend that runs it, and a supervisory agent that watches it):
 
 ```text
                  Solar
@@ -31,10 +31,17 @@ the whole chain unattended, and every action — its own or an operator's — pa
 validation guard before the simulator sees it. The control room asks and watches; it no
 longer drives.
 
-The control room has two views over the same live session: **Overview** (the concise
-operational summary, plus scenario/fault controls and the event feed) and **3D Plant**
-(a spatial digital twin, where faulted units turn amber or red under a warning beacon).
-No agents, no RL yet. The point is the architecture those things will plug into.
+Since V6 the plant is also *supervised*. A supervisory agent sits beside the controller,
+not inside it: it sleeps through routine operation, wakes on a situation (a warning, a
+critical event, a status change, a collapse in output, or an operator asking), investigates
+with a small toolset, and retunes the operating envelope — the same lever a human operator
+has. It never allocates a kilowatt and never touches the simulator.
+
+The control room has three views over the same live session: **Overview** (the concise
+operational summary, plus scenario/fault controls and the event feed), **3D Plant**
+(a spatial digital twin, where faulted units turn amber or red under a warning beacon) and
+**Agent** (what the supervisor concluded, what it changed, and the trace behind it).
+No RL yet — the point is the architecture it will plug into.
 
 ---
 
@@ -74,14 +81,24 @@ No agents, no RL yet. The point is the architecture those things will plug into.
 │   │   ├── controllers/
 │   │   │   ├── base.py         Controller contract + Constraints (the envelope)
 │   │   │   └── heuristic.py    the rule-based operator that runs the plant today
+│   │   ├── agent/            the supervisory operator (V6)
+│   │   │   ├── supervisor.py   SupervisorAgent: gating, one run, failure paths
+│   │   │   ├── triggers.py     when waking it up is worth an LLM call
+│   │   │   ├── tools.py        AgentToolbox: the only way it can touch the plant
+│   │   │   ├── observations.py telemetry -> what a supervisor can actually see
+│   │   │   ├── engines.py      LLMEngine (Agents SDK) + RuleEngine (the fallback)
+│   │   │   ├── prompts.py      the supervisory brief
+│   │   │   ├── sdk.py          the toolbox wrapped as SDK function tools
+│   │   │   ├── trace.py        the operational trace and the incident record
+│   │   │   └── evaluation.py   the five-scenario regression harness (`make eval`)
 │   │   └── safety/
 │   │       └── validation.py   the guard every action passes through
-│   └── tests/                controller, constraints, guard, loop, API contract
+│   └── tests/                controller, constraints, guard, loop, agent, API contract
 │
 ├── frontend/           the control room
 │   └── src/
 │       ├── views.tsx         view manifest -> drives router + top nav
-│       ├── pages/            Overview + 3D Plant (the twin)
+│       ├── pages/            Overview + 3D Plant (the twin) + Agent (the supervisor)
 │       ├── components/       shell (top nav, page header) + overview widgets
 │       │   └── plant-3d/     the twin: scene, units, flow network
 │       ├── hooks/            usePlantSession: the SSE link and the state adapter
@@ -101,6 +118,9 @@ Responsibilities stay strictly separated:
 | `backend`   | the clock, who drives, what is allowed      | model physics                       |
 | `frontend`  | showing state and collecting operator input | model physics; own plant state; own the clock |
 
+The supervisory agent lives in the backend and is bound by the same rule: it changes what
+the plant is *allowed* to do, never what it physically does.
+
 ---
 
 ## How to run
@@ -119,9 +139,14 @@ Individually:
 ```bash
 make backend        # uv run uvicorn plant_backend.app:app --reload --port 8000
 make frontend       # cd frontend && npm run dev
-make test           # simulator + backend test suite (86 tests)
+make test           # simulator + backend test suite (119 tests)
+make eval           # the supervisor against five scenarios, deterministically
 make sim            # one simulated day, headless, printed as a table
 ```
+
+The supervisor runs on rules unless `OPENAI_API_KEY` is set, in which case the LLM drives
+it (`PLANT_AGENT_MODEL` picks the model, `PLANT_AGENT_ENABLED=0` switches it off).
+No key is required to run the plant, the tests or the evaluation.
 
 `make sim` is the fastest way to see the model work:
 
@@ -340,9 +365,9 @@ species-agnostic); a water tank or a second stack would follow it again.
 **Faults and events.** Built in V4 — see below. Components own their limits, so a fault is
 just a component reporting degraded headroom, and `allocation.py` handles the refusal.
 
-**Agents and controllers.** Built in V5 — the seam is `Controller.compute_action()` and
-the lever is `Constraints`. See "V5" below for exactly where V6 plugs in. The simulator
-never learns who is driving it.
+**Agents and controllers.** Built in V5 (the seam is `Controller.compute_action()`, the
+lever is `Constraints`) and used in V6 by the supervisory agent, which steers through that
+lever instead of driving. The simulator never learns who is driving it.
 
 **RL environments.** `reset()` / `step(action)` / `PlantState.to_dict()` are already
 Gym-shaped. A `PlantEnv` wrapper adding an observation vector and a reward belongs beside
@@ -430,6 +455,7 @@ always produces the same trace.
 | `cloud_cover` | generation drops 60% for three hours around midday |
 | `dac_failure` | the DAC trips; CO₂ inventory drains until methanation stops |
 | `multiple_problems` | cloud cover on top of an already degraded stack |
+| `sensor_drift` | an H₂ level transmitter starts over-reporting; the physics is untouched |
 
 ```python
 sim.load_scenario("dac_failure")
@@ -450,6 +476,246 @@ The Overview gained one bone panel and one card: **Conditions** (scenario select
 button per fault type, and the list of what is running, each clearable) and **Events**.
 In the twin, a degraded unit's plate turns amber and an offline unit's red, both under a
 pulsing beacon; flows thin out on their own because they are drawn from the physics.
+
+---
+
+## V6: the supervisory agent
+
+V6 adds the second decision-maker. The controller still answers *"what should the plant do
+right now?"* every 60 simulated seconds. The supervisor answers a slower set of questions —
+*what is happening, is something wrong, why, should the strategy change?* — and it answers
+them only when something looks abnormal.
+
+```text
+Frontend
+   │
+Backend ──── SupervisorAgent ──── AgentToolbox   (read: telemetry, events, components)
+   │                │                            (write: envelope, mode, pause, shutdown)
+   │                ↓
+   ├──── Controller  ← the envelope it just retuned
+   ├──── safety.validate()
+   ↓
+Simulator
+```
+
+Two properties define the design. First, the supervisor is **beside** the fast loop, not
+inside it: `SimulationClock` calls `supervisor.observe(frames)` after the controller has
+already decided, validated and applied, and `observe` normally does nothing but evaluate
+triggers. When it does fire, the run happens in a background task — the plant keeps
+stepping while the supervisor thinks. Second, it has **no privileged access**: it reads
+telemetry (which can lie) rather than `PlantState`, and it writes only what an operator
+could write.
+
+### The toolset
+
+Twelve tools, all methods of `AgentToolbox`, all recorded in the trace:
+
+| Tool | What it answers or does |
+| ---- | ----------------------- |
+| `get_current_telemetry()` | the latest reported plant state, flat and compact |
+| `get_recent_telemetry(minutes)` | a thinned trend plus means over the window |
+| `get_recent_events(limit)` | what the plant itself flagged, oldest first |
+| `inspect_component(id)` | observed performance of one unit against its design figures |
+| `run_diagnostic(id)` | mass balances: do the levels and the flows agree? |
+| `get_controller_status()` | mode, controller, last applied action, guard adjustments |
+| `get_controller_constraints()` | the envelope in force, the ratings it sits inside |
+| `set_controller_constraints(changes, reason)` | retune the envelope — the main lever |
+| `set_operating_mode(mode, reason)` | AUTO / MANUAL |
+| `pause_plant(reason)` / `resume_plant(reason)` | stop and start simulated time |
+| `request_safe_shutdown(reason)` | all process caps to 0 kW, reserve raised, time stopped |
+
+`inspect_component` is where diagnosis actually happens, because it reports the *ratio* of
+observed to design performance: a stack drawing its usual kilowatts at 86.7 kWh/kg against
+a 52.0 kWh/kg design is degraded, and that is visible without the simulator's hidden
+`severity` ever being exposed. `run_diagnostic` is the only tool that cross-checks two
+independent readings of the same thing (a tank level against the flows through that tank),
+which is what makes a drifting sensor distinguishable from a real process fault.
+
+Writes are capped at six per run and a failed write returns `{"ok": false, "error": ...}`
+instead of raising: the supervisor is expected to read the refusal and carry on.
+
+### Triggers
+
+`TriggerWatch.evaluate()` runs every tick, is pure, and returns at most one trigger — the
+most urgent:
+
+| Trigger | Fires on | Priority |
+| ------- | -------- | -------- |
+| `manual` | an operator pressed *Investigate current plant* | 100 |
+| `critical_event` | a new `critical` event | 90 |
+| `plant_critical` | status changed into `critical` | 80 |
+| `warning_event` | a new `warning` event | 60 |
+| `plant_degraded` | status changed into `degraded` | 50 |
+| `production_drop` | CH₄ output below half its baseline while the sun was up | 40 |
+
+Then the gating, in order: the agent must be enabled, no run may be in flight, `MIN_GAP_S`
+(600 simulated seconds) must have passed since the last run, and the trigger's `key` must
+not be on cooldown (`COOLDOWN_S`, one simulated hour) or already attached to an open
+incident. Only fresh events count, and the supervisor's own `agent.*` events are excluded
+so it cannot wake itself. One degraded electrolyser therefore produces one investigation,
+not one per timestep.
+
+### Prompt and engines
+
+`RuleEngine` and `LLMEngine` implement one contract — *given a toolbox and a trigger,
+investigate and return a `Diagnosis`* — so the plant cannot tell them apart. `RuleEngine`
+walks the same tools in a fixed diagnostic order (instruments, then converting units, then
+the energy budget, then feedstock) with explicit thresholds; it needs no network and no
+credentials, which is what makes it both the fallback and the harness. Selection is
+`default_engine()`: the LLM when `OPENAI_API_KEY` is set, the rules otherwise.
+
+The brief (`prompts.SYSTEM_PROMPT`) is short and operational rather than educational — the
+model can read telemetry, so what it needs is the division of labour:
+
+- it is the *supervisory* operator; a controller already handles routine allocation
+- investigate before acting: telemetry, trend, events, then the components that could
+  explain what it sees
+- compare observed performance with design figures; `yield_ratio` well below 1.0 is a
+  derated unit
+- telemetry can be wrong — a level that moves without a flow is an instrument problem
+- distinguish "a component is failing" from "there is not enough energy"
+- the levers are the envelope and the mode; never allocate power
+- safety and equipment protection before production
+- **do nothing if nothing is wrong** — an unnecessary intervention is a failure, not a safe
+  default
+- finish with a short structured report: category, component, confidence, summary, whether
+  a human is needed. Conclusions only, no step-by-step reasoning
+
+### The trace
+
+`AgentTrace` is a bounded stream (240 entries) of `trigger` / `observation` / `tool` /
+`decision` / `diagnosis` / `action` / `result` / `error` entries, each with the simulated
+clock, the run number and a small dict of numbers behind it. It is a shift log, not a
+transcript: the model's reasoning is never stored or exposed. `Incident` is the other half
+— trigger, category, component, confidence, summary, the actions applied, whether a human
+is needed, resolved or not — so the control room can answer "what is wrong and did anyone
+do anything" without replaying the trace.
+
+Four real runs, from `make eval` (rule engine, so these are reproducible):
+
+```text
+D1 09:10  trigger      warning_event: D1 09:00 Electrolyser degradation started (severity 40%)
+D1 09:10  tool         get_current_telemetry()
+D1 09:10  tool         get_recent_events(limit=20)
+D1 09:10  tool         get_recent_telemetry(minutes=120)
+D1 09:10  tool         run_diagnostic(component=plant)
+D1 09:10  tool         inspect_component(component=electrolyser)
+D1 09:10  observation  Electrical input normal at 1960 kW; H2 yield 60% of design (86.67 vs 52.0 kWh/kg), stack at 80 degC
+D1 09:10  action       electrolyser_max_kw: unset -> 1800
+D1 09:10  diagnosis    electrolyser degradation (confidence: high)
+D1 09:10  result       1 change(s) applied; plant degraded
+
+D1 07:10  trigger      critical_event: D1 07:01 Plant status: critical
+D1 07:10  tool         inspect_component(component=dac)
+D1 07:10  observation  Capture unit unavailable: 0 kW drawn, 0.0 kg/h captured, 124 kg left in the buffer
+D1 07:10  action       methanator_max_kw: unset -> 70
+D1 07:10  diagnosis    dac unavailable (confidence: high)
+D1 07:10  result       1 change(s) applied; plant critical
+
+D1 08:10  trigger      warning_event: D1 08:00 Solar generation drop started (severity 60%)
+D1 08:10  tool         inspect_component(component=solar)
+D1 08:10  observation  Generation 959 kW against 2399 kW clear-sky (40%), with every unit converting to specification
+D1 08:10  action       battery_min_soc: 0.15 -> 0.3
+D1 08:10  action       electrolyser_max_kw: unset -> 1500
+D1 08:10  action       dac_max_kw: unset -> 480
+D1 08:10  diagnosis    energy shortfall (confidence: high)
+D1 08:10  result       3 change(s) applied; plant degraded
+
+D1 08:10  trigger      warning_event: D1 08:00 Sensor drift started (severity 17%)
+D1 08:10  tool         run_diagnostic(component=plant)
+D1 08:10  observation  h2_level_kg and the flow readings disagree by 340.0 kg at D1 08:01
+D1 08:10  diagnosis    sensor inconsistency (confidence: medium)
+D1 08:10  result       No change made; plant normal
+```
+
+The four cases are the four different *kinds* of answer: retune the unit that is failing;
+protect the inventory a failed unit no longer supplies; recognise weather as weather and
+hold energy back; and refuse to act on a reading that disagrees with itself, flagging it
+for a human instead.
+
+### How a constraint change actually reaches the plant
+
+```text
+toolbox.set_controller_constraints({"electrolyser_max_kw": 1800}, reason=...)
+    → PlantRuntime.configure_constraints        Constraints.merged() validates the field
+    → HeuristicController.compute_action        plans inside the new envelope
+    → safety.validate()                        clamps whatever still escapes
+    → PlantSimulator.step()
+```
+
+Nothing about that path is new in V6, which is the point: the supervisor uses the operator's
+door. There is deliberately no tool that builds an `Action`, and none that reaches the
+simulator, the fault registry or a component object. A supervisor that could allocate
+kilowatts would do the controller's job badly; one that could clear its own faults would be
+marking its own homework. `safety.validate()` stays authoritative — V6 also tightened it, so
+solar and battery support are now counted *together* against a component's cap rather than
+separately.
+
+One asymmetry is worth knowing: `configure_constraints(changes, by=...)` records who asked. The
+operator's envelope is configuration and survives a reset; a supervisor's retune belongs to the
+incident that caused it, so `reset()` and loading a scenario put back whatever the agent
+overwrote. An operator writing the same field afterwards takes ownership of it back. Without
+that, a fresh run would start silently capped by a fault that no longer exists.
+
+### API and control room
+
+| Route | Purpose |
+| ----- | ------- |
+| `GET /api/agent?trace=n` | status, engine, run count, current incident, recent trace |
+| `GET /api/agent/trace?limit=n&run=k` | the whole trace, or one run of it |
+| `POST /api/agent/investigate` | one run, now — the *Investigate current plant* button |
+| `POST /api/agent/config {enabled}` | switch the supervisor off or on |
+
+The snapshot also rides on every SSE payload as `agent`, so the **Agent** page needs no
+polling: status, the latest diagnosis with its confidence, whether a human is required, the
+actions applied, the trace, and the incident history.
+
+### Failure is a path, not an exception
+
+Anything the engine can do wrong — no key, a network error, a timeout, an unparseable
+response — is caught, recorded as an `error` entry, emitted as an `agent.error` plant event,
+and then handed to `RuleEngine`, which needs neither network nor credentials. If that fails
+too, the incident closes as `unclear` with `human_intervention_required`. The clock never
+awaits the supervisor, so the worst case is a plant supervised less well, never a plant that
+stops being controlled.
+
+### Evaluation
+
+`make eval` (`plant_backend.agent.evaluation`) runs five scenarios deterministically and
+scores what a regression would break: did it trigger, did it inspect the relevant component,
+did it reach the right category, did it act at all, did it hold the battery reserve, and did
+it leave the plant alone during normal operation.
+
+```text
+scenario                   runs  diagnosis                  acted  result
+clear_day                     1  normal                         0  pass
+electrolyser_degradation      3  electrolyser_degradation       1  pass
+dac_failure                   2  dac_unavailable                1  pass
+cloud_cover                   2  energy_shortfall               3  pass
+sensor_drift                  2  sensor_inconsistency           0  pass
+5/5 cases passed
+```
+
+`sensor_drift` is new in the simulator's scenario catalogue; the other four already existed.
+Deliberately not a benchmark — it is regression coverage, and it runs without an API key.
+
+The same five cases also pass with `LLMEngine` against the real model (`gpt-4.1-mini`), which
+is how the brief was tuned: the model's own runs are what showed that it needed telling that a
+plant ramping up is `normal`, and that a degradation diagnosis has to be followed by the cap
+it implies. Those runs are not part of the suite, because a regression gate that costs money
+and answers differently each time is not a gate: `backend/tests/conftest.py` hides the key so
+every test takes the deterministic rule path — the same path the plant falls back to in
+production.
+
+### Where the RL controller plugs in
+
+Unchanged by V6, and now proven by having a second decision-maker in the building:
+`Controller.compute_action(observation, constraints, config)` is the seam, and
+`PlantRuntime.controllers` is the registry. An RL policy replaces `HeuristicController`
+without the supervisor noticing — it supervises *the plant*, through the envelope, not a
+particular controller, and the envelope it tightens is exactly the action space an RL policy
+would be trained inside. `safety.validate()` stays the last word for whichever of them is
+driving.
 
 ---
 
@@ -547,7 +813,9 @@ plant keeps running under a bad command and the adjustment is reported back:
 The simulator still enforces its own physical invariants — the guard exists so obviously
 invalid commands never reach it, and so the operator is told what changed.
 
-### Where V6 plugs in
+### Where V6 plugged in
+
+Built in V6 (see above); the seam V5 left is exactly the one it uses.
 
 ```text
 Supervisor (V6)                 reads: GET /api/state, /api/events  (telemetry only)

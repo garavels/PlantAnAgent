@@ -94,6 +94,16 @@ SCENARIOS: dict[str, Scenario] = {
             faults=(FaultSpec(type="dac_outage", start_s=_h(1.0)),),
         ),
         Scenario(
+            id="sensor_drift",
+            name="H2 sensor drift",
+            description="Two hours in, the hydrogen level transmitter starts over-reporting by 17% of full scale. Physics is untouched: the only thing wrong is what the plant says about itself, and the level no longer agrees with the flows.",
+            faults=(
+                FaultSpec(
+                    type="sensor_drift", severity=0.17, start_s=_h(2.0), channel="h2_level_kg"
+                ),
+            ),
+        ),
+        Scenario(
             id="multiple_problems",
             name="Multiple problems",
             description="A degraded stack meets a cloudy afternoon: less H2 per kWh, and fewer kWh to spend.",

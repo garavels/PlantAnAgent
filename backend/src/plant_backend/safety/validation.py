@@ -7,7 +7,8 @@ happily refuse power the equipment cannot use. What this layer does is stop
 obviously invalid commands from ever getting that far, and say why:
 
 * nothing negative, nothing NaN, no oversubscribed bus (`Action.sanitised`)
-* no power routed past a component's rating or its configured constraint
+* no power routed past a component's rating or its configured constraint, solar
+  and battery support counted together
 * no power routed to an offline unit
 * no discharging the battery below its reserve, and never past its rating
 
@@ -77,7 +78,14 @@ def validate(
         else:
             shares[key] = share
 
-    support_kw = _support_kw(safe, observation, constraints, config, offline, adjustments)
+    # A cap on the stack is a cap on the stack: solar and borrowed battery power
+    # both land on the same rectifier, so they share the one limit.
+    headroom_kw = max(
+        0.0, constraints.electrolyser_limit_kw(config) - shares["electrolyser_share"] * bus_kw
+    )
+    support_kw = _support_kw(
+        safe, observation, constraints, config, offline, adjustments, headroom_kw
+    )
     # what the process gives back stays with the battery rather than vanishing
     freed = sum(getattr(safe, key) - shares[key] for key, _, _, _ in limits)
     battery_share = min(1.0, safe.battery_share + max(0.0, freed))
@@ -101,6 +109,7 @@ def _support_kw(
     config: PlantConfig,
     offline: dict[str, bool],
     adjustments: list[str],
+    headroom_kw: float,
 ) -> float:
     """Battery discharge the plant is allowed to lend the stack right now."""
     requested_kw = action.battery_support_kw
@@ -118,7 +127,7 @@ def _support_kw(
         return 0.0
 
     usable_kwh = (observation.battery_soc - reserve_soc) * observation.battery_capacity_kwh
-    limit_kw = min(constraints.support_limit_kw(config), usable_kwh / config.dt_h)
+    limit_kw = min(constraints.support_limit_kw(config), usable_kwh / config.dt_h, headroom_kw)
     if requested_kw > limit_kw:
         adjustments.append(
             f"Battery support clamped to {limit_kw:.0f} kW (asked for {requested_kw:.0f} kW)"

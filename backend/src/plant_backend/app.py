@@ -21,7 +21,7 @@ import json
 from collections.abc import AsyncIterator
 from typing import Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
@@ -45,7 +45,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
         await clock.stop()
 
 
-app = FastAPI(title="Plant An Agent -- control backend", version="0.5.0", lifespan=lifespan)
+app = FastAPI(title="Plant An Agent -- control backend", version="0.6.0", lifespan=lifespan)
 
 # Dev only: the Vite dev server proxies /api, but allow direct calls too.
 app.add_middleware(
@@ -105,6 +105,12 @@ class FaultRequest(BaseModel):
 
 class ScenarioRequest(BaseModel):
     scenario: str
+
+
+class AgentConfigRequest(BaseModel):
+    """Turn the supervisory agent on or off. Off leaves V5 behaviour exactly."""
+
+    enabled: bool
 
 
 def _publish(payload: dict[str, Any]) -> dict[str, Any]:
@@ -264,6 +270,37 @@ async def delete_faults() -> dict[str, Any]:
 async def delete_fault(fault_id: str) -> dict[str, Any]:
     if not runtime.session.clear_fault(fault_id):
         raise HTTPException(status_code=404, detail=f"unknown fault: {fault_id}")
+    return _publish(runtime.payload())
+
+
+# --- supervisory agent -----------------------------------------------------
+@app.get("/api/agent")
+def get_agent(trace: int = Query(60, ge=0, le=240)) -> dict[str, Any]:
+    """Supervisor status, the current incident, and its recent trace."""
+    return runtime.supervisor.snapshot(trace_limit=trace)
+
+
+@app.get("/api/agent/trace")
+def get_agent_trace(
+    limit: int = Query(120, ge=0, le=240),
+    run: int | None = None,
+) -> dict[str, Any]:
+    """The operational trace, whole or for one run. Never chain-of-thought."""
+    agent_trace = runtime.supervisor.trace
+    entries = agent_trace.entries_for_run(run) if run is not None else agent_trace.recent(limit)
+    return {"trace": entries, "incidents": agent_trace.incidents()}
+
+
+@app.post("/api/agent/investigate")
+async def post_agent_investigate() -> dict[str, Any]:
+    """"Investigate current plant": one supervisor run, now, on demand."""
+    incident = await runtime.supervisor.investigate()
+    return {"incident": incident.to_dict(), **_publish(runtime.payload())}
+
+
+@app.post("/api/agent/config")
+async def post_agent_config(request: AgentConfigRequest) -> dict[str, Any]:
+    runtime.supervisor.set_enabled(request.enabled)
     return _publish(runtime.payload())
 
 

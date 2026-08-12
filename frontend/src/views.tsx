@@ -7,6 +7,7 @@
 
 import type { ReactNode } from 'react'
 
+import { AgentPage } from './pages/AgentPage'
 import { OverviewPage } from './pages/OverviewPage'
 import { Plant3DView } from './pages/Plant3DView'
 
@@ -56,7 +57,8 @@ export const VIEWS: ViewDef[] = [
   {
     path: '/agent',
     label: 'Agent',
-    ready: false,
+    ready: true,
+    element: <AgentPage />,
     glyph: (
       <svg viewBox="0 0 20 20" {...stroke}>
         <rect x="4" y="6.5" width="12" height="9" rx="2" />
