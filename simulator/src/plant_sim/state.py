@@ -13,6 +13,13 @@ from typing import Any
 SECONDS_PER_HOUR = 3600.0
 HOURS_PER_DAY = 24.0
 
+#: Plant-level operational status, derived from conditions -- never set by hand.
+NORMAL = "normal"
+DEGRADED = "degraded"
+CRITICAL = "critical"
+OFFLINE = "offline"
+PLANT_STATUSES = (NORMAL, DEGRADED, CRITICAL, OFFLINE)
+
 
 def _finite(value: Any, fallback: float = 0.0) -> float:
     """Coerce anything action-shaped into a usable float (NaN/inf/str -> fallback)."""
@@ -83,6 +90,15 @@ class Action:
 
 
 @dataclass(frozen=True)
+class ComponentHealth:
+    """How a single unit is doing, as far as the plant can tell."""
+
+    status: str = NORMAL
+    degradation: float = 0.0
+    offline: bool = False
+
+
+@dataclass(frozen=True)
 class PlantState:
     """Complete observable plant state after a timestep.
 
@@ -95,6 +111,10 @@ class PlantState:
 
     # --- generation -------------------------------------------------------
     solar_available_kw: float = 0.0
+    #: Clear-sky generation before any weather disturbance.
+    solar_potential_kw: float = 0.0
+    #: `solar_available_kw / solar_potential_kw`, 1.0 with clear skies.
+    solar_output_factor: float = 1.0
     solar_to_battery_kw: float = 0.0
     solar_to_electrolyser_kw: float = 0.0
     solar_to_dac_kw: float = 0.0
@@ -106,12 +126,17 @@ class PlantState:
     battery_energy_kwh: float = 0.0
     battery_power_kw: float = 0.0  # >0 charging, <0 discharging
     battery_to_electrolyser_kw: float = 0.0
+    #: Effective capacity after degradation; the SOC is measured against this.
+    battery_capacity_kwh: float = 0.0
 
     # --- electrolyser -----------------------------------------------------
     electrolyser_power_kw: float = 0.0
     electrolyser_load_frac: float = 0.0
     electrolyser_online: bool = False
     h2_production_kg_h: float = 0.0
+    #: H2 yield relative to the nameplate stack, 0..1 (falls with degradation).
+    electrolyser_efficiency: float = 1.0
+    electrolyser_temperature_c: float = 0.0
 
     # --- hydrogen storage -------------------------------------------------
     h2_level_kg: float = 0.0
@@ -146,6 +171,13 @@ class PlantState:
     h2_produced_total_kg: float = 0.0
     co2_captured_total_kg: float = 0.0
     ch4_produced_total_kg: float = 0.0
+
+    # --- condition --------------------------------------------------------
+    #: `normal` / `degraded` / `critical` / `offline`, derived every timestep.
+    plant_status: str = NORMAL
+    #: Per-unit condition, keyed by component name.
+    health: dict[str, ComponentHealth] = field(default_factory=dict)
+
     action: Action = field(default_factory=Action.idle)
 
     @property

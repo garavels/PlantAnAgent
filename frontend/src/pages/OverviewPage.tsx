@@ -6,9 +6,12 @@
  */
 
 import { BalanceCard } from '../components/overview/BalanceCard'
+import { ConditionDeck } from '../components/overview/ConditionDeck'
 import { ControlDeck } from '../components/overview/ControlDeck'
+import { EventFeed } from '../components/overview/EventFeed'
 import { MetricCard } from '../components/overview/MetricCard'
 import { PlantFlow } from '../components/overview/PlantFlow'
+import { PlantStatusChip } from '../components/overview/PlantStatusChip'
 import { PageHeader } from '../components/shell/PageHeader'
 import { kg, kw, pct } from '../lib/format'
 import { usePlant } from '../state/plantContext'
@@ -45,6 +48,9 @@ export function OverviewPage() {
   return (
     <div className="overview">
       <PageHeader title="Overview">
+        <span className="page-head__stat">
+          <PlantStatusChip status={state.plant_status} />
+        </span>
         <span className="page-head__stat">
           <span className="page-head__value">{state.clock}</span>
           <span className="page-head__unit">Sim clock</span>
@@ -153,6 +159,11 @@ export function OverviewPage() {
       </section>
 
       <ControlDeck />
+
+      <section className="overview__conditions">
+        <ConditionDeck />
+        <EventFeed />
+      </section>
     </div>
   )
 }

@@ -11,7 +11,7 @@ import { useRef } from 'react'
 import * as THREE from 'three'
 
 import { UNIT_POSITIONS } from './layout'
-import { CARRIER, SURFACE } from './palette'
+import { CARRIER, SURFACE, statusTint } from './palette'
 import { useUnitSelection } from './selection'
 import { UnitChrome, type InspectRow } from './UnitChrome'
 import { damp, type PlantVisuals } from './visuals'
@@ -30,6 +30,7 @@ export function DacUnit({ dac }: DacUnitProps) {
   const grilleMatRef = useRef<THREE.MeshStandardMaterial>(null)
   const lampMatRef = useRef<THREE.MeshStandardMaterial>(null)
   const spin = useRef(0)
+  const tint = statusTint(dac.status)
 
   useFrame((_, delta) => {
     spin.current = damp(spin.current, dac.online ? 0.35 + dac.loadFrac * 0.65 : 0, delta, 3)
@@ -41,21 +42,21 @@ export function DacUnit({ dac }: DacUnitProps) {
     }
     if (grilleMatRef.current) grilleMatRef.current.emissiveIntensity = 0.04 + s * 0.9
     if (lampMatRef.current) {
-      lampMatRef.current.emissive.set(dac.online ? CARRIER.co2 : '#5a6156')
-      lampMatRef.current.emissiveIntensity = dac.online ? 0.5 + s * 1.6 : 0.25
+      lampMatRef.current.emissive.set(tint ?? (dac.online ? CARRIER.co2 : '#5a6156'))
+      lampMatRef.current.emissiveIntensity = tint ? 1.4 : dac.online ? 0.5 + s * 1.6 : 0.25
     }
   })
 
   const rows: InspectRow[] = [
     { label: 'Power', value: `${Math.round(dac.powerKw).toLocaleString('en-US')} kW` },
-    { label: 'Status', value: dac.online ? 'Capturing' : 'Standby' },
+    { label: 'Status', value: dac.status === 'offline' ? 'Offline' : dac.online ? 'Capturing' : 'Standby' },
     { label: 'Load', value: `${Math.round(dac.loadFrac * 100)} % of ${Math.round(dac.ratedKw).toLocaleString('en-US')} kW` },
     { label: 'CO₂ captured', value: `${dac.co2kgH.toFixed(1)} kg/h` },
   ]
 
   return (
     <group position={[UNIT_POSITIONS.dac.x, 0, UNIT_POSITIONS.dac.z]}>
-      <UnitChrome id="dac" name="DAC" accent={CARRIER.co2} plateHeight={4.4} rows={rows}>
+      <UnitChrome id="dac" name="DAC" accent={CARRIER.co2} status={dac.status} plateHeight={4.4} rows={rows}>
         {(active) => (
           <group>
             {/* plinth */}

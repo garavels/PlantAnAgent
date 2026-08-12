@@ -32,6 +32,10 @@ class Methanator(Component):
     chemistry. The unit only draws the power its actual production needs, so
     power allocated beyond what the gases allow is handed back, not burned.
 
+    An outage stops the reaction outright: no CH4, and -- just as importantly --
+    no H2 or CO2 drawn from the tanks, so the feedstocks pile up while the
+    reactor is down.
+
     Extension point: minimum turndown, thermal management, catalyst
     degradation, product-quality limits.
     """
@@ -51,12 +55,19 @@ class Methanator(Component):
     def load_frac(self) -> float:
         return self.power_kw / self.config.rated_kw
 
+    @property
+    def available_kw(self) -> float:
+        """Rated power after faults: zero while the reactor is offline."""
+        return self.config.rated_kw * max(self.health, 0.0)
+
     def max_power_kw(self, dt_h: float, h2_available_kg: float, co2_available_kg: float, ch4_headroom_kg: float) -> float:
         """Largest power draw that would still produce: what the gases allow."""
+        if self.offline:
+            return 0.0
         by_h2_kg = h2_available_kg / self.config.h2_kg_per_kg_ch4
         by_co2_kg = co2_available_kg / self.config.co2_kg_per_kg_ch4
         ch4_possible_kg = min(by_h2_kg, by_co2_kg, max(0.0, ch4_headroom_kg))
-        return min(self.config.rated_kw, ch4_possible_kg * self.config.specific_energy_kwh_per_kg / dt_h)
+        return min(self.available_kw, ch4_possible_kg * self.config.specific_energy_kwh_per_kg / dt_h)
 
     def run(
         self,
@@ -68,7 +79,11 @@ class Methanator(Component):
         ch4_headroom_kg: float,
     ) -> MethanatorResult:
         """Run for `dt_h` at up to `power_kw`; returns the mass balance (kg)."""
-        offered = min(max(0.0, power_kw), self.config.rated_kw)
+        if self.offline:
+            self.power_kw = 0.0
+            self.online = False
+            return MethanatorResult(ch4_kg=0.0, h2_kg=0.0, co2_kg=0.0)
+        offered = min(max(0.0, power_kw), self.available_kw)
         by_power_kg = offered * dt_h / self.config.specific_energy_kwh_per_kg
         ch4_kg = min(
             by_power_kg,
@@ -91,4 +106,6 @@ class Methanator(Component):
             "load_frac": self.load_frac,
             "online": self.online,
             "rated_kw": self.config.rated_kw,
+            "available_kw": self.available_kw,
+            **self.health_snapshot(),
         }

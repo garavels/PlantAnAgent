@@ -7,8 +7,27 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { fetchState, resetPlant, stepPlant } from '../lib/api'
-import type { PlantAction, PlantConfig, PlantState } from '../types/plant'
+import {
+  clearFault as clearFaultRequest,
+  clearFaults as clearFaultsRequest,
+  fetchFaults,
+  fetchScenarios,
+  fetchState,
+  injectFault as injectFaultRequest,
+  loadScenario as loadScenarioRequest,
+  resetPlant,
+  stepPlant,
+} from '../lib/api'
+import type {
+  FaultKind,
+  PlantAction,
+  PlantConfig,
+  PlantEvent,
+  PlantFault,
+  PlantFrames,
+  PlantState,
+  ScenarioDef,
+} from '../types/plant'
 
 /** Wall-clock interval between advances. */
 export const TICK_MS = 200
@@ -16,6 +35,8 @@ export const TICK_MS = 200
 export const SPEEDS = [1, 4, 16] as const
 /** ~24 simulated hours of history at the default 60 s timestep. */
 const MAX_FRAMES = 1440
+/** Events kept client-side; the backend already trims its own stream. */
+const MAX_EVENTS = 200
 
 export type LinkStatus = 'connecting' | 'online' | 'down'
 
@@ -36,12 +57,21 @@ export interface PlantSession {
   speed: number
   link: LinkStatus
   error: string | null
+  events: PlantEvent[]
+  faults: PlantFault[]
+  faultKinds: FaultKind[]
+  scenarios: ScenarioDef[]
+  scenario: string | null
   setAction: (action: PlantAction) => void
   setSpeed: (speed: number) => void
   togglePlay: () => void
   stepOnce: () => void
   reset: () => void
   reconnect: () => void
+  injectFault: (type: string, severity?: number) => void
+  clearFault: (faultId: string) => void
+  clearFaults: () => void
+  loadScenario: (scenario: string) => void
 }
 
 export function usePlantSession(): PlantSession {
@@ -53,6 +83,11 @@ export function usePlantSession(): PlantSession {
   const [speed, setSpeed] = useState<number>(SPEEDS[1])
   const [link, setLink] = useState<LinkStatus>('connecting')
   const [error, setError] = useState<string | null>(null)
+  const [events, setEvents] = useState<PlantEvent[]>([])
+  const [faults, setFaults] = useState<PlantFault[]>([])
+  const [faultKinds, setFaultKinds] = useState<FaultKind[]>([])
+  const [scenarios, setScenarios] = useState<ScenarioDef[]>([])
+  const [scenario, setScenario] = useState<string | null>(null)
 
   // the tick closure reads these refs, so changing the action mid-run does not
   // tear down and rebuild the interval
@@ -68,6 +103,13 @@ export function usePlantSession(): PlantSession {
     setFrames((previous) => (replace ? next : [...previous, ...next]).slice(-MAX_FRAMES))
   }, [])
 
+  /** Conditions ride along with every response, so keep them in one place. */
+  const absorbConditions = useCallback((payload: PlantFrames) => {
+    if (payload.events) setEvents(payload.events.slice(-MAX_EVENTS))
+    if (payload.faults) setFaults(payload.faults)
+    if (payload.scenario !== undefined) setScenario(payload.scenario)
+  }, [])
+
   const fail = useCallback((reason: unknown) => {
     setPlaying(false)
     setLink('down')
@@ -80,12 +122,16 @@ export function usePlantSession(): PlantSession {
       const payload = await fetchState()
       setConfig(payload.config ?? null)
       absorb(payload.frames.length > 0 ? payload.frames : [payload.state], true)
+      absorbConditions(payload)
+      const [scenarioList, faultList] = await Promise.all([fetchScenarios(), fetchFaults()])
+      setScenarios(scenarioList.scenarios)
+      setFaultKinds(faultList.catalogue)
       setLink('online')
       setError(null)
     } catch (reason) {
       fail(reason)
     }
-  }, [absorb, fail])
+  }, [absorb, absorbConditions, fail])
 
   useEffect(() => {
     void connect()
@@ -100,6 +146,7 @@ export function usePlantSession(): PlantSession {
       try {
         const payload = await stepPlant(actionRef.current, speedRef.current)
         absorb(payload.frames)
+        absorbConditions(payload)
       } catch (reason) {
         fail(reason)
       } finally {
@@ -107,27 +154,60 @@ export function usePlantSession(): PlantSession {
       }
     }, TICK_MS)
     return () => window.clearInterval(timer)
-  }, [playing, absorb, fail])
+  }, [playing, absorb, absorbConditions, fail])
 
   const stepOnce = useCallback(async () => {
     try {
-      absorb((await stepPlant(actionRef.current, 1)).frames)
+      const payload = await stepPlant(actionRef.current, 1)
+      absorb(payload.frames)
+      absorbConditions(payload)
     } catch (reason) {
       fail(reason)
     }
-  }, [absorb, fail])
+  }, [absorb, absorbConditions, fail])
 
   const reset = useCallback(async () => {
     setPlaying(false)
     try {
       const payload = await resetPlant()
       absorb([payload.state], true)
+      absorbConditions(payload)
       setLink('online')
       setError(null)
     } catch (reason) {
       fail(reason)
     }
-  }, [absorb, fail])
+  }, [absorb, absorbConditions, fail])
+
+  // --- abnormal operation ------------------------------------------------
+  /** Faults only change conditions; the state arrives with the next step. */
+  const mutateFaults = useCallback(
+    async (call: Promise<PlantFrames>) => {
+      try {
+        absorbConditions(await call)
+        setError(null)
+      } catch (reason) {
+        setError(reason instanceof Error ? reason.message : String(reason))
+      }
+    },
+    [absorbConditions],
+  )
+
+  const loadScenario = useCallback(
+    async (id: string) => {
+      setPlaying(false)
+      try {
+        const payload = await loadScenarioRequest(id)
+        absorb([payload.state], true)
+        absorbConditions(payload)
+        setLink('online')
+        setError(null)
+      } catch (reason) {
+        fail(reason)
+      }
+    },
+    [absorb, absorbConditions, fail],
+  )
 
   return {
     state,
@@ -138,11 +218,20 @@ export function usePlantSession(): PlantSession {
     speed,
     link,
     error,
+    events,
+    faults,
+    faultKinds,
+    scenarios,
+    scenario,
     setAction,
     setSpeed,
     togglePlay: () => setPlaying((previous) => !previous),
     stepOnce: () => void stepOnce(),
     reset: () => void reset(),
     reconnect: () => void connect(),
+    injectFault: (type, severity) => void mutateFaults(injectFaultRequest(type, severity)),
+    clearFault: (faultId) => void mutateFaults(clearFaultRequest(faultId)),
+    clearFaults: () => void mutateFaults(clearFaultsRequest()),
+    loadScenario: (id) => void loadScenario(id),
   }
 }

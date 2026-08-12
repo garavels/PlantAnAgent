@@ -50,6 +50,18 @@
   margin-left: auto;
 }
 
+/* --- abnormal operation ------------------------------------------------- */
+.overview__conditions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  gap: var(--gap);
+  align-items: stretch;
+}
+
+.overview__conditions .events {
+  max-height: 260px;
+}
+
 /* --- link states ------------------------------------------------------- */
 .overview__blank {
   display: flex;
@@ -110,7 +122,8 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .overview__middle {
+  .overview__middle,
+  .overview__conditions {
     grid-template-columns: minmax(0, 1fr);
   }
 }

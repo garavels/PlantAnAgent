@@ -9,6 +9,7 @@
 import { useEffect } from 'react'
 import type { CSSProperties } from 'react'
 
+import { PlantStatusChip } from '../components/overview/PlantStatusChip'
 import { PlantScene } from '../components/plant-3d/PlantScene'
 import { PageHeader } from '../components/shell/PageHeader'
 import { SPEEDS, TICK_MS } from '../hooks/usePlantSession'
@@ -17,8 +18,14 @@ import { usePlant } from '../state/plantContext'
 import './plant-3d.css'
 
 export function Plant3DPage() {
-  const { state, config, link, error, playing, speed, togglePlay, stepOnce, reset, reconnect, setSpeed } =
+  const { state, config, link, error, playing, speed, events, togglePlay, stepOnce, reset, reconnect, setSpeed } =
     usePlant()
+
+  // the twin shows only what needs attention; the console owns the full stream
+  const alerts = events
+    .filter((event) => event.level !== 'info')
+    .slice(-3)
+    .reverse()
 
   // control-room reflexes: space runs, R resets
   useEffect(() => {
@@ -116,6 +123,9 @@ export function Plant3DPage() {
     <div className="plant3d">
       <PageHeader title="3D Plant">
         <span className="page-head__stat">
+          <PlantStatusChip status={state.plant_status} />
+        </span>
+        <span className="page-head__stat">
           <span className="page-head__value">{state.clock}</span>
           <span className="page-head__unit">Sim clock</span>
         </span>
@@ -151,6 +161,18 @@ export function Plant3DPage() {
             <div className="plant3d__curtail mono">{kw(state.solar_curtailed_kw)} kW curtailed</div>
           )}
         </aside>
+
+        {alerts.length > 0 && (
+          <aside className="plant3d__alerts" aria-label="Recent simulator alerts">
+            {alerts.map((event) => (
+              <span key={event.seq} className={`plant3d__alert plant3d__alert--${event.level}`}>
+                <i className="plant3d__alert-dot" />
+                <b className="mono">{event.clock}</b>
+                {event.message}
+              </span>
+            ))}
+          </aside>
+        )}
 
         <span className="plant3d__hint">Drag to orbit · scroll to zoom · click a unit to inspect</span>
       </section>

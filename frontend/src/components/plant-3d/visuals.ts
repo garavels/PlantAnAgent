@@ -11,7 +11,14 @@
  */
 
 import { clamp } from '../../lib/format'
-import type { PlantConfig, PlantState } from '../../types/plant'
+import type { PlantConfig, PlantState, PlantStatus, UnitStatus } from '../../types/plant'
+
+/** How a unit is doing, straight from the simulator's health report. */
+export interface UnitCondition {
+  status: UnitStatus
+  /** 0 when healthy, 1 when the unit produces nothing. */
+  degradation: number
+}
 
 export interface FlowVisual {
   /** Current throughput, in the carrier's own unit (kW or kg/h). */
@@ -23,6 +30,8 @@ export interface FlowVisual {
 }
 
 export interface PlantVisuals {
+  /** Plant-level condition, as derived by the simulator. */
+  status: PlantStatus
   sun: {
     /** 0 at night, 1 at solar noon -- mirrors the simulator's half-sine. */
     elevation: number
@@ -31,13 +40,15 @@ export interface PlantVisuals {
     /** Sun azimuth progress across the day, 0 at sunrise, 1 at sunset. */
     phase: number
   }
-  solar: {
+  solar: UnitCondition & {
     kw: number
     /** vs peak array power, 0..1 */
     frac: number
     daylight: boolean
+    /** Clear-sky power: above `kw` while a weather disturbance is running. */
+    potentialKw: number
   }
-  battery: {
+  battery: UnitCondition & {
     soc: number
     energyKwh: number
     capacityKwh: number
@@ -46,21 +57,24 @@ export interface PlantVisuals {
     charging: boolean
     discharging: boolean
   }
-  electrolyser: {
+  electrolyser: UnitCondition & {
     online: boolean
     powerKw: number
     ratedKw: number
     loadFrac: number
     h2kgH: number
+    /** Yield vs the nameplate stack, 0..1. */
+    efficiency: number
+    temperatureC: number
   }
-  dac: {
+  dac: UnitCondition & {
     online: boolean
     powerKw: number
     ratedKw: number
     loadFrac: number
     co2kgH: number
   }
-  methanator: {
+  methanator: UnitCondition & {
     online: boolean
     powerKw: number
     ratedKw: number
@@ -97,9 +111,16 @@ export interface TankVisual {
 }
 
 const FLOW_EPSILON = 0.5
+const HEALTHY: UnitCondition = { status: 'nominal', degradation: 0 }
 
 function flow(value: number, reference: number): FlowVisual {
   return { value, intensity: clamp(value / Math.max(reference, 1)), live: value > FLOW_EPSILON }
+}
+
+/** A unit's condition, defaulting to healthy for pre-V4 telemetry. */
+function condition(state: PlantState, unit: string): UnitCondition {
+  const health = state.health?.[unit]
+  return health ? { status: health.status, degradation: health.degradation } : HEALTHY
 }
 
 export function deriveVisuals(state: PlantState, config: PlantConfig | null): PlantVisuals {
@@ -127,28 +148,36 @@ export function deriveVisuals(state: PlantState, config: PlantConfig | null): Pl
   const dayFactor = clamp(state.solar_available_kw / (0.22 * peakKw))
 
   return {
+    status: state.plant_status ?? 'normal',
     sun: { elevation, dayFactor, phase },
     solar: {
+      ...condition(state, 'solar'),
       kw: state.solar_available_kw,
       frac: clamp(state.solar_available_kw / peakKw),
       daylight: state.solar_available_kw > FLOW_EPSILON,
+      potentialKw: state.solar_potential_kw ?? state.solar_available_kw,
     },
     battery: {
+      ...condition(state, 'battery'),
       soc: clamp(state.battery_soc),
       energyKwh: state.battery_energy_kwh,
-      capacityKwh: config?.battery.capacity_kwh ?? 0,
+      capacityKwh: state.battery_capacity_kwh ?? config?.battery.capacity_kwh ?? 0,
       powerKw: state.battery_power_kw,
       charging: state.battery_power_kw > FLOW_EPSILON,
       discharging: state.battery_power_kw < -FLOW_EPSILON,
     },
     electrolyser: {
+      ...condition(state, 'electrolyser'),
       online: state.electrolyser_online,
       powerKw: state.electrolyser_power_kw,
       ratedKw,
       loadFrac: clamp(state.electrolyser_load_frac),
       h2kgH: state.h2_production_kg_h,
+      efficiency: state.electrolyser_efficiency ?? 1,
+      temperatureC: state.electrolyser_temperature_c ?? 0,
     },
     dac: {
+      ...condition(state, 'dac'),
       online: state.dac_online,
       powerKw: state.dac_power_kw,
       ratedKw: dacRatedKw,
@@ -156,6 +185,7 @@ export function deriveVisuals(state: PlantState, config: PlantConfig | null): Pl
       co2kgH: state.co2_capture_kg_h,
     },
     methanator: {
+      ...condition(state, 'methanator'),
       online: state.methanator_online,
       powerKw: state.methanator_power_kw,
       ratedKw: metRatedKw,

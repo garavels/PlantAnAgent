@@ -54,10 +54,13 @@ export function BatteryUnit({ battery }: BatteryUnitProps) {
     { label: 'Status', value: status },
     { label: 'Stored', value: `${Math.round(battery.energyKwh).toLocaleString('en-US')} / ${Math.round(battery.capacityKwh).toLocaleString('en-US')} kWh` },
   ]
+  if (battery.degradation > 0) {
+    rows.push({ label: 'Capacity fade', value: `${Math.round(battery.degradation * 100)} %` })
+  }
 
   return (
     <group position={[UNIT_POSITIONS.battery.x, 0, UNIT_POSITIONS.battery.z]}>
-      <UnitChrome id="battery" name="Battery" accent={CARRIER.stored} plateHeight={3.9} rows={rows}>
+      <UnitChrome id="battery" name="Battery" accent={CARRIER.stored} status={battery.status} plateHeight={3.9} rows={rows}>
         {(active) => (
           <group>
             {/* plinth */}

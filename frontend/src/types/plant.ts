@@ -8,11 +8,75 @@ export interface PlantAction {
   battery_support_kw: number
 }
 
+export type PlantStatus = 'normal' | 'degraded' | 'critical' | 'offline'
+export type UnitStatus = 'nominal' | 'degraded' | 'offline'
+export type EventLevel = 'info' | 'warning' | 'critical'
+
+export interface ComponentHealth {
+  status: UnitStatus
+  degradation: number
+  offline: boolean
+}
+
+/** One thing the simulator noticed, in its own words. */
+export interface PlantEvent {
+  seq: number
+  time_s: number
+  clock: string
+  level: EventLevel
+  code: string
+  message: string
+}
+
+/** A fault or disturbance the plant has been given. */
+export interface PlantFault {
+  id: string
+  type: string
+  label: string
+  target: string
+  mode: 'degradation' | 'outage' | 'sensor'
+  severity: number
+  channel: string | null
+  start_s: number
+  end_s: number | null
+  duration_s: number | null
+  active: boolean
+  cleared: boolean
+}
+
+/** An injectable fault type, as advertised by the simulator. */
+export interface FaultKind {
+  type: string
+  label: string
+  target: string
+  mode: 'degradation' | 'outage' | 'sensor'
+  description: string
+  default_severity: number
+  default_channel: string | null
+}
+
+export interface ScenarioDef {
+  id: string
+  name: string
+  description: string
+  start_hour: number
+  initial: { battery_soc: number | null; h2_kg: number | null; co2_kg: number | null; ch4_kg: number | null }
+  faults: {
+    type: string
+    severity: number
+    start_s: number | null
+    duration_s: number | null
+    channel: string | null
+  }[]
+}
+
 export interface PlantState {
   step: number
   time_s: number
 
   solar_available_kw: number
+  solar_potential_kw: number
+  solar_output_factor: number
   solar_to_battery_kw: number
   solar_to_electrolyser_kw: number
   solar_to_dac_kw: number
@@ -23,11 +87,14 @@ export interface PlantState {
   battery_energy_kwh: number
   battery_power_kw: number
   battery_to_electrolyser_kw: number
+  battery_capacity_kwh: number
 
   electrolyser_power_kw: number
   electrolyser_load_frac: number
   electrolyser_online: boolean
   h2_production_kg_h: number
+  electrolyser_efficiency: number
+  electrolyser_temperature_c: number
 
   h2_level_kg: number
   h2_capacity_kg: number
@@ -56,6 +123,9 @@ export interface PlantState {
   h2_produced_total_kg: number
   co2_captured_total_kg: number
   ch4_produced_total_kg: number
+
+  plant_status: PlantStatus
+  health: Record<string, ComponentHealth>
 
   action: PlantAction
 
@@ -98,4 +168,17 @@ export interface PlantFrames {
   state: PlantState
   frames: PlantState[]
   config?: PlantConfig
+  events?: PlantEvent[]
+  faults?: PlantFault[]
+  scenario?: string | null
+}
+
+export interface ScenarioCatalogue {
+  scenarios: ScenarioDef[]
+  scenario: string | null
+}
+
+export interface FaultCatalogue {
+  catalogue: FaultKind[]
+  faults: PlantFault[]
 }
