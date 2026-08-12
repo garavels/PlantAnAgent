@@ -32,7 +32,8 @@ const LEGEND = [
   ['var(--waste)', 'Curtailed'],
 ] as const
 
-interface ConduitProps {
+interface ConduitSpec {
+  id: string
   d: string
   power: number
   reference: number
@@ -44,7 +45,7 @@ interface ConduitProps {
 }
 
 /** One line on the diagram: static rail + travelling energy dots. */
-function Conduit({ d, power, reference, accent, label, at, anchor = 'middle', dashed }: ConduitProps) {
+function ConduitRail({ d, power, reference, accent, dashed }: ConduitSpec) {
   const live = power > 0.5
   const load = intensity(power, reference)
   return (
@@ -59,10 +60,29 @@ function Conduit({ d, power, reference, accent, label, at, anchor = 'middle', da
           animationDuration: `${(1.6 - 1.1 * load).toFixed(2)}s`,
         }}
       />
-      <text className={`conduit__label mono${live ? ' conduit__label--live' : ''}`} x={at[0]} y={at[1]} textAnchor={anchor}>
-        {label}
-      </text>
     </g>
+  )
+}
+
+/** A conduit's reading, drawn in a layer above the equipment.
+ *
+ * The nodes are opaque, and a three-digit rate is wider than the gaps between
+ * them, so a label painted underneath one silently loses its leading digits --
+ * `412.1 kg/h` reading as `12.1 kg/h`. Labels therefore sit on top, with a halo
+ * in the card colour so they stay legible wherever they land.
+ */
+function ConduitLabel({ power, accent, label, at, anchor = 'middle' }: ConduitSpec) {
+  const live = power > 0.5
+  return (
+    <text
+      className={`conduit__label mono${live ? ' conduit__label--live' : ''}`}
+      style={{ color: accent }}
+      x={at[0]}
+      y={at[1]}
+      textAnchor={anchor}
+    >
+      {label}
+    </text>
   )
 }
 
@@ -259,6 +279,128 @@ export function PlantFlow({ state, config }: { state: PlantState; config: PlantC
           ? { text: 'Draining', live: true }
           : { text: 'Holding', live: false }
 
+  const conduits: ConduitSpec[] = [
+    {
+      id: 'solar',
+      d: 'M244 265 H 330',
+      power: state.solar_available_kw,
+      reference: peakKw,
+      accent: 'var(--solar)',
+      label: `${kw(state.solar_available_kw)} kW`,
+      at: [287, 252],
+    },
+    {
+      id: 'solar-battery',
+      d: 'M330 265 V 94 H 420',
+      power: state.solar_to_battery_kw,
+      reference: chargeKw,
+      accent: 'var(--stored)',
+      label: `${kw(state.solar_to_battery_kw)} kW`,
+      at: [344, 84],
+      anchor: 'start',
+    },
+    {
+      id: 'solar-stack',
+      d: 'M330 265 V 280 H 420',
+      power: state.solar_to_electrolyser_kw,
+      reference: ratedKw,
+      accent: 'var(--feed)',
+      label: `${kw(state.solar_to_electrolyser_kw)} kW`,
+      at: [344, 301],
+      anchor: 'start',
+    },
+    {
+      id: 'solar-dac',
+      d: 'M330 265 V 460 H 420',
+      power: state.solar_to_dac_kw,
+      reference: dacRatedKw,
+      accent: 'var(--co2)',
+      label: `${kw(state.solar_to_dac_kw)} kW`,
+      at: [344, 481],
+      anchor: 'start',
+    },
+    {
+      id: 'battery-stack',
+      d: 'M545 164 V 210',
+      power: state.battery_to_electrolyser_kw,
+      reference: chargeKw,
+      accent: 'var(--stored)',
+      label: `${kw(state.battery_to_electrolyser_kw)} kW`,
+      at: [559, 196],
+      anchor: 'start',
+    },
+    {
+      id: 'stack-h2',
+      d: 'M670 280 H 700 V 190 H 742',
+      power: state.h2_production_kg_h,
+      reference: ratedKgH,
+      accent: 'var(--h2)',
+      label: `${state.h2_production_kg_h.toFixed(1)} kg/h`,
+      at: [736, 178],
+      anchor: 'end',
+    },
+    {
+      id: 'dac-co2',
+      d: 'M670 460 H 700 V 480 H 742',
+      power: state.co2_capture_kg_h,
+      reference: dacRatedKgH,
+      accent: 'var(--co2)',
+      label: `${state.co2_capture_kg_h.toFixed(1)} kg/h`,
+      at: [736, 552],
+      anchor: 'end',
+    },
+    {
+      id: 'h2-methanator',
+      d: 'M950 190 H 985 V 280 H 1022',
+      power: h2ToMetKgH,
+      reference: ratedKgH,
+      accent: 'var(--h2)',
+      label: `${h2ToMetKgH.toFixed(1)} kg/h`,
+      at: [1018, 262],
+      anchor: 'end',
+    },
+    {
+      id: 'co2-methanator',
+      d: 'M950 480 H 990 V 345 H 1022',
+      power: co2ToMetKgH,
+      reference: dacRatedKgH,
+      accent: 'var(--co2)',
+      label: `${co2ToMetKgH.toFixed(1)} kg/h`,
+      at: [1018, 424],
+      anchor: 'end',
+    },
+    {
+      id: 'methanator-ch4',
+      d: 'M1260 280 H 1332',
+      power: state.ch4_production_kg_h,
+      reference: metRatedKgH,
+      accent: 'var(--ch4)',
+      label: `${state.ch4_production_kg_h.toFixed(1)} kg/h`,
+      at: [1296, 268],
+    },
+    {
+      id: 'solar-methanator',
+      d: 'M330 460 V 612 H 1140 V 350',
+      power: state.solar_to_methanator_kw,
+      reference: metRatedKw,
+      accent: 'var(--feed)',
+      label: `${kw(state.solar_to_methanator_kw)} kW`,
+      at: [660, 600],
+      anchor: 'end',
+    },
+    {
+      id: 'curtailed',
+      d: 'M287 265 V 556',
+      power: state.solar_curtailed_kw,
+      reference: peakKw,
+      accent: 'var(--waste)',
+      label: `${kw(state.solar_curtailed_kw)} kW`,
+      at: [275, 528],
+      anchor: 'end',
+      dashed: true,
+    },
+  ]
+
   return (
     <div className="flow-frame">
     <svg className="flow" viewBox={`0 0 ${VIEW.w} ${VIEW.h}`} preserveAspectRatio="xMidYMid meet">
@@ -273,113 +415,10 @@ export function PlantFlow({ state, config }: { state: PlantState; config: PlantC
         ))}
       </g>
 
-      {/* --- conduits (behind the equipment) --- */}
-      <Conduit
-        d="M244 265 H 330"
-        power={state.solar_available_kw}
-        reference={peakKw}
-        accent="var(--solar)"
-        label={`${kw(state.solar_available_kw)} kW`}
-        at={[287, 252]}
-      />
-      <Conduit
-        d="M330 265 V 94 H 420"
-        power={state.solar_to_battery_kw}
-        reference={chargeKw}
-        accent="var(--stored)"
-        label={`${kw(state.solar_to_battery_kw)} kW`}
-        at={[344, 84]}
-        anchor="start"
-      />
-      <Conduit
-        d="M330 265 V 280 H 420"
-        power={state.solar_to_electrolyser_kw}
-        reference={ratedKw}
-        accent="var(--feed)"
-        label={`${kw(state.solar_to_electrolyser_kw)} kW`}
-        at={[344, 301]}
-        anchor="start"
-      />
-      <Conduit
-        d="M330 265 V 460 H 420"
-        power={state.solar_to_dac_kw}
-        reference={dacRatedKw}
-        accent="var(--co2)"
-        label={`${kw(state.solar_to_dac_kw)} kW`}
-        at={[344, 481]}
-        anchor="start"
-      />
-      <Conduit
-        d="M545 164 V 210"
-        power={state.battery_to_electrolyser_kw}
-        reference={chargeKw}
-        accent="var(--stored)"
-        label={`${kw(state.battery_to_electrolyser_kw)} kW`}
-        at={[559, 196]}
-        anchor="start"
-      />
-      <Conduit
-        d="M670 280 H 700 V 190 H 742"
-        power={state.h2_production_kg_h}
-        reference={ratedKgH}
-        accent="var(--h2)"
-        label={`${state.h2_production_kg_h.toFixed(1)} kg/h`}
-        at={[736, 178]}
-        anchor="end"
-      />
-      <Conduit
-        d="M670 460 H 700 V 480 H 742"
-        power={state.co2_capture_kg_h}
-        reference={dacRatedKgH}
-        accent="var(--co2)"
-        label={`${state.co2_capture_kg_h.toFixed(1)} kg/h`}
-        at={[736, 512]}
-        anchor="end"
-      />
-      <Conduit
-        d="M950 190 H 985 V 280 H 1022"
-        power={h2ToMetKgH}
-        reference={ratedKgH}
-        accent="var(--h2)"
-        label={`${h2ToMetKgH.toFixed(1)} kg/h`}
-        at={[1018, 262]}
-        anchor="end"
-      />
-      <Conduit
-        d="M950 480 H 990 V 345 H 1022"
-        power={co2ToMetKgH}
-        reference={dacRatedKgH}
-        accent="var(--co2)"
-        label={`${co2ToMetKgH.toFixed(1)} kg/h`}
-        at={[1018, 424]}
-        anchor="end"
-      />
-      <Conduit
-        d="M1260 280 H 1332"
-        power={state.ch4_production_kg_h}
-        reference={metRatedKgH}
-        accent="var(--ch4)"
-        label={`${state.ch4_production_kg_h.toFixed(1)} kg/h`}
-        at={[1296, 268]}
-      />
-      <Conduit
-        d="M330 460 V 612 H 1140 V 350"
-        power={state.solar_to_methanator_kw}
-        reference={metRatedKw}
-        accent="var(--feed)"
-        label={`${kw(state.solar_to_methanator_kw)} kW`}
-        at={[735, 600]}
-      />
-      <Conduit
-        d="M287 265 V 556"
-        power={state.solar_curtailed_kw}
-        reference={peakKw}
-        accent="var(--waste)"
-        label={`${kw(state.solar_curtailed_kw)} kW`}
-        at={[275, 528]}
-        anchor="end"
-        dashed
-      />
+      {/* --- conduits (behind the equipment; their labels go on top) --- */}
+      {conduits.map((conduit) => (
+        <ConduitRail key={conduit.id} {...conduit} />
+      ))}
 
       {/* bus junction + annotations */}
       <circle className="flow__junction" cx={330} cy={265} r={3.5} />
@@ -517,6 +556,11 @@ export function PlantFlow({ state, config }: { state: PlantState; config: PlantC
         fill={state.ch4_fill}
         netKgH={state.ch4_production_kg_h}
       />
+
+      {/* --- readings, above the equipment so no digit is ever painted over --- */}
+      {conduits.map((conduit) => (
+        <ConduitLabel key={conduit.id} {...conduit} />
+      ))}
     </svg>
     </div>
   )

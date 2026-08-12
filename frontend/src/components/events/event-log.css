@@ -24,8 +24,9 @@
   color: var(--text-dim);
 }
 
+/* the code column fits the longest code the simulator emits, 30 characters */
 .log__list--coded .log__row {
-  grid-template-columns: 74px 62px 216px minmax(0, 1fr);
+  grid-template-columns: 74px 62px 240px minmax(0, 1fr);
 }
 
 .log__row + .log__row {

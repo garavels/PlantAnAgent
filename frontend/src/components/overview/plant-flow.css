@@ -47,9 +47,15 @@
   }
 }
 
+/* Halo in the card colour: the labels are drawn over the equipment, so they
+   need to carry their own background where a node happens to sit behind. */
 .conduit__label {
   font-size: 12px;
   fill: var(--text-faint);
+  paint-order: stroke;
+  stroke: var(--card-raised);
+  stroke-width: 4;
+  stroke-linejoin: round;
 }
 
 .conduit__label--live {

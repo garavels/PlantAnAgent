@@ -109,6 +109,6 @@
   /* stacked: the diagram keeps a real height instead of shrinking to its header */
   .overview__middle {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(420px, 1fr) auto;
+    grid-template-rows: minmax(520px, 1fr) auto;
   }
 }
