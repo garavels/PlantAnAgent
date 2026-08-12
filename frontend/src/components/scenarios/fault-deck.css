@@ -1,26 +1,26 @@
-/* Sibling of the control deck: same bone panel, same three-column rhythm. */
-.conditions {
+/* Sibling of the control deck: same bone panel, same column rhythm. */
+.faults {
   display: grid;
-  grid-template-columns: minmax(240px, 1fr) minmax(300px, 1.3fr) minmax(240px, 1fr);
+  grid-template-columns: minmax(320px, 1.4fr) minmax(260px, 1fr);
   gap: 34px;
   align-items: start;
   padding: 16px 20px 18px;
-  animation: rise 460ms 260ms ease both;
+  animation: rise 460ms 120ms ease both;
 }
 
-.conditions__group {
+.faults__group {
   display: flex;
   flex-direction: column;
   gap: 11px;
   min-width: 0;
 }
 
-.conditions__group + .conditions__group {
+.faults__group + .faults__group {
   padding-left: 34px;
   border-left: 1px solid var(--bone-line);
 }
 
-.conditions__row {
+.faults__row {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -28,47 +28,19 @@
   min-height: 24px;
 }
 
-.conditions__hint {
+.faults__hint {
   font-size: 11px;
   color: var(--ink-faint);
 }
 
-.conditions__pick {
-  display: flex;
-  gap: 6px;
-}
-
-.conditions__select {
-  flex: 1;
-  min-width: 0;
-  padding: 5px 9px;
-  border: 1px solid var(--bone-line);
-  border-radius: var(--r-pill);
-  background: var(--bone-sunk);
-  font-family: var(--font-sans);
-  font-size: 11.5px;
-  color: var(--ink-text);
-}
-
-.conditions__select:disabled {
-  opacity: 0.4;
-}
-
-.conditions__desc {
-  margin: 0;
-  font-size: 11px;
-  line-height: 1.45;
-  color: var(--ink-dim);
-}
-
 /* --- injection --------------------------------------------------------- */
-.conditions__faults {
+.faults__kinds {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
 
-.conditions__inject {
+.faults__inject {
   padding: 4px 10px;
   border: 1px dashed var(--bone-line);
   border-radius: var(--r-pill);
@@ -81,17 +53,17 @@
     border-color 160ms ease;
 }
 
-.conditions__inject:hover:not(:disabled) {
+.faults__inject:hover:not(:disabled) {
   color: var(--ink-text);
   border-color: var(--ink-faint);
 }
 
-.conditions__inject:disabled {
+.faults__inject:disabled {
   opacity: 0.4;
 }
 
 /* --- what is running --------------------------------------------------- */
-.conditions__active {
+.faults__active {
   display: flex;
   flex-direction: column;
   gap: 5px;
@@ -100,12 +72,12 @@
   list-style: none;
 }
 
-.conditions__none {
+.faults__none {
   font-size: 11.5px;
   color: var(--ink-faint);
 }
 
-.conditions__fault {
+.faults__fault {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -114,12 +86,12 @@
   opacity: 0.6;
 }
 
-.conditions__fault--on {
+.faults__fault--on {
   opacity: 1;
   color: var(--ink-text);
 }
 
-.conditions__fault-name {
+.faults__fault-name {
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -129,7 +101,7 @@
   white-space: nowrap;
 }
 
-.conditions__led {
+.faults__led {
   width: 6px;
   height: 6px;
   flex: none;
@@ -137,15 +109,15 @@
   background: var(--ch4-ink);
 }
 
-.conditions__led--outage {
+.faults__led--outage {
   background: var(--alarm);
 }
 
-.conditions__led--sensor {
+.faults__led--sensor {
   background: var(--co2-ink);
 }
 
-.conditions__fault-meta {
+.faults__fault-meta {
   margin-left: auto;
   font-size: 10px;
   letter-spacing: -0.05em;
@@ -153,7 +125,7 @@
   white-space: nowrap;
 }
 
-.conditions__clear {
+.faults__clear {
   flex: none;
   width: 18px;
   height: 18px;
@@ -165,18 +137,18 @@
   color: var(--ink-faint);
 }
 
-.conditions__clear:hover {
+.faults__clear:hover {
   color: var(--ink-text);
   background: var(--bone-sunk);
 }
 
 @media (max-width: 1180px) {
-  .conditions {
+  .faults {
     grid-template-columns: minmax(0, 1fr);
     gap: 18px;
   }
 
-  .conditions__group + .conditions__group {
+  .faults__group + .faults__group {
     padding-left: 0;
     padding-top: 18px;
     border-left: 0;

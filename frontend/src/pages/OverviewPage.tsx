@@ -1,14 +1,12 @@
 /** Overview: what the plant is doing right now.
  *
- * Reads simulator state only -- four readouts, the single-line diagram, the
- * energy balance, and the operator deck. Future views (3D plant, metrics, agent)
- * sit alongside it and read the same `usePlant()` session.
+ * One glance, three bands: a strip of small readouts, the single-line diagram
+ * given the bulk of the page, and the operator deck along the bottom. Events and
+ * scenarios have pages of their own, so nothing competes with the diagram here.
  */
 
 import { BalanceCard } from '../components/overview/BalanceCard'
-import { ConditionDeck } from '../components/overview/ConditionDeck'
 import { ControlDeck } from '../components/overview/ControlDeck'
-import { EventFeed } from '../components/overview/EventFeed'
 import { MetricCard } from '../components/overview/MetricCard'
 import { PlantFlow } from '../components/overview/PlantFlow'
 import { PlantStatusChip } from '../components/overview/PlantStatusChip'
@@ -80,6 +78,7 @@ export function OverviewPage() {
 
       <section className="overview__metrics">
         <MetricCard
+          compact
           index={0}
           label="Solar power"
           unit="kW available"
@@ -90,6 +89,7 @@ export function OverviewPage() {
           trendMax={peakKw}
         />
         <MetricCard
+          compact
           index={1}
           label="Battery"
           unit="% state of charge"
@@ -102,6 +102,7 @@ export function OverviewPage() {
           trendMax={1}
         />
         <MetricCard
+          compact
           index={2}
           label="H₂ production"
           unit="kg per hour"
@@ -114,6 +115,7 @@ export function OverviewPage() {
           trendMax={ratedKgH}
         />
         <MetricCard
+          compact
           index={3}
           label="H₂ storage"
           unit="kg in tank"
@@ -124,6 +126,7 @@ export function OverviewPage() {
           trendMax={state.h2_capacity_kg}
         />
         <MetricCard
+          compact
           index={4}
           label="CO₂ storage"
           unit="kg captured"
@@ -134,6 +137,7 @@ export function OverviewPage() {
           trendMax={state.co2_capacity_kg}
         />
         <MetricCard
+          compact
           index={5}
           label="CH₄ production"
           unit="kg per hour"
@@ -159,11 +163,6 @@ export function OverviewPage() {
       </section>
 
       <ControlDeck />
-
-      <section className="overview__conditions">
-        <ConditionDeck />
-        <EventFeed />
-      </section>
     </div>
   )
 }

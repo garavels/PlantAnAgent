@@ -8,8 +8,10 @@
 import type { ReactNode } from 'react'
 
 import { AgentPage } from './pages/AgentPage'
+import { EventsPage } from './pages/EventsPage'
 import { OverviewPage } from './pages/OverviewPage'
 import { Plant3DView } from './pages/Plant3DView'
+import { ScenariosPage } from './pages/ScenariosPage'
 
 export interface ViewDef {
   path: string
@@ -79,7 +81,8 @@ export const VIEWS: ViewDef[] = [
   {
     path: '/events',
     label: 'Events',
-    ready: false,
+    ready: true,
+    element: <EventsPage />,
     glyph: (
       <svg viewBox="0 0 20 20" {...stroke}>
         <path d="M2.5 10h3.2l2-4.5 2.6 9L12.8 10h4.7" />
@@ -89,7 +92,8 @@ export const VIEWS: ViewDef[] = [
   {
     path: '/scenarios',
     label: 'Scenarios',
-    ready: false,
+    ready: true,
+    element: <ScenariosPage />,
     glyph: (
       <svg viewBox="0 0 20 20" {...stroke}>
         <path d="M4 3.5v13M4 5h9l-1.6 2.5L13 10H4" />

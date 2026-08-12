@@ -1,0 +1,13 @@
+.scenarios {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+.scenarios__note {
+  max-width: 78ch;
+  margin: 0 4px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}

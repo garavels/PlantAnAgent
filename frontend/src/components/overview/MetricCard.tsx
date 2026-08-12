@@ -11,11 +11,26 @@ interface MetricCardProps {
   /** 0..1 -- shown as a percentage of the unit's own ceiling. */
   fill?: number
   index?: number
+  /** Strip form: same readout, a third of the height. */
+  compact?: boolean
 }
 
-export function MetricCard({ label, value, unit, footer, trend, trendMax, fill, index = 0 }: MetricCardProps) {
+export function MetricCard({
+  label,
+  value,
+  unit,
+  footer,
+  trend,
+  trendMax,
+  fill,
+  index = 0,
+  compact = false,
+}: MetricCardProps) {
   return (
-    <article className="card metric" style={{ animationDelay: `${index * 60}ms` }}>
+    <article
+      className={`card metric${compact ? ' metric--compact' : ''}`}
+      style={{ animationDelay: `${index * 60}ms` }}
+    >
       <header className="metric__head">
         <span className="label">{label}</span>
         {fill !== undefined && <span className="metric__gauge mono">{Math.round(fill * 100)}%</span>}
