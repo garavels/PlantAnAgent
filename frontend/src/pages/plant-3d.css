@@ -225,6 +225,15 @@
   color: var(--ink-faint);
 }
 
+/* who is driving the plant right now */
+.plant3d__driver {
+  margin-left: 14px;
+  padding-left: 14px;
+  border-left: 1px solid var(--bone-line);
+  font-size: 11px;
+  color: var(--ink-dim);
+}
+
 /* --- link states -------------------------------------------------------- */
 .plant3d__blank {
   display: flex;

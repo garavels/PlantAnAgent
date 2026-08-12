@@ -7,7 +7,7 @@ setup:            ## install python + node dependencies
 	uv sync
 	cd frontend && npm install
 
-backend:          ## run the dev API on :8000
+backend:          ## run the control backend on :8000
 	uv run uvicorn plant_backend.app:app --reload --port 8000
 
 frontend:         ## run the control room on :5173
@@ -19,7 +19,7 @@ dev:              ## run both (ctrl-c stops both)
 sim:              ## run one simulated day headless
 	uv run python -m plant_sim --hours 24
 
-test:             ## simulator test suite
+test:             ## simulator + backend test suite
 	uv run pytest -q
 
 build:            ## typecheck + build the frontend

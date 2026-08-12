@@ -8,7 +8,7 @@ requires-python = ">=3.11"
 dependencies = ["plant-sim", "plant-backend"]
 
 [dependency-groups]
-dev = ["pytest>=8.0"]
+dev = ["pytest>=8.0", "httpx>=0.27"]  # httpx: fastapi's TestClient
 
 [tool.uv]
 package = false
@@ -21,4 +21,4 @@ plant-sim = { workspace = true }
 plant-backend = { workspace = true }
 
 [tool.pytest.ini_options]
-testpaths = ["simulator/tests"]
+testpaths = ["simulator/tests", "backend/tests"]

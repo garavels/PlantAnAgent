@@ -1,25 +1,51 @@
-"""Development API in front of the simulator.
-
-Deliberately thin: it holds one `PlantSession` in memory and exposes it over
-HTTP so the frontend never imports the simulator directly. The clock lives in
-the browser -- the UI decides when to call `/api/step`, the backend only decides
-what happens when it does. That is the seam where controllers and agents will
-eventually take over.
+"""HTTP surface of the plant-control backend.
 
     uv run uvicorn plant_backend.app:app --reload --port 8000
+
+The frontend reaches the plant only through here, and only ever *asks*: what is
+the state, please run, please stop, please inject this fault, please switch to
+manual. The simulation loop, the controller and the action guard all live behind
+this layer (`orchestration`, `controllers`, `safety`), so there is no way for a
+client to hand the simulator an action that was not validated first.
+
+Live state arrives over SSE at `/api/stream` -- one self-contained payload per
+tick. The REST routes are for asking questions and for changing things; the
+stream is for watching.
 """
 
 from __future__ import annotations
 
+import asyncio
+import contextlib
+import json
+from collections.abc import AsyncIterator
 from typing import Any
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from .session import PlantSession
+from .orchestration import Broadcaster, PlantRuntime, SimulationClock
 
-app = FastAPI(title="Plant An Agent -- dev API", version="0.1.0")
+#: Seconds without an update before the stream sends a keepalive comment.
+KEEPALIVE_S = 15.0
+
+runtime = PlantRuntime()
+broadcast = Broadcaster()
+clock = SimulationClock(runtime, broadcast)
+
+
+@contextlib.asynccontextmanager
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    clock.start()
+    try:
+        yield
+    finally:
+        await clock.stop()
+
+
+app = FastAPI(title="Plant An Agent -- control backend", version="0.5.0", lifespan=lifespan)
 
 # Dev only: the Vite dev server proxies /api, but allow direct calls too.
 app.add_middleware(
@@ -29,11 +55,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-session = PlantSession()
-
 
 class ActionModel(BaseModel):
-    """How to split the available power this timestep. See `plant_sim.Action`."""
+    """How to split the available power. See `plant_sim.Action`."""
 
     battery_share: float = 0.5
     electrolyser_share: float = 0.5
@@ -43,9 +67,27 @@ class ActionModel(BaseModel):
 
 
 class StepRequest(BaseModel):
-    action: ActionModel = Field(default_factory=ActionModel)
-    #: Fast-forward: apply the same action this many timesteps in one call.
+    """Advance the plant by hand. Used when the clock is paused."""
+
+    #: Manual mode only: the allocation to apply (and remember).
+    action: ActionModel | None = None
     repeat: int = Field(default=1, ge=1, le=1000)
+
+
+class SpeedRequest(BaseModel):
+    #: Timesteps applied per tick.
+    speed: int = Field(ge=1, le=64)
+
+
+class ControllerConfigRequest(BaseModel):
+    """Change how the plant is driven. Every field is optional."""
+
+    mode: str | None = None
+    controller: str | None = None
+    #: Partial update of the operating envelope. See `controllers.Constraints`.
+    constraints: dict[str, float | None] | None = None
+    #: The manual setpoint; stored now, validated when it is applied.
+    action: ActionModel | None = None
 
 
 class FaultRequest(BaseModel):
@@ -65,87 +107,179 @@ class ScenarioRequest(BaseModel):
     scenario: str
 
 
+def _publish(payload: dict[str, Any]) -> dict[str, Any]:
+    """Send an update to every connected client and answer the caller with it."""
+    broadcast.publish(payload)
+    return payload
+
+
 @app.get("/api/health")
 def health() -> dict[str, Any]:
-    return {"status": "ok", "step": session.simulator.step_index}
+    return {
+        "status": "ok",
+        "step": runtime.session.simulator.step_index,
+        "clock": clock.running,
+        "clients": broadcast.subscribers,
+    }
 
 
 @app.get("/api/config")
 def get_config() -> dict[str, Any]:
-    return session.config
+    return runtime.session.config
 
 
 @app.get("/api/state")
 def get_state(history: int = 240) -> dict[str, Any]:
-    """Current telemetry, plus recent frames so a reloaded UI can redraw its charts."""
+    """Everything a freshly loaded control room needs, including its charts."""
     return {
-        "state": session.state,
-        "frames": session.recent(history),
-        "config": session.config,
-        **session.conditions(),
+        **runtime.payload(runtime.session.recent(history), replace=True),
+        "config": runtime.session.config,
     }
 
 
+@app.get("/api/stream")
+async def stream() -> StreamingResponse:
+    """Server-sent events: one payload per tick, plus one on every change."""
+    queue = broadcast.subscribe()
+
+    async def events() -> AsyncIterator[str]:
+        try:
+            snapshot = {
+                **runtime.payload(runtime.session.recent(240), replace=True),
+                "config": runtime.session.config,
+            }
+            yield f"data: {json.dumps(snapshot)}\n\n"
+            while True:
+                try:
+                    payload = await asyncio.wait_for(queue.get(), timeout=KEEPALIVE_S)
+                except TimeoutError:
+                    yield ": keepalive\n\n"
+                    continue
+                yield f"data: {json.dumps(payload)}\n\n"
+        finally:
+            broadcast.unsubscribe(queue)
+
+    return StreamingResponse(
+        events(),
+        media_type="text/event-stream",
+        headers={"cache-control": "no-store", "x-accel-buffering": "no"},
+    )
+
+
+# --- simulation controls ---------------------------------------------------
+@app.post("/api/simulation/play")
+async def post_play() -> dict[str, Any]:
+    runtime.play()
+    return _publish(runtime.payload())
+
+
+@app.post("/api/simulation/pause")
+async def post_pause() -> dict[str, Any]:
+    runtime.pause()
+    return _publish(runtime.payload())
+
+
+@app.post("/api/simulation/speed")
+async def post_speed(request: SpeedRequest) -> dict[str, Any]:
+    runtime.set_speed(request.speed)
+    return _publish(runtime.payload())
+
+
+@app.post("/api/simulation/step")
 @app.post("/api/step")
-def post_step(request: StepRequest) -> dict[str, Any]:
-    """Advance the plant. Returns every frame produced, newest last."""
-    frames = session.step(request.action.model_dump(), request.repeat)
-    return {"state": frames[-1], "frames": frames, **session.conditions()}
+async def post_step(request: StepRequest | None = None) -> dict[str, Any]:
+    """Advance the plant by hand: the same decide/validate/apply path as the clock."""
+    ask = request or StepRequest()
+    if ask.action is not None:
+        runtime.set_manual_action(ask.action.model_dump())
+    frames = runtime.advance(ask.repeat)
+    return _publish(runtime.payload(frames))
 
 
+@app.post("/api/simulation/reset")
 @app.post("/api/reset")
-def post_reset() -> dict[str, Any]:
-    state = session.reset()
-    return {"state": state, "frames": [state], **session.conditions()}
+async def post_reset() -> dict[str, Any]:
+    state = runtime.reset()
+    return _publish(runtime.payload([state], replace=True))
+
+
+# --- control ---------------------------------------------------------------
+@app.get("/api/controller")
+def get_controller() -> dict[str, Any]:
+    """Mode, controller, envelope, and why the last action looked as it did."""
+    return runtime.control_status()
+
+
+@app.post("/api/controller/config")
+async def post_controller_config(request: ControllerConfigRequest) -> dict[str, Any]:
+    """Switch AUTO/MANUAL, pick a controller, retune constraints, set the setpoint."""
+    try:
+        if request.mode is not None:
+            runtime.set_mode(request.mode)
+        if request.controller is not None:
+            runtime.set_controller(request.controller)
+        if request.constraints is not None:
+            runtime.configure_constraints(dict(request.constraints))
+        if request.action is not None:
+            runtime.set_manual_action(request.action.model_dump())
+    except ValueError as reason:
+        raise HTTPException(status_code=400, detail=str(reason)) from reason
+    return _publish(runtime.payload())
 
 
 # --- abnormal operation ----------------------------------------------------
 @app.get("/api/events")
 def get_events(limit: int = 60) -> dict[str, Any]:
     """What the plant noticed, oldest first."""
-    return {"events": session.events(limit)}
+    return {"events": runtime.session.events(limit)}
 
 
 @app.get("/api/faults")
 def get_faults() -> dict[str, Any]:
     """Injectable fault types, and the ones currently scheduled or running."""
-    return {"catalogue": session.fault_catalogue(), "faults": session.faults}
+    return {
+        "catalogue": runtime.session.fault_catalogue(),
+        "faults": runtime.session.faults,
+    }
 
 
 @app.post("/api/faults")
-def post_fault(request: FaultRequest) -> dict[str, Any]:
+async def post_fault(request: FaultRequest) -> dict[str, Any]:
     """Inject a fault or disturbance, immediately or at a scheduled time."""
     try:
-        fault = session.inject_fault(request.model_dump())
+        fault = runtime.session.inject_fault(request.model_dump())
     except ValueError as reason:
         raise HTTPException(status_code=400, detail=str(reason)) from reason
-    return {"fault": fault, "state": session.state, **session.conditions()}
+    return {"fault": fault, **_publish(runtime.payload())}
 
 
 @app.delete("/api/faults")
-def delete_faults() -> dict[str, Any]:
+async def delete_faults() -> dict[str, Any]:
     """Clear every fault, leaving the plant where it is."""
-    session.clear_faults()
-    return {"state": session.state, **session.conditions()}
+    runtime.session.clear_faults()
+    return _publish(runtime.payload())
 
 
 @app.delete("/api/faults/{fault_id}")
-def delete_fault(fault_id: str) -> dict[str, Any]:
-    if not session.clear_fault(fault_id):
+async def delete_fault(fault_id: str) -> dict[str, Any]:
+    if not runtime.session.clear_fault(fault_id):
         raise HTTPException(status_code=404, detail=f"unknown fault: {fault_id}")
-    return {"state": session.state, **session.conditions()}
+    return _publish(runtime.payload())
 
 
 @app.get("/api/scenarios")
 def get_scenarios() -> dict[str, Any]:
-    return {"scenarios": session.scenario_catalogue(), "scenario": session.scenario}
+    return {
+        "scenarios": runtime.session.scenario_catalogue(),
+        "scenario": runtime.session.scenario,
+    }
 
 
 @app.post("/api/scenarios")
-def post_scenario(request: ScenarioRequest) -> dict[str, Any]:
+async def post_scenario(request: ScenarioRequest) -> dict[str, Any]:
     """Reset the plant into a predefined, repeatable situation."""
     try:
-        state = session.load_scenario(request.scenario)
+        state = runtime.load_scenario(request.scenario)
     except ValueError as reason:
         raise HTTPException(status_code=404, detail=str(reason)) from reason
-    return {"state": state, "frames": [state], **session.conditions()}
+    return _publish(runtime.payload([state], replace=True))

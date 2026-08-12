@@ -1,8 +1,10 @@
-/** Drives the plant: holds the observed state, the action, and the clock.
+/** Subscribes to the plant. Since V5 it no longer drives it.
  *
- * The browser owns the clock for this first iteration -- every tick asks the
- * backend to advance N timesteps. When a controller or agent takes over the
- * pacing, only this hook changes.
+ * The backend owns the clock, the controller and the action guard, so this hook
+ * is an adapter: it opens the SSE stream, keeps the last frames, events, faults
+ * and control status, and turns operator gestures into requests. Play, speed and
+ * mode are *reported* by the backend, never assumed here -- what the UI shows is
+ * what the plant is actually doing.
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -15,10 +17,18 @@ import {
   fetchState,
   injectFault as injectFaultRequest,
   loadScenario as loadScenarioRequest,
+  pause as pauseRequest,
+  play as playRequest,
   resetPlant,
+  setControlMode as setControlModeRequest,
+  setManualAction,
+  setSpeed as setSpeedRequest,
+  STREAM_URL,
   stepPlant,
 } from '../lib/api'
 import type {
+  ControlMode,
+  ControlStatus,
   FaultKind,
   PlantAction,
   PlantConfig,
@@ -29,9 +39,7 @@ import type {
   ScenarioDef,
 } from '../types/plant'
 
-/** Wall-clock interval between advances. */
-export const TICK_MS = 200
-/** Timesteps applied per tick, per speed setting. */
+/** Timesteps per backend tick, per speed setting. */
 export const SPEEDS = [1, 4, 16] as const
 /** ~24 simulated hours of history at the default 60 s timestep. */
 const MAX_FRAMES = 1440
@@ -52,6 +60,7 @@ export interface PlantSession {
   state: PlantState | null
   frames: PlantState[]
   config: PlantConfig | null
+  /** The manual setpoint as edited here; the backend validates it on apply. */
   action: PlantAction
   playing: boolean
   speed: number
@@ -62,8 +71,10 @@ export interface PlantSession {
   faultKinds: FaultKind[]
   scenarios: ScenarioDef[]
   scenario: string | null
+  control: ControlStatus | null
   setAction: (action: PlantAction) => void
   setSpeed: (speed: number) => void
+  setMode: (mode: ControlMode) => void
   togglePlay: () => void
   stepOnce: () => void
   reset: () => void
@@ -78,9 +89,7 @@ export function usePlantSession(): PlantSession {
   const [state, setState] = useState<PlantState | null>(null)
   const [frames, setFrames] = useState<PlantState[]>([])
   const [config, setConfig] = useState<PlantConfig | null>(null)
-  const [action, setAction] = useState<PlantAction>(DEFAULT_ACTION)
-  const [playing, setPlaying] = useState(false)
-  const [speed, setSpeed] = useState<number>(SPEEDS[1])
+  const [action, setLocalAction] = useState<PlantAction>(DEFAULT_ACTION)
   const [link, setLink] = useState<LinkStatus>('connecting')
   const [error, setError] = useState<string | null>(null)
   const [events, setEvents] = useState<PlantEvent[]>([])
@@ -88,134 +97,123 @@ export function usePlantSession(): PlantSession {
   const [faultKinds, setFaultKinds] = useState<FaultKind[]>([])
   const [scenarios, setScenarios] = useState<ScenarioDef[]>([])
   const [scenario, setScenario] = useState<string | null>(null)
+  const [control, setControl] = useState<ControlStatus | null>(null)
+  const [generation, setGeneration] = useState(0)
 
-  // the tick closure reads these refs, so changing the action mid-run does not
-  // tear down and rebuild the interval
-  const actionRef = useRef(action)
-  const speedRef = useRef(speed)
-  const busyRef = useRef(false)
-  actionRef.current = action
-  speedRef.current = speed
+  // payloads arrive twice for whoever asked for them (once as the response,
+  // once over the stream), so frames are keyed on the timestep they belong to
+  const lastStepRef = useRef(-1)
+  const editedActionRef = useRef(false)
 
-  const absorb = useCallback((next: PlantState[], replace = false) => {
-    if (next.length === 0) return
-    setState(next[next.length - 1])
-    setFrames((previous) => (replace ? next : [...previous, ...next]).slice(-MAX_FRAMES))
-  }, [])
-
-  /** Conditions ride along with every response, so keep them in one place. */
-  const absorbConditions = useCallback((payload: PlantFrames) => {
+  const absorb = useCallback((payload: PlantFrames) => {
+    if (payload.config) setConfig(payload.config)
     if (payload.events) setEvents(payload.events.slice(-MAX_EVENTS))
     if (payload.faults) setFaults(payload.faults)
     if (payload.scenario !== undefined) setScenario(payload.scenario)
+    if (payload.control) {
+      setControl(payload.control)
+      // adopt the backend's setpoint until the operator touches a slider
+      if (!editedActionRef.current) setLocalAction(payload.control.manual_action)
+    }
+
+    const replace = payload.replace ?? false
+    const incoming = payload.frames.length > 0 ? payload.frames : [payload.state]
+    const fresh = replace ? incoming : incoming.filter((frame) => frame.step > lastStepRef.current)
+    if (replace) lastStepRef.current = -1
+    if (fresh.length === 0) {
+      if (replace) setState(payload.state)
+      return
+    }
+    lastStepRef.current = fresh[fresh.length - 1].step
+    setState(fresh[fresh.length - 1])
+    setFrames((previous) => (replace ? fresh : [...previous, ...fresh]).slice(-MAX_FRAMES))
   }, [])
 
-  const fail = useCallback((reason: unknown) => {
-    setPlaying(false)
-    setLink('down')
+  const report = useCallback((reason: unknown) => {
     setError(reason instanceof Error ? reason.message : String(reason))
   }, [])
 
-  const connect = useCallback(async () => {
-    setLink('connecting')
-    try {
-      const payload = await fetchState()
-      setConfig(payload.config ?? null)
-      absorb(payload.frames.length > 0 ? payload.frames : [payload.state], true)
-      absorbConditions(payload)
-      const [scenarioList, faultList] = await Promise.all([fetchScenarios(), fetchFaults()])
-      setScenarios(scenarioList.scenarios)
-      setFaultKinds(faultList.catalogue)
-      setLink('online')
-      setError(null)
-    } catch (reason) {
-      fail(reason)
-    }
-  }, [absorb, absorbConditions, fail])
-
-  useEffect(() => {
-    void connect()
-  }, [connect])
-
-  // --- the clock --------------------------------------------------------
-  useEffect(() => {
-    if (!playing) return
-    const timer = window.setInterval(async () => {
-      if (busyRef.current) return // a slow tick skips rather than stacks up
-      busyRef.current = true
-      try {
-        const payload = await stepPlant(actionRef.current, speedRef.current)
-        absorb(payload.frames)
-        absorbConditions(payload)
-      } catch (reason) {
-        fail(reason)
-      } finally {
-        busyRef.current = false
-      }
-    }, TICK_MS)
-    return () => window.clearInterval(timer)
-  }, [playing, absorb, absorbConditions, fail])
-
-  const stepOnce = useCallback(async () => {
-    try {
-      const payload = await stepPlant(actionRef.current, 1)
-      absorb(payload.frames)
-      absorbConditions(payload)
-    } catch (reason) {
-      fail(reason)
-    }
-  }, [absorb, absorbConditions, fail])
-
-  const reset = useCallback(async () => {
-    setPlaying(false)
-    try {
-      const payload = await resetPlant()
-      absorb([payload.state], true)
-      absorbConditions(payload)
-      setLink('online')
-      setError(null)
-    } catch (reason) {
-      fail(reason)
-    }
-  }, [absorb, absorbConditions, fail])
-
-  // --- abnormal operation ------------------------------------------------
-  /** Faults only change conditions; the state arrives with the next step. */
-  const mutateFaults = useCallback(
+  /** Requests answer with the same payload the stream carries. */
+  const ask = useCallback(
     async (call: Promise<PlantFrames>) => {
       try {
-        absorbConditions(await call)
+        absorb(await call)
         setError(null)
       } catch (reason) {
-        setError(reason instanceof Error ? reason.message : String(reason))
+        report(reason)
       }
     },
-    [absorbConditions],
+    [absorb, report],
   )
 
-  const loadScenario = useCallback(
-    async (id: string) => {
-      setPlaying(false)
+  // --- the stream --------------------------------------------------------
+  useEffect(() => {
+    let cancelled = false
+    setLink('connecting')
+
+    // catalogues are static, so they are fetched rather than streamed
+    void (async () => {
       try {
-        const payload = await loadScenarioRequest(id)
-        absorb([payload.state], true)
-        absorbConditions(payload)
-        setLink('online')
-        setError(null)
+        const [scenarioList, faultList] = await Promise.all([fetchScenarios(), fetchFaults()])
+        if (cancelled) return
+        setScenarios(scenarioList.scenarios)
+        setFaultKinds(faultList.catalogue)
       } catch (reason) {
-        fail(reason)
+        if (!cancelled) report(reason)
       }
+    })()
+
+    const source = new EventSource(STREAM_URL)
+    source.onopen = () => {
+      setLink('online')
+      setError(null)
+    }
+    source.onmessage = (event: MessageEvent<string>) => {
+      absorb(JSON.parse(event.data) as PlantFrames)
+      setLink('online')
+    }
+    // EventSource reconnects by itself; say so and keep the last frames on screen
+    source.onerror = () => {
+      setLink('down')
+      setError('Lost the plant feed — reconnecting')
+    }
+
+    // if the stream cannot be established at all, at least draw the plant once
+    void fetchState()
+      .then((payload) => {
+        if (!cancelled) absorb(payload)
+      })
+      .catch((reason: unknown) => {
+        if (!cancelled) report(reason)
+      })
+
+    return () => {
+      cancelled = true
+      source.close()
+    }
+  }, [absorb, report, generation])
+
+  // --- operator gestures --------------------------------------------------
+  const setAction = useCallback(
+    (next: PlantAction) => {
+      editedActionRef.current = true
+      setLocalAction(next)
+      void ask(setManualAction(next))
     },
-    [absorb, absorbConditions, fail],
+    [ask],
   )
+
+  const togglePlay = useCallback(() => {
+    void ask(control?.playing ? pauseRequest() : playRequest())
+  }, [ask, control?.playing])
 
   return {
     state,
     frames,
     config,
     action,
-    playing,
-    speed,
+    playing: control?.playing ?? false,
+    speed: control?.speed ?? SPEEDS[1],
     link,
     error,
     events,
@@ -223,15 +221,17 @@ export function usePlantSession(): PlantSession {
     faultKinds,
     scenarios,
     scenario,
+    control,
     setAction,
-    setSpeed,
-    togglePlay: () => setPlaying((previous) => !previous),
-    stepOnce: () => void stepOnce(),
-    reset: () => void reset(),
-    reconnect: () => void connect(),
-    injectFault: (type, severity) => void mutateFaults(injectFaultRequest(type, severity)),
-    clearFault: (faultId) => void mutateFaults(clearFaultRequest(faultId)),
-    clearFaults: () => void mutateFaults(clearFaultsRequest()),
-    loadScenario: (id) => void loadScenario(id),
+    setSpeed: (speed) => void ask(setSpeedRequest(speed)),
+    setMode: (mode) => void ask(setControlModeRequest(mode)),
+    togglePlay,
+    stepOnce: () => void ask(stepPlant(1)),
+    reset: () => void ask(resetPlant()),
+    reconnect: () => setGeneration((previous) => previous + 1),
+    injectFault: (type, severity) => void ask(injectFaultRequest(type, severity)),
+    clearFault: (faultId) => void ask(clearFaultRequest(faultId)),
+    clearFaults: () => void ask(clearFaultsRequest()),
+    loadScenario: (id) => void ask(loadScenarioRequest(id)),
   }
 }
