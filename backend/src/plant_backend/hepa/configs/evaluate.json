@@ -1,0 +1,6 @@
+{
+  "split": "test",
+  "batch_size": 64,
+  "threshold": 0.5,
+  "bins": 10
+}

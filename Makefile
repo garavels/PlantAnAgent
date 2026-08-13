@@ -1,4 +1,6 @@
-.PHONY: help setup dev backend frontend sim test eval rl-eval train-dry train build clean
+.PHONY: help setup dev backend frontend sim test eval rl-eval train-dry train \
+	hepa-collect hepa-pretrain-dry hepa-pretrain hepa-finetune-dry hepa-finetune \
+	hepa-eval build clean
 
 help:             ## list targets
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*##/\t/'
@@ -31,6 +33,38 @@ train:            ## train PPO (long; needs `uv sync --group train`)
 
 sim:              ## run one simulated day headless
 	uv run python -m plant_sim --hours 24
+
+hepa-collect:     ## collect a HEPA telemetry dataset (EPISODES=<n> DATASET=<dir>)
+	uv run python -m plant_backend.hepa.data.collect \
+		--config $(or $(CONFIG),backend/src/plant_backend/hepa/configs/collect.json) \
+		--out $(or $(DATASET),datasets/hepa) $(if $(EPISODES),--episodes $(EPISODES),)
+
+hepa-pretrain-dry: ## print the stage-1 plan; trains nothing
+	uv run python -m plant_backend.hepa.pretraining \
+		--dataset $(or $(DATASET),datasets/hepa) --dry-run
+
+hepa-pretrain:    ## stage-1 self-supervised pretraining (long; needs `uv sync --group hepa`)
+	uv run python -m plant_backend.hepa.pretraining \
+		--config $(or $(CONFIG),backend/src/plant_backend/hepa/configs/pretrain.json) \
+		--dataset $(or $(DATASET),datasets/hepa) --out $(or $(OUT),checkpoints/hepa/stage1)
+
+hepa-finetune-dry: ## print the stage-2 plan; trains nothing
+	uv run python -m plant_backend.hepa.finetuning \
+		--dataset $(or $(DATASET),datasets/hepa) \
+		--pretrained $(or $(PRETRAINED),checkpoints/hepa/stage1) --dry-run
+
+hepa-finetune:    ## stage-2 event fine-tuning (long; needs `uv sync --group hepa`)
+	uv run python -m plant_backend.hepa.finetuning \
+		--config $(or $(CONFIG),backend/src/plant_backend/hepa/configs/finetune.json) \
+		--dataset $(or $(DATASET),datasets/hepa) \
+		--pretrained $(or $(PRETRAINED),checkpoints/hepa/stage1) \
+		--out $(or $(OUT),checkpoints/hepa/stage2)
+
+hepa-eval:        ## score a stage-2 checkpoint per event and per horizon
+	uv run python -m plant_backend.hepa.evaluation \
+		--config $(or $(CONFIG),backend/src/plant_backend/hepa/configs/evaluate.json) \
+		--checkpoint $(or $(CHECKPOINT),checkpoints/hepa/stage2) \
+		--dataset $(or $(DATASET),datasets/hepa)
 
 test:             ## simulator + backend test suite
 	uv run pytest -q

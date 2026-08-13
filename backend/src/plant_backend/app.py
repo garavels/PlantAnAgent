@@ -26,6 +26,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
+from .hepa.api import configure as configure_hepa
+from .hepa.api import router as hepa_router
 from .orchestration import Broadcaster, PlantRuntime, SimulationClock
 
 #: Seconds without an update before the stream sends a keepalive comment.
@@ -46,6 +48,12 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(title="Plant An Agent -- control backend", version="0.6.0", lifespan=lifespan)
+
+# V9: event forecasting, advisory only. The router is read-only and never touches the
+# controller; with no checkpoint configured its routes answer "unavailable" and the
+# rest of the backend is unaffected. It reads the session's rolling telemetry history.
+app.include_router(hepa_router)
+configure_hepa(lambda: list(runtime.session.history))
 
 # Dev only: the Vite dev server proxies /api, but allow direct calls too.
 app.add_middleware(

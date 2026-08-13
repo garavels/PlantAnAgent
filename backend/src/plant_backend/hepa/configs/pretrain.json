@@ -1,0 +1,20 @@
+{
+  "epochs": 100,
+  "patience": 10,
+  "batch_size": 64,
+  "learning_rate": 0.0003,
+  "weight_decay": 0.01,
+  "sigreg_weight": 0.1,
+  "projections": 64,
+  "context_len": 144,
+  "seed": 0,
+  "device": "cuda",
+  "detach_target": false,
+  "model": {
+    "d_model": 256,
+    "num_layers": 2,
+    "num_heads": 4,
+    "patch_size": 16,
+    "dropout": 0.1
+  }
+}

@@ -44,6 +44,13 @@ counters; PPO training, checkpointing and a deterministic heuristic-vs-policy co
 wired up end to end. **No policy has been trained** — V7 is the foundation, and the backend
 keeps the heuristic controller unless a compatible checkpoint is loaded successfully.
 
+Since V9 the plant can also be *asked about the future*. `backend/src/plant_backend/hepa/`
+implements HEPA — a horizon-conditioned event-predictive architecture — end to end:
+telemetry collection, self-supervised pretraining, event fine-tuning, evaluation and two
+advisory HTTP routes that answer *P(event within Δt)*. **Nothing has been pretrained or
+fine-tuned**: this environment has no useful GPU, so V9 ships the infrastructure and the
+tests, and the backend runs exactly as V7 did until a checkpoint is configured.
+
 The control room has three views over the same live session: **Overview** (the concise
 operational summary, plus scenario/fault controls and the event feed), **3D Plant**
 (a spatial digital twin, where faulted units turn amber or red under a warning beacon) and
@@ -100,6 +107,19 @@ operational summary, plus scenario/fault controls and the event feed), **3D Plan
 │   │   │   ├── policies.py     checkpoint -> something with .act()
 │   │   │   ├── training/       PPO config, model wiring, `train` entry point
 │   │   │   └── evaluation/     heuristic vs policy on identical episodes (`make rl-eval`)
+│   │   ├── hepa/            future event prediction (V9); torch is optional, advisory only
+│   │   │   ├── telemetry.py    the feature schema, as data: source, unit, formula
+│   │   │   ├── events.py       the event rules, defined once for every stage
+│   │   │   ├── horizons.py     hours <-> sample steps (the horizon grid)
+│   │   │   ├── checkpoints.py  weights + the metadata needed to refuse them
+│   │   │   ├── inference.py    telemetry history -> P(event within Δt)
+│   │   │   ├── evaluation.py   AUROC/AUPRC/Brier/calibration, per event and horizon
+│   │   │   ├── api.py          GET /api/hepa/status, POST /api/hepa/predict
+│   │   │   ├── data/           trajectories, windows, labels, splits, the collector
+│   │   │   ├── models/         causal encoder, horizon predictor, survival head
+│   │   │   ├── pretraining/    stage 1: self-supervised representation learning
+│   │   │   ├── finetuning/     stage 2: event fine-tuning on a frozen encoder
+│   │   │   └── configs/        example collect/pretrain/finetune/evaluate configs
 │   │   ├── agent/            the supervisory operator (V6)
 │   │   │   ├── supervisor.py   SupervisorAgent: gating, one run, failure paths
 │   │   │   ├── triggers.py     when waking it up is worth an LLM call
@@ -158,11 +178,23 @@ Individually:
 ```bash
 make backend        # uv run uvicorn plant_backend.app:app --reload --port 8000
 make frontend       # cd frontend && npm run dev
-make test           # simulator + backend test suite (174 tests)
+make test           # simulator + backend test suite (248 tests)
 make eval           # the supervisor against five scenarios, deterministically
 make sim            # one simulated day, headless, printed as a table
 make rl-eval        # the heuristic baseline through PlantEnv (CHECKPOINT=<dir> adds a policy)
 make train-dry      # build the RL environment and print the training plan; trains nothing
+```
+
+HEPA (V9) is opt-in, because it is the only part that needs torch:
+
+```bash
+uv sync --group hepa        # the optional model dependencies
+make hepa-collect EPISODES=8 DATASET=datasets/hepa-smoke   # simulator -> dataset
+make hepa-pretrain-dry DATASET=datasets/hepa-smoke         # the stage-1 plan; trains nothing
+make hepa-finetune-dry DATASET=datasets/hepa-smoke         # the stage-2 plan; trains nothing
+make hepa-pretrain   # stage 1: long, GPU-shaped work (configs/pretrain.json)
+make hepa-finetune   # stage 2: needs a stage-1 checkpoint
+make hepa-eval CHECKPOINT=checkpoints/hepa/stage2          # per-event, per-horizon metrics
 ```
 
 The supervisor runs on rules unless `OPENAI_API_KEY` is set, in which case the LLM drives
@@ -310,6 +342,8 @@ API surface (all under `/api`, proxied from Vite):
 | `/faults`             | DELETE | clear every fault (`/faults/{id}` clears one)                  |
 | `/scenarios`          | GET    | the scenario catalogue                                         |
 | `/scenarios`          | POST   | `{scenario}` — reset the plant into that situation             |
+| `/hepa/status`        | GET    | whether a forecast can be served, and this build's contract    |
+| `/hepa/predict`       | POST   | `{horizons?, telemetry?}` — P(event within Δt), advisory only   |
 
 `/api/step` and `/api/reset` still answer, unchanged, for anything built against V1–V4.
 
@@ -403,6 +437,213 @@ placeholders pointing at it. Write a page, flip `ready: true`, and it appears.
 Overview and maps `PlantState` onto meshes — see "The 3D twin" below. Adding a unit to
 the twin never touches the simulator: one entry in `plant-3d/layout.ts`, one component,
 one flow route.
+
+---
+
+## V9: HEPA — predicting events before they happen
+
+V9 gives the plant a *forecast*. Everything so far reacts to the present: the controller
+allocates against the sample in front of it, the guard clamps the action it is handed, the
+supervisor wakes when something has already gone wrong. HEPA answers a different question —
+
+> given the last twelve hours of telemetry, what is the probability that the battery eats
+> into its reserve, that the methanator starves, or that the plant goes critical, at some
+> point in the next 1, 3, 6, 12 or 24 hours?
+
+It is an implementation of **HEPA (Horizon-conditioned Event Predictive Architecture)**
+([arXiv:2605.11130](https://arxiv.org/abs/2605.11130)), a JEPA-style architecture that
+learns by predicting *representations* of the future rather than the future itself, and is
+conditioned on the horizon it is asked about.
+
+**Nothing in this repository has been pretrained or fine-tuned.** V9 is infrastructure plus
+tests: the model, the two training stages, the dataset format, the metrics and the serving
+path all exist and are exercised on CPU-sized problems, and no accuracy claim is made
+anywhere. The backend behaves exactly as V7 did until `PLANT_HEPA_CHECKPOINT` points at a
+fine-tuned checkpoint.
+
+```text
+Simulator ──> telemetry dataset ──> stage 1: HEPA pretraining ──> pretrained encoder
+                                                                       │
+                                            stage 2: event fine-tuning ┘
+                                                       ↓
+                                             P(event within Δt)
+```
+
+### The architecture
+
+```text
+context x_{<=t}  (C, 30) ──f_θ──> h_t  (D)  ──g_φ(·, Δt)──> ĥ_{(t, t+Δt]}  (D)
+                                                                  │  stage 1: compare
+future (t, t+Δt] (K, 30) ──f_θ──> attention-pooled target  (D) ────┘  against this
+
+                            h_t ──g_φ(·, anchors)──> (M, D) ──head──> λ per event, per block
+                                                        p(t, Δt) = 1 - Π_j (1 - λ_j)
+```
+
+| Piece                     | What it is                                                                                     |
+| ------------------------- | ---------------------------------------------------------------------------------------------- |
+| `f_θ` (`models/encoder.py`) | causal Transformer over non-overlapping patches of `P = 16` samples; `d_model = 256`, 2 layers, 4 heads, sinusoidal positions, per-context instance normalisation. `h_t` is the last causal token |
+| `g_φ` (`models/predictor.py`) | the horizon-conditioned predictor: Δt enters as an input (log-scaled, Fourier-expanded), so the *same* weights answer "in an hour" and "in a day" |
+| target path               | the *same* encoder, no EMA teacher and no stop-gradient, attention-pooled over the tokens inside Δt |
+| stage-1 loss (`pretraining/objective.py`) | `(1 - α)·L1(ĥ, target) + α·SIGReg(ĥ)`, `α = 0.1`; SIGReg is the sketched Cramér–von Mises penalty that makes collapse unprofitable, which is why the target encoder can keep its gradients |
+| horizons                  | drawn **log-uniformly** during pretraining, so the short horizons that dominate at serving time are not drowned by the long tail |
+| event head (`models/heads.py`) | predicts a per-block *hazard* per event and composes it into a cumulative probability, which makes `p(t, Δt)` monotone in Δt by construction rather than by hope |
+| stage 2 (`finetuning/`)   | loads the stage-1 checkpoint, **freezes `f_θ`** (the paper's protocol), trains the predictor and the head with masked, positive-weighted BCE |
+
+HEPA is deliberately *not* replaced by something simpler: the representation is learned by
+predicting future latents, and the event head is a downstream probe on top of it. A
+Transformer classifier trained directly on labels would be a different method with the same
+inputs, and would not be this paper.
+
+**Deliberate deviations from the paper**, each one recorded next to the code that makes it:
+
+| Deviation                                                          | Why                                                                                     |
+| ------------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
+| pretraining horizons are drawn in whole patches                    | the target is pooled over patch tokens, so a Δt ending mid-patch has no distinct target. Fine-tuning and inference use exact sample horizons |
+| the downstream head predicts hazards, not a direct per-horizon logit | it forces monotonicity in Δt and shares statistical strength across horizons, which matters when the rare events have few positives |
+| model and dataset scale are the plant's, not the paper's           | 30 channels of one plant, sampled every 5 minutes; the paper's sizes are the defaults, the sizes here are configurable |
+| `detach_target` exists as a switch, defaulting to off              | the paper does not stop the target's gradients; the switch makes that choice explicit and testable rather than implicit |
+
+### What the model sees
+
+**30 features**, all of them *observed telemetry* — the same `PlantState` an operator sees,
+sensor faults included, never the simulator's private truth. The schema lives in
+`hepa/telemetry.py` **as data** (each feature carries its source, its unit and the formula
+used to scale it), so `GET /api/hepa/status` publishes the exact contract a checkpoint was
+trained against, and documentation cannot drift from the encoder:
+
+| Group      | Features                                                                          |
+| ---------- | --------------------------------------------------------------------------------- |
+| time       | `time_of_day_sin`, `time_of_day_cos` (cyclic, so midnight is next to 23:59)       |
+| generation | `solar_available`, `solar_potential`, `solar_output_factor`, `solar_curtailed`     |
+| storage    | `battery_soc`, `h2_fill`, `co2_fill`, `ch4_fill`                                   |
+| power      | `battery_power`, `battery_support`, `electrolyser_power`, `dac_power`, `methanator_power` + a load fraction per unit |
+| production | `h2_production`, `co2_capture`, `ch4_production`                                   |
+| condition  | `*_online`, `*_health`, `electrolyser_efficiency`, `electrolyser_temperature`, `plant_status` |
+
+Every channel is divided by the thing that bounds it (rated power, tank capacity, SOC), so
+the vector is roughly `[0, 1]` before normalisation — and a *drifting sensor may still
+exceed it*, which is information, not an error. Dataset statistics are fitted on the
+**training split only** and travel with both the manifest and every checkpoint.
+
+### The five events
+
+Defined once, in `hepa/events.py`, and read from there by the collector, the label
+generator, the fine-tuning loop, the evaluation code and the API — because a pipeline where
+each stage has its own idea of "starvation" reports a number that measures nothing:
+
+| Event                        | Fires when                                                                              |
+| ---------------------------- | --------------------------------------------------------------------------------------- |
+| `battery_reserve_violation`  | observed SOC ≤ the operating reserve (0.15 — the envelope, not the pack's hard floor)   |
+| `h2_starvation`              | methanator commanded, methanator not running, observed H₂ below `empty_kg`               |
+| `co2_starvation`             | the same three conditions on the CO₂ tank                                                |
+| `forced_production_shutdown` | electrolyser or methanator commanded while offline                                       |
+| `critical_plant_state`       | reported `plant_status` is `critical` or `offline`                                       |
+
+Labels are **multi-label** (a shutdown usually overlaps a starvation), **strictly future**
+(the interval `(t, t+Δt]` is half-open on the left: sample `t` is input, never label),
+**cumulative** (matching the survival form the head predicts, hence monotone in Δt) and
+**never truncated** — a 24 h label needs 24 h of recorded future, and where the episode
+ends first the label is *unknown* and masked out of the loss and the metrics, rather than
+quietly counted as a negative.
+
+### Dataset and horizons
+
+```bash
+make hepa-collect EPISODES=512 DATASET=datasets/hepa
+```
+
+The collector drives the ordinary plant: `PlantSimulator` under the heuristic controller,
+episodes drawn from the **same** `rl/episodes.py` sampler V7 uses (scenario, start state,
+weather, seed), so an episode is reproducible from `seed + index`. It runs the simulator at
+its own 60 s timestep and *resamples* to the model's 300 s sample period, accumulating any
+event that occurred inside a sample so the resampling cannot hide one.
+
+```text
+datasets/hepa/
+├── manifest.json           feature + event contract, thresholds, horizons, normalisation
+└── episode_0000.npz …      features (T, 30) float32 | events (T, 5) bool | time_s (T,)
+```
+
+Horizons are a grid, in hours, converted to samples once (`hepa/horizons.py`):
+
+| Horizon | 1 h | 3 h | 6 h | 12 h | 24 h |
+| ------- | --- | --- | --- | ---- | ---- |
+| samples | 12  | 36  | 72  | 144  | 288  |
+
+A window is `context (144, 30)` — twelve hours, nine patches — plus `future`, `labels
+(5, H)` and `valid (H,)`. `future` exists because stage 1 needs a target representation of
+it; it is a separate field, never part of the input, and at serving time `inference.py`
+builds a context and nothing else.
+
+### Checkpoints refuse rather than guess
+
+A checkpoint is a directory of `weights.pt` + `metadata.json`, and the metadata is the
+point: feature names and schema version, event names and event-spec version, thresholds,
+the horizon grid, the context length, the normalisation statistics, the seed, the training
+config, the validation report, and whether it was trained at all. Loading verifies all of
+it, and a mismatch is an error — a model trained against different statistics, a different
+feature order or a different definition of `h2_starvation` is not a slightly worse model,
+it is a wrong one.
+
+### Serving: advisory, and nothing more
+
+```text
+GET  /api/hepa/status     is a model loaded, for which events and horizons, and the schema
+POST /api/hepa/predict    {horizons?, telemetry?} -> P(event within Δt), per event
+```
+
+```json
+{
+  "probabilities": {"battery_reserve_violation": {"1h": 0.02, "6h": 0.31}},
+  "horizons": ["1h", "6h"],
+  "observed_at_s": 86400.0,
+  "checkpoint": {"stage": "stage2", "trained": true, "context_len": 144}
+}
+```
+
+Both routes are **read-only and advisory**. Nothing in the controller, the guard or the
+supervisor consults HEPA, and no forecast changes an action: wiring a prediction into
+control is a decision that deserves to be made explicitly, not inherited from a merge. The
+model is loaded lazily from `PLANT_HEPA_CHECKPOINT` and cached, so a backend with no
+checkpoint starts exactly as V7's did. Everything degrades on purpose — no torch or no
+checkpoint is a `503` that names the fix, `/status` still answers because metadata needs no
+tensors, and too little history or an unrequestable horizon is a `400`. There is no path
+that returns a number without a trusted checkpoint behind it.
+
+The live plant runs at 60 s and the model is trained on 300 s samples, so `/predict`
+resamples the session history to the checkpoint's sample period, measuring the spacing from
+the frames themselves and walking backwards from *now*.
+
+### Evaluation
+
+`hepa/evaluation.py` reports, per event **and** per horizon: AUROC, AUPRC, Brier score,
+precision/recall/F₁ at a threshold, a reliability curve, the base rate and the number of
+windows scored. Masked (unknown-future) windows are excluded, and a metric with no
+positives to rank is `nan` rather than a comforting 0.5.
+
+```bash
+make hepa-eval CHECKPOINT=checkpoints/hepa/stage2 DATASET=datasets/hepa
+```
+
+### What is tested, and what is not
+
+Tested on CPU, in seconds (`backend/tests/test_hepa_*.py`): the feature schema and its
+metadata; encoding from live simulator telemetry and from serialised frames; normalisation;
+every event rule at its boundary; horizon conversion; strictly-future, cumulative, masked
+labels; window shapes; dataset round-trips and schema rejection; the collector, including
+determinism from the seed and training-only statistics; model shapes; attention causality;
+horizon conditioning; hazard monotonicity; the stage-1 loss and its SIGReg term; a few real
+optimisation steps; encoder freezing; positive weighting; masked BCE; checkpoint metadata,
+compatibility and corruption; a whole stage-1 → stage-2 → inference → evaluation pipeline on
+a synthetic dataset with a 32-dimensional model; and both HTTP routes, with and without a
+checkpoint.
+
+**Not done here, and it needs a GPU:** collecting a real dataset (hundreds of multi-day
+episodes), stage-1 pretraining, stage-2 fine-tuning, and therefore any statement about how
+well HEPA predicts these events. The configs in `hepa/configs/` are the starting point for
+that run, `make hepa-pretrain-dry` prints exactly what it would do, and until it has been
+done this repository claims nothing about forecast quality.
 
 ---
 
