@@ -123,6 +123,7 @@ class RuleEngine:
         for rule in (
             _critical_condition,
             _controller_behaviour,
+            _recovery,
             _sensor_inconsistency,
             _electrolyser,
             _dac,
@@ -248,6 +249,30 @@ def _controller_behaviour(
         confidence="high",
         human_intervention_required=not switched,
     )
+
+
+def _recovery(
+    toolbox: AgentToolbox,
+    telemetry: dict[str, Any],
+    constraints: dict[str, Any],
+    diagnostic: dict[str, Any],
+) -> Diagnosis | None:
+    """Coming back out of safe mode, before the component rules get a say.
+
+    Safe mode stops the electrolyser and the DAC, so the plant it produces looks
+    starved of feedstock for as long as it lasts. Read from below, that is an
+    unresolved feedstock fault and the supervisor would keep re-diagnosing its own
+    intervention forever. So a healthy plant under a healthy driver leaves safe
+    mode here, on the strength of the plant status the safe controller was put
+    there to restore -- not on inventories the safe controller is not refilling.
+    """
+    if telemetry["plant_status"] != "normal":
+        return None
+    if toolbox.get_active_controller()["operating_state"] == "normal":
+        return None
+    if toolbox.get_controller_metrics()["grade"] == "poor":
+        return None
+    return _normal(toolbox)
 
 
 def _normal(toolbox: AgentToolbox) -> Diagnosis:

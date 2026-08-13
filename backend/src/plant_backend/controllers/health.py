@@ -184,6 +184,16 @@ class ControllerHealth:
     def healthy(self) -> bool:
         return self.grade in {"unrated", "good"}
 
+    @property
+    def summary(self) -> str:
+        """One line an operator can read: the grade, and what is behind it."""
+        if self.steps < MIN_GRADED_STEPS:
+            return f"{self.steps} of {MIN_GRADED_STEPS} steps driven: not graded yet"
+        concerns = self.concerns()
+        if not concerns:
+            return f"Nothing of concern in the last {self.steps} steps"
+        return f"Graded {self.grade}: {'; '.join(concerns[:2])}"
+
     def to_dict(self) -> dict[str, Any]:
         counts = self.counts()
         steps = max(1, self.steps)
@@ -199,6 +209,7 @@ class ControllerHealth:
                 for key in (*RATE_THRESHOLDS, *SOFT_RATE_THRESHOLDS)
             },
             "concerns": self.concerns(),
+            "summary": self.summary,
         }
 
 

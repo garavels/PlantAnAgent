@@ -256,6 +256,37 @@ def test_a_hand_to_mouth_reactor_is_not_a_starved_one(runtime: PlantRuntime) -> 
     assert not fed_by_flow.resource_starvation
 
 
+def test_health_reads_as_a_line_the_control_room_can_show(runtime: PlantRuntime) -> None:
+    """The frontend renders `summary`, so health has to publish one at every stage."""
+    fresh = ControllerHealth("rl")
+    graded = runtime.control.active_health
+
+    assert "not graded yet" in fresh.to_dict()["summary"]
+    assert graded.to_dict()["summary"] == graded.summary
+    assert graded.summary and "Nothing of concern" in graded.summary
+
+
+def test_a_graded_controllers_summary_names_what_is_wrong() -> None:
+    health = _poor_health("rl")
+
+    assert health.to_dict()["summary"].startswith("Graded poor:")
+    assert health.concerns()[0] in health.summary
+
+
+def test_safe_mode_is_left_again_once_the_plant_is_well(runtime: PlantRuntime) -> None:
+    """Safe mode empties the tanks by design, so recovery cannot wait behind feedstock."""
+    runtime.set_operating_state("safe", reason="test setup")
+    runtime.advance(120)
+    assert runtime.session.telemetry.plant_status == "normal"
+
+    toolbox = AgentToolbox(runtime, AgentTrace())
+    diagnosis = asyncio.run(RuleEngine().investigate(toolbox, {"reason": "scheduled"}))
+
+    assert diagnosis.category == "normal"
+    assert runtime.control.operating_state == "normal"
+    assert runtime.controller_id == HeuristicController.id
+
+
 def test_poor_health_alerts_once_per_spell() -> None:
     manager = clocked(0.0)
     manager.health[HeuristicController.id] = _poor_health(HeuristicController.id)
