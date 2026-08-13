@@ -28,6 +28,8 @@ class SupervisorReport(BaseModel):
 
     category: Literal[
         "normal",
+        "controller_degradation",
+        "critical_condition",
         "electrolyser_degradation",
         "dac_unavailable",
         "dac_degradation",
@@ -103,6 +105,16 @@ def agent_tools(toolbox: AgentToolbox) -> list[Any]:
         return toolbox.get_controller_status()
 
     @function_tool
+    def get_active_controller() -> dict[str, Any]:
+        """Who is driving the plant timestep by timestep, and what else could be."""
+        return toolbox.get_active_controller()
+
+    @function_tool
+    def get_controller_metrics() -> dict[str, Any]:
+        """Controller health: counts of mistakes over a rolling window, and a grade."""
+        return toolbox.get_controller_metrics()
+
+    @function_tool
     def get_controller_constraints() -> dict[str, Any]:
         """The operating envelope in force, with equipment ratings for context."""
         return toolbox.get_controller_constraints()
@@ -137,6 +149,70 @@ def agent_tools(toolbox: AgentToolbox) -> list[Any]:
         }
         given = {key: value for key, value in changes.items() if value is not None}
         return toolbox.set_controller_constraints(given, reason=reason)
+
+    @function_tool
+    def switch_controller(controller: str, reason: str) -> dict[str, Any]:
+        """Hand the plant to a different controller. The plant keeps running throughout.
+
+        Use it when the driver itself is the problem, not when the plant is: a
+        degraded component is a reason to retune the envelope, repeatedly bad
+        actions are a reason to change driver. May be refused while a cooldown is
+        in force -- read the reason and leave it alone rather than retrying.
+
+        Args:
+            controller: "heuristic", "rl" or "safe".
+            reason: Short operational justification, logged with the switch. Required.
+        """
+        return toolbox.switch_controller(controller, reason=reason)
+
+    @function_tool
+    def set_operating_state(state: str, reason: str) -> dict[str, Any]:
+        """Set how the plant is run: normal, degraded or safe.
+
+        Args:
+            state: "normal" for ordinary running, "degraded" to record running on a
+                deliberately tightened envelope, "safe" to put the safe controller
+                on the plant during a critical condition.
+            reason: Short operational justification, logged with the change. Required.
+        """
+        return toolbox.set_operating_state(state, reason=reason)
+
+    @function_tool
+    def simulate_strategy(
+        controller: str | None = None,
+        horizon_min: int = 120,
+        electrolyser_max_kw: float | None = None,
+        dac_max_kw: float | None = None,
+        methanator_max_kw: float | None = None,
+        battery_support_max_kw: float | None = None,
+        battery_min_soc: float | None = None,
+    ) -> dict[str, Any]:
+        """Project one strategy on a copy of the plant. Changes nothing.
+
+        Optional: use it to check a change you are unsure about, one option at a
+        time. Omitted fields keep their live values. The projection is indicative,
+        not a promise, so do not tune against small differences.
+
+        Args:
+            controller: Controller to project, or omit for the one driving now.
+            horizon_min: Minutes to project, 15..240.
+            electrolyser_max_kw: Cap on electrolyser power to project, kW.
+            dac_max_kw: Cap on DAC power to project, kW.
+            methanator_max_kw: Cap on methanation power to project, kW.
+            battery_support_max_kw: Cap on battery discharge to project, kW.
+            battery_min_soc: Battery reserve to project, 0..0.95.
+        """
+        changes = {
+            "electrolyser_max_kw": electrolyser_max_kw,
+            "dac_max_kw": dac_max_kw,
+            "methanator_max_kw": methanator_max_kw,
+            "battery_support_max_kw": battery_support_max_kw,
+            "battery_min_soc": battery_min_soc,
+        }
+        given = {key: value for key, value in changes.items() if value is not None}
+        return toolbox.simulate_strategy(
+            controller=controller, constraints=given or None, horizon_min=horizon_min
+        )
 
     @function_tool
     def set_operating_mode(mode: str, reason: str) -> dict[str, Any]:
@@ -175,8 +251,13 @@ def agent_tools(toolbox: AgentToolbox) -> list[Any]:
         inspect_component,
         run_diagnostic,
         get_controller_status,
+        get_active_controller,
+        get_controller_metrics,
         get_controller_constraints,
+        simulate_strategy,
         set_controller_constraints,
+        switch_controller,
+        set_operating_state,
         set_operating_mode,
         pause_plant,
         resume_plant,

@@ -75,6 +75,8 @@ export function ControlDeck() {
   // one option per backend controller; RL is listed even when it cannot be picked
   const controllers = control?.controllers ?? []
   const selectable = controllers.length > 1
+  // V8: who the manager has driving, how it is grading, and the last handover
+  const hierarchy = control?.hierarchy
 
   // control-room reflexes: space runs, R resets
   useEffect(() => {
@@ -120,6 +122,14 @@ export function ControlDeck() {
           </span>
           {note && <span className="deck__note">{note}</span>}
         </div>
+        {auto && hierarchy && (
+          <span className="deck__hint">
+            {hierarchy.operating_state !== 'normal' && `${hierarchy.operating_state} operation · `}
+            health {hierarchy.health.grade}
+            {hierarchy.last_switch &&
+              ` · ${hierarchy.last_switch.summary} (${hierarchy.last_switch.reason})`}
+          </span>
+        )}
       </div>
 
       {selectable && (

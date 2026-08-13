@@ -104,7 +104,12 @@ class SupervisorAgent:
         """Evaluate the triggers and the gating. No model call, no side effects."""
         if not self.enabled or self.busy or not frames:
             return None
-        trigger = self.watch.evaluate(self._window(), self.runtime.session.events(60))
+        trigger = self.watch.evaluate(
+            self._window(),
+            self.runtime.session.events(60),
+            # V8: the driver itself is something worth waking up for
+            self.runtime.control.health_alert(),
+        )
         if trigger is None:
             return None
         return trigger if self._allowed(trigger, float(frames[-1]["time_s"])) else None

@@ -28,6 +28,8 @@ from .trace import Confidence
 #: What the supervisor thinks it is looking at. `normal` means "nothing wrong".
 CATEGORIES = (
     "normal",
+    "controller_degradation",
+    "critical_condition",
     "electrolyser_degradation",
     "dac_unavailable",
     "dac_degradation",
@@ -62,6 +64,12 @@ SHORTFALL_ELECTROLYSER_FRAC = 0.5
 SHORTFALL_DAC_FRAC = 0.4
 #: Methanation left when CO2 supply is gone, as a fraction of rating.
 CO2_STARVED_METHANATOR_FRAC = 0.4
+#: Plant conditions that call for safe mode rather than a retuned envelope.
+CRITICAL_STATUSES = ("critical", "offline")
+#: SOC above the reserve at which there is still an energy budget to retune.
+CRITICAL_SOC_MARGIN = 0.03
+#: The controller the plant falls back to when a driver is graded poor.
+FALLBACK_CONTROLLER = "heuristic"
 
 
 @dataclass(frozen=True)
@@ -95,10 +103,12 @@ class Engine(Protocol):
 class RuleEngine:
     """The deterministic supervisor: the same tools, walked in a fixed order.
 
-    The order is the diagnostic one, not the alphabetical one. Instruments are
-    checked before the process (a bad reading invalidates everything downstream),
-    then the units that convert power into product, then the energy budget, then
-    the feedstock chain.
+    The order is the diagnostic one, not the alphabetical one. A critical plant
+    condition comes first (protect first, explain afterwards), then the driver
+    itself (a controller misbehaving invalidates conclusions about the plant it is
+    driving), then instruments before the process (a bad reading invalidates
+    everything downstream), then the units that convert power into product, then
+    the energy budget, then the feedstock chain.
     """
 
     label = "rules"
@@ -111,6 +121,8 @@ class RuleEngine:
         diagnostic = toolbox.run_diagnostic("plant")
 
         for rule in (
+            _critical_condition,
+            _controller_behaviour,
             _sensor_inconsistency,
             _electrolyser,
             _dac,
@@ -124,14 +136,7 @@ class RuleEngine:
                 return diagnosis
 
         if telemetry["plant_status"] == "normal":
-            return Diagnosis(
-                category="normal",
-                summary=(
-                    "Telemetry, inventories and component performance are all consistent with "
-                    "normal operation. No intervention taken."
-                ),
-                confidence="high",
-            )
+            return _normal(toolbox)
         return Diagnosis(
             category="unclear",
             summary=(
@@ -141,6 +146,148 @@ class RuleEngine:
             confidence="low",
             human_intervention_required=True,
         )
+
+
+def _critical_condition(
+    toolbox: AgentToolbox,
+    telemetry: dict[str, Any],
+    constraints: dict[str, Any],
+    diagnostic: dict[str, Any],
+) -> Diagnosis | None:
+    """A critical plant with no energy left to work with gets the safe controller.
+
+    Both halves of that matter. A critical status on its own usually has a
+    component behind it, and that component wants its cap moved, not the whole
+    plant put to bed -- V6's component diagnoses are still the right answer there.
+    But a critical plant sitting on its battery reserve has no budget left to
+    retune: whatever the envelope permits, there is no power to spend inside it.
+    Then the safe controller is the right driver, because it stops the process
+    loads, recharges the pack and works off the feedstock already in the tanks
+    while a human looks at the plant.
+    """
+    if telemetry["plant_status"] not in CRITICAL_STATUSES:
+        return None
+    reserve_soc = float(constraints["battery_reserve_soc"])
+    if float(telemetry["battery_soc"]) > reserve_soc + CRITICAL_SOC_MARGIN:
+        return None
+    control = toolbox.get_active_controller()
+    if control["operating_state"] == "safe":
+        return Diagnosis(
+            category="critical_condition",
+            summary=(
+                f"Plant status is {telemetry['plant_status']} and the plant is already in safe "
+                "mode under the safe/degraded controller. Left there; the condition needs a human, "
+                "not another supervisory change."
+            ),
+            confidence="high",
+            human_intervention_required=True,
+        )
+    reason = f"plant status {telemetry['plant_status']}: protecting the plant"
+    result = toolbox.set_operating_state("safe", reason=reason)
+    entered = bool(result.get("ok"))
+    return Diagnosis(
+        category="critical_condition",
+        summary=(
+            f"Plant status is {telemetry['plant_status']} while {control['active']['label']} was "
+            "driving. "
+            + (
+                "Moved to safe mode: process loads stop, the battery recharges and only existing "
+                "feedstock is consumed."
+                if entered
+                else f"Safe mode was refused ({result.get('error')}), so the envelope is unchanged "
+                "and the condition needs a human now."
+            )
+        ),
+        confidence="high",
+        human_intervention_required=True,
+    )
+
+
+def _controller_behaviour(
+    toolbox: AgentToolbox,
+    telemetry: dict[str, Any],
+    constraints: dict[str, Any],
+    diagnostic: dict[str, Any],
+) -> Diagnosis | None:
+    """Is the driver the problem? Only a `poor` grade is grounds for a handover.
+
+    Anything short of that -- `suspect`, or a poor grade on the fallback
+    controller, which has nowhere safer to hand the plant -- is written into the
+    shift log and then left to the plant rules below. Taking a controller off the
+    plant for a bad half-hour is how a supervisor turns one incident into an
+    oscillation, and a genuinely faulty component still wants its cap moved.
+    """
+    metrics = toolbox.get_controller_metrics()
+    grade = metrics["grade"]
+    if grade not in {"poor", "suspect"}:
+        return None
+    control = toolbox.get_active_controller()
+    active = control["active"]["id"]
+    concerns = metrics["concerns"]
+    evidence = "; ".join(concerns[:2]) or "repeated corrections"
+    toolbox.observe(f"{active} graded {grade}: {evidence}", controller=active, grade=grade)
+    if grade == "suspect" or active == FALLBACK_CONTROLLER:
+        return None
+    result = toolbox.switch_controller(
+        FALLBACK_CONTROLLER, reason=f"{active} graded poor: {evidence}"
+    )
+    switched = bool(result.get("ok")) and result.get("switched")
+    return Diagnosis(
+        category="controller_degradation",
+        component=None,
+        summary=(
+            f"{control['active']['label']} is driving badly: {evidence}. "
+            + (
+                "Handed the plant to the heuristic controller, which keeps running from the same "
+                "state under the same envelope."
+                if switched
+                else f"The handover was refused ({result.get('error')}), so it keeps driving and "
+                "will be reassessed."
+            )
+        ),
+        confidence="high",
+        human_intervention_required=not switched,
+    )
+
+
+def _normal(toolbox: AgentToolbox) -> Diagnosis:
+    """Nothing is wrong. Which may itself be news, if the plant is still in safe mode.
+
+    Coming back is a one-way step taken once, and only from a plant that reports
+    normal with a driver that is not misbehaving -- both already established by
+    the time this runs.
+    """
+    control = toolbox.get_active_controller()
+    if control["operating_state"] == "normal":
+        return Diagnosis(
+            category="normal",
+            summary=(
+                "Telemetry, inventories and component performance are all consistent with "
+                f"normal operation under {control['active']['label']}. No intervention taken."
+            ),
+            confidence="high",
+        )
+    result = toolbox.set_operating_state(
+        "normal", reason="plant back to normal status with a healthy controller"
+    )
+    if not result.get("ok"):
+        return Diagnosis(
+            category="normal",
+            summary=(
+                f"The plant reports normal operation but leaving {control['operating_state']} mode "
+                f"was refused ({result.get('error')}). Left as it is."
+            ),
+            confidence="medium",
+        )
+    return Diagnosis(
+        category="normal",
+        summary=(
+            f"The condition that put the plant into {control['operating_state']} mode has cleared: "
+            "telemetry, inventories and component performance are all consistent with normal "
+            f"operation. Returned to normal running under {result['controller']}."
+        ),
+        confidence="high",
+    )
 
 
 def _tighten(

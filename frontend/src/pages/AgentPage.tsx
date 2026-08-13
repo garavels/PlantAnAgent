@@ -11,7 +11,12 @@
 
 import { PageHeader } from '../components/shell/PageHeader'
 import { usePlant } from '../state/plantContext'
-import type { AgentIncident, AgentStatus, AgentTraceEntry } from '../types/plant'
+import type {
+  AgentIncident,
+  AgentStatus,
+  AgentTraceEntry,
+  ControlStatus,
+} from '../types/plant'
 import './agent.css'
 
 const STATUS_WORD: Record<AgentStatus, string> = {
@@ -28,6 +33,14 @@ const STATUS_CHIP: Record<AgentStatus, string> = {
   disabled: 'chip--idle',
 }
 
+/** V8: how a controller's health grade reads as a chip. */
+const GRADE_CHIP: Record<string, string> = {
+  good: 'chip--live',
+  suspect: 'chip--warn',
+  poor: 'chip--alarm',
+  unrated: 'chip--idle',
+}
+
 /** Trace kinds that deserve emphasis over the run-of-the-mill tool calls. */
 const LOUD: AgentTraceEntry['kind'][] = ['diagnosis', 'action', 'error']
 
@@ -36,7 +49,7 @@ function words(value: string): string {
 }
 
 export function AgentPage() {
-  const { agent, investigate, setAgentEnabled, state } = usePlant()
+  const { agent, control, investigate, setAgentEnabled, state } = usePlant()
 
   if (!agent) {
     return (
@@ -85,7 +98,7 @@ export function AgentPage() {
 
       <div className="agent__top">
         <IncidentCard incident={incident} />
-
+        <HierarchyCard control={control} />
         <section className="card agent__deck">
           <header className="agent__head">
             <h3 className="agent__title">Supervision</h3>
@@ -151,6 +164,63 @@ export function AgentPage() {
         </section>
       </div>
     </div>
+  )
+}
+
+/** V8: the hierarchy in four lines -- who drives, how, how well, and last handover.
+ *
+ * The supervisor sits above a controller that runs every timestep, so "who is
+ * driving" is the one fact this page was missing: an intervention that keeps RL
+ * on the plant reads very differently from one that takes it off.
+ */
+function HierarchyCard({ control }: { control: ControlStatus | null }) {
+  const hierarchy = control?.hierarchy
+  const health = hierarchy?.health
+  const grade = health?.grade ?? 'unrated'
+  const handover = hierarchy?.last_switch ?? null
+  return (
+    <section className="card agent__hierarchy">
+      <header className="agent__head">
+        <h3 className="agent__title">Control</h3>
+        <span className="label">{hierarchy ? words(hierarchy.operating_state) : '--'}</span>
+      </header>
+      <dl className="agent__facts">
+        <div>
+          <dt className="label">Active controller</dt>
+          <dd className="agent__value">{control?.controller.label ?? '--'}</dd>
+        </div>
+        <div>
+          <dt className="label">Health</dt>
+          <dd className="agent__value">
+            <span className={`chip ${GRADE_CHIP[grade] ?? 'chip--idle'}`}>
+              <i className="chip__led" />
+              {grade}
+            </span>
+          </dd>
+        </div>
+        <div className="agent__facts-wide">
+          <dt className="label">Behaviour</dt>
+          <dd className="agent__summary">
+            {health?.summary ?? 'No controller history yet'}
+          </dd>
+        </div>
+        <div className="agent__facts-wide">
+          <dt className="label">Latest switch</dt>
+          <dd className="agent__summary">
+            {handover ? (
+              <>
+                <span className="agent__action mono">{handover.summary}</span>
+                <span className="agent__switch-reason">
+                  {handover.clock} &middot; {handover.by} &middot; {handover.reason}
+                </span>
+              </>
+            ) : (
+              'No handover this run'
+            )}
+          </dd>
+        </div>
+      </dl>
+    </section>
   )
 }
 

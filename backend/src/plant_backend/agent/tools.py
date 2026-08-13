@@ -129,6 +129,8 @@ class AgentToolbox:
             "applied_action": status["applied_action"],
             "notes": status["notes"],
             "adjustments": status["adjustments"],
+            "operating_state": status["hierarchy"]["operating_state"],
+            "health_grade": status["hierarchy"]["health"]["grade"],
         }
 
     def get_controller_constraints(self) -> dict[str, Any]:
@@ -153,6 +155,52 @@ class AgentToolbox:
             "battery_reserve_soc": round(constraints.reserve_soc(config), 3),
             "fields": CONSTRAINT_FIELDS,
         }
+
+    def get_active_controller(self) -> dict[str, Any]:
+        """Who is driving the plant right now, and what else could be.
+
+        The first question of any hierarchical decision: the supervisor sets
+        strategy, but a controller is doing the timestep-by-timestep driving, and
+        which one it is changes what a sensible intervention looks like.
+        """
+        control = self._runtime.control
+        status = control.status()
+        self._log(
+            "get_active_controller",
+            controller=status["active_id"],
+            operating_state=status["operating_state"],
+        )
+        return {
+            "active": status["active"],
+            "operating_state": status["operating_state"],
+            "preferred": status["preferred_id"],
+            "available": [
+                {
+                    "id": entry["id"],
+                    "label": entry["label"],
+                    "available": entry["available"],
+                    "reason": entry["reason"],
+                    "grade": entry["grade"],
+                }
+                for entry in status["controllers"]
+            ],
+            "health_grade": status["health"]["grade"],
+            "last_switch": status["last_switch"],
+            "switch_count": status["switch_count"],
+        }
+
+    def get_controller_metrics(self) -> dict[str, Any]:
+        """How well the driver is driving: counts, rates and a grade per controller.
+
+        Deterministic counters over a rolling window, not a judgement -- the
+        judgement is the supervisor's job. `grade` is `unrated` until a controller
+        has driven long enough to have shown anything.
+        """
+        control = self._runtime.control
+        metrics = control.metrics()
+        health = control.active_health
+        self._log("get_controller_metrics", controller=metrics["active"], grade=health.grade)
+        return {**metrics, "grade": health.grade, "concerns": health.concerns()}
 
     def observe(self, message: str, **detail: Any) -> None:
         """Write one observation into the trace. Touches nothing but the log.
@@ -182,6 +230,94 @@ class AgentToolbox:
         if not applied:
             self._log("set_controller_constraints", note="no change", reason=reason)
         return {"ok": True, "before": before, "after": after, "applied": applied}
+
+    def switch_controller(self, controller: str, reason: str) -> dict[str, Any]:
+        """Hand the plant to another controller. The plant keeps running throughout.
+
+        Selection only: the simulator is not reset, the envelope carries over, and
+        the new controller picks up from the state the old one left. Refused with
+        an explanation while a cooldown is in force, which is the mechanism that
+        stops a switch becoming an oscillation -- read the error, do not retry.
+        """
+        if not reason or not reason.strip():
+            return self._refuse("switch_controller", "a reason is required")
+        blocked = self._budget("switch_controller")
+        if blocked:
+            return blocked
+        before = self._runtime.controller_id
+        try:
+            switch = self._runtime.switch_controller(controller, reason=reason, by="agent")
+        except ValueError as reason_text:
+            return self._refuse("switch_controller", str(reason_text))
+        if switch is None:
+            self._log("switch_controller", note=f"{controller} was already driving")
+            return {"ok": True, "controller": before, "switched": False}
+        self._act(f"controller: {switch.summary}", reason=reason, previous_grade=switch.previous_grade)
+        return {"ok": True, "controller": switch.current, "switched": True, "switch": switch.to_dict()}
+
+    def set_operating_state(self, state: str, reason: str) -> dict[str, Any]:
+        """Choose how the plant is run: `normal`, `degraded` or `safe`.
+
+        `safe` puts the safe/degraded controller on the plant -- no electrolyser,
+        no DAC, no battery lending, gentle methanation of whatever feedstock
+        exists -- and is the right answer to a critical condition. `degraded`
+        records that the plant is deliberately running on a tightened envelope.
+        `normal` hands the plant back to the controller that was driving before.
+        """
+        if not reason or not reason.strip():
+            return self._refuse("set_operating_state", "a reason is required")
+        blocked = self._budget("set_operating_state")
+        if blocked:
+            return blocked
+        control = self._runtime.control
+        before = control.operating_state
+        driver_before = control.active_id
+        try:
+            after = self._runtime.set_operating_state(state, reason=reason, by="agent")
+        except ValueError as reason_text:
+            return self._refuse("set_operating_state", str(reason_text))
+        if after != before or control.active_id != driver_before:
+            self._act(
+                f"operating state: {before} -> {after} (controller {control.active_id})",
+                reason=reason,
+            )
+        return {
+            "ok": True,
+            "operating_state": after,
+            "previous": before,
+            "controller": control.active_id,
+        }
+
+    def simulate_strategy(
+        self,
+        controller: str | None = None,
+        constraints: dict[str, float | None] | None = None,
+        horizon_min: int = 120,
+    ) -> dict[str, Any]:
+        """Try one strategy on a *copy* of the plant before committing to it.
+
+        Reads, never writes: the live plant is untouched and nothing here counts
+        against the write budget. The projection is open-loop and indicative --
+        good enough to tell "this empties the battery" from "this is fine", not a
+        promise, and not something to optimise against.
+        """
+        try:
+            from ..orchestration import foresight  # noqa: PLC0415 - avoids an import cycle
+
+            forecast = foresight.look_ahead(
+                self._runtime,
+                controller_id=controller,
+                constraints=dict(constraints) if constraints else None,
+                horizon_min=horizon_min,
+            )
+        except ValueError as reason_text:
+            return self._refuse("simulate_strategy", str(reason_text))
+        self._log(
+            "simulate_strategy",
+            controller=forecast["controller"],
+            minutes=forecast["horizon_min"],
+        )
+        return {"ok": True, **forecast}
 
     def set_operating_mode(self, mode: str, reason: str) -> dict[str, Any]:
         """Switch between AUTO (the controller drives) and MANUAL (the operator does)."""

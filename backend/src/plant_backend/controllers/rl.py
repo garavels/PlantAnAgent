@@ -94,7 +94,9 @@ class RLController(Controller):
         except Exception as reason:  # inference is third-party code: never trust it
             self.failure = f"{type(reason).__name__}: {reason}"
             return ControlDecision(
-                Action.idle(), (f"RL inference failed ({self.failure}): plant idled",)
+                Action.idle(),
+                (f"RL inference failed ({self.failure}): plant idled",),
+                invalid=True,
             )
 
         self._steps += 1
@@ -103,7 +105,7 @@ class RLController(Controller):
             notes.append("Policy output was outside its action range and was clipped")
         if not self.loaded.metadata.trained:
             notes.append("Mock checkpoint: this is not a trained policy")
-        return ControlDecision(decoded.action, tuple(notes))
+        return ControlDecision(decoded.action, tuple(notes), invalid=decoded.clipped)
 
     # --- internals --------------------------------------------------------
     def _tools(self, config: PlantConfig) -> tuple[ObservationEncoder, ActionAdapter]:

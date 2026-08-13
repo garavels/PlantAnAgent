@@ -84,6 +84,10 @@ class ControllerConfigRequest(BaseModel):
 
     mode: str | None = None
     controller: str | None = None
+    #: V8: `normal`, `degraded` or `safe`. See `controllers.ControllerManager`.
+    operating_state: str | None = None
+    #: Why the controller changed, for the switch log. Optional for an operator.
+    reason: str | None = None
     #: Partial update of the operating envelope. See `controllers.Constraints`.
     constraints: dict[str, float | None] | None = None
     #: The manual setpoint; stored now, validated when it is applied.
@@ -229,7 +233,13 @@ async def post_controller_config(request: ControllerConfigRequest) -> dict[str, 
         if request.mode is not None:
             runtime.set_mode(request.mode)
         if request.controller is not None:
-            runtime.set_controller(request.controller)
+            runtime.set_controller(
+                request.controller, reason=request.reason or "operator selection"
+            )
+        if request.operating_state is not None:
+            runtime.set_operating_state(
+                request.operating_state, reason=request.reason or "operator request"
+            )
         if request.constraints is not None:
             runtime.configure_constraints(dict(request.constraints))
         if request.action is not None:

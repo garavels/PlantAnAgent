@@ -27,6 +27,14 @@ under `rl` and selected with `set_controller`, and it inherits the envelope, the
 guard and the supervisor unchanged. With no checkpoint the registry holds the
 heuristic controller alone -- which is why the heuristic is the default: there is
 nothing else to select, and nothing is invented to fill the gap.
+
+Where V8 plugged in: that registry, the envelope and the fallback logic now live
+in `ControllerManager` (`self.control`), which also grades whoever is driving.
+The runtime kept the two jobs only it can do -- driving the clock and putting
+every action through the guard -- so the step above is unchanged, and the layers
+read exactly as the hierarchy does:
+
+    supervisor -> self.control -> controller -> safety.validate -> simulator
 """
 
 from __future__ import annotations
@@ -36,8 +44,9 @@ from typing import Any, Literal
 from plant_sim import Action, PlantConfig, PlantState, Scenario
 
 from ..agent import SupervisorAgent
-from ..controllers import Constraints, Controller, HeuristicController
-from ..controllers.rl import RL_CONTROLLER_ID, RLController, RLControllerSlot
+from ..controllers import Constraints, ControlDecision, Controller
+from ..controllers.manager import Actor, ControllerManager, ControllerSwitch
+from ..controllers.rl import RLController, RLControllerSlot
 from ..safety import validate
 from ..session import PlantSession
 
@@ -69,19 +78,9 @@ class PlantRuntime:
 
     def __init__(self, config: PlantConfig | None = None) -> None:
         self.session = PlantSession(config)
-        self.controllers: dict[str, Controller] = {
-            controller.id: controller for controller in (HeuristicController(),)
-        }
-        self.controller_id = HeuristicController.id
-        #: The RL checkpoint slot. Empty unless one is configured and loads cleanly.
-        self.rl = RLControllerSlot()
-        self.rl.autoload()
-        if self.rl.controller is not None:
-            self.controllers[RL_CONTROLLER_ID] = self.rl.controller
+        #: V8: who drives, inside what envelope, and how well they are doing it.
+        self.control = ControllerManager(now=self._now)
         self.mode: ControlMode = "auto"
-        self.constraints = Constraints()
-        #: Envelope fields the supervisor overwrote, and what they were before.
-        self._agent_envelope: dict[str, Any] = {}
         self.manual_action = DEFAULT_MANUAL_ACTION
         #: The V6 supervisory agent. Disabled, the runtime behaves exactly as V5.
         self.supervisor = SupervisorAgent(self)
@@ -95,11 +94,37 @@ class PlantRuntime:
 
     @property
     def controller(self) -> Controller:
-        return self.controllers[self.controller_id]
+        return self.control.active
+
+    @property
+    def controllers(self) -> dict[str, Controller]:
+        return self.control.controllers
+
+    @property
+    def controller_id(self) -> str:
+        return self.control.active_id
+
+    @controller_id.setter
+    def controller_id(self, controller_id: str) -> None:
+        """Kept for the pre-V8 spelling of `set_controller`; goes the same way."""
+        self.set_controller(controller_id, reason="controller set directly")
+
+    @property
+    def rl(self) -> RLControllerSlot:
+        return self.control.rl
+
+    @property
+    def constraints(self) -> Constraints:
+        return self.control.constraints
 
     @property
     def config(self) -> PlantConfig:
         return self.session.simulator.config
+
+    def _now(self) -> tuple[float, str]:
+        """Simulated time, for anything that wants to stamp a log entry."""
+        observation = self.session.telemetry
+        return observation.time_s, observation.clock
 
     # --- the loop ---------------------------------------------------------
     def advance(self, steps: int = 1) -> list[dict[str, Any]]:
@@ -107,44 +132,62 @@ class PlantRuntime:
         frames: list[dict[str, Any]] = []
         for _ in range(max(1, min(int(steps), MAX_STEPS))):
             observation = self.session.telemetry
-            action, notes = self._decide(observation)
+            decision = self._decide(observation)
             validated = validate(
-                action, observation, constraints=self.constraints, config=self.config
+                decision.action, observation, constraints=self.constraints, config=self.config
             )
-            self.notes = notes
+            self.notes = decision.notes
             self.adjustments = validated.adjustments
             self.applied_action = validated.action
+            seen = self._last_event_seq
             frames.extend(self.session.step(validated.action))
+            # V8: grade the driver on the step it just asked for, from telemetry
+            self.control.record_step(
+                before=observation,
+                after=self.session.telemetry,
+                requested=decision.action,
+                adjustments=validated.adjustments,
+                config=self.config,
+                invalid_action=decision.invalid,
+                critical_events=self._critical_events_since(seen),
+            )
         return frames
 
-    def _decide(self, observation: PlantState) -> tuple[Action, tuple[str, ...]]:
+    def _decide(self, observation: PlantState) -> ControlDecision:
         if self.mode == "manual":
-            return self.manual_action, ("Manual control: operator allocation",)
+            return ControlDecision(
+                self.manual_action, ("Manual control: operator allocation",)
+            )
         controller = self.controller
-        decision = controller.compute_action(
-            observation, constraints=self.constraints, config=self.config
-        )
+        decision = self.control.decide(observation, config=self.config)
         if isinstance(controller, RLController) and controller.failure is not None:
             return self._after_rl_failure(observation, controller.failure)
-        return decision.action, decision.notes
+        return decision
 
-    def _after_rl_failure(
-        self, observation: PlantState, reason: str
-    ) -> tuple[Action, tuple[str, ...]]:
+    def _after_rl_failure(self, observation: PlantState, reason: str) -> ControlDecision:
         """A policy that cannot answer stops driving: back to the heuristic, loudly.
 
-        The failure is recorded on the slot, RL leaves the registry (so it cannot
-        be reselected until a checkpoint is loaded again) and the note says what
-        happened -- the plant keeps running on the controller that always can.
+        The manager records the failure, drops RL from the registry (so it cannot
+        be reselected until a checkpoint is loaded again) and logs the handover;
+        the note says what happened -- the plant keeps running on the controller
+        that always can.
         """
-        self.rl.mark_failed(reason)
-        self.controllers.pop(RL_CONTROLLER_ID, None)
-        self.controller_id = HeuristicController.id
-        decision = self.controller.compute_action(
-            observation, constraints=self.constraints, config=self.config
+        self.control.rl_failed(reason)
+        decision = self.control.decide(observation, config=self.config)
+        note = f"RL inference failed ({reason}): reverted to {self.controller.label.lower()}"
+        return ControlDecision(decision.action, (note, *decision.notes), invalid=True)
+
+    @property
+    def _last_event_seq(self) -> int:
+        recent = self.session.events(1)
+        return int(recent[-1]["seq"]) if recent else 0
+
+    def _critical_events_since(self, seq: int) -> int:
+        return sum(
+            1
+            for event in self.session.events(20)
+            if event["seq"] > seq and event["level"] == "critical"
         )
-        note = f"RL inference failed ({reason}): reverted to heuristic"
-        return decision.action, (note, *decision.notes)
 
     # --- simulation controls ----------------------------------------------
     def play(self) -> None:
@@ -166,23 +209,19 @@ class PlantRuntime:
         retuned for an incident that no longer exists.
         """
         self.pause()
-        for controller in self.controllers.values():
-            controller.reset()
+        self.control.reset()
         self.notes = ()
         self.adjustments = ()
         self.applied_action = Action.idle()
-        self.revert_agent_constraints()
         self.supervisor.reset()
         return self.session.reset()
 
     def load_scenario(self, scenario: Scenario | str) -> dict[str, Any]:
         self.pause()
-        for controller in self.controllers.values():
-            controller.reset()
+        self.control.reset()
         self.notes = ()
         self.adjustments = ()
         self.applied_action = Action.idle()
-        self.revert_agent_constraints()
         self.supervisor.reset()
         return self.session.load_scenario(scenario)
 
@@ -193,14 +232,29 @@ class PlantRuntime:
         self.mode = mode  # type: ignore[assignment]  # guarded above
         return self.mode
 
-    def set_controller(self, controller_id: str) -> str:
-        if controller_id not in self.controllers:
-            if controller_id == RL_CONTROLLER_ID:
-                # selectable only once a checkpoint is loaded; say why it is not
-                raise ValueError(f"RL controller unavailable: {self.rl.status.reason}")
-            raise ValueError(f"unknown controller: {controller_id}")
-        self.controller_id = controller_id
+    def set_controller(
+        self,
+        controller_id: str,
+        *,
+        reason: str = "operator selection",
+        by: Actor = "operator",
+        force: bool = False,
+    ) -> str:
+        """Hand the plant to another controller. Selection only: nothing is reset."""
+        self.control.select(controller_id, reason=reason, by=by, force=force)
         return self.controller_id
+
+    def switch_controller(
+        self, controller_id: str, *, reason: str, by: Actor = "agent", force: bool = False
+    ) -> ControllerSwitch | None:
+        """The supervisor's version of `set_controller`: a reason, and the brakes on."""
+        return self.control.select(controller_id, reason=reason, by=by, force=force)
+
+    def set_operating_state(
+        self, state: str, *, reason: str = "", by: Actor = "operator"
+    ) -> str:
+        """Normal, degraded or safe running. Safe mode puts the safe controller on."""
+        return self.control.set_operating_state(state, reason=reason, by=by)
 
     def load_rl_checkpoint(self, path: str) -> dict[str, Any]:
         """Load an RL checkpoint and make it selectable. Raises on a bad checkpoint.
@@ -208,60 +262,26 @@ class PlantRuntime:
         Loading does not switch to it: selecting a controller stays a separate,
         deliberate act, so a checkpoint arriving never changes who is driving.
         """
-        try:
-            controller = self.rl.load(path)
-        except ValueError:
-            # a bad checkpoint must not leave the registry and the slot disagreeing
-            # about whether RL can drive: whoever was driving carries on
-            self._reconcile_rl()
-            raise
-        self.controllers[RL_CONTROLLER_ID] = controller
-        return self.rl.status.to_dict()
-
-    def _reconcile_rl(self) -> None:
-        """Make the controller registry agree with the slot, and never strand RL."""
-        if self.rl.controller is not None:
-            self.controllers[RL_CONTROLLER_ID] = self.rl.controller
-            return
-        self.controllers.pop(RL_CONTROLLER_ID, None)
-        if self.controller_id == RL_CONTROLLER_ID:
-            self.controller_id = HeuristicController.id
+        return self.control.load_rl(path)
 
     def unload_rl_checkpoint(self) -> dict[str, Any]:
         """Drop the policy; if it was driving, the heuristic takes over immediately."""
-        self.controllers.pop(RL_CONTROLLER_ID, None)
-        if self.controller_id == RL_CONTROLLER_ID:
-            self.controller_id = HeuristicController.id
-        return self.rl.unload().to_dict()
+        return self.control.unload_rl()
 
     def configure_constraints(
-        self, changes: dict[str, Any], *, by: Literal["operator", "agent"] = "operator"
+        self, changes: dict[str, Any], *, by: Actor = "operator"
     ) -> Constraints:
-        """Tighten or relax the envelope. This is V6's main lever.
+        """Tighten or relax the shared envelope. This is V6's main lever.
 
-        Who asked matters for exactly one reason: the operator's envelope is
-        configuration and survives a reset, while a supervisor's retune belongs
-        to the incident that caused it. So an agent write remembers what it
-        replaced, and an operator write over the same field takes ownership back.
+        Held by the controller manager since V8, so one envelope reaches whoever
+        is driving: the supervisor lowers a cap once and both the heuristic and
+        the RL policy plan inside it, with no retraining.
         """
-        before = self.constraints.to_dict()
-        self.constraints = self.constraints.merged(changes)
-        after = self.constraints.to_dict()
-        for field in changes:
-            if field not in after or after[field] == before[field]:
-                continue
-            if by == "agent":
-                self._agent_envelope.setdefault(field, before[field])
-            else:
-                self._agent_envelope.pop(field, None)
-        return self.constraints
+        return self.control.configure_constraints(changes, by=by)
 
     def revert_agent_constraints(self) -> Constraints:
         """Put back whatever the supervisor overwrote. Called on reset."""
-        if self._agent_envelope:
-            self.constraints = self.constraints.merged(dict(self._agent_envelope))
-            self._agent_envelope.clear()
-        return self.constraints
+        return self.control.revert_agent_constraints()
 
     def set_manual_action(self, action: Action | dict[str, Any] | None) -> Action:
         """Store the operator's setpoint; it is validated when it is applied."""
@@ -270,10 +290,11 @@ class PlantRuntime:
 
     # --- reporting --------------------------------------------------------
     def control_status(self) -> dict[str, Any]:
+        hierarchy = self.control.status()
         return {
             "mode": self.mode,
-            "controller": self.controller.to_dict(),
-            "controllers": self._controller_catalogue(),
+            "controller": hierarchy["active"],
+            "controllers": hierarchy["controllers"],
             "rl": self.rl.status.to_dict(),
             "constraints": self.constraints.to_dict(),
             "manual_action": self.manual_action.to_dict(),
@@ -283,21 +304,9 @@ class PlantRuntime:
             "playing": self.playing,
             "speed": self.speed,
             "tick_ms": TICK_MS,
+            #: V8: the hierarchy's own state, in one place the frontend can read.
+            "hierarchy": hierarchy,
         }
-
-    def _controller_catalogue(self) -> list[dict[str, Any]]:
-        """Every controller the control room may offer, available or not.
-
-        RL appears even when it cannot be selected, carrying the reason: a
-        disabled option with an explanation is honest, a missing option is not.
-        """
-        catalogue = [
-            {**controller.to_dict(), "available": True, "state": "ready", "reason": ""}
-            for controller_id, controller in self.controllers.items()
-            if controller_id != RL_CONTROLLER_ID
-        ]
-        catalogue.append(self.rl.descriptor())
-        return catalogue
 
     def payload(
         self, frames: list[dict[str, Any]] | None = None, *, replace: bool = False

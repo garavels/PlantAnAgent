@@ -196,11 +196,12 @@ def test_inference_failure_is_recorded_and_idles_the_plant() -> None:
 def test_the_heuristic_is_the_default_without_a_checkpoint() -> None:
     plant = PlantRuntime()
     assert plant.controller_id == HeuristicController.id
-    assert list(plant.controllers) == [HeuristicController.id]
+    # V8 added the safe controller; RL still needs a checkpoint to exist at all
+    assert list(plant.controllers) == [HeuristicController.id, "safe"]
     status = plant.control_status()
     assert status["rl"]["available"] is False
     # RL is still offered, so the reason is visible instead of the option missing
-    assert [entry["id"] for entry in status["controllers"]] == ["heuristic", "rl"]
+    assert [entry["id"] for entry in status["controllers"]] == ["heuristic", "safe", "rl"]
 
 
 def test_selecting_rl_without_a_checkpoint_fails_with_the_reason() -> None:

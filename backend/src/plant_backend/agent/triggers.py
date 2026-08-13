@@ -7,10 +7,17 @@ only then asks for an opinion:
 
     critical event        the plant shouted
     plant CRITICAL        the derived status says so
+    controller health     the *driver* has started making mistakes
     warning event         the plant grumbled
     plant DEGRADED        something is derated or starved
     production drop       methane output collapsed while the sun was up
     manual               a human pressed "investigate"
+
+Controller health is the V8 addition, and it is a different kind of trigger from
+the rest: every other one says something about the plant, this one says something
+about whoever is driving it. It fires once per bad spell (the manager only offers
+the alert on the edge, see `controllers.ControllerManager.health_alert`), because
+a controller that is driving badly now will still be driving badly next tick.
 
 Each trigger carries a `key`, and the key is what stops one fault from starting
 thirty investigations: while an incident with the same key is open, and for a
@@ -73,7 +80,12 @@ class TriggerWatch:
         self._last_event_seq = 0
         self._last_status = "normal"
 
-    def evaluate(self, frames: list[dict[str, Any]], events: list[dict[str, Any]]) -> Trigger | None:
+    def evaluate(
+        self,
+        frames: list[dict[str, Any]],
+        events: list[dict[str, Any]],
+        health_alert: dict[str, Any] | None = None,
+    ) -> Trigger | None:
         """The most urgent trigger raised by `frames`, or `None` to stay asleep.
 
         `events` is the plant's own stream; only entries newer than the last call
@@ -94,6 +106,7 @@ class TriggerWatch:
             for candidate in (
                 _from_events(fresh, "critical", 90),
                 _from_status(status, previous_status),
+                _from_health(health_alert),
                 _from_events(fresh, "warning", 60),
                 _production_drop(frames),
             )
@@ -118,6 +131,20 @@ def _from_events(events: list[dict[str, Any]], level: str, priority: int) -> Tri
         detail=f"{event['clock']} {event['message']}",
         key=f"event:{event['code']}",
         priority=priority,
+    )
+
+
+def _from_health(alert: dict[str, Any] | None) -> Trigger | None:
+    """The active controller's health has just gone poor. Look at the driver."""
+    if not alert:
+        return None
+    concerns = alert.get("concerns") or ["repeated corrections"]
+    controller = alert.get("controller", "controller")
+    return Trigger(
+        reason="controller_health",
+        detail=f"{controller} health graded poor: {'; '.join(concerns[:2])}",
+        key=f"controller:{controller}",
+        priority=70,
     )
 
 
