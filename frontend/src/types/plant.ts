@@ -76,6 +76,26 @@ export interface ControllerInfo {
   id: string
   label: string
   description: string
+  /** False for a controller the backend cannot select yet, e.g. RL with no checkpoint. */
+  available?: boolean
+  /** `ready` | `unavailable` | `failed`. */
+  state?: string
+  /** Why it is unavailable, shown next to the disabled option. */
+  reason?: string
+}
+
+/** The RL checkpoint slot: whether a policy can drive, and why not when it cannot. */
+export interface RLStatus {
+  state: 'ready' | 'unavailable' | 'failed'
+  available: boolean
+  reason: string
+  checkpoint: string | null
+  metadata: {
+    algorithm: string
+    total_timesteps: number
+    trained: boolean
+    spec_version: number
+  } | null
 }
 
 /** Mirror of `controllers.Constraints`: the envelope the backend enforces. */
@@ -92,6 +112,8 @@ export interface ControlStatus {
   mode: ControlMode
   controller: ControllerInfo
   controllers: ControllerInfo[]
+  /** V7: the RL checkpoint slot. Unavailable until a checkpoint is loaded. */
+  rl?: RLStatus
   constraints: Constraints
   manual_action: PlantAction
   applied_action: PlantAction

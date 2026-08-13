@@ -3,8 +3,9 @@
 An autonomous, intermittently powered industrial plant — starting with the foundation:
 **a small working digital twin plus a control room that watches it.**
 
-The plant today (V6 — the full simplified synthetic-methane chain, everything that can go
-wrong with it, a backend that runs it, and a supervisory agent that watches it):
+The plant today (V7 — the full simplified synthetic-methane chain, everything that can go
+wrong with it, a backend that runs it, a supervisory agent that watches it, and the RL
+foundation a learned controller plugs into):
 
 ```text
                  Solar
@@ -37,11 +38,16 @@ critical event, a status change, a collapse in output, or an operator asking), i
 with a small toolset, and retunes the operating envelope — the same lever a human operator
 has. It never allocates a kilowatt and never touches the simulator.
 
+Since V7 the plant is also an **RL environment**. `PlantEnv` wraps the simulator with a
+normalised observation, a five-number action and a reward built from the plant's own
+counters; PPO training, checkpointing and a deterministic heuristic-vs-policy comparison are
+wired up end to end. **No policy has been trained** — V7 is the foundation, and the backend
+keeps the heuristic controller unless a compatible checkpoint is loaded successfully.
+
 The control room has three views over the same live session: **Overview** (the concise
 operational summary, plus scenario/fault controls and the event feed), **3D Plant**
 (a spatial digital twin, where faulted units turn amber or red under a warning beacon) and
 **Agent** (what the supervisor concluded, what it changed, and the trace behind it).
-No RL yet — the point is the architecture it will plug into.
 
 ---
 
@@ -80,7 +86,20 @@ No RL yet — the point is the architecture it will plug into.
 │   │   │   └── broadcast.py    fan-out of updates to connected control rooms
 │   │   ├── controllers/
 │   │   │   ├── base.py         Controller contract + Constraints (the envelope)
-│   │   │   └── heuristic.py    the rule-based operator that runs the plant today
+│   │   │   ├── heuristic.py    the rule-based operator that runs the plant today
+│   │   │   └── rl.py           RLController + RLControllerSlot: the policy, if one is loaded
+│   │   ├── rl/               the learning side (V7); imports nothing web
+│   │   │   ├── spaces.py       the observation/action contract, as data
+│   │   │   ├── observation.py  telemetry -> normalised vector
+│   │   │   ├── actions.py      policy vector -> Action (no second guard)
+│   │   │   ├── reward.py       what "running the plant well" scores
+│   │   │   ├── episodes.py     the episode distribution: scenario + start + weather
+│   │   │   ├── metrics.py      plant-side numbers a person compares controllers with
+│   │   │   ├── env.py          PlantEnv: reset(seed) / step(vector) / step_action(Action)
+│   │   │   ├── checkpoints.py  metadata, compatibility, the mock checkpoint writer
+│   │   │   ├── policies.py     checkpoint -> something with .act()
+│   │   │   ├── training/       PPO config, model wiring, `train` entry point
+│   │   │   └── evaluation/     heuristic vs policy on identical episodes (`make rl-eval`)
 │   │   ├── agent/            the supervisory operator (V6)
 │   │   │   ├── supervisor.py   SupervisorAgent: gating, one run, failure paths
 │   │   │   ├── triggers.py     when waking it up is worth an LLM call
@@ -93,7 +112,7 @@ No RL yet — the point is the architecture it will plug into.
 │   │   │   └── evaluation.py   the five-scenario regression harness (`make eval`)
 │   │   └── safety/
 │   │       └── validation.py   the guard every action passes through
-│   └── tests/                controller, constraints, guard, loop, agent, API contract
+│   └── tests/                controller, constraints, guard, loop, agent, RL, API contract
 │
 ├── frontend/           the control room
 │   └── src/
@@ -139,9 +158,11 @@ Individually:
 ```bash
 make backend        # uv run uvicorn plant_backend.app:app --reload --port 8000
 make frontend       # cd frontend && npm run dev
-make test           # simulator + backend test suite (119 tests)
+make test           # simulator + backend test suite (174 tests)
 make eval           # the supervisor against five scenarios, deterministically
 make sim            # one simulated day, headless, printed as a table
+make rl-eval        # the heuristic baseline through PlantEnv (CHECKPOINT=<dir> adds a policy)
+make train-dry      # build the RL environment and print the training plan; trains nothing
 ```
 
 The supervisor runs on rules unless `OPENAI_API_KEY` is set, in which case the LLM drives
@@ -282,6 +303,7 @@ API surface (all under `/api`, proxied from Vite):
 | `/simulation/reset`   | POST   | back to the initial condition                                  |
 | `/controller`         | GET    | mode, controller, constraints, and the last decision's notes   |
 | `/controller/config`  | POST   | `{mode?, controller?, constraints?, action?}`                   |
+| `/controller/rl`      | POST   | `{checkpoint}` — load an RL checkpoint (`null` unloads it)      |
 | `/events`             | GET    | recent simulator events                                        |
 | `/faults`             | GET    | fault catalogue + what is scheduled or running                 |
 | `/faults`             | POST   | `{type, severity, start_s?, duration_s?, channel?}` — inject   |
@@ -369,9 +391,9 @@ just a component reporting degraded headroom, and `allocation.py` handles the re
 lever is `Constraints`) and used in V6 by the supervisory agent, which steers through that
 lever instead of driving. The simulator never learns who is driving it.
 
-**RL environments.** `reset()` / `step(action)` / `PlantState.to_dict()` are already
-Gym-shaped. A `PlantEnv` wrapper adding an observation vector and a reward belongs beside
-the simulator, not inside it.
+**RL environments.** Built in V7 (see below), and beside the simulator rather than inside
+it: `backend/src/plant_backend/rl/` owns the observation, the action conversion and the
+reward, while `PlantSimulator` still knows nothing about who is driving it.
 
 **More views.** `frontend/src/views.tsx` is the manifest that drives both the router and the
 top nav; the greyed-out entries (3D Plant, Agent, Metrics, Events, Scenarios) are
@@ -381,6 +403,273 @@ placeholders pointing at it. Write a page, flip `ready: true`, and it appears.
 Overview and maps `PlantState` onto meshes — see "The 3D twin" below. Adding a unit to
 the twin never touches the simulator: one entry in `plant-3d/layout.ts`, one component,
 one flow route.
+
+---
+
+## V7: the RL foundation
+
+V7 makes the plant learnable without letting anything unproven drive it. It adds the
+environment, the reward, the training and evaluation entry points, checkpoint handling and
+the controller slot a policy loads into — and it trains nothing. **There is no policy in
+this repository**, so there is no heuristic-vs-RL result to report, and the code says so
+wherever a number could be mistaken for one.
+
+```text
+                    Supervisory agent (V6)
+                            │  constraints
+              ┌─────────────┴─────────────┐
+       HeuristicController          RLController
+        (default, always)      (only with a loaded checkpoint)
+              └─────────────┬─────────────┘
+                            ↓
+                    safety.validate()          unchanged, authoritative
+                            ↓
+                        Simulator
+```
+
+The learning side lives in `backend/src/plant_backend/rl/` and imports no FastAPI: the
+environment, training and evaluation run headless, locally or on a remote box, and the
+backend only depends on it for the controller.
+
+### The environment
+
+```python
+from plant_backend.rl import PlantEnv
+
+env = PlantEnv()                                  # 48 h episodes by default
+observation, info = env.reset(seed=7)             # same seed -> same episode
+observation, reward, terminated, truncated, info = env.step(env.action_space.sample())
+```
+
+`PlantEnv` is a translation layer, not a second plant: `PlantSimulator` still owns the
+physics, `load_scenario` still puts it into a starting condition, and every action takes the
+backend's path — **decide → `safety.validate()` → `simulator.step()`**. Two doors share that
+body: `step(vector)` for a policy and `step_action(Action)` for anything implementing
+`Controller`, which is what makes the evaluation below a fair comparison rather than two
+rollout loops that drifted apart.
+
+Truth and telemetry stay split in both directions. The **observation is telemetry**, sensor
+drift included; the **reward is `simulator.state`**, the plant's own production accounting.
+A policy that learns to believe a drifting transmitter is penalised the way a real plant
+would penalise it — with methane it did not make.
+
+Episodes end by **truncation, never termination**. An industrial plant has no absorbing
+state; a critical condition is something to recover from, not a game over. `terminated` is
+always `False`, `truncated` becomes `True` at the horizon, and bootstrapping stays correct
+at the cut. Severe fault recovery is deliberately *not* the objective: the episode pool is
+ordinary weather and ordinary operation, because the thing being learned is routine
+allocation.
+
+### What the policy sees
+
+30 floats, mostly in `[0, 1]`. The order is part of the checkpoint contract, so the whole
+table lives in `rl/spaces.py` **as data** — each field carrying its source, its unit before
+normalisation and the formula used — and `ObservationEncoder` is the only thing that reads
+it. Documentation cannot drift from the encoder, tests assert on declared bounds instead of
+hard-coded indices, and a checkpoint records the field order it was trained against.
+
+| Group | Fields | Why it is in there |
+| ----- | ------ | ------------------ |
+| time | `time_of_day_sin`, `time_of_day_cos`, `episode_progress` | midnight is next to 23:59; the solar day is the plant's only exogenous cycle |
+| energy | `solar_available`, `solar_potential`, `solar_output_factor`, `solar_trend` | what is on the bus, what a clear sky would give, and which way it is moving — the forecast the model actually has |
+| storage | `battery_soc`, `battery_power`, `battery_reserve_margin`, `h2_fill`, `co2_fill`, `ch4_fill` | every inter-temporal decision in the plant is about these |
+| units | `{electrolyser,dac,methanator}_{load,online,health}` | a derated unit converts worse; an offline one converts nothing |
+| production | `h2_production`, `co2_production`, `ch4_production` | the flows the shares just bought |
+| envelope | `electrolyser_cap`, `dac_cap`, `methanator_cap`, `support_cap`, `reserve_soc` | the supervisor retunes these mid-episode; a policy that cannot see the envelope keeps asking for what it cannot have |
+
+Normalisation is by *design* reference (rating, capacity, peak) rather than by running
+statistics, so the vector means the same thing on the first step of training as on a
+re-sized plant, with no normaliser to save alongside the weights. `solar_trend` is the only
+field with memory (one step), which is why `ObservationEncoder.reset()` exists.
+
+### What the policy says
+
+5 floats in `[-1, 1]` — the range Gaussian and tanh policies are comfortable in:
+
+| Slot | Becomes | Conversion |
+| ---- | ------- | ---------- |
+| `battery_share` | `Action.battery_share` | `(a + 1) / 2` |
+| `electrolyser_share` | `Action.electrolyser_share` | `(a + 1) / 2` |
+| `dac_share` | `Action.dac_share` | `(a + 1) / 2` |
+| `methanator_share` | `Action.methanator_share` | `(a + 1) / 2` |
+| `battery_support` | `Action.battery_support_kw` | `(a + 1) / 2 × Constraints.support_limit_kw(config)` |
+
+`ActionAdapter` clips out-of-range output, reports that it had to (`clipped`, which the
+reward penalises mildly), maps support into the envelope's kilowatts, and hands the result
+to `Action.sanitised` — the simulator's own normalisation for shares that oversubscribe the
+bus. It deliberately stops there: **the adapter is a unit conversion, not a second safety
+system.** `safety.validate()` remains the only guard, for the policy exactly as for the
+operator.
+
+### The reward
+
+The objective is the plant's objective — *make methane efficiently over time, without
+operating unsafely or unstably*. Everything except the first term is a cost on a way an
+allocation policy can look productive while wasting the resource or damaging the plant:
+
+| Term | Signal (simulator truth) | Sign | Normalised by | Weight | Why |
+| ---- | ------------------------ | ---- | ------------- | ------ | --- |
+| `methane` | `ch4_produced_total_kg` delta | + | CH₄ at rated methanator power for one step | 1.0 | the product |
+| `curtailment` | `energy_curtailed_kwh` delta | − | solar generated this step | 0.25 | the main way a plant with a battery underperforms |
+| `battery_drain` | discharge this step | − | one step at rated discharge | 0.05 | discharging to clear the stack's floor is *correct*, just not free |
+| `reserve_breach` | SOC below `Constraints.reserve_soc` | − | SOC points | 2.0 | the reserve is what keeps the plant able to restart |
+| `storage_saturation` | tanks at ≥ 98% fill | − | 3 tanks | 0.1 | a full tank throttles the unit feeding it |
+| `shutdown` | `plant_status` in `critical`/`offline` | − | per step | 0.5 | time unable to produce |
+| `correction` | guard adjustments + out-of-range output | − | 3 clampable consumers | 0.1 | mild on purpose: it teaches the policy to stop asking, it does not stand in for the guard |
+| `cycling` | on/off transitions of the three units | − | 3 units | 0.05 | equipment wear the physics does not model |
+
+Every term reads a counter the simulator already maintains, so nothing is double-counted,
+and every term is order-1 per step, so the weights survive a change of timestep or plant
+size. `info["reward"]` carries the signed `components` (they sum to the scalar) and the raw
+`signals` — the only way to tell a policy that learned to make methane from one that learned
+to dodge the shutdown penalty by idling. **The weights are chosen for scale, not tuned
+against training outcomes**, which is why they are `TrainingConfig.reward` rather than
+constants.
+
+### Episodes and determinism
+
+One seed draws the whole episode: scenario from the pool (`clear_day`, `cloud_cover`),
+starting battery SOC and H₂/CO₂/CH₄ inventories, and — 30% of the time — one extra mild
+`solar_drop` at a random hour. The draw becomes a plain `Scenario` and is loaded through
+`PlantSimulator.load_scenario`, so the env adds no second way of starting the plant.
+
+```bash
+uv run pytest backend/tests/test_rl_env.py -q     # includes the determinism test
+```
+
+Same seed and same actions produce identical rewards and identical observations; different
+seeds do not. Nothing in the env or the reward calls a global RNG.
+
+### Training (wired, not run)
+
+One maintained baseline — PPO from Stable-Baselines3 — because the environment is what V7 is
+about, and a second algorithm would double the surface with nothing to compare.
+
+```bash
+uv sync --group train                             # pulls torch; nothing else needs it
+make train-dry                                    # builds the env, prints the plan, trains nothing
+uv run python -m plant_backend.rl.training.train --config runs/ppo.json --output runs/ppo-1
+uv run python -m plant_backend.rl.training.train --resume runs/ppo-1/checkpoint
+```
+
+`make train-dry` is the honest version of "is this ready to train": it constructs and resets
+a real environment and reports the shapes, the steps per episode, how many simulated days the
+budget buys and which scenario seed 0 drew.
+
+```json
+{"seed": 0, "total_timesteps": 1000000, "n_envs": 4, "observation_shape": [30],
+ "action_shape": [5], "steps_per_episode": 2880, "simulated_days": 694.4,
+ "first_episode": "cloud_cover", "output_dir": "runs/ppo"}
+```
+
+`TrainingConfig` (JSON, `rl/training/config.py`) keeps the four concerns apart —
+`episode`, `reward`, `ppo`, and the run itself (seed, timesteps, `n_envs`,
+`checkpoint_every`, `output_dir`, `resume_from`) — and rejects unknown keys rather than
+silently ignoring a typo in a learning rate. Torch is imported only inside the training and
+loading paths, so the backend, the tests and `make dev` never pay for it.
+
+### Checkpoints
+
+A checkpoint is a directory: `metadata.json` plus the policy artifact (`policy.zip` for
+SB3). The metadata records the observation and action field order, `SPEC_VERSION`, the
+`plant_sim` version, the seed, the timesteps trained and the full training config — enough
+to know whether the weights still fit the plant.
+
+Loading refuses, loudly and specifically, in every case where it cannot be sure:
+
+| Situation | Result |
+| --------- | ------ |
+| path missing | `MissingCheckpointError` |
+| no `metadata.json`, unreadable JSON, missing artifact | `CorruptCheckpointError` |
+| observation/action fields or `SPEC_VERSION` differ | `IncompatibleCheckpointError`, naming the difference |
+| Stable-Baselines3 not installed | `CheckpointError` telling you to `uv sync --group train` |
+
+There is **no path that initialises a random policy** when a checkpoint cannot be loaded:
+the RL controller simply does not exist, and the reason is on the status. Runs live under
+`runs/`, which is git-ignored — trained weights are build output, not source.
+
+`checkpoints.write_fixed_checkpoint(path, action)` writes a `fixed`-format mock that repeats
+one constant action. It exists so the loading, selection and evaluation paths can be tested
+without torch, and it is labelled a mock everywhere it surfaces: in the metadata
+(`trained: false`), in the controller's notes, in the control room's status line and in the
+evaluation output.
+
+### Evaluation
+
+```bash
+make rl-eval                                      # heuristic baseline alone
+make rl-eval CHECKPOINT=runs/ppo-1/checkpoint     # both, on identical episodes
+uv run python -m plant_backend.rl.evaluation --seeds 1 2 3 --hours 24 --json out.json
+```
+
+Both controllers get the same seeds, the same scenarios, the same starting inventories, the
+same horizon, the same guard, the same reward and the same `EpisodeMetrics`, because both are
+rolled out through `PlantEnv` — the heuristic through `step_action`, the policy through
+`step`.
+
+```text
+3 seed(s) x 24 h per controller  [SMOKE TEST -- no trained policy]
+
+controller             CH4 kg      solar use  curtailed kWh        min SOC           idle    corrections         cycles         reward
+Heuristic              1768.8          98.1%            833          22.3%          48.8%           52.0          141.0          694.2
+
+No policy has been trained yet: the RL row above is either absent or a
+constant-action mock. Performance numbers follow the first real training run.
+```
+
+The JSON carries every run, the per-controller aggregate, the checkpoint metadata and
+`smoke_test`, which is `true` whenever neither side is a trained policy. Alongside the eight
+columns above the metrics also track H₂/CO₂ produced, battery energy discharged, feedstock
+shortages while methanation was commanded, time in a critical or offline condition, and how
+many steps the guard had to correct. **The heuristic figures are a baseline, not a
+comparison**: there is nothing to compare them with yet.
+
+### The backend: three modes, one default
+
+| Mode | Who decides | Available when |
+| ---- | ----------- | -------------- |
+| `AUTO — Heuristic` | `HeuristicController` | always; the default |
+| `AUTO — RL` | `RLController` | only once a compatible checkpoint has loaded |
+| `MANUAL` | the operator's stored setpoint | always |
+
+```bash
+export PLANT_RL_CHECKPOINT=runs/ppo-1/checkpoint   # loaded at start-up, if it loads
+curl -X POST localhost:8000/api/controller/rl -d '{"checkpoint": "runs/ppo-1/checkpoint"}'
+curl -X POST localhost:8000/api/controller/config -d '{"controller": "rl"}'
+curl -X POST localhost:8000/api/controller/rl -d '{"checkpoint": null}'   # unload
+```
+
+Loading a checkpoint never switches controller by itself — that stays an explicit operator
+choice. A bad checkpoint is a `400` carrying the reason, and the plant keeps running on the
+heuristic. Selecting `rl` without one is also a `400`, with the reason instead of a silent
+no-op. Unloading, or an inference failure, hands the plant straight back:
+`RLController` returns an idle action and records why, `PlantRuntime` reverts to the
+heuristic, notes *"RL inference failed … reverted to heuristic"*, and the RL status turns
+`failed`. A controller that throws every 60 s is not a controller.
+
+Switching controllers changes **who decides**, never the path: `safety.validate()` runs
+identically for the heuristic, the policy and the operator, and the supervisor keeps
+steering through `Constraints` — it supervises *the plant*, not a particular controller, and
+the envelope it tightens is exactly the action space a policy is trained inside.
+
+### Control room
+
+Minimal, deliberately: the control deck lists the available controllers under the
+AUTO/MANUAL toggle, marks RL `unavailable` or `failed` with the backend's own reason on
+hover, and disables the option instead of offering something that cannot drive. There is no
+ML dashboard, no training progress bar and no score — none of those would be showing
+anything real. Telemetry, the trend charts, the event feed and the 3D replay are untouched;
+a recorded session replays the same way whichever controller drove it, because frames are
+`PlantState` either way.
+
+### Where V8 plugs in
+
+The seam is now proven from both sides: `PlantEnv` is the training door and
+`Controller.compute_action()` is the driving door, with the same guard behind both. V8 is
+therefore a *training* task, not an integration task — run `make train`, evaluate the
+checkpoint against the baseline with `make rl-eval CHECKPOINT=…`, and if it wins, ship the
+checkpoint. Until that run exists, this repository makes no claim about how a learned
+controller compares with the heuristic.
 
 ---
 

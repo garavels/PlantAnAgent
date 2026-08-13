@@ -1,6 +1,6 @@
 [project]
 name = "plant-backend"
-version = "0.6.0"
+version = "0.7.0"
 description = "Plant-control backend: owns the simulation loop, the controller, the action guard and the supervisory agent."
 requires-python = ">=3.11"
 dependencies = [
@@ -8,6 +8,10 @@ dependencies = [
     "fastapi>=0.115",
     "uvicorn[standard]>=0.30",
     "openai-agents>=0.19.4,<0.20",
+    # V7: the RL environment and checkpoint inference. Small and pure-Python-ish;
+    # the training stack (torch) is the optional `train` group, not a runtime dep.
+    "gymnasium>=1.0,<2",
+    "numpy>=1.26,<3",
 ]
 
 [tool.uv.sources]

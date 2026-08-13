@@ -46,8 +46,21 @@ function normalised(action: PlantAction): PlantAction {
 }
 
 export function ControlDeck() {
-  const { config, action, playing, speed, link, control, setAction, setSpeed, setMode, togglePlay, stepOnce, reset } =
-    usePlant()
+  const {
+    config,
+    action,
+    playing,
+    speed,
+    link,
+    control,
+    setAction,
+    setSpeed,
+    setMode,
+    setController,
+    togglePlay,
+    stepOnce,
+    reset,
+  } = usePlant()
 
   const auto = control?.mode !== 'manual'
   const maxSupportKw = config?.battery.max_discharge_kw ?? 2500
@@ -59,6 +72,9 @@ export function ControlDeck() {
   const applied = normalised(shown)
   const oversubscribed = !auto && applied !== shown
   const note = control?.adjustments[0] ?? control?.notes[0]
+  // one option per backend controller; RL is listed even when it cannot be picked
+  const controllers = control?.controllers ?? []
+  const selectable = controllers.length > 1
 
   // control-room reflexes: space runs, R resets
   useEffect(() => {
@@ -105,6 +121,41 @@ export function ControlDeck() {
           {note && <span className="deck__note">{note}</span>}
         </div>
       </div>
+
+      {selectable && (
+        <div className="deck__group">
+          <span className="label">Controller</span>
+          <div className="deck__controllers">
+            {controllers.map((option) => {
+              const chosen = control?.controller.id === option.id
+              const usable = option.available !== false
+              return (
+                <button
+                  key={option.id}
+                  className={`deck__controller${chosen ? ' deck__controller--on' : ''}`}
+                  onClick={() => setController(option.id)}
+                  disabled={offline || !usable || !auto}
+                  aria-pressed={chosen}
+                  title={usable ? option.description : option.reason}
+                >
+                  <i className="deck__radio" />
+                  <span>{option.label}</span>
+                  {!usable && <em>{option.state === 'failed' ? 'failed' : 'unavailable'}</em>}
+                </button>
+              )
+            })}
+          </div>
+          <span className="deck__hint">
+            {control?.rl && !control.rl.available
+              ? control.rl.reason
+              : control?.rl?.metadata && !control.rl.metadata.trained
+                ? 'Mock checkpoint loaded: not a trained policy.'
+                : auto
+                  ? 'Drives the plant in AUTO; its actions pass the same guard.'
+                  : 'Switch to AUTO to hand the plant back to a controller.'}
+          </span>
+        </div>
+      )}
 
       <div className="deck__group">
         <span className="label">Clock</span>
