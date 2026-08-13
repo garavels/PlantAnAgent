@@ -1,0 +1,73 @@
+.log__list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  min-height: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.log__empty {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+.log__row {
+  display: grid;
+  grid-template-columns: 74px 62px minmax(0, 1fr);
+  align-items: baseline;
+  gap: 14px;
+  padding: 6px 2px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+/* the code column fits the longest code the simulator emits, 30 characters */
+.log__list--coded .log__row {
+  grid-template-columns: 74px 62px 240px minmax(0, 1fr);
+}
+
+.log__row + .log__row {
+  border-top: 1px solid var(--hairline);
+}
+
+.log__clock {
+  font-size: 12px;
+  letter-spacing: -0.05em;
+  color: var(--text-faint);
+}
+
+.log__level {
+  font-size: 10px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.log__code {
+  font-size: 11.5px;
+  letter-spacing: -0.05em;
+  color: var(--text-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.log__row--warning .log__level {
+  color: var(--solar);
+}
+
+.log__row--critical .log__level {
+  color: var(--alarm);
+}
+
+.log__row--critical .log__message {
+  color: var(--text);
+}
+
+.log__message {
+  min-width: 0;
+  line-height: 1.4;
+}

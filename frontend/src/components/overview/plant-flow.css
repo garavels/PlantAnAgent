@@ -47,9 +47,15 @@
   }
 }
 
+/* Halo in the card colour: the labels are drawn over the equipment, so they
+   need to carry their own background where a node happens to sit behind. */
 .conduit__label {
-  font-size: 10.5px;
+  font-size: 12px;
   fill: var(--text-faint);
+  paint-order: stroke;
+  stroke: var(--card-raised);
+  stroke-width: 4;
+  stroke-linejoin: round;
 }
 
 .conduit__label--live {
@@ -64,7 +70,7 @@
 .flow__axis,
 .flow__vent text {
   font-family: var(--font-sans);
-  font-size: 11px;
+  font-size: 12px;
   fill: var(--text-faint);
 }
 
@@ -82,7 +88,7 @@
 
 .legend__name {
   font-family: var(--font-sans);
-  font-size: 11.5px;
+  font-size: 12.5px;
   fill: var(--text-dim);
 }
 
@@ -99,7 +105,7 @@
 
 .node__title {
   font-family: var(--font-sans);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
   letter-spacing: -0.01em;
   fill: var(--text);
@@ -107,7 +113,7 @@
 
 .node__status {
   font-family: var(--font-sans);
-  font-size: 11.5px;
+  font-size: 12.5px;
   fill: var(--text-faint);
 }
 
@@ -133,14 +139,14 @@
 
 .node__unit {
   font-family: var(--font-sans);
-  font-size: 11.5px;
+  font-size: 12.5px;
   font-weight: 400;
   letter-spacing: 0;
   fill: var(--text-faint);
 }
 
 .node__foot {
-  font-size: 10.5px;
+  font-size: 11.5px;
   fill: var(--text-dim);
 }
 

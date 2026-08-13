@@ -1,0 +1,38 @@
+.events-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  height: 100%;
+  min-height: 520px;
+}
+
+.events-page__log {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+  padding: 16px 20px 18px;
+  animation: rise 420ms ease both;
+}
+
+.events-page__head {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.events-page__title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.events-page__filters {
+  display: flex;
+  gap: 6px;
+}
+
+.events-page__head .label {
+  margin-left: auto;
+}

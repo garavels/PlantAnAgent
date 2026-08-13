@@ -6,6 +6,37 @@
   animation: rise 420ms ease both;
 }
 
+/* Strip form for the overview, where the diagram gets the room instead. */
+.metric--compact {
+  gap: 7px;
+  padding: 10px 13px 9px;
+}
+
+.metric--compact .label {
+  font-size: 11px;
+}
+
+.metric--compact .metric__trend {
+  height: 24px;
+  margin-bottom: -2px;
+}
+
+.metric--compact .metric__value {
+  font-size: 22px;
+}
+
+.metric--compact .metric__unit {
+  font-size: 10.5px;
+}
+
+.metric--compact .metric__foot {
+  padding-top: 7px;
+  font-size: 10.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .metric__head {
   display: flex;
   align-items: baseline;
