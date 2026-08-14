@@ -1,0 +1,11 @@
+{
+  "epochs": 50,
+  "patience": 10,
+  "batch_size": 64,
+  "learning_rate": 0.001,
+  "weight_decay": 0.01,
+  "context_len": 144,
+  "seed": 0,
+  "device": "cuda",
+  "freeze_encoder": true
+}

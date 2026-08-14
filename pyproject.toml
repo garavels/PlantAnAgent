@@ -13,6 +13,11 @@ dev = ["pytest>=8.0", "httpx>=0.27"]  # httpx: fastapi's TestClient
 # torch, and nothing in the backend, the simulator or the tests needs it. The RL
 # environment itself is a normal backend dependency (gymnasium + numpy).
 train = ["stable-baselines3>=2.4,<3"]
+# V9: HEPA. Same reasoning as `train` -- torch is only needed to build, train or
+# run the HEPA network, so it is installed on purpose (`uv sync --group hepa`).
+# Everything in the HEPA package that does not touch a tensor (telemetry schema,
+# event definitions, labels, dataset format, collection, metrics) is torch-free.
+hepa = ["torch>=2.6,<3"]
 
 [tool.uv]
 package = false

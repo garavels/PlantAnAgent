@@ -1,0 +1,37 @@
+{
+  "episodes": 512,
+  "seed": 0,
+  "dt_s": 60.0,
+  "controller": "heuristic",
+  "episode": {
+    "horizon_h": 168.0,
+    "scenarios": [
+      "clear_day",
+      "cloud_cover",
+      "electrolyser_degradation",
+      "dac_failure",
+      "sensor_drift",
+      "multiple_problems"
+    ],
+    "battery_soc": [0.1, 0.85],
+    "h2_fill": [0.0, 0.5],
+    "co2_fill": [0.0, 0.6],
+    "ch4_fill": [0.0, 0.3],
+    "disturbance_probability": 0.4,
+    "disturbance_severity": [0.2, 0.7],
+    "disturbance_duration_h": [0.5, 6.0]
+  },
+  "horizons": {
+    "hours": [1.0, 3.0, 6.0, 12.0, 24.0],
+    "sample_period_s": 300.0
+  },
+  "split": {
+    "train": 0.7,
+    "val": 0.15,
+    "test": 0.15
+  },
+  "thresholds": {
+    "reserve_soc": 0.15,
+    "empty_kg": 1.0
+  }
+}
