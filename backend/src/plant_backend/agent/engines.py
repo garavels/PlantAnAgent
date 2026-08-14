@@ -19,6 +19,7 @@ implementation of the same interface.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import partial
 from typing import Any, Protocol
 
 from .prompts import SYSTEM_PROMPT, brief as build_brief
@@ -28,6 +29,8 @@ from .trace import Confidence
 #: What the supervisor thinks it is looking at. `normal` means "nothing wrong".
 CATEGORIES = (
     "normal",
+    #: V10: a credible HEPA forecast, acted on before the event.
+    "predicted_risk",
     "controller_degradation",
     "critical_condition",
     "electrolyser_degradation",
@@ -64,6 +67,13 @@ SHORTFALL_ELECTROLYSER_FRAC = 0.5
 SHORTFALL_DAC_FRAC = 0.4
 #: Methanation left when CO2 supply is gone, as a fraction of rating.
 CO2_STARVED_METHANATOR_FRAC = 0.4
+#: Methanation left when CO2 starvation is *predicted* but not yet happening: a
+#: forecast buys a gentler change than a fault does.
+CO2_RISK_METHANATOR_FRAC = 0.6
+#: Fall in mean CO2 inventory over the window that counts as "heading down".
+CO2_FALL_KG = 1.0
+#: Fall in mean SOC over the window that counts as the pack losing ground.
+SOC_FALL = 0.02
 #: Plant conditions that call for safe mode rather than a retuned envelope.
 CRITICAL_STATUSES = ("critical", "offline")
 #: SOC above the reserve at which there is still an energy budget to retune.
@@ -109,6 +119,13 @@ class RuleEngine:
     driving), then instruments before the process (a bad reading invalidates
     everything downstream), then the units that convert power into product, then
     the energy budget, then the feedstock chain.
+
+    V10 inserts one rule into that order, after the instrument check and before the
+    component rules: a HEPA forecast that the telemetry corroborates. It sits there
+    because the point of a forecast is to act while the plant still looks fine --
+    the component rules below all describe something that has already gone wrong --
+    and behind the instrument check because a forecast built on a lying sensor is
+    worth exactly as much as the sensor.
     """
 
     label = "rules"
@@ -116,15 +133,20 @@ class RuleEngine:
     async def investigate(self, toolbox: AgentToolbox, trigger: dict[str, Any]) -> Diagnosis:
         telemetry = toolbox.get_current_telemetry()
         toolbox.get_recent_events(20)
-        toolbox.get_recent_telemetry(120)
+        trend = toolbox.get_recent_telemetry(120)
         constraints = toolbox.get_controller_constraints()
         diagnostic = toolbox.run_diagnostic("plant")
+        # V10: what may happen, before the rules about what already has. It is only
+        # ever evidence: `_predicted_risk` acts on a forecast the telemetry agrees
+        # with, and otherwise stands aside for the present-tense rules below.
+        risk = toolbox.get_predicted_event_risk()
 
         for rule in (
             _critical_condition,
             _controller_behaviour,
             _recovery,
             _sensor_inconsistency,
+            partial(_predicted_risk, risk=risk, trend=trend),
             _electrolyser,
             _dac,
             _methanator,
@@ -386,6 +408,198 @@ def _sensor_inconsistency(
         confidence="medium",
         human_intervention_required=True,
     )
+
+
+def _predicted_risk(
+    toolbox: AgentToolbox,
+    telemetry: dict[str, Any],
+    constraints: dict[str, Any],
+    diagnostic: dict[str, Any],
+    *,
+    risk: dict[str, Any],
+    trend: dict[str, Any],
+) -> Diagnosis | None:
+    """V10: act on a forecast, but only one the plant's own telemetry supports.
+
+    HEPA says *what* may happen, never *why*, so this rule does what a supervisor
+    would do with a warning: name the risk, then go and look. Something in the
+    telemetry has to corroborate the forecast before the envelope moves -- a
+    falling buffer, a unit under-performing, generation short of clear-sky. If
+    nothing does, the risk is written into the shift log as a prediction that was
+    not confirmed, and the present-tense rules below get their turn.
+
+    Nothing here shuts anything down: a probability is not grounds for stopping a
+    plant that is running.
+    """
+    if risk.get("status") != "active":
+        return None
+    concerns = risk.get("attention") or []
+    if not concerns:
+        return None
+    worst = concerns[0]
+    toolbox.observe(
+        f"HEPA: {worst['event'].replace('_', ' ')} within {worst['horizon']} at "
+        f"{worst['probability']:.0%} ({worst['level']}, {worst['trend']})",
+        event=worst["event"],
+        horizon=worst["horizon"],
+        probability=worst["probability"],
+        level=worst["level"],
+        trend=worst["trend"],
+    )
+    handler = {
+        "co2_starvation": _predicted_co2_starvation,
+        "battery_reserve_violation": _predicted_battery_reserve,
+    }.get(worst["event"])
+    if handler is None:
+        return None
+    return handler(toolbox, telemetry, constraints, trend, worst)
+
+
+def _predicted_co2_starvation(
+    toolbox: AgentToolbox,
+    telemetry: dict[str, Any],
+    constraints: dict[str, Any],
+    trend: dict[str, Any],
+    worst: dict[str, Any],
+) -> Diagnosis | None:
+    """CO2 starvation ahead: is the capture chain actually losing ground?
+
+    The plant can look entirely normal here -- the reactor is running, the buffer
+    is not empty -- which is the whole point: by the time CO2 starvation is a fact,
+    methanation has already stopped. The evidence that makes the forecast credible
+    is capture, not inventory: a unit that is unavailable or converting power at
+    well under its design rate, with the buffer draining.
+    """
+    co2_kg = float(telemetry["co2_level_kg"])
+    if co2_kg < 1.0:
+        return None  # already starved: the present-tense rules own this
+    reading = toolbox.inspect_component("dac")
+    ratio = reading.get("yield_ratio")
+    draining = _fell(trend, "co2_level_kg", CO2_FALL_KG)
+    weak_capture = not reading["available"] or (ratio is not None and ratio < YIELD_SUSPECT)
+    if not (draining and weak_capture):
+        toolbox.observe(
+            "Predicted CO2 starvation not corroborated: capture is at design rate and the "
+            f"buffer holds {co2_kg:.0f} kg",
+            co2_level_kg=co2_kg,
+        )
+        return None
+    toolbox.observe(
+        f"CO2 buffer at {co2_kg:.0f} kg and falling, capture "
+        + (
+            "unavailable"
+            if not reading["available"]
+            else f"at {ratio:.0%} of design ({reading['co2_capture_kg_h']:.1f} kg/h)"
+        ),
+        co2_level_kg=co2_kg,
+        capture_kg_h=reading["co2_capture_kg_h"],
+    )
+    target_kw = round(constraints["rated_kw"]["methanator"] * CO2_RISK_METHANATOR_FRAC, -1)
+    applied = _tighten(
+        toolbox,
+        {"methanator_max_kw": target_kw},
+        {"methanator_max_kw": constraints["effective_kw"]["methanator"]},
+        reason=(
+            f"predicted CO2 starvation within {worst['horizon']} "
+            f"({worst['probability']:.0%}); stretch the buffer while capture recovers"
+        ),
+    )
+    return Diagnosis(
+        category="predicted_risk",
+        component="dac",
+        summary=(
+            f"CO2 starvation is predicted within {worst['horizon']} at "
+            f"{worst['probability']:.0%} and the telemetry agrees: the buffer is down to "
+            f"{co2_kg:.0f} kg and falling while capture is "
+            + ("unavailable" if not reading["available"] else f"at {ratio:.0%} of design")
+            + ". Nothing has stopped yet. "
+            + (
+                f"Methanation capped at {target_kw:.0f} kW so the remaining CO2 lasts long enough "
+                "for capture to catch up."
+                if applied
+                else "Methanation is already held low enough to stretch the remaining CO2, so the "
+                "envelope is unchanged."
+            )
+        ),
+        confidence="medium",
+    )
+
+
+def _predicted_battery_reserve(
+    toolbox: AgentToolbox,
+    telemetry: dict[str, Any],
+    constraints: dict[str, Any],
+    trend: dict[str, Any],
+    worst: dict[str, Any],
+) -> Diagnosis | None:
+    """Reserve violation ahead while the pack still looks healthy: shed early.
+
+    Corroboration is generation short of clear-sky, or a pack that is simply
+    losing charge over the window. The intervention is the ordinary one -- hold
+    more charge back, take the discretionary capture load down -- applied while
+    there is still charge to protect, and left to the controller to work inside.
+    """
+    soc = float(telemetry["battery_soc"])
+    reserve_soc = float(constraints["battery_reserve_soc"])
+    if soc <= reserve_soc + RESERVE_MARGIN:
+        return None  # already on the reserve: `_battery` owns this
+    solar = toolbox.inspect_component("solar")
+    short_generation = solar["clear_sky_kw"] > 0.0 and solar["output_ratio"] < SOLAR_SUSPECT
+    if not (short_generation or _fell(trend, "battery_soc", SOC_FALL)):
+        toolbox.observe(
+            f"Predicted reserve violation not corroborated: pack at {soc:.0%} and holding, "
+            f"generation at {solar['output_ratio']:.0%} of clear-sky",
+            battery_soc=soc,
+        )
+        return None
+    toolbox.observe(
+        f"Pack at {soc:.0%} against a {reserve_soc:.0%} reserve, generation at "
+        f"{solar['output_ratio']:.0%} of clear-sky",
+        battery_soc=soc,
+        output_ratio=solar["output_ratio"],
+    )
+    reason = (
+        f"predicted reserve violation within {worst['horizon']} "
+        f"({worst['probability']:.0%}); protect stored energy early"
+    )
+    applied = _tighten(
+        toolbox,
+        {"dac_max_kw": round(constraints["rated_kw"]["dac"] * SHORTFALL_DAC_FRAC, -1)},
+        {"dac_max_kw": constraints["effective_kw"]["dac"]},
+        reason=reason,
+    )
+    if reserve_soc < SHORTFALL_RESERVE_SOC:
+        result = toolbox.set_controller_constraints(
+            {"battery_min_soc": SHORTFALL_RESERVE_SOC}, reason=reason
+        )
+        if result.get("ok"):
+            applied.update(result.get("applied") or {})
+    return Diagnosis(
+        category="predicted_risk",
+        component="battery",
+        summary=(
+            f"A battery reserve violation is predicted within {worst['horizon']} at "
+            f"{worst['probability']:.0%}. The pack is still at {soc:.0%}, above its "
+            f"{reserve_soc:.0%} reserve, but generation is at {solar['output_ratio']:.0%} of "
+            "clear-sky. "
+            + (
+                f"{_changed(applied)} while there is still charge to protect."
+                if applied
+                else "The envelope already holds discretionary load low enough, so it is left "
+                "unchanged."
+            )
+        ),
+        confidence="medium",
+    )
+
+
+def _fell(trend: dict[str, Any], channel: str, by: float) -> bool:
+    """Whether a channel's mean is at least `by` lower now than earlier in the window."""
+    earlier = trend.get("earlier") or {}
+    recent = trend.get("recent") or {}
+    if channel not in earlier or channel not in recent:
+        return False
+    return float(earlier[channel]) - float(recent[channel]) >= by
 
 
 def _electrolyser(
@@ -672,6 +886,7 @@ class LLMEngine:
             trigger,
             toolbox.get_current_telemetry(),
             toolbox.get_recent_events(10)["events"],
+            toolbox.get_predicted_event_risk(),
         )
         result = await Runner.run(agent, message, max_turns=self.max_turns)
         report = result.final_output

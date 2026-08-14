@@ -335,6 +335,39 @@ HEPA becomes useful only if it improves decisions compared with simpler approach
 
 Training data can be generated from the simulator by running many scenarios with different weather, actions, disturbances, and injected faults, then recording what happens over future horizons.
 
+### As implemented (V9 + V10)
+
+The plan-scoring form above is still the long-term target. What exists is the unconditioned form: HEPA reads telemetry history and answers *P(event within Δt)* per event and horizon, and V10 gives that answer to the supervisor rather than to a plan selector.
+
+```text
+telemetry history ──> HEPA ──> P(event within Δt) ──> supervisor
+```
+
+not, for now:
+
+```text
+telemetry + proposed plan ──> HEPA ──> plan score
+```
+
+Action-conditioned HEPA and counterfactual plan scoring are deliberately deferred: they change what the model is, and they only make sense once a trained checkpoint exists to say whether the unconditioned form predicts anything useful at all.
+
+So the system reasons on four levels, each answering a different question:
+
+```text
+Simulator          "what happens physically?"
+Controller / RL    "what should we do right now?"
+HEPA               "what is likely to happen later?"
+Supervisor         "given all of this, should our strategy change?"
+```
+
+The authority runs strictly downwards, and prediction has none of it:
+
+```text
+HEPA ──> Supervisor ──> Controller manager / constraints ──> Controller ──> Safety ──> Simulator
+```
+
+A forecast can make the supervisor investigate. It cannot cap a load, switch a controller, change a constraint or stop a machine — only the supervisor can, and only after the plant's own telemetry corroborates the prediction. With no checkpoint configured, HEPA reports `unavailable` and the plant runs exactly as it did before it existed.
+
 ---
 
 ## 9. Intended final architecture

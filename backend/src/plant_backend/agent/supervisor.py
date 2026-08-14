@@ -5,10 +5,16 @@
                      -> maybe one run         # a model call, in the background
 
 `observe` is called on every tick and is deliberately almost free: it evaluates
-the triggers and returns. When a trigger does fire, the run happens in a
-background task, so the simulation keeps stepping while the supervisor thinks --
-and if the model is slow, hangs or fails, the plant is still being controlled by
-the same heuristic controller as before.
+the triggers and returns. Since V10 it also keeps the predicted-risk monitor up to
+date -- but on the monitor's own cadence (15 simulated minutes by default), not per
+tick: HEPA answers questions about hours, and asking it every 60 s would be a waste
+of a forecast. A risk that crosses its configured level, or that is rising towards
+one, becomes one more trigger competing on priority with the plant's own alarms.
+
+When a trigger does fire, the run happens in a background task, so the simulation
+keeps stepping while the supervisor thinks -- and if the model is slow, hangs or
+fails, the plant is still being controlled by the same heuristic controller as
+before.
 
 Gating, in order: the agent must be enabled, no run may already be in flight, a
 minimum gap must have passed since the last run, and the trigger's key must not
@@ -29,7 +35,9 @@ import logging
 import os
 from typing import Any
 
+from ..hepa import service as hepa_service
 from .engines import Diagnosis, Engine, LLMEngine, RuleEngine
+from .risk import RiskMonitor, RiskPolicy
 from .tools import AgentToolbox
 from .trace import AgentTrace, Incident
 from .triggers import Trigger, TriggerWatch, manual
@@ -72,11 +80,16 @@ class SupervisorAgent:
         min_gap_s: float = MIN_GAP_S,
         timeout_s: float = RUN_TIMEOUT_S,
         enabled: bool | None = None,
+        forecaster: hepa_service.Forecaster | None = None,
+        risk_policy: RiskPolicy | None = None,
     ) -> None:
         self.runtime = runtime
         self.engine = engine or default_engine()
         self.trace = AgentTrace()
         self.watch = TriggerWatch()
+        #: V10: "what may happen?", on its own cadence. Unavailable, and silent,
+        #: until a HEPA checkpoint is configured.
+        self.risk = RiskMonitor(runtime, forecaster, risk_policy, trace=self.trace)
         self.cooldown_s = cooldown_s
         self.min_gap_s = min_gap_s
         self.timeout_s = timeout_s
@@ -109,6 +122,8 @@ class SupervisorAgent:
             self.runtime.session.events(60),
             # V8: the driver itself is something worth waking up for
             self.runtime.control.health_alert(),
+            # V10: and so is something that has not happened yet
+            self._risk_trigger(),
         )
         if trigger is None:
             return None
@@ -138,7 +153,7 @@ class SupervisorAgent:
                 key=trigger.key,
             )
         )
-        toolbox = AgentToolbox(self.runtime, self.trace)
+        toolbox = AgentToolbox(self.runtime, self.trace, self.risk)
         try:
             diagnosis = await self._decide(toolbox, trigger)
         finally:
@@ -247,6 +262,17 @@ class SupervisorAgent:
         except Exception:  # noqa: BLE001 - logging must never break a run
             log.debug("could not emit agent event %s", code, exc_info=True)
 
+    def _risk_trigger(self) -> Trigger | None:
+        """Refresh the forecast if it is due, and offer what it raises, if anything.
+
+        Cheap by construction: the monitor's cadence decides whether the model is
+        asked at all, and a monitor with no checkpoint answers `unavailable` without
+        loading anything. Failure here is not the plant's problem -- the monitor
+        turns every failure into a status -- so nothing is caught again.
+        """
+        self.risk.update()
+        return self.risk.trigger()
+
     def _allowed(self, trigger: Trigger, time_s: float) -> bool:
         if self.last_run_time_s is not None and time_s - self.last_run_time_s < self.min_gap_s:
             return False
@@ -286,6 +312,7 @@ class SupervisorAgent:
         """Forget the run history. Called when the plant itself is reset."""
         self.trace.clear()
         self.watch.reset()
+        self.risk.reset()
         self._cooldowns.clear()
         self.runs = 0
         self.last_run_time_s = None
@@ -310,6 +337,8 @@ class SupervisorAgent:
             "incident": incident.to_dict() if incident else None,
             "incidents": self.trace.incidents(10),
             "trace": self.trace.recent(trace_limit),
+            # V10: what may happen, next to what happened.
+            "risk": self.risk.snapshot(),
         }
 
 

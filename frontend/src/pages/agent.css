@@ -44,6 +44,7 @@
 .agent__incident-card,
 .agent__hierarchy,
 .agent__deck,
+.agent__risk,
 .agent__trace,
 .agent__history {
   display: flex;
@@ -142,6 +143,64 @@
   border-radius: var(--r-pill);
   font-size: 11px;
   color: var(--accent);
+}
+
+/* --- V10: predictive risk ------------------------------------------------ */
+.agent__risk-status {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.agent__risk-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11.5px;
+  color: var(--text-dim);
+}
+
+.agent__risk-table th {
+  padding: 0 0 6px;
+  text-align: right;
+  font-weight: 400;
+}
+
+.agent__risk-table th:first-child {
+  text-align: left;
+}
+
+.agent__risk-table td {
+  padding: 4px 0;
+  border-top: 1px solid var(--hairline);
+}
+
+.agent__risk-event {
+  text-transform: capitalize;
+  color: var(--text);
+}
+
+.agent__risk-cell {
+  text-align: right;
+  font-size: 11px;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+.agent__risk-cell--elevated {
+  color: var(--text);
+}
+
+.agent__risk-cell--high {
+  color: var(--solar);
+}
+
+.agent__risk-cell--critical {
+  color: var(--alarm);
+}
+
+.agent__risk-trend {
+  margin-left: 4px;
+  font-size: 10px;
 }
 
 /* --- trace and incident history ----------------------------------------- */

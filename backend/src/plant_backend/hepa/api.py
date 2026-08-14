@@ -3,10 +3,11 @@
     GET  /api/hepa/status     is a model loaded, for which events and horizons
     POST /api/hepa/predict    P(event within Δt) for the live plant, or a given history
 
-Both routes are advisory. Nothing here touches the controller, the action guard or the
-supervisor: HEPA answers when asked and is never consulted automatically. Wiring a
-forecast into control is a decision for a later version, and it should be an explicit
-one.
+Both routes are read-only, and both are *one* way of asking. Since V10 the supervisory
+agent asks the same question through `hepa.service`, which these routes now share, so a
+prediction the control room reads and a prediction the supervisor acted on come from the
+same loaded checkpoint and the same resampled history. Neither route touches the
+controller or the action guard: HEPA predicts, the supervisor decides.
 
 Everything degrades on purpose:
 
@@ -24,15 +25,14 @@ nothing and a backend with no HEPA checkpoint starts exactly as it did in V7.
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from typing import Any, Callable, Sequence
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from . import checkpoints, events as event_rules, horizons as horizon_grid, telemetry
-from .inference import InferenceError, status
+from . import checkpoints, events as event_rules, horizons as horizon_grid, service, telemetry
+from .inference import EventPredictor, InferenceError, status
 
 router = APIRouter(prefix="/api/hepa", tags=["hepa"])
 
@@ -40,8 +40,10 @@ router = APIRouter(prefix="/api/hepa", tags=["hepa"])
 #: Set by `app.py`; without it `/predict` needs an explicit history in the request.
 _history_provider: Callable[[], Sequence[dict[str, Any]]] | None = None
 
-_predictor: Any = None
-_predictor_path: str | None = None
+#: The checkpoint lookup, the model cache and the resampling all live in `service`,
+#: so these routes and the supervisor cannot disagree about any of the three.
+checkpoint_path = service.checkpoint_path
+reset_cache = service.reset_cache
 
 
 def configure(history: Callable[[], Sequence[dict[str, Any]]] | None) -> None:
@@ -50,39 +52,11 @@ def configure(history: Callable[[], Sequence[dict[str, Any]]] | None) -> None:
     _history_provider = history
 
 
-def checkpoint_path() -> str | None:
-    """The configured checkpoint directory, or None. No local path is hardcoded."""
-    value = os.environ.get(checkpoints.CHECKPOINT_ENV, "").strip()
-    return value or None
-
-
-def reset_cache() -> None:
-    """Drop the loaded model. For tests, and for pointing at a new checkpoint."""
-    global _predictor, _predictor_path
-    _predictor = None
-    _predictor_path = None
-
-
-def _load_predictor(path: str) -> Any:
-    global _predictor, _predictor_path
-    if _predictor is not None and _predictor_path == path:
-        return _predictor
+def _load_predictor(path: str) -> EventPredictor:
     try:
-        from .inference import EventPredictor
-    except ModuleNotFoundError as reason:  # torch, or one of its dependencies
-        raise HTTPException(
-            status_code=503,
-            detail=(
-                f"HEPA inference needs the optional model dependencies ({reason.name}): "
-                "install them with `uv sync --group hepa`"
-            ),
-        ) from reason
-    try:
-        _predictor = EventPredictor.load(path)
-    except (checkpoints.HepaCheckpointError, InferenceError) as reason:
+        return service.load_predictor(path)
+    except service.ForecastUnavailable as reason:
         raise HTTPException(status_code=503, detail=str(reason)) from reason
-    _predictor_path = path
-    return _predictor
 
 
 class PredictRequest(BaseModel):
@@ -141,7 +115,9 @@ def post_predict(request: PredictRequest | None = None) -> dict[str, Any]:
     if body.telemetry is not None:
         frames = list(body.telemetry)
     else:
-        frames = _resample(_live_history(), predictor.metadata.horizons.sample_period_s)
+        frames = service.resample(
+            _live_history(), predictor.metadata.horizons.sample_period_s
+        )
     try:
         history = [telemetry.state_from_frame(frame) for frame in frames]
     except (TypeError, ValueError) as reason:
@@ -162,24 +138,6 @@ def _live_history() -> list[dict[str, Any]]:
             detail="no live plant history available: send telemetry frames in the request",
         )
     return list(_history_provider())
-
-
-def _resample(frames: Sequence[dict[str, Any]], sample_period_s: float) -> list[dict[str, Any]]:
-    """The live history at the model's sample period, anchored on the newest frame.
-
-    The plant runs at a 60 s timestep and the model is trained on 300 s samples, so
-    handing the raw history over would compress a 12 h context into 2.4 h of plant.
-    The spacing is measured from the frames themselves rather than assumed, and the
-    walk runs backwards from `now`, because the sample that matters most is the last
-    one.
-    """
-    if len(frames) < 2:
-        return list(frames)
-    spacing = float(frames[-1].get("time_s", 0.0)) - float(frames[-2].get("time_s", 0.0))
-    if spacing <= 0.0:
-        return list(frames)
-    stride = max(1, int(round(sample_period_s / spacing)))
-    return list(reversed(list(frames)[::-1][::stride]))
 
 
 __all__ = ["PredictRequest", "checkpoint_path", "configure", "reset_cache", "router"]

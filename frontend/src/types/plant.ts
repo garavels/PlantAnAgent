@@ -267,6 +267,8 @@ export interface PlantConfig {
 export type AgentEntryKind =
   | 'trigger'
   | 'observation'
+  /** V10: what HEPA says may happen, as opposed to what the plant is doing. */
+  | 'prediction'
   | 'tool'
   | 'diagnosis'
   | 'decision'
@@ -308,6 +310,44 @@ export interface AgentIncident {
   closed_clock: string | null
 }
 
+// --- V10: predicted event risk ---------------------------------------------
+/** Mirror of `agent.risk`: how urgent a predicted event is, and where it is going. */
+export type RiskLevel = 'low' | 'elevated' | 'high' | 'critical'
+export type RiskTrend = 'stable' | 'rising' | 'falling'
+
+/** Whether a forecast can be served at all. Only `active` carries numbers. */
+export type RiskStatus = 'active' | 'unavailable' | 'error'
+
+/** One event at one horizon: `P(event within Δt)`, what it means, how it moved. */
+export interface EventRisk {
+  event: string
+  horizon: string
+  probability: number
+  level: RiskLevel
+  trend: RiskTrend
+  previous: number | null
+  delta: number | null
+}
+
+/** Mirror of `RiskMonitor.snapshot()`. Empty of numbers unless status is active. */
+export interface RiskSnapshot {
+  status: RiskStatus
+  available: boolean
+  reason: string | null
+  /** `checkpoint`, or `fixture:<name>` when the numbers are hand-written test data. */
+  source: string
+  updated_clock: string | null
+  updated_time_s: number | null
+  forecasts: number
+  events: string[]
+  horizons: string[]
+  risks: EventRisk[]
+  /** The risks that justify waking the supervisor. */
+  attention: EventRisk[]
+  refresh_s: number
+  thresholds: Record<string, { elevated: number; high: number; critical: number }>
+}
+
 /** Mirror of `SupervisorAgent.snapshot()`. */
 export interface AgentSnapshot {
   enabled: boolean
@@ -324,6 +364,8 @@ export interface AgentSnapshot {
   incident: AgentIncident | null
   incidents: AgentIncident[]
   trace: AgentTraceEntry[]
+  /** V10: what may happen, next to what happened. */
+  risk: RiskSnapshot
 }
 
 export interface AgentTraceResponse {

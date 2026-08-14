@@ -1,4 +1,4 @@
-.PHONY: help setup dev backend frontend sim test eval rl-eval train-dry train \
+.PHONY: help setup dev backend frontend sim test eval foresight-eval rl-eval train-dry train \
 	hepa-collect hepa-pretrain-dry hepa-pretrain hepa-finetune-dry hepa-finetune \
 	hepa-eval build clean
 
@@ -20,6 +20,9 @@ dev:              ## run both (ctrl-c stops both)
 
 eval:             ## run the supervisory agent against the five scenarios
 	uv run python -m plant_backend.agent.evaluation
+
+foresight-eval:   ## compare controller / +supervisor / +HEPA (fixture forecasts)
+	uv run python -m plant_backend.agent.foresight_evaluation
 
 rl-eval:          ## evaluate the heuristic baseline (add CHECKPOINT=<dir> for a policy)
 	uv run python -m plant_backend.rl.evaluation --seeds 1 2 3 --hours 24 \
