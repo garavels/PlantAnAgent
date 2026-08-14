@@ -26,7 +26,7 @@
 
 .agent__top {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 300px) minmax(280px, 360px);
   gap: var(--gap);
   align-items: stretch;
 }
@@ -42,6 +42,7 @@
 }
 
 .agent__incident-card,
+.agent__hierarchy,
 .agent__deck,
 .agent__trace,
 .agent__history {
@@ -113,6 +114,18 @@
   font-size: 12px;
   line-height: 1.65;
   color: var(--text-dim);
+}
+
+/* the hierarchy card is a narrow column: its facts stack rather than tile */
+.agent__hierarchy .agent__facts {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.agent__switch-reason {
+  display: block;
+  margin-top: 6px;
+  font-size: 11.5px;
+  color: var(--text-faint);
 }
 
 .agent__actions {

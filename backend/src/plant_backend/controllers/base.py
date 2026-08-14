@@ -100,13 +100,20 @@ def _cap(rated_kw: float, limit_kw: float | None) -> float:
 
 @dataclass(frozen=True)
 class ControlDecision:
-    """An action plus why: `notes` is what the control room shows the operator."""
+    """An action plus why: `notes` is what the control room shows the operator.
+
+    `invalid` means the controller asked for something outside its own range and
+    had to be corrected before the action was even built -- a clipped policy
+    vector, not a clamped power. It is a statement about the controller, which is
+    why controller health counts it (see `controllers.health`).
+    """
 
     action: Action
     notes: tuple[str, ...] = ()
+    invalid: bool = False
 
     def to_dict(self) -> dict[str, Any]:
-        return {"action": self.action.to_dict(), "notes": list(self.notes)}
+        return {"action": self.action.to_dict(), "notes": list(self.notes), "invalid": self.invalid}
 
 
 class Controller(ABC):

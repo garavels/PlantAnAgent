@@ -82,6 +82,46 @@ export interface ControllerInfo {
   state?: string
   /** Why it is unavailable, shown next to the disabled option. */
   reason?: string
+  /** V8: `unrated` | `good` | `suspect` | `poor`, from the controller health window. */
+  grade?: string
+}
+
+/** V8: how well the driver is driving. Counted, never learned. */
+export interface ControllerHealth {
+  controller: string
+  grade: 'unrated' | 'good' | 'suspect' | 'poor'
+  steps: number
+  summary: string
+  concerns: string[]
+  counts: Record<string, number>
+  rates: Record<string, number>
+}
+
+/** V8: one logged handover, with the reason that justified it. */
+export interface ControllerSwitch {
+  time_s: number
+  clock: string
+  previous: string
+  current: string
+  /** e.g. `RL -> HEURISTIC`. */
+  summary: string
+  reason: string
+  by: 'operator' | 'agent' | 'system'
+  previous_grade: string
+}
+
+/** V8: the control hierarchy above the timestep -- who drives, how, how well. */
+export interface ControlHierarchy {
+  active_id: string
+  preferred_id: string
+  operating_state: 'normal' | 'degraded' | 'safe'
+  health: ControllerHealth
+  last_switch: ControllerSwitch | null
+  switches: ControllerSwitch[]
+  switch_count: number
+  cooldown_s: number
+  /** Envelope fields the supervisor currently owns. */
+  agent_envelope: string[]
 }
 
 /** The RL checkpoint slot: whether a policy can drive, and why not when it cannot. */
@@ -115,6 +155,8 @@ export interface ControlStatus {
   /** V7: the RL checkpoint slot. Unavailable until a checkpoint is loaded. */
   rl?: RLStatus
   constraints: Constraints
+  /** V8: the controller manager's view of itself. */
+  hierarchy?: ControlHierarchy
   manual_action: PlantAction
   applied_action: PlantAction
   /** Why the last action looked the way it did. */
