@@ -7,7 +7,9 @@ import { READY_VIEWS } from './views'
 export default function App() {
   return (
     <PlantProvider>
-      <BrowserRouter>
+      {/* the router's default transition-priority navigation never commits while
+          the stream re-renders the twin, so navigation runs at normal priority */}
+      <BrowserRouter useTransitions={false}>
         <AppShell>
           <Routes>
             {READY_VIEWS.map((view) => (
