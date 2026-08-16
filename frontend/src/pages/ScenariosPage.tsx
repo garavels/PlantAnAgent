@@ -6,6 +6,7 @@
 
 import { FaultDeck } from '../components/scenarios/FaultDeck'
 import { ScenarioCatalog } from '../components/scenarios/ScenarioCatalog'
+import { ScenarioComposer } from '../components/scenarios/ScenarioComposer'
 import { PageHeader } from '../components/shell/PageHeader'
 import { usePlant } from '../state/plantContext'
 import './scenarios.css'
@@ -39,6 +40,8 @@ export function ScenariosPage() {
         Running a scenario resets the plant to the scenario's starting hour and stores,
         then schedules its faults. Injected faults apply to the plant as it is now.
       </p>
+
+      <ScenarioComposer />
 
       <ScenarioCatalog />
 

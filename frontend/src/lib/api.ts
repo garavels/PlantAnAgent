@@ -18,6 +18,9 @@ import type {
   PlantAction,
   PlantFrames,
   ScenarioCatalogue,
+  ScenarioDef,
+  ScenarioDraft,
+  ScenarioSaved,
 } from '../types/plant'
 
 const BASE = '/api'
@@ -27,8 +30,19 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     headers: { 'content-type': 'application/json' },
     ...init,
   })
-  if (!response.ok) throw new Error(`${init?.method ?? 'GET'} ${path} -> ${response.status}`)
+  if (!response.ok) throw new Error(await reason(response, init?.method ?? 'GET', path))
   return (await response.json()) as T
+}
+
+/** The backend's own explanation of a refusal, since validation errors are read by operators. */
+async function reason(response: Response, method: string, path: string): Promise<string> {
+  try {
+    const body = (await response.json()) as { detail?: unknown }
+    if (typeof body.detail === 'string' && body.detail) return body.detail
+  } catch {
+    // no JSON body; fall back to the status line
+  }
+  return `${method} ${path} -> ${response.status}`
 }
 
 function post<T>(path: string, body?: unknown): Promise<T> {
@@ -96,6 +110,34 @@ export function fetchScenarios(): Promise<ScenarioCatalogue> {
 /** Reset the plant into a predefined, repeatable situation. */
 export function loadScenario(scenario: string): Promise<PlantFrames> {
   return post<PlantFrames>('/scenarios', { scenario })
+}
+
+/** Natural language -> a validated scenario draft. Nothing is saved or run yet. */
+export function generateScenario(prompt: string): Promise<ScenarioDraft> {
+  return post<ScenarioDraft>('/scenarios/generate', { prompt })
+}
+
+/** Keep a reviewed draft for this session; the backend validates it again. */
+export function saveScenario(scenario: ScenarioDef): Promise<ScenarioSaved> {
+  return post<ScenarioSaved>('/scenarios/save', { scenario: draft(scenario) })
+}
+
+/** A saved scenario travels in seconds; the generator's format speaks hours. */
+function draft(scenario: ScenarioDef): Record<string, unknown> {
+  return {
+    name: scenario.name,
+    description: scenario.description,
+    start_hour: scenario.start_hour,
+    initial: scenario.initial,
+    faults: scenario.faults.map((fault) => ({
+      type: fault.type,
+      severity: fault.severity,
+      start_hour: (fault.start_s ?? 0) / 3600,
+      duration_hours: fault.duration_s === null ? null : fault.duration_s / 3600,
+      channel: fault.channel,
+    })),
+    notes: [],
+  }
 }
 
 export function fetchFaults(): Promise<FaultCatalogue> {

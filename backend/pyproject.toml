@@ -8,6 +8,8 @@ dependencies = [
     "fastapi>=0.115",
     "uvicorn[standard]>=0.30",
     "openai-agents>=0.19.4,<0.20",
+    # V10: scenario authoring calls the Responses API directly, without the SDK.
+    "openai>=2.0,<3",
     # V7: the RL environment and checkpoint inference. Small and pure-Python-ish;
     # the training stack (torch) is the optional `train` group, not a runtime dep.
     "gymnasium>=1.0,<2",

@@ -42,6 +42,7 @@ export function ScenarioCatalog() {
           >
             <header className="catalog__head">
               <h3 className="catalog__name">{entry.name}</h3>
+              {entry.saved && !running && <span className="chip chip--idle">Generated</span>}
               {running && (
                 <span className="chip chip--live">
                   <i className="chip__led" />

@@ -440,6 +440,42 @@ one flow route.
 
 ---
 
+## V10: scenarios written in words
+
+The Scenarios page gained a prompt box. An operator describes a situation —
+
+> Create a scenario where solar capacity suddenly drops by 50%, two sensors drift, and the
+> DAC becomes degraded after 3 hours.
+
+— and `POST /api/scenarios/generate` turns it into a scenario draft, which is shown for
+review, saved on request, and then loaded through the same path a predefined scenario is.
+
+```text
+prompt ──> Responses API (strict JSON schema) ──> validation ──> Scenario ──> load_scenario()
+```
+
+`backend/src/plant_backend/authoring.py` owns the middle. The schema it sends is *generated
+from the simulator*: the fault `type` enum is `faults.CATALOGUE`, `channel` is
+`telemetry.SENSOR_CHANNELS`, `additionalProperties` is false everywhere, and there is no
+field anywhere in it that could carry code — the model fills in a fixed set of numbers and
+strings, nothing else. What comes back is then validated a second time in Python, because a
+schema cannot express ranges we care about: hours are clamped to a day, inventories to the
+real tank capacities, and severities go through `FaultSpec.parse()`, the same constructor
+the predefined scenarios use. A request for something the plant cannot do is either mapped
+to the nearest supported fault — recorded in `notes`, surfaced as a warning in the UI — or
+rejected with a 422 explaining why.
+
+Saving is session-scoped: `PlantSession.saved` holds the drafts, `scenario_catalogue()`
+lists them after the simulator's own with `saved: true`, and `load_scenario("ai_…")` finds
+them. The simulator is untouched by this feature; it never learns that a scenario was
+written by a model.
+
+The key is read from `OPENAI_API_KEY` and the model from `PLANT_AUTHOR_MODEL`
+(default `gpt-4.1-mini`); with no key the endpoint returns a 422 saying so, and the rest of
+the page works as before.
+
+---
+
 ## V9: HEPA — predicting events before they happen
 
 V9 gives the plant a *forecast*. Everything so far reacts to the present: the controller
