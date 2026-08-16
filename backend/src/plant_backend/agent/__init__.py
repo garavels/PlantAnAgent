@@ -20,6 +20,7 @@ Modules:
     observations  what the supervisor is allowed to see (telemetry, not truth)
     tools         the only surface it can act through (`AgentToolbox`)
     triggers      when it is worth waking up
+    risk          V10: HEPA's forecast as levels, trends and one more trigger
     engines       how it decides: `LLMEngine` (Agents SDK) or `RuleEngine`
     prompts       the supervisory brief
     sdk           the Agents SDK adapter: toolbox methods as function tools
@@ -30,6 +31,7 @@ Modules:
 from __future__ import annotations
 
 from .engines import Diagnosis, LLMEngine, RuleEngine
+from .risk import EventRisk, RiskMonitor, RiskPolicy, Thresholds
 from .supervisor import SupervisorAgent, default_engine
 from .tools import AgentToolbox
 from .trace import AgentTrace, Incident, TraceEntry
@@ -39,10 +41,14 @@ __all__ = [
     "AgentToolbox",
     "AgentTrace",
     "Diagnosis",
+    "EventRisk",
     "Incident",
     "LLMEngine",
+    "RiskMonitor",
+    "RiskPolicy",
     "RuleEngine",
     "SupervisorAgent",
+    "Thresholds",
     "TraceEntry",
     "Trigger",
     "TriggerWatch",

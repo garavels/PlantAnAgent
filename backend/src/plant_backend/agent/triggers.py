@@ -10,8 +10,16 @@ only then asks for an opinion:
     controller health     the *driver* has started making mistakes
     warning event         the plant grumbled
     plant DEGRADED        something is derated or starved
+    predicted risk        HEPA says something is becoming likely (V10)
     production drop       methane output collapsed while the sun was up
     manual               a human pressed "investigate"
+
+Predicted risk is the V10 addition, and it is the first trigger that is not about
+the present at all: every other one fires because something already happened, this
+one fires because something probably will. It sits *below* the plant's own alarms
+on purpose -- a forecast never outranks a critical event -- and the risk itself is
+never a decision: it buys an investigation, and the supervisor decides the rest
+(see `risk.RiskMonitor.trigger`).
 
 Controller health is the V8 addition, and it is a different kind of trigger from
 the rest: every other one says something about the plant, this one says something
@@ -85,12 +93,14 @@ class TriggerWatch:
         frames: list[dict[str, Any]],
         events: list[dict[str, Any]],
         health_alert: dict[str, Any] | None = None,
+        risk: Trigger | None = None,
     ) -> Trigger | None:
         """The most urgent trigger raised by `frames`, or `None` to stay asleep.
 
         `events` is the plant's own stream; only entries newer than the last call
         are considered, so a warning that is still in the window does not fire
-        again on the next tick.
+        again on the next tick. `risk` is the V10 predicted-risk candidate, already
+        formed by the risk monitor, and competes on priority like the rest.
         """
         if not frames:
             return None
@@ -108,6 +118,7 @@ class TriggerWatch:
                 _from_status(status, previous_status),
                 _from_health(health_alert),
                 _from_events(fresh, "warning", 60),
+                risk,
                 _production_drop(frames),
             )
             if candidate is not None

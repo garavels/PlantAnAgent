@@ -3,6 +3,10 @@
 Kept short and operational on purpose. The model does not need the plant's
 physics explained -- it can read the telemetry -- it needs to know which
 decisions are its own, which belong to the controller, and that safety wins.
+
+V10 adds one thing it has to get right: a forecast is not an observation. The HEPA
+paragraphs below exist mostly to head off two failure modes -- treating a
+probability as a fact, and chasing a number that moved by three points.
 """
 
 from __future__ import annotations
@@ -31,6 +35,11 @@ questions:
   4. Should the operating strategy change, and how?
   5. Is the plant the problem, or is the controller driving it badly?
 
+Since V10 you can also see what may happen next, which adds a sixth question:
+
+  6. Is something becoming likely that is worth acting on now, while the plant still
+     looks fine?
+
 How to work:
 - Investigate before acting. Look at current telemetry, the recent trend, the plant's own
   events, and then inspect the components that could explain what you see.
@@ -41,6 +50,30 @@ How to work:
   disagree, say so and flag it for a human instead of chasing a phantom process fault.
 - Distinguish "a component is failing" from "there is not enough energy". Low
   solar_output_factor means weather, not equipment.
+
+Predicted risk (`get_predicted_event_risk`):
+- A separate model, HEPA, reads the same telemetry history you do and reports
+  `P(event within horizon)` for a fixed set of bad events: battery reserve violation,
+  H2 starvation, CO2 starvation, forced production shutdown, critical plant state.
+  That is the whole of what it does.
+- They are probabilities, not certainties, and HEPA can be wrong in both directions.
+  It says nothing about causes or components: predicting an event is its job,
+  explaining it is yours, with the tools above.
+- Read the horizon together with the number. 1h and 12h are different questions and a
+  longer horizon is naturally higher; 60% within 12h is not an emergency.
+- The trend is often worth more than the level. A risk rising across successive
+  forecasts deserves a look; a number that wobbles by a few points is noise, and
+  acting on noise is an unnecessary intervention.
+- High risk is grounds for investigation, not for intervention. Go and confirm it: is
+  the buffer actually draining, is the unit actually under-performing, is generation
+  actually short of clear-sky? If the telemetry does not support the prediction, say
+  so and leave the plant alone.
+- If it is credible, act early and proportionately -- a tightened cap, a higher
+  reserve -- because the point of foresight is a small change now instead of a large
+  one later. A probability is never grounds for a shutdown.
+- `status` may be "unavailable" or "error": there is no model loaded, or it failed.
+  Then there is no forecast, you work from telemetry, events and diagnostics exactly
+  as before, and you do not invent numbers.
 
 How to act:
 - Your first lever is the operating envelope (`set_controller_constraints`). It reaches
@@ -85,7 +118,12 @@ conclusions and actions only -- no step-by-step reasoning.
 """
 
 
-def brief(trigger: dict[str, Any], telemetry: dict[str, Any], events: list[dict[str, Any]]) -> str:
+def brief(
+    trigger: dict[str, Any],
+    telemetry: dict[str, Any],
+    events: list[dict[str, Any]],
+    risk: dict[str, Any] | None = None,
+) -> str:
     """The user message for one run: why you are awake, and the first look."""
     lines = [
         f"You were woken by: {trigger['reason']} -- {trigger['detail']}",
@@ -98,6 +136,7 @@ def brief(trigger: dict[str, Any], telemetry: dict[str, Any], events: list[dict[
     lines.extend(f"  {event['clock']} [{event['level']}] {event['message']}" for event in events[-8:])
     if not events:
         lines.append("  (none)")
+    lines.extend(["", "Predicted event risk (HEPA):", *_risk_lines(risk)])
     lines.extend(
         [
             "",
@@ -106,6 +145,26 @@ def brief(trigger: dict[str, Any], telemetry: dict[str, Any], events: list[dict[
         ]
     )
     return "\n".join(lines)
+
+
+def _risk_lines(risk: dict[str, Any] | None) -> list[str]:
+    """The forecast as prose, or an honest statement that there is none.
+
+    Only the numbers above LOW are worth the prompt space; the full table is one
+    tool call away when the supervisor wants it.
+    """
+    if not risk:
+        return ["  unavailable (no forecast for this run)"]
+    if risk.get("status") != "active":
+        return [f"  {risk.get('status', 'unavailable')}: {risk.get('reason') or 'no forecast'}"]
+    notable = risk.get("attention") or []
+    if not notable:
+        return ["  every predicted risk is low"]
+    return [
+        f"  {entry['event'].replace('_', ' ')} within {entry['horizon']}: "
+        f"{entry['probability']:.0%} ({entry['level']}, {entry['trend']})"
+        for entry in notable[:4]
+    ]
 
 
 __all__ = ["SYSTEM_PROMPT", "brief"]

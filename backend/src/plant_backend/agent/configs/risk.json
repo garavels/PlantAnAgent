@@ -1,0 +1,46 @@
+{
+  "horizons": ["1h", "3h", "6h", "12h"],
+  "refresh_s": 900.0,
+  "trend_tolerance": 0.05,
+  "attention": "high",
+  "rising_attention": "elevated",
+  "default": {
+    "elevated": 0.3,
+    "high": 0.55,
+    "critical": 0.8
+  },
+  "events": {
+    "battery_reserve_violation": {
+      "elevated": 0.3,
+      "high": 0.55,
+      "critical": 0.8
+    },
+    "h2_starvation": {
+      "elevated": 0.3,
+      "high": 0.55,
+      "critical": 0.8
+    },
+    "co2_starvation": {
+      "elevated": 0.35,
+      "high": 0.6,
+      "critical": 0.85,
+      "horizons": {
+        "1h": {
+          "elevated": 0.2,
+          "high": 0.4,
+          "critical": 0.65
+        }
+      }
+    },
+    "forced_production_shutdown": {
+      "elevated": 0.2,
+      "high": 0.45,
+      "critical": 0.75
+    },
+    "critical_plant_state": {
+      "elevated": 0.15,
+      "high": 0.35,
+      "critical": 0.6
+    }
+  }
+}

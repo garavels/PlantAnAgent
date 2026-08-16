@@ -51,6 +51,13 @@ advisory HTTP routes that answer *P(event within Δt)*. **Nothing has been pretr
 fine-tuned**: this environment has no useful GPU, so V9 ships the infrastructure and the
 tests, and the backend runs exactly as V7 did until a checkpoint is configured.
 
+Since V10 the forecast is *part of the supervision*. The supervisor asks HEPA — on its own
+cadence, through one service door — what is becoming likely, turns the answer into levels
+and trends, and investigates a credible risk **before** the event: it corroborates the
+prediction against telemetry and the units involved, and only then retunes the envelope the
+controller drives inside. HEPA still only predicts. With no checkpoint it reports
+`unavailable`, raises nothing, and the plant behaves exactly as it did in V8.
+
 The control room has three views over the same live session: **Overview** (the concise
 operational summary, plus scenario/fault controls and the event feed), **3D Plant**
 (a spatial digital twin, where faulted units turn amber or red under a warning beacon) and
@@ -115,6 +122,8 @@ operational summary, plus scenario/fault controls and the event feed), **3D Plan
 │   │   │   ├── inference.py    telemetry history -> P(event within Δt)
 │   │   │   ├── evaluation.py   AUROC/AUPRC/Brier/calibration, per event and horizon
 │   │   │   ├── api.py          GET /api/hepa/status, POST /api/hepa/predict
+│   │   │   ├── service.py      V10: the one door the supervisor asks through
+│   │   │   ├── fixtures.py     V10: deterministic stand-ins for tests, labelled as such
 │   │   │   ├── data/           trajectories, windows, labels, splits, the collector
 │   │   │   ├── models/         causal encoder, horizon predictor, survival head
 │   │   │   ├── pretraining/    stage 1: self-supervised representation learning
@@ -129,7 +138,10 @@ operational summary, plus scenario/fault controls and the event feed), **3D Plan
 │   │   │   ├── prompts.py      the supervisory brief
 │   │   │   ├── sdk.py          the toolbox wrapped as SDK function tools
 │   │   │   ├── trace.py        the operational trace and the incident record
-│   │   │   └── evaluation.py   the five-scenario regression harness (`make eval`)
+│   │   │   ├── risk.py         V10: HEPA probabilities -> levels, trends, attention
+│   │   │   ├── configs/risk.json  the thresholds, per event and per horizon
+│   │   │   ├── evaluation.py   the five-scenario regression harness (`make eval`)
+│   │   │   └── foresight_evaluation.py  V10: controller / +supervisor / +HEPA (`make foresight-eval`)
 │   │   └── safety/
 │   │       └── validation.py   the guard every action passes through
 │   └── tests/                controller, constraints, guard, loop, agent, RL, API contract
@@ -178,8 +190,9 @@ Individually:
 ```bash
 make backend        # uv run uvicorn plant_backend.app:app --reload --port 8000
 make frontend       # cd frontend && npm run dev
-make test           # simulator + backend test suite (248 tests)
+make test           # simulator + backend test suite (266 tests)
 make eval           # the supervisor against five scenarios, deterministically
+make foresight-eval # controller vs +supervisor vs +supervisor+HEPA (fixture forecasts)
 make sim            # one simulated day, headless, printed as a table
 make rl-eval        # the heuristic baseline through PlantEnv (CHECKPOINT=<dir> adds a policy)
 make train-dry      # build the RL environment and print the training plan; trains nothing
@@ -440,6 +453,147 @@ one flow route.
 
 ---
 
+## V10: the supervisor asks about the future
+
+V9 built a forecast and left it beside the plant. V10 wires it into the only place that can
+reasonably use one — the supervisor — and nowhere else. Four layers, four different
+questions:
+
+```text
+Simulator          "what happens physically?"
+Controller / RL    "what should we do right now?"
+HEPA               "what is likely to happen later?"
+Supervisor         "given all of this, should our strategy change?"
+```
+
+which is also the order the authority runs in:
+
+```text
+                         Supervisor
+                        /          \
+                    HEPA          Diagnostics
+            "what may happen?"  "what happened?"
+                       │
+                risk predictions
+                       │
+                Controller manager
+                 /             \
+                RL          Heuristic
+                 \             /
+                      Safety
+                        │
+                    Simulator
+```
+
+A forecast reaches the plant only as *attention*. Nothing in `hepa/` caps a load, switches a
+controller, changes a constraint or stops a machine; a prediction can make the supervisor
+look, and the supervisor still has to convince itself with telemetry before it moves the
+envelope the controller drives inside.
+
+### The path, in five pieces
+
+```text
+Supervisor ──> get_predicted_event_risk() ──> RiskMonitor ──> hepa.service ──> checkpoint
+                (semantic, read-only)        (levels,        (loading,
+                                              trends,         resampling,
+                                              cadence)        failure as a value)
+```
+
+**`hepa/service.py`** is the one door. It owns the checkpoint path, the lazy torch import,
+the resampling from the plant's 60 s frames to the model's sample period, and — the point of
+it — the conversion of every failure into a value: `Forecast.unavailable(...)` when there is
+no checkpoint, `Forecast.failed(...)` when inference raises. The supervisor never sees a
+tensor, a normalisation constant, a model dimension or an exception.
+
+**`agent/risk.py`** turns *P(event within Δt)* into something a supervisor can act on:
+levels (`LOW` / `ELEVATED` / `HIGH` / `CRITICAL`) from configurable per-event and
+per-horizon thresholds, trends (`stable` / `rising` / `falling`) against the previous
+forecast, the cadence at which the model is asked at all, and the trigger that competes on
+priority with the plant's own alarms. Deliberately unsophisticated: a level is a threshold
+comparison, a trend is two numbers and a tolerance.
+
+**`get_predicted_event_risk(horizons=...)`** is the agent tool: probabilities, levels,
+trends and what deserves attention, as words and numbers. Read-only — it is the one tool in
+the box that cannot change anything, and it is logged in the trace like any other.
+
+**Thresholds are configuration**, because where a probability stops being noise is an
+operating decision, not a constant:
+
+```bash
+PLANT_RISK_CONFIG=backend/src/plant_backend/agent/configs/risk.json
+PLANT_RISK_REFRESH_S=900     # simulated seconds between forecasts
+PLANT_HEPA_CHECKPOINT=checkpoints/hepa/stage2
+```
+
+```json
+{
+  "co2_starvation": {"elevated": 0.35, "high": 0.60, "critical": 0.85,
+                     "horizons": {"1h": {"elevated": 0.20, "high": 0.40}}},
+  "forced_production_shutdown": {"elevated": 0.20, "high": 0.45, "critical": 0.75}
+}
+```
+
+**HEPA is not a per-timestep tool.** The plant moves in minutes and the horizons are hours,
+so the monitor asks once every `refresh_s` of simulated time (15 minutes by default) and the
+existing V6 gating still applies on top: one run at a time, a minimum gap between runs, and
+a cooldown per situation. An explicit tool call can force a fresh forecast.
+
+### Proactive, in practice
+
+The CO₂ case, which is the one worth having: DAC capture stops, the CO₂ buffer is still half
+full, the plant reports itself normal and nothing has failed yet.
+
+```text
+11:15  prediction   HEPA: co2 starvation 12h risk increased to 62%
+11:15  trigger      predicted_risk: HEPA predicts co2 starvation within 12h: 62% (high and rising)
+11:15  observation  HEPA: co2 starvation within 12h at 62% (high, rising)
+11:15  tool         inspect_component(dac)
+11:15  observation  CO2 buffer at 84 kg and falling, capture unavailable
+11:16  action       methanation capped at 90 kW
+11:16  diagnosis    predicted risk (confidence: medium)
+11:16  result       1 change(s) applied; plant normal
+11:30  prediction   HEPA: co2 starvation 12h risk decreased to 48%
+```
+
+The supervisor does not stop anything and does not touch the simulator: it lowers the
+methanator's share of the envelope so the remaining CO₂ lasts long enough for capture to
+recover, and the controller keeps running the plant inside the new limits. The battery case
+is the same shape — thin generation, a pack still above its reserve, a rising
+reserve-violation risk, discretionary DAC load reduced before the reserve is touched.
+
+Predictions are traced as `prediction` entries, distinct from `observation`: what may
+happen never reads as what happened. The **Agent** view shows the same thing — HEPA status,
+the time of the latest forecast, and a multi-horizon table of levels and trends, or, with no
+model loaded, "no trained model loaded" and no table at all.
+
+### Evaluation and tests, without a checkpoint
+
+```bash
+make foresight-eval    # controller / +supervisor / +supervisor+HEPA on the same scenarios
+```
+
+The harness runs three arms of each scenario and counts negative events reached, forced
+shutdowns, envelope changes, how many landed *before* the event, how many landed on a plant
+with nothing wrong with it, CH₄ produced, the lead time from first warning, and the
+predicted risk before and after intervention.
+
+**There is still no trained checkpoint here, so arm C is driven by hand-written fixtures**
+(`hepa/fixtures.py`), labelled `fixture:*` in every forecast, snapshot and report line they
+touch. What that measures is the integration, not the model, and the report says so. The
+integration tests (`backend/tests/test_hepa_supervision.py`) use the same fixtures to cover
+the whole path: thresholds and per-horizon overrides, trends, cadence, the tool's output and
+its read-only boundary, a rising risk that triggers an investigation, a corroborated risk
+that changes constraints, an *un*corroborated one that changes nothing, a falling risk after
+intervention, a missing checkpoint, an inference failure, and the hierarchy itself — a
+forecast alone never moves a constraint, a controller or the simulator.
+
+Not done, and deliberately: action-conditioned HEPA (scoring a *proposed* plan rather than
+predicting from history), counterfactual plan scoring, and any claim that HEPA improves the
+plant. The first two are a design decision for a later version; the third needs a trained
+checkpoint and a real evaluation run.
+
+---
+
 ## V9: HEPA — predicting events before they happen
 
 V9 gives the plant a *forecast*. Everything so far reacts to the present: the controller
@@ -602,9 +756,9 @@ POST /api/hepa/predict    {horizons?, telemetry?} -> P(event within Δt), per ev
 }
 ```
 
-Both routes are **read-only and advisory**. Nothing in the controller, the guard or the
-supervisor consults HEPA, and no forecast changes an action: wiring a prediction into
-control is a decision that deserves to be made explicitly, not inherited from a merge. The
+Both routes are **read-only and advisory**, and so is everything downstream of them. The
+controller and the guard never consult HEPA; the supervisor does, since V10, and only to
+decide what to look at (see below). No forecast changes an action by itself. The
 model is loaded lazily from `PLANT_HEPA_CHECKPOINT` and cached, so a backend with no
 checkpoint starts exactly as V7's did. Everything degrades on purpose — no torch or no
 checkpoint is a `503` that names the fix, `/status` still answers because metadata needs no
