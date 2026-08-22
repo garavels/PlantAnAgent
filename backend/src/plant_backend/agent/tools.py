@@ -22,13 +22,14 @@ expected to read the answer and carry on, not to crash the plant.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Sequence
 
 from . import observations
 from .trace import AgentTrace
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from ..orchestration.runtime import PlantRuntime
+    from .risk import RiskMonitor
 
 #: Frames of history a `get_recent_telemetry` call may look back over.
 MAX_HISTORY_FRAMES = 720
@@ -52,9 +53,17 @@ CONSTRAINT_FIELDS = {
 class AgentToolbox:
     """The tool surface for one supervisor run, bound to the live runtime."""
 
-    def __init__(self, runtime: "PlantRuntime", trace: AgentTrace) -> None:
+    def __init__(
+        self,
+        runtime: "PlantRuntime",
+        trace: AgentTrace,
+        risk: "RiskMonitor | None" = None,
+    ) -> None:
         self._runtime = runtime
         self._trace = trace
+        #: V10: the run's predicted-risk monitor. Defaults to the runtime's own, so
+        #: a hand-built toolbox sees the same forecast the supervisor does.
+        self._risk: RiskMonitor | None = risk if risk is not None else runtime.supervisor.risk
         #: One line per applied change, for the incident record.
         self.actions: list[str] = []
         self.writes = 0
@@ -116,6 +125,41 @@ class AgentToolbox:
             report["reading"] = component
         self._log("run_diagnostic", component=component_id, inconsistent=len(balance["inconsistent"]))
         return report
+
+    def get_predicted_event_risk(
+        self,
+        horizons: Sequence[str | float] | None = None,
+        refresh: bool = True,
+    ) -> dict[str, Any]:
+        """V10: `P(event within Δt)` per event and horizon, from HEPA.
+
+        The only forward-looking tool, and a read: it asks the risk monitor, which
+        asks the HEPA inference service, which owns the checkpoint. Nothing about
+        the model reaches this method -- no tensors, no context length, no
+        normalisation, no path -- and nothing here can change the plant.
+
+        With no checkpoint configured the answer is `status: unavailable` with a
+        reason and no probabilities. It is never a guess: an invented number here
+        would be acted on.
+        """
+        if self._risk is None:
+            self._log("get_predicted_event_risk", status="unavailable")
+            return {
+                "status": "unavailable",
+                "reason": "no predicted-risk monitor is attached to this run",
+                "probabilities": {},
+            }
+        wanted = _horizon_labels(horizons)
+        if refresh:
+            self._risk.update()
+        view = self._risk.view(wanted)
+        self._log(
+            "get_predicted_event_risk",
+            status=view["status"],
+            horizons=view["horizons"],
+            attention=len(view["attention"]),
+        )
+        return view
 
     def get_controller_status(self) -> dict[str, Any]:
         """Mode, controller, the last applied action and why it looked like that."""
@@ -428,6 +472,25 @@ def _arguments(detail: dict[str, Any]) -> str:
 
 def _kw(value: Any) -> str:
     return "unset" if value is None else f"{float(value):g}"
+
+
+def _horizon_labels(horizons: Sequence[str | float] | None) -> list[str] | None:
+    """`[1, 3, 6, 12]`, `['6h']` or `None` -> the labels HEPA answers in.
+
+    The model's horizons are named (`6h`); a caller thinking in hours should not
+    have to know that, so both forms are accepted and one form is passed on.
+    """
+    if not horizons:
+        return None
+    labels: list[str] = []
+    for horizon in horizons:
+        if isinstance(horizon, (int, float)):
+            hours = float(horizon)
+            labels.append(f"{int(hours)}h" if hours == int(hours) else f"{hours:g}h")
+        else:
+            text = str(horizon).strip()
+            labels.append(text if text.endswith(("h", "m")) else f"{text}h")
+    return labels
 
 
 __all__ = ["AgentToolbox", "CONSTRAINT_FIELDS", "MAX_WRITES_PER_RUN"]

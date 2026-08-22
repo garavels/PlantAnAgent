@@ -101,6 +101,8 @@ def test_the_toolbox_cannot_reach_the_simulator_or_set_an_action() -> None:
         "get_recent_events",
         "inspect_component",
         "run_diagnostic",
+        # V10: a read, like the rest of this group. HEPA only predicts.
+        "get_predicted_event_risk",
         "get_controller_status",
         "get_active_controller",
         "get_controller_metrics",

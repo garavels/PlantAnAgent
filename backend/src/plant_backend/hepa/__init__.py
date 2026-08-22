@@ -8,6 +8,8 @@
     pretraining/   stage 1: self-supervised representation learning
     finetuning/    stage 2: event fine-tuning on a frozen representation
     inference      serving: telemetry history -> P(event within Δt)
+    service        V10: the one door the supervisor asks through, failures as values
+    fixtures       V10: deterministic stand-ins for tests. Not a model, and labelled
     evaluation     AUROC/AUPRC/Brier and calibration, per event and per horizon
     checkpoints    weights plus the metadata needed to refuse them
 
@@ -22,7 +24,9 @@ metrics and the checkpoint *metadata* are all torch-free, so the backend starts 
 `pretraining`, `finetuning` and `EventPredictor` are the parts that need torch, and
 they are imported where they are used.
 
-Nothing here is wired into the controllers or the agent: HEPA answers when asked.
+Nothing here touches the controllers, the action guard or the simulator. Since V10 the
+supervisory agent does consume it -- through `service`, as advice -- but only ever to
+decide what to investigate: HEPA predicts, the supervisor decides, the controller acts.
 """
 
 from . import checkpoints, evaluation, events, horizons, telemetry

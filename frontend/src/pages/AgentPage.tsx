@@ -16,6 +16,10 @@ import type {
   AgentStatus,
   AgentTraceEntry,
   ControlStatus,
+  EventRisk,
+  RiskLevel,
+  RiskSnapshot,
+  RiskTrend,
 } from '../types/plant'
 import './agent.css'
 
@@ -42,7 +46,21 @@ const GRADE_CHIP: Record<string, string> = {
 }
 
 /** Trace kinds that deserve emphasis over the run-of-the-mill tool calls. */
-const LOUD: AgentTraceEntry['kind'][] = ['diagnosis', 'action', 'error']
+const LOUD: AgentTraceEntry['kind'][] = ['prediction', 'diagnosis', 'action', 'error']
+
+/** V10: how a risk level reads. LOW is deliberately quiet. */
+const LEVEL_CLASS: Record<RiskLevel, string> = {
+  low: '',
+  elevated: ' agent__risk-cell--elevated',
+  high: ' agent__risk-cell--high',
+  critical: ' agent__risk-cell--critical',
+}
+
+const TREND_MARK: Record<RiskTrend, string> = {
+  stable: '',
+  rising: '\u2191',
+  falling: '\u2193',
+}
 
 function words(value: string): string {
   return value.replace(/_/g, ' ')
@@ -123,6 +141,8 @@ export function AgentPage() {
         </section>
       </div>
 
+      <PredictiveRiskCard risk={agent.risk} />
+
       <div className="agent__bottom">
         <section className="card agent__trace">
           <header className="agent__head">
@@ -164,6 +184,94 @@ export function AgentPage() {
         </section>
       </div>
     </div>
+  )
+}
+
+/** V10: what HEPA says may happen, per event and horizon.
+ *
+ * A forecast is only shown when there is one: with no trained checkpoint the card
+ * says so and stops there, because a plausible-looking table of numbers no model
+ * produced is worse than no table. Levels colour the cells and an arrow marks a
+ * risk that moved since the previous forecast -- the movement is usually the
+ * information. Nothing here is a control: predictions reach the plant only through
+ * the supervisor.
+ */
+function PredictiveRiskCard({ risk }: { risk: RiskSnapshot }) {
+  const horizons = risk.horizons
+  const byEvent = new Map<string, Map<string, EventRisk>>()
+  for (const entry of risk.risks) {
+    const row = byEvent.get(entry.event) ?? new Map<string, EventRisk>()
+    row.set(entry.horizon, entry)
+    byEvent.set(entry.event, row)
+  }
+  const fixture = risk.source.startsWith('fixture')
+
+  return (
+    <section className="card agent__risk">
+      <header className="agent__head">
+        <h3 className="agent__title">Predictive risk</h3>
+        <span className="label">
+          {risk.available ? `HEPA · ${risk.updated_clock ?? '--'}` : 'HEPA'}
+        </span>
+      </header>
+
+      <div className="agent__risk-status">
+        <span className={`chip ${risk.available ? 'chip--live' : 'chip--idle'}`}>
+          <i className="chip__led" />
+          {risk.available ? 'Active' : 'No trained model loaded'}
+        </span>
+        {fixture && <span className="label">{words(risk.source)} — test fixture</span>}
+      </div>
+
+      {!risk.available ? (
+        <p className="agent__note">
+          {risk.reason ??
+            'No event-risk model is loaded, so no probabilities are shown. The supervisor is ' +
+              'working from telemetry, events and diagnostics alone.'}
+        </p>
+      ) : (
+        <>
+          <table className="agent__risk-table">
+            <thead>
+              <tr>
+                <th className="label">Event</th>
+                {horizons.map((horizon) => (
+                  <th key={horizon} className="label">
+                    {horizon}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[...byEvent.entries()].map(([event, row]) => (
+                <tr key={event}>
+                  <td className="agent__risk-event">{words(event)}</td>
+                  {horizons.map((horizon) => {
+                    const cell = row.get(horizon)
+                    return (
+                      <td
+                        key={horizon}
+                        className={`agent__risk-cell mono${
+                          cell ? LEVEL_CLASS[cell.level] : ''
+                        }`}
+                      >
+                        {cell ? `${Math.round(cell.probability * 100)}%` : '--'}
+                        {cell && <span className="agent__risk-trend">{TREND_MARK[cell.trend]}</span>}
+                      </td>
+                    )
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="agent__note">
+            Probabilities, not certainties, refreshed every{' '}
+            {Math.round(risk.refresh_s / 60)} simulated minutes. A level is when the
+            supervisor looks; what it does is decided from telemetry and diagnostics.
+          </p>
+        </>
+      )}
+    </section>
   )
 }
 

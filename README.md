@@ -51,6 +51,13 @@ advisory HTTP routes that answer *P(event within Δt)*. **Nothing has been pretr
 fine-tuned**: this environment has no useful GPU, so V9 ships the infrastructure and the
 tests, and the backend runs exactly as V7 did until a checkpoint is configured.
 
+Since V10 the forecast is *part of the supervision*. The supervisor asks HEPA — on its own
+cadence, through one service door — what is becoming likely, turns the answer into levels
+and trends, and investigates a credible risk **before** the event: it corroborates the
+prediction against telemetry and the units involved, and only then retunes the envelope the
+controller drives inside. HEPA still only predicts. With no checkpoint it reports
+`unavailable`, raises nothing, and the plant behaves exactly as it did in V8.
+
 The control room has three views over the same live session: **Overview** (the concise
 operational summary, plus scenario/fault controls and the event feed), **3D Plant**
 (a spatial digital twin, where faulted units turn amber or red under a warning beacon) and
@@ -115,6 +122,8 @@ operational summary, plus scenario/fault controls and the event feed), **3D Plan
 │   │   │   ├── inference.py    telemetry history -> P(event within Δt)
 │   │   │   ├── evaluation.py   AUROC/AUPRC/Brier/calibration, per event and horizon
 │   │   │   ├── api.py          GET /api/hepa/status, POST /api/hepa/predict
+│   │   │   ├── service.py      V10: the one door the supervisor asks through
+│   │   │   ├── fixtures.py     V10: deterministic stand-ins for tests, labelled as such
 │   │   │   ├── data/           trajectories, windows, labels, splits, the collector
 │   │   │   ├── models/         causal encoder, horizon predictor, survival head
 │   │   │   ├── pretraining/    stage 1: self-supervised representation learning
@@ -129,7 +138,10 @@ operational summary, plus scenario/fault controls and the event feed), **3D Plan
 │   │   │   ├── prompts.py      the supervisory brief
 │   │   │   ├── sdk.py          the toolbox wrapped as SDK function tools
 │   │   │   ├── trace.py        the operational trace and the incident record
-│   │   │   └── evaluation.py   the five-scenario regression harness (`make eval`)
+│   │   │   ├── risk.py         V10: HEPA probabilities -> levels, trends, attention
+│   │   │   ├── configs/risk.json  the thresholds, per event and per horizon
+│   │   │   ├── evaluation.py   the five-scenario regression harness (`make eval`)
+│   │   │   └── foresight_evaluation.py  V10: controller / +supervisor / +HEPA (`make foresight-eval`)
 │   │   └── safety/
 │   │       └── validation.py   the guard every action passes through
 │   └── tests/                controller, constraints, guard, loop, agent, RL, API contract
@@ -178,8 +190,9 @@ Individually:
 ```bash
 make backend        # uv run uvicorn plant_backend.app:app --reload --port 8000
 make frontend       # cd frontend && npm run dev
-make test           # simulator + backend test suite (248 tests)
+make test           # simulator + backend test suite (266 tests)
 make eval           # the supervisor against five scenarios, deterministically
+make foresight-eval # controller vs +supervisor vs +supervisor+HEPA (fixture forecasts)
 make sim            # one simulated day, headless, printed as a table
 make rl-eval        # the heuristic baseline through PlantEnv (CHECKPOINT=<dir> adds a policy)
 make train-dry      # build the RL environment and print the training plan; trains nothing
@@ -638,9 +651,9 @@ POST /api/hepa/predict    {horizons?, telemetry?} -> P(event within Δt), per ev
 }
 ```
 
-Both routes are **read-only and advisory**. Nothing in the controller, the guard or the
-supervisor consults HEPA, and no forecast changes an action: wiring a prediction into
-control is a decision that deserves to be made explicitly, not inherited from a merge. The
+Both routes are **read-only and advisory**, and so is everything downstream of them. The
+controller and the guard never consult HEPA; the supervisor does, since V10, and only to
+decide what to look at (see below). No forecast changes an action by itself. The
 model is loaded lazily from `PLANT_HEPA_CHECKPOINT` and cached, so a backend with no
 checkpoint starts exactly as V7's did. Everything degrades on purpose — no torch or no
 checkpoint is a `503` that names the fix, `/status` still answers because metadata needs no

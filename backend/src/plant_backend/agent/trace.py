@@ -5,6 +5,7 @@ diagnosis, decision, action, result -- not the model's reasoning. Nothing here
 carries chain-of-thought: an entry is a short line a human operator could have
 written in a shift log, plus a small dict of numbers behind it.
 
+    14:31  prediction   HEPA: CO2 starvation 12h risk increased to 74%
     14:32  observation  H2 production 38% below the last clear hour
     14:32  tool         inspect_component(electrolyser)
     14:33  diagnosis    Probable electrolyser degradation (confidence: high)
@@ -25,6 +26,9 @@ from typing import Any, Literal
 #: Entry kinds, in the order they usually appear in a run.
 EntryKind = Literal[
     "trigger",
+    #: V10: what HEPA says may happen. Kept distinct from `observation`, which is
+    #: something the plant is doing now -- a forecast is not a measurement.
+    "prediction",
     "observation",
     "tool",
     "diagnosis",

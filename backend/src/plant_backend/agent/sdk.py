@@ -28,6 +28,7 @@ class SupervisorReport(BaseModel):
 
     category: Literal[
         "normal",
+        "predicted_risk",
         "controller_degradation",
         "critical_condition",
         "electrolyser_degradation",
@@ -98,6 +99,25 @@ def agent_tools(toolbox: AgentToolbox) -> list[Any]:
             component_id: A component name, or "plant" for the whole mass balance.
         """
         return toolbox.run_diagnostic(component_id)
+
+    @function_tool
+    def get_predicted_event_risk(horizons: list[str] | None = None) -> dict[str, Any]:
+        """HEPA's forecast: probability of each bad event happening within each horizon.
+
+        Probabilities, not certainties, and they depend on the horizon: 12h is
+        always at least as likely as 1h. `levels` says whether a number is worth
+        attention, `trends` how it moved since the last forecast -- a rising 40% is
+        usually more informative than a steady 60%. `status` may be "unavailable"
+        or "error", in which case there is no forecast and you work from telemetry,
+        events and diagnostics as usual.
+
+        HEPA predicts *events*, never causes. Confirm a prediction against
+        telemetry and the components before changing anything.
+
+        Args:
+            horizons: Horizons to report, e.g. ["1h", "6h", "12h"]. Omit for all.
+        """
+        return toolbox.get_predicted_event_risk(horizons)
 
     @function_tool
     def get_controller_status() -> dict[str, Any]:
@@ -248,6 +268,7 @@ def agent_tools(toolbox: AgentToolbox) -> list[Any]:
         get_current_telemetry,
         get_recent_telemetry,
         get_recent_events,
+        get_predicted_event_risk,
         inspect_component,
         run_diagnostic,
         get_controller_status,
