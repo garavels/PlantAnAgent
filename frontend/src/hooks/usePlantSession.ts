@@ -21,6 +21,7 @@ import {
   pause as pauseRequest,
   play as playRequest,
   resetPlant,
+  saveScenario as saveScenarioRequest,
   setAgentEnabled as setAgentEnabledRequest,
   setController as setControllerRequest,
   setControlMode as setControlModeRequest,
@@ -91,6 +92,8 @@ export interface PlantSession {
   clearFault: (faultId: string) => void
   clearFaults: () => void
   loadScenario: (scenario: string) => void
+  /** Keep a generated scenario for this session; resolves with the id it got. */
+  saveScenario: (scenario: ScenarioDef) => Promise<string>
   /** Ask for one supervisor run now, outside the trigger rules. */
   investigate: () => void
   setAgentEnabled: (enabled: boolean) => void
@@ -216,6 +219,12 @@ export function usePlantSession(): PlantSession {
     [ask],
   )
 
+  const saveScenario = useCallback(async (draft: ScenarioDef) => {
+    const saved = await saveScenarioRequest(draft)
+    setScenarios(saved.scenarios)
+    return saved.scenario_id
+  }, [])
+
   const togglePlay = useCallback(() => {
     void ask(control?.playing ? pauseRequest() : playRequest())
   }, [ask, control?.playing])
@@ -248,6 +257,7 @@ export function usePlantSession(): PlantSession {
     clearFault: (faultId) => void ask(clearFaultRequest(faultId)),
     clearFaults: () => void ask(clearFaultsRequest()),
     loadScenario: (id) => void ask(loadScenarioRequest(id)),
+    saveScenario,
     investigate: () => void ask(investigatePlant()),
     setAgentEnabled: (enabled) => void ask(setAgentEnabledRequest(enabled)),
   }

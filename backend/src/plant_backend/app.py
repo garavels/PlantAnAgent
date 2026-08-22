@@ -26,6 +26,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
+from . import authoring
 from .hepa.api import configure as configure_hepa
 from .hepa.api import router as hepa_router
 from .orchestration import Broadcaster, PlantRuntime, SimulationClock
@@ -123,6 +124,18 @@ class FaultRequest(BaseModel):
 
 class ScenarioRequest(BaseModel):
     scenario: str
+
+
+class ScenarioPromptRequest(BaseModel):
+    """V10: a scenario described in words. See `authoring`."""
+
+    prompt: str = Field(min_length=1, max_length=authoring.PROMPT_LIMIT)
+
+
+class ScenarioDraftRequest(BaseModel):
+    """A reviewed scenario the operator wants to keep. Revalidated before saving."""
+
+    scenario: dict[str, Any]
 
 
 class AgentConfigRequest(BaseModel):
@@ -362,3 +375,42 @@ async def post_scenario(request: ScenarioRequest) -> dict[str, Any]:
     except ValueError as reason:
         raise HTTPException(status_code=404, detail=str(reason)) from reason
     return _publish(runtime.payload([state], replace=True))
+
+
+@app.post("/api/scenarios/generate")
+async def post_scenario_generate(request: ScenarioPromptRequest) -> dict[str, Any]:
+    """Turn a description into a scenario draft. Nothing is saved or run here.
+
+    The model only ever fills in the simulator's own schema, and what it returns
+    is validated server-side before the operator sees it, so a draft is already
+    a runnable scenario -- `warnings` say where it was clamped or reinterpreted.
+    """
+    try:
+        scenario, warnings = await authoring.author(
+            request.prompt,
+            config=runtime.session.simulator.config,
+            taken=tuple(runtime.session.saved),
+        )
+    except authoring.ScenarioValidationError as reason:
+        raise HTTPException(status_code=422, detail=str(reason)) from reason
+    return {"scenario": scenario.to_dict(), "warnings": warnings}
+
+
+@app.post("/api/scenarios/save")
+async def post_scenario_save(request: ScenarioDraftRequest) -> dict[str, Any]:
+    """Keep a reviewed draft for this session; it then runs like any scenario."""
+    try:
+        scenario, warnings = authoring.build(
+            request.scenario,
+            config=runtime.session.simulator.config,
+            taken=tuple(runtime.session.saved),
+        )
+    except authoring.ScenarioValidationError as reason:
+        raise HTTPException(status_code=422, detail=str(reason)) from reason
+    runtime.session.save_scenario(scenario)
+    return {
+        "scenario_id": scenario.id,
+        "warnings": warnings,
+        "scenarios": runtime.session.scenario_catalogue(),
+        "scenario": runtime.session.scenario,
+    }

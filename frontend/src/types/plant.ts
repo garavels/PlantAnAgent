@@ -55,19 +55,30 @@ export interface FaultKind {
   default_channel: string | null
 }
 
+export interface ScenarioFaultDef {
+  type: string
+  severity: number
+  start_s: number | null
+  duration_s: number | null
+  channel: string | null
+}
+
 export interface ScenarioDef {
   id: string
   name: string
   description: string
   start_hour: number
   initial: { battery_soc: number | null; h2_kg: number | null; co2_kg: number | null; ch4_kg: number | null }
-  faults: {
-    type: string
-    severity: number
-    start_s: number | null
-    duration_s: number | null
-    channel: string | null
-  }[]
+  faults: ScenarioFaultDef[]
+  /** True for a scenario generated and saved during this session. */
+  saved?: boolean
+}
+
+/** A generated scenario, already validated by the backend, awaiting review. */
+export interface ScenarioDraft {
+  scenario: ScenarioDef
+  /** Where the request was clamped, reinterpreted or left out. */
+  warnings: string[]
 }
 
 export type ControlMode = 'auto' | 'manual'
@@ -391,6 +402,12 @@ export interface PlantFrames {
 export interface ScenarioCatalogue {
   scenarios: ScenarioDef[]
   scenario: string | null
+}
+
+/** The catalogue after a draft was saved, plus the id it was saved under. */
+export interface ScenarioSaved extends ScenarioCatalogue {
+  scenario_id: string
+  warnings: string[]
 }
 
 export interface FaultCatalogue {

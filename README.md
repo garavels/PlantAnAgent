@@ -453,144 +453,39 @@ one flow route.
 
 ---
 
-## V10: the supervisor asks about the future
+## V10: scenarios written in words
 
-V9 built a forecast and left it beside the plant. V10 wires it into the only place that can
-reasonably use one — the supervisor — and nowhere else. Four layers, four different
-questions:
+The Scenarios page gained a prompt box. An operator describes a situation —
 
-```text
-Simulator          "what happens physically?"
-Controller / RL    "what should we do right now?"
-HEPA               "what is likely to happen later?"
-Supervisor         "given all of this, should our strategy change?"
-```
+> Create a scenario where solar capacity suddenly drops by 50%, two sensors drift, and the
+> DAC becomes degraded after 3 hours.
 
-which is also the order the authority runs in:
+— and `POST /api/scenarios/generate` turns it into a scenario draft, which is shown for
+review, saved on request, and then loaded through the same path a predefined scenario is.
 
 ```text
-                         Supervisor
-                        /          \
-                    HEPA          Diagnostics
-            "what may happen?"  "what happened?"
-                       │
-                risk predictions
-                       │
-                Controller manager
-                 /             \
-                RL          Heuristic
-                 \             /
-                      Safety
-                        │
-                    Simulator
+prompt ──> Responses API (strict JSON schema) ──> validation ──> Scenario ──> load_scenario()
 ```
 
-A forecast reaches the plant only as *attention*. Nothing in `hepa/` caps a load, switches a
-controller, changes a constraint or stops a machine; a prediction can make the supervisor
-look, and the supervisor still has to convince itself with telemetry before it moves the
-envelope the controller drives inside.
+`backend/src/plant_backend/authoring.py` owns the middle. The schema it sends is *generated
+from the simulator*: the fault `type` enum is `faults.CATALOGUE`, `channel` is
+`telemetry.SENSOR_CHANNELS`, `additionalProperties` is false everywhere, and there is no
+field anywhere in it that could carry code — the model fills in a fixed set of numbers and
+strings, nothing else. What comes back is then validated a second time in Python, because a
+schema cannot express ranges we care about: hours are clamped to a day, inventories to the
+real tank capacities, and severities go through `FaultSpec.parse()`, the same constructor
+the predefined scenarios use. A request for something the plant cannot do is either mapped
+to the nearest supported fault — recorded in `notes`, surfaced as a warning in the UI — or
+rejected with a 422 explaining why.
 
-### The path, in five pieces
+Saving is session-scoped: `PlantSession.saved` holds the drafts, `scenario_catalogue()`
+lists them after the simulator's own with `saved: true`, and `load_scenario("ai_…")` finds
+them. The simulator is untouched by this feature; it never learns that a scenario was
+written by a model.
 
-```text
-Supervisor ──> get_predicted_event_risk() ──> RiskMonitor ──> hepa.service ──> checkpoint
-                (semantic, read-only)        (levels,        (loading,
-                                              trends,         resampling,
-                                              cadence)        failure as a value)
-```
-
-**`hepa/service.py`** is the one door. It owns the checkpoint path, the lazy torch import,
-the resampling from the plant's 60 s frames to the model's sample period, and — the point of
-it — the conversion of every failure into a value: `Forecast.unavailable(...)` when there is
-no checkpoint, `Forecast.failed(...)` when inference raises. The supervisor never sees a
-tensor, a normalisation constant, a model dimension or an exception.
-
-**`agent/risk.py`** turns *P(event within Δt)* into something a supervisor can act on:
-levels (`LOW` / `ELEVATED` / `HIGH` / `CRITICAL`) from configurable per-event and
-per-horizon thresholds, trends (`stable` / `rising` / `falling`) against the previous
-forecast, the cadence at which the model is asked at all, and the trigger that competes on
-priority with the plant's own alarms. Deliberately unsophisticated: a level is a threshold
-comparison, a trend is two numbers and a tolerance.
-
-**`get_predicted_event_risk(horizons=...)`** is the agent tool: probabilities, levels,
-trends and what deserves attention, as words and numbers. Read-only — it is the one tool in
-the box that cannot change anything, and it is logged in the trace like any other.
-
-**Thresholds are configuration**, because where a probability stops being noise is an
-operating decision, not a constant:
-
-```bash
-PLANT_RISK_CONFIG=backend/src/plant_backend/agent/configs/risk.json
-PLANT_RISK_REFRESH_S=900     # simulated seconds between forecasts
-PLANT_HEPA_CHECKPOINT=checkpoints/hepa/stage2
-```
-
-```json
-{
-  "co2_starvation": {"elevated": 0.35, "high": 0.60, "critical": 0.85,
-                     "horizons": {"1h": {"elevated": 0.20, "high": 0.40}}},
-  "forced_production_shutdown": {"elevated": 0.20, "high": 0.45, "critical": 0.75}
-}
-```
-
-**HEPA is not a per-timestep tool.** The plant moves in minutes and the horizons are hours,
-so the monitor asks once every `refresh_s` of simulated time (15 minutes by default) and the
-existing V6 gating still applies on top: one run at a time, a minimum gap between runs, and
-a cooldown per situation. An explicit tool call can force a fresh forecast.
-
-### Proactive, in practice
-
-The CO₂ case, which is the one worth having: DAC capture stops, the CO₂ buffer is still half
-full, the plant reports itself normal and nothing has failed yet.
-
-```text
-11:15  prediction   HEPA: co2 starvation 12h risk increased to 62%
-11:15  trigger      predicted_risk: HEPA predicts co2 starvation within 12h: 62% (high and rising)
-11:15  observation  HEPA: co2 starvation within 12h at 62% (high, rising)
-11:15  tool         inspect_component(dac)
-11:15  observation  CO2 buffer at 84 kg and falling, capture unavailable
-11:16  action       methanation capped at 90 kW
-11:16  diagnosis    predicted risk (confidence: medium)
-11:16  result       1 change(s) applied; plant normal
-11:30  prediction   HEPA: co2 starvation 12h risk decreased to 48%
-```
-
-The supervisor does not stop anything and does not touch the simulator: it lowers the
-methanator's share of the envelope so the remaining CO₂ lasts long enough for capture to
-recover, and the controller keeps running the plant inside the new limits. The battery case
-is the same shape — thin generation, a pack still above its reserve, a rising
-reserve-violation risk, discretionary DAC load reduced before the reserve is touched.
-
-Predictions are traced as `prediction` entries, distinct from `observation`: what may
-happen never reads as what happened. The **Agent** view shows the same thing — HEPA status,
-the time of the latest forecast, and a multi-horizon table of levels and trends, or, with no
-model loaded, "no trained model loaded" and no table at all.
-
-### Evaluation and tests, without a checkpoint
-
-```bash
-make foresight-eval    # controller / +supervisor / +supervisor+HEPA on the same scenarios
-```
-
-The harness runs three arms of each scenario and counts negative events reached, forced
-shutdowns, envelope changes, how many landed *before* the event, how many landed on a plant
-with nothing wrong with it, CH₄ produced, the lead time from first warning, and the
-predicted risk before and after intervention.
-
-**There is still no trained checkpoint here, so arm C is driven by hand-written fixtures**
-(`hepa/fixtures.py`), labelled `fixture:*` in every forecast, snapshot and report line they
-touch. What that measures is the integration, not the model, and the report says so. The
-integration tests (`backend/tests/test_hepa_supervision.py`) use the same fixtures to cover
-the whole path: thresholds and per-horizon overrides, trends, cadence, the tool's output and
-its read-only boundary, a rising risk that triggers an investigation, a corroborated risk
-that changes constraints, an *un*corroborated one that changes nothing, a falling risk after
-intervention, a missing checkpoint, an inference failure, and the hierarchy itself — a
-forecast alone never moves a constraint, a controller or the simulator.
-
-Not done, and deliberately: action-conditioned HEPA (scoring a *proposed* plan rather than
-predicting from history), counterfactual plan scoring, and any claim that HEPA improves the
-plant. The first two are a design decision for a later version; the third needs a trained
-checkpoint and a real evaluation run.
+The key is read from `OPENAI_API_KEY` and the model from `PLANT_AUTHOR_MODEL`
+(default `gpt-4.1-mini`); with no key the endpoint returns a 422 saying so, and the rest of
+the page works as before.
 
 ---
 

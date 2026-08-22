@@ -33,6 +33,8 @@ class PlantSession:
         self.simulator = PlantSimulator(config)
         self.history: deque[dict[str, Any]] = deque(maxlen=HISTORY_LIMIT)
         self.history.append(self.state)
+        #: Scenarios saved during this session (V10: the generated ones).
+        self.saved: dict[str, Scenario] = {}
 
     @property
     def state(self) -> dict[str, Any]:
@@ -102,8 +104,15 @@ class PlantSession:
     def clear_faults(self) -> None:
         self.simulator.clear_faults()
 
+    def save_scenario(self, scenario: Scenario) -> dict[str, Any]:
+        """Keep a scenario for this session so it can be run like a predefined one."""
+        self.saved[scenario.id] = scenario
+        return scenario.to_dict()
+
     def load_scenario(self, scenario: Scenario | str) -> dict[str, Any]:
-        """Reset the plant into a predefined situation."""
+        """Reset the plant into a predefined or saved situation."""
+        if isinstance(scenario, str) and scenario in self.saved:
+            scenario = self.saved[scenario]
         self.simulator.load_scenario(scenario)
         state = self.state
         self.history.clear()
@@ -114,6 +123,9 @@ class PlantSession:
     def fault_catalogue() -> list[dict[str, Any]]:
         return fault_library.catalogue()
 
-    @staticmethod
-    def scenario_catalogue() -> list[dict[str, Any]]:
-        return scenario_library.catalogue()
+    def scenario_catalogue(self) -> list[dict[str, Any]]:
+        """The simulator's scenarios, then the ones saved during this session."""
+        return [
+            *({**entry, "saved": False} for entry in scenario_library.catalogue()),
+            *({**scenario.to_dict(), "saved": True} for scenario in self.saved.values()),
+        ]
