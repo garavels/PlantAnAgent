@@ -354,3 +354,22 @@ This commit provides accounting, not yet a new RL task. The next increment const
 an explicit V2 environment with delivery observations, service-based reward, decision
 cadence, and an audit manifest; stochastic weather and equipment commitment remain
 separate later ablations.
+
+### Post-correction V1 replay
+
+The 100-seed V1 ceiling diagnostic was repeated at `ed368e8` after the battery-reserve
+fix and delivery-kernel commit. The opt-in delivery seam is inactive in this command.
+
+```text
+72/100 runs at or above 96% terminal CH4 fill
+Pearson r(initial CH4, produced CH4) = -1.000 on those 72 runs
+mean terminal fill                  = 94.7415%
+mean CH4 production                 = 2538.6667 kg
+mean reward                         = 987.1140
+mean minimum SOC                    = 18.1671%
+```
+
+The original pre-fix values were 2538.6929 kg, 987.1268 reward, and 18.1641% minimum
+SOC. This small, intentional drift is attributable to correcting loss-adjusted reserve
+support; the saturation count and conclusion are unchanged. The generated replay is
+`/tmp/plant-an-agent-v1-ceiling-post-kernel.json` and remains outside Git.
