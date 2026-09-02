@@ -17,7 +17,7 @@ distinction between the truth (`state`) and what an observer is told
 from __future__ import annotations
 
 from dataclasses import replace
-from typing import Any
+from typing import Any, Iterable, Mapping
 
 from . import scenarios as scenario_library
 from . import telemetry as telemetry_module
@@ -32,6 +32,7 @@ from .components import (
     SolarArray,
 )
 from .config import PlantConfig
+from .delivery import DeliveryCommitment, DeliveryLedger, DeliveryStepResult
 from .events import EventLog
 from .faults import Fault, FaultRegistry, FaultSpec
 from .scenarios import Scenario
@@ -90,6 +91,8 @@ class PlantSimulator:
         self.faults = FaultRegistry()
         #: What the plant noticed, oldest first.
         self.events = EventLog()
+        #: Opt-in methane delivery schedule and accounting, kept outside V1 state.
+        self.delivery_ledger = DeliveryLedger()
         #: Id of the scenario in force, if any.
         self.scenario: str | None = None
         #: Last reported plant status, so status changes emit exactly one event.
@@ -117,6 +120,7 @@ class PlantSimulator:
             self.faults.clear_all()
             self.scenario = None
         self.events.clear()
+        self.delivery_ledger.clear()
         self._status = NORMAL
         self.step_index = 0
         self.time_s = 0.0
@@ -177,6 +181,16 @@ class PlantSimulator:
         self.co2_captured_total_kg += flows.co2_captured_kg
         self.ch4_produced_total_kg += flows.ch4_produced_kg
 
+        # A tick-n deadline sits after production over [n - 1, n), so methane
+        # made in this dispatch is available to the delivery.  Tick indices,
+        # rather than float timestamps, make the boundary unambiguous.
+        delivery = self.delivery_ledger.settle(
+            self.step_index,
+            available_kg=self.ch4_tank.level_kg,
+        )
+        if delivery.delivered_kg > 0.0:
+            self.ch4_tank.withdraw(delivery.delivered_kg)
+
         self.state = self._build_state(flows, safe_action)
         self.events.at(self.time_s, self.state.clock)
         self._observe_conditions(self.state)
@@ -196,6 +210,37 @@ class PlantSimulator:
         agents and the control room should read *this*, not `state`.
         """
         return self.telemetry
+
+    # --- deliveries ------------------------------------------------------
+    def set_delivery_schedule(
+        self,
+        commitments: Iterable[DeliveryCommitment | Mapping[str, Any]],
+    ) -> DeliveryStepResult:
+        """Install an episode-relative methane delivery schedule atomically.
+
+        ``due_step`` values are counted from the most recent ``reset()`` or
+        ``load_scenario()``.  When installing after the episode has advanced,
+        every deadline must still be in the future.  A reset or scenario load
+        clears both the schedule and all delivery accounting.
+        """
+        return self.delivery_ledger.set_schedule(
+            commitments,
+            current_step=self.step_index,
+        )
+
+    @property
+    def delivery_step(self) -> DeliveryStepResult:
+        """Immutable delivery result for the current simulator boundary."""
+        return self.delivery_ledger.current
+
+    @property
+    def next_delivery(self) -> DeliveryCommitment | None:
+        """Next pending commitment, without exposing the whole future tape."""
+        return self.delivery_ledger.next_pending
+
+    def delivery_audit(self) -> dict[str, Any]:
+        """Serialize the full schedule, settlements, and cumulative totals."""
+        return self.delivery_ledger.audit()
 
     # --- faults and scenarios ---------------------------------------------
     def inject_fault(self, spec: FaultSpec | dict[str, Any]) -> Fault:

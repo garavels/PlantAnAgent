@@ -292,3 +292,65 @@ Verification before commit:
 focused RL tests                              60 passed
 full backend suite                           279 passed, 1 existing warning
 ```
+
+## 2026-09-02 — Methane delivery kernel
+
+### Research objective
+
+Remove the V1 terminal-tank objective without changing V1 behavior. The first physical
+V2 seam must turn methane into a recurring service obligation and provide accounting
+that later rewards, metrics, controllers, and oracles can consume.
+
+### Design decision
+
+Delivery is an opt-in business ledger beside `PlantState`, not a silent extension of
+the V1 observation or scenario schema. A `DeliveryCommitment` has a unique identifier,
+an integer episode-relative physics tick, and requested kilograms. Integer ticks avoid
+floating-point deadline comparisons.
+
+At each simulator step:
+
+1. the selected action produces over `[t, t + dt)`;
+2. the physics tick advances;
+3. every commitment due on the new tick settles against available CH4;
+4. delivered methane is withdrawn from storage;
+5. the end-of-interval plant state is constructed.
+
+This means product made during the deadline interval is available to that delivery.
+Each commitment settles exactly once. Same-tick commitments preserve declared order,
+and every settlement satisfies:
+
+```text
+requested kg = delivered kg + unmet kg
+ending CH4    = starting CH4 + produced CH4 - delivered CH4
+```
+
+The simulator exposes only the current result and next pending commitment through its
+ordinary delivery seam. Full schedules and settlement history are available through an
+explicit audit serialization for research provenance. `PlantState`, `Scenario`, and
+their serializations remain unchanged, so installed V1 controllers receive no new
+fields or future contract tape.
+
+Schedule installation validates the complete input before mutation. Invalid IDs,
+deadlines, masses, duplicates, or already-passed deadlines leave an existing schedule
+untouched. Reset and scenario load clear both schedule and accounting. A successful
+mid-episode replacement is allowed only with future deadlines and intentionally begins
+a new ledger; evaluation manifests will prohibit such replacement during a benchmark.
+
+### Verification
+
+Sixteen focused tests cover deadline ordering, shortfall and tank conservation,
+same-tick obligations, exactly-once settlement, reset/load behavior, invalid and atomic
+replacement, immutable/detached views, and equivalence of absent and explicitly empty
+schedules.
+
+```text
+delivery tests                                 16 passed
+complete simulator suite                       72 passed
+delivery + existing simulator behavior         49 passed in local cross-check
+```
+
+This commit provides accounting, not yet a new RL task. The next increment constructs
+an explicit V2 environment with delivery observations, service-based reward, decision
+cadence, and an audit manifest; stochastic weather and equipment commitment remain
+separate later ablations.
