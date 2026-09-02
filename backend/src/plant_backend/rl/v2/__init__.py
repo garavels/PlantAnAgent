@@ -5,17 +5,18 @@ This namespace is intentionally parallel to :mod:`plant_backend.rl`.  Importing
 callers must request ``PlantEnvV2`` by name.
 
 The current alpha contains recurring methane delivery commitments, a slower
-controller cadence, seeded solar-resource truth, and causal forecast vintages.
-Equipment commitment dynamics remain a later, separately switchable increment.
+controller cadence, seeded solar-resource truth, causal forecast vintages, and
+separately switchable electrolyser commitment dynamics.
 """
 
 from .config import EpisodeConfigV2, EpisodeV2, sample_episode
 from .boundary import ControlStateV2, IntervalSummaryV2
+from .control import ControllerObservationV2, ControllerV2, DeliveryObservation
 from .env import PlantEnvV2
 from .evaluation import BaselineEvaluation, evaluate
 from .metrics import EpisodeMetricsV2
 from .reward import RewardWeightsV2
-from .weather import ForecastIssueV2, WeatherConfigV2
+from .weather import ForecastIssueV2, PublicForecastIssueV2, WeatherConfigV2
 from .spaces import (
     ACTION_NAMES,
     ACTION_SIZE,
@@ -34,10 +35,14 @@ __all__ = [
     "ENVIRONMENT_ID",
     "BaselineEvaluation",
     "ControlStateV2",
+    "ControllerObservationV2",
+    "ControllerV2",
+    "DeliveryObservation",
     "EpisodeConfigV2",
     "EpisodeMetricsV2",
     "EpisodeV2",
     "ForecastIssueV2",
+    "PublicForecastIssueV2",
     "IntervalSummaryV2",
     "OBSERVATION_NAMES",
     "OBSERVATION_SIZE",

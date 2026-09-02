@@ -31,11 +31,12 @@ from .boundary import (
     IntervalTelemetryAccumulator,
 )
 from .config import EpisodeConfigV2, EpisodeV2, sample_episode
+from .control import ControllerObservationV2, DeliveryObservation
 from .contract import describe_checkpoint_contract
 from .metrics import EpisodeMetricsV2
-from .observation import DeliveryObservation, ObservationEncoderV2
+from .observation import ObservationEncoderV2
 from .reward import OBJECTIVE_VERSION, IntervalOutcome, RewardWeightsV2, compute
-from .weather import ForecastIssueV2
+from .weather import PublicForecastIssueV2
 
 
 class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
@@ -334,11 +335,11 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
         return replace(raw, solar_output_factor=measured_factor)
 
     @property
-    def current_forecast(self) -> ForecastIssueV2:
-        """Latest immutable issuance available to every controller family."""
+    def current_forecast(self) -> PublicForecastIssueV2:
+        """Latest immutable public issuance available to online controllers."""
         if self._episode is None:
             raise RuntimeError("reset() must be called before requesting a forecast")
-        return self._episode.weather.current_issue(self.physics_steps_taken)
+        return self._episode.weather.current_issue(self.physics_steps_taken).public()
 
     @property
     def progress(self) -> float:
@@ -346,12 +347,14 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
             return 0.0
         return min(1.0, self.decisions_taken / self.episode_decisions)
 
-    def _observe(self) -> np.ndarray:
-        if self._episode is None or self.control_state is None:
-            raise RuntimeError("reset() must be called before observing")
+    @property
+    def delivery_observation(self) -> DeliveryObservation:
+        """Current-deadline view, separated from the private delivery schedule."""
+        if self._episode is None:
+            raise RuntimeError("reset() must be called before requesting delivery state")
         next_delivery = self.simulator.next_delivery
         current = self.simulator.delivery_step
-        delivery = DeliveryObservation(
+        return DeliveryObservation(
             steps_to_next=(
                 None
                 if next_delivery is None
@@ -364,12 +367,27 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
             cumulative_requested_kg=current.cumulative_requested_kg,
             cumulative_delivered_kg=current.cumulative_delivered_kg,
         )
-        return self.encoder.encode(
-            self.control_state,
-            constraints=self.constraints,
-            progress=self.progress,
-            delivery=delivery,
+
+    @property
+    def controller_observation(self) -> ControllerObservationV2:
+        """Detached common causal source for RL, heuristics and optimisers."""
+        if self._episode is None or self.control_state is None:
+            raise RuntimeError("reset() must be called before observing")
+        # PlantState is frozen but intentionally contains a mutable health map.
+        # A deep copy prevents an in-process controller from changing a later
+        # observation or any simulator-owned nested value through aliasing.
+        return ControllerObservationV2(
+            state=deepcopy(self.control_state),
+            delivery=self.delivery_observation,
             forecast=self.current_forecast,
+            progress=self.progress,
+            decision_interval_s=self.episode_config.decision_interval_s,
+        )
+
+    def _observe(self) -> np.ndarray:
+        return self.encoder.encode_controller_observation(
+            self.controller_observation,
+            constraints=self.constraints,
         )
 
     def _public_info(self) -> dict[str, Any]:

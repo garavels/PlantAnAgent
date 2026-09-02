@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
 from numbers import Real
 
 import numpy as np
@@ -18,18 +17,8 @@ from ...controllers.base import Constraints
 from ..observation import ObservationEncoder as V1ObservationEncoder
 from . import spaces
 from .boundary import COMMITMENT_MODE_NAMES, ControlStateV2
-from .weather import ForecastIssueV2
-
-
-@dataclass(frozen=True)
-class DeliveryObservation:
-    """Only contractual information available at the current decision boundary."""
-
-    steps_to_next: int | None
-    delivery_period_steps: int
-    next_requested_kg: float
-    cumulative_requested_kg: float
-    cumulative_delivered_kg: float
+from .control import ControllerObservationV2, DeliveryObservation
+from .weather import PublicForecastIssueV2
 
 
 class ObservationEncoderV2:
@@ -65,7 +54,7 @@ class ObservationEncoderV2:
         constraints: Constraints,
         progress: float,
         delivery: DeliveryObservation,
-        forecast: ForecastIssueV2,
+        forecast: PublicForecastIssueV2,
     ) -> np.ndarray:
         telemetry = state.encoder_telemetry()
         base = self._base.encode(
@@ -108,6 +97,23 @@ class ObservationEncoderV2:
         )
         vector = np.nan_to_num(vector, nan=0.0, posinf=1.0, neginf=-1.0)
         return np.clip(vector, self._low, self._high).astype(np.float32)
+
+    def encode_controller_observation(
+        self,
+        observation: ControllerObservationV2,
+        *,
+        constraints: Constraints,
+    ) -> np.ndarray:
+        """Encode the same causal object consumed by non-learning controllers."""
+        if observation.forecast is None:
+            raise ValueError("the V2 RL observation contract requires an issued forecast")
+        return self.encode(
+            observation.state,
+            constraints=constraints,
+            progress=observation.progress,
+            delivery=observation.delivery,
+            forecast=observation.forecast,
+        )
 
     def _commitment_values(self, state: ControlStateV2) -> tuple[float, ...]:
         snapshot = state.electrolyser_commitment

@@ -290,7 +290,12 @@ class ForecastWindowV2:
 
 @dataclass(frozen=True)
 class ForecastIssueV2:
-    """Immutable forecasts available from one controller decision boundary."""
+    """Private replay issuance from one controller decision boundary.
+
+    The random-stream digest is required for offline audit, so this object must
+    remain inside :class:`WeatherEpisodeV2`.  Online consumers receive the
+    deliberately smaller :class:`PublicForecastIssueV2` projection instead.
+    """
 
     issued_at_physics_boundary_step: int
     issued_at_offset_s: float
@@ -332,6 +337,65 @@ class ForecastIssueV2:
 
     def to_dict(self) -> dict[str, object]:
         """Controller-safe issuance; random-stream identity remains private."""
+        return PublicForecastIssueV2.from_private(self).to_dict()
+
+    def public(self) -> "PublicForecastIssueV2":
+        """Return the immutable online projection with no replay identity."""
+        return PublicForecastIssueV2.from_private(self)
+
+
+@dataclass(frozen=True)
+class PublicForecastIssueV2:
+    """Controller-visible forecast issuance with replay metadata removed."""
+
+    issued_at_physics_boundary_step: int
+    issued_at_offset_s: float
+    windows: tuple[ForecastWindowV2, ...]
+
+    def __post_init__(self) -> None:
+        step = self.issued_at_physics_boundary_step
+        if isinstance(step, bool) or not isinstance(step, Integral) or step < 0:
+            raise ValueError("forecast issue boundary step must be a non-negative integer")
+        if (
+            isinstance(self.issued_at_offset_s, bool)
+            or not isinstance(self.issued_at_offset_s, Real)
+            or not math.isfinite(self.issued_at_offset_s)
+            or self.issued_at_offset_s < 0.0
+        ):
+            raise ValueError("forecast issue offset must be finite non-negative seconds")
+        expected_windows = tuple(
+            (_window_name(start_h, end_h), start_h, end_h)
+            for start_h, end_h in FORECAST_WINDOWS_H
+        )
+        actual_windows = tuple(
+            (
+                window.name,
+                window.start_offset_s_from_issue / SECONDS_PER_HOUR,
+                window.end_offset_s_from_issue / SECONDS_PER_HOUR,
+            )
+            for window in self.windows
+        )
+        if actual_windows != expected_windows:
+            raise ValueError("forecast issue must contain the canonical ordered windows")
+
+    @classmethod
+    def from_private(cls, issue: ForecastIssueV2) -> "PublicForecastIssueV2":
+        """Project a private issuance without retaining its stream digest."""
+        if not isinstance(issue, ForecastIssueV2):
+            raise TypeError("issue must be a ForecastIssueV2")
+        return cls(
+            issued_at_physics_boundary_step=issue.issued_at_physics_boundary_step,
+            issued_at_offset_s=issue.issued_at_offset_s,
+            windows=tuple(issue.windows),
+        )
+
+    def window(self, name: str) -> ForecastWindowV2:
+        for window in self.windows:
+            if window.name == name:
+                return window
+        raise KeyError(name)
+
+    def to_dict(self) -> dict[str, object]:
         return {
             "issued_at_physics_boundary_step": self.issued_at_physics_boundary_step,
             "issued_at_offset_s": self.issued_at_offset_s,
@@ -876,6 +940,7 @@ __all__ = [
     "WEATHER_GENERATOR_VERSION",
     "ForecastIssueV2",
     "ForecastWindowV2",
+    "PublicForecastIssueV2",
     "RandomStreamKeyV2",
     "WeatherConfigV2",
     "WeatherEpisodeV2",
