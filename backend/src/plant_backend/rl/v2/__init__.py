@@ -12,8 +12,21 @@ separately switchable electrolyser commitment dynamics.
 from .config import EpisodeConfigV2, EpisodeV2, sample_episode
 from .boundary import ControlStateV2, IntervalSummaryV2
 from .control import ControllerObservationV2, ControllerV2, DeliveryObservation
+from .controllers import (
+    ClimatologyControllerV2,
+    DeliveryAwareControllerV2,
+    DeliveryPlannerSettingsV2,
+    IssuedForecastControllerV2,
+    RiskAdjustedIssuedForecastControllerV2,
+)
 from .env import PlantEnvV2
-from .evaluation import BaselineEvaluation, evaluate
+from .evaluation import (
+    BaselineEvaluation,
+    CausalControllerEvaluationV2,
+    ControllerEvaluationV2,
+    evaluate,
+    evaluate_controllers,
+)
 from .metrics import EpisodeMetricsV2
 from .reward import RewardWeightsV2
 from .weather import ForecastIssueV2, PublicForecastIssueV2, WeatherConfigV2
@@ -34,23 +47,31 @@ __all__ = [
     "ENVIRONMENT_CONTRACT_DIGEST",
     "ENVIRONMENT_ID",
     "BaselineEvaluation",
+    "CausalControllerEvaluationV2",
     "ControlStateV2",
     "ControllerObservationV2",
     "ControllerV2",
+    "ControllerEvaluationV2",
+    "ClimatologyControllerV2",
+    "DeliveryAwareControllerV2",
     "DeliveryObservation",
+    "DeliveryPlannerSettingsV2",
     "EpisodeConfigV2",
     "EpisodeMetricsV2",
     "EpisodeV2",
     "ForecastIssueV2",
     "PublicForecastIssueV2",
     "IntervalSummaryV2",
+    "IssuedForecastControllerV2",
     "OBSERVATION_NAMES",
     "OBSERVATION_SIZE",
     "PlantEnvV2",
     "RewardWeightsV2",
+    "RiskAdjustedIssuedForecastControllerV2",
     "SPEC_VERSION",
     "WeatherConfigV2",
     "describe",
     "evaluate",
+    "evaluate_controllers",
     "sample_episode",
 ]

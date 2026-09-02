@@ -64,6 +64,22 @@ class SpyControllerV2:
         }
 
 
+class InvalidDecisionControllerV2(SpyControllerV2):
+    id = "invalid-spy"
+    label = "Invalid spy"
+
+    def compute_action(
+        self,
+        observation: ControllerObservationV2,
+        *,
+        constraints: Constraints,
+        config: PlantConfig,
+        commitment_profile: ElectrolyserCommitmentProfile | None,
+    ) -> ControlDecision:
+        del observation, constraints, config, commitment_profile
+        return ControlDecision(Action.idle(), invalid=True)
+
+
 def test_run_controller_redacts_forecast_for_blind_policy() -> None:
     controller = SpyControllerV2(uses_forecast=False)
     run = run_controller(PlantEnvV2(episode=SHORT), controller, seed=5)
@@ -73,6 +89,23 @@ def test_run_controller_redacts_forecast_for_blind_policy() -> None:
     assert len(controller.observations) == 2
     assert all(item.forecast is None for item in controller.observations)
     assert all(not hasattr(item, "environment") for item in controller.observations)
+
+
+def test_run_controller_retains_controller_invalidity_in_metrics_and_trace() -> None:
+    run = run_controller(
+        PlantEnvV2(episode=SHORT),
+        InvalidDecisionControllerV2(),
+        seed=5,
+    )
+
+    assert run.metrics is not None
+    assert run.metrics.out_of_range_decisions == run.metrics.decisions == 2
+    assert run.requested_actions is not None
+    assert all(item.controller_invalid for item in run.requested_actions)
+    assert all(
+        item["controller_invalid"]
+        for item in run.to_dict()["requested_action_trace"]["actions"]
+    )
 
 
 def test_run_controller_passes_only_public_current_issue_to_forecast_policy() -> None:
@@ -102,10 +135,14 @@ def test_paired_controller_evaluation_records_declared_information_and_settings(
     assert result.pairing()["full_manifest_match_by_seed"] is True
     assert result.pairing()["all_arms_present_by_seed"] is True
     assert payload["evidence_scope"] == "development_comparator"
-    assert payload["schema_version"] == 4
+    assert payload["schema_version"] == 5
     assert payload["disclaimer"] == CAUSAL_COMPARATOR_DISCLAIMER
     assert payload["controller_specs"]["spy"]["uses_forecast"] is False
     assert payload["controller_specs"]["spy_forecast"]["uses_forecast"] is True
+    assert all(run["requested_action_trace"]["count"] == 2 for run in payload["runs"])
+    source_audit = payload["provenance"]["execution_source_audit"]
+    assert source_audit["status"] == "valid"
+    assert source_audit["worktree_identity_unchanged"] is True
     assert "richer than" in result.report()
 
 

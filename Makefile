@@ -1,4 +1,4 @@
-.PHONY: help setup dev backend frontend sim test eval foresight-eval rl-eval rl-ceiling v2-eval v2-weather-eval train-dry train \
+.PHONY: help setup dev backend frontend sim test eval foresight-eval rl-eval rl-ceiling v2-eval v2-weather-eval v2-controller-eval train-dry train \
 	hepa-collect hepa-pretrain-dry hepa-pretrain hepa-finetune-dry hepa-finetune \
 	hepa-eval build clean
 
@@ -39,6 +39,14 @@ v2-eval:          ## run paired transparent baselines on the V2 commitment alpha
 		--delivery-rate $(or $(DELIVERY_RATE),40) $(if $(JSON),--json $(JSON),)
 
 v2-weather-eval: v2-eval  ## compatibility alias for the pre-commitment target name
+
+v2-controller-eval: ## compare causal delivery-aware controllers on the development task
+	uv run python -m plant_backend.rl.v2.compare \
+		--seed-start $(or $(SEED_START),0) --count $(or $(SEEDS),3) \
+		--hours $(or $(HOURS),72) --delivery-rate $(or $(DELIVERY_RATE),35) \
+		$(if $(ALLOW_DIRTY_DEVELOPMENT),--allow-dirty-development,) \
+		$(if $(ACKNOWLEDGE_SEED_CONTAMINATION),--acknowledge-seed-contamination,) \
+		$(if $(JSON),--json $(JSON),)
 
 train-dry:        ## build the RL environment and print the training plan; trains nothing
 	uv run python -m plant_backend.rl.training.train --dry-run

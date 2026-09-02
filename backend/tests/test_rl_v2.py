@@ -32,6 +32,7 @@ from plant_backend.rl.v2.contract import (
     CheckpointContractError,
     require_compatible_checkpoint,
 )
+from plant_backend.rl.v2.metrics import EpisodeMetricsV2
 from plant_backend.rl.v2.reward import IntervalOutcome, compute
 from plant_backend.rl.v2.weather import WEATHER_GENERATOR_VERSION
 
@@ -71,6 +72,22 @@ def test_v2_reset_rejects_boolean_and_negative_seed_aliases() -> None:
         env.reset(seed=True)
     with pytest.raises(ValueError, match="non-negative integer"):
         env.reset(seed=-1)
+
+
+def test_v2_controller_door_retains_controller_side_invalidity() -> None:
+    env = PlantEnvV2(episode=SHORT)
+    env.reset(seed=4)
+    initial_soc = env.telemetry.battery_soc
+
+    assert env.metrics.min_battery_soc == pytest.approx(initial_soc)
+    _, _, _, _, info = env.step_action(
+        Action.idle(),
+        controller_invalid=True,
+    )
+    assert info["metrics"]["out_of_range_decisions"] == 1
+
+    with pytest.raises(TypeError, match="controller_invalid"):
+        env.step_action(Action.idle(), controller_invalid=1)  # type: ignore[arg-type]
 
 
 def test_v2_descriptor_digest_is_complete_and_deterministic() -> None:
@@ -572,6 +589,101 @@ def test_v2_reports_requested_and_applied_energy_over_the_whole_decision() -> No
     assert info["metrics"]["request_application_gap_kwh"] == pytest.approx(
         authority["request_application_integral_l1_kwh"]
     )
+    accepted = sum(
+        power["applied_kwh"][name]
+        for name in ("electrolyser", "dac", "methanator")
+    )
+    assert info["metrics"]["accepted_process_energy_kwh"] == pytest.approx(
+        accepted
+    )
+    assert info["metrics"]["electrolyser_applied_energy_kwh"] == pytest.approx(
+        power["applied_kwh"]["electrolyser"]
+    )
+
+
+def test_process_energy_intensity_is_undefined_without_delivered_product() -> None:
+    env = PlantEnvV2(episode=SHORT)
+    env.reset(seed=4)
+    _, _, _, _, info = env.step_action(Action.idle())
+
+    assert info["metrics"]["delivered_kg"] == 0.0
+    assert info["metrics"]["accepted_process_energy_per_delivered_kg"] is None
+
+
+def test_process_energy_intensity_counts_each_accepted_conversion_channel_once() -> None:
+    metrics = EpisodeMetricsV2(
+        delivered_kg=10.0,
+        electrolyser_applied_energy_kwh=520.0,
+        dac_applied_energy_kwh=20.0,
+        methanator_applied_energy_kwh=80.0,
+    )
+
+    assert metrics.accepted_process_energy_kwh == pytest.approx(620.0)
+    assert metrics.accepted_process_energy_per_delivered_kg == pytest.approx(62.0)
+    assert metrics.to_dict()["accepted_process_energy_per_delivered_kg"] == pytest.approx(
+        62.0
+    )
+
+
+def test_episode_metrics_track_complete_initial_and_terminal_inventory_vector() -> None:
+    env = PlantEnvV2(episode=SHORT)
+    env.reset(seed=4)
+    initial = env.telemetry
+    initial_metrics = env.metrics.to_dict()
+
+    assert initial_metrics["initial_h2_kg"] == pytest.approx(initial.h2_level_kg)
+    assert initial_metrics["initial_co2_kg"] == pytest.approx(initial.co2_level_kg)
+    assert initial_metrics["initial_ch4_kg"] == pytest.approx(initial.ch4_level_kg)
+    assert initial_metrics["initial_battery_soc"] == pytest.approx(initial.battery_soc)
+    assert initial_metrics["initial_battery_energy_kwh"] == pytest.approx(
+        initial.battery_energy_kwh
+    )
+
+    _, _, _, _, info = env.step_action(Action.all_to_battery())
+    terminal = env.telemetry
+    metrics = info["metrics"]
+    assert metrics["terminal_h2_kg"] == pytest.approx(terminal.h2_level_kg)
+    assert metrics["terminal_co2_kg"] == pytest.approx(terminal.co2_level_kg)
+    assert metrics["terminal_ch4_kg"] == pytest.approx(terminal.ch4_level_kg)
+    assert metrics["terminal_battery_soc"] == pytest.approx(terminal.battery_soc)
+    assert metrics["terminal_battery_energy_kwh"] == pytest.approx(
+        terminal.battery_energy_kwh
+    )
+    assert metrics["h2_inventory_change_kg"] == pytest.approx(
+        terminal.h2_level_kg - initial.h2_level_kg
+    )
+    assert metrics["co2_inventory_change_kg"] == pytest.approx(
+        terminal.co2_level_kg - initial.co2_level_kg
+    )
+    assert metrics["ch4_inventory_change_kg"] == pytest.approx(
+        terminal.ch4_level_kg - initial.ch4_level_kg
+    )
+    assert metrics["battery_energy_change_kwh"] == pytest.approx(
+        terminal.battery_energy_kwh - initial.battery_energy_kwh
+    )
+
+
+def test_episode_metrics_reject_corrupt_terminal_inventory() -> None:
+    metrics = EpisodeMetricsV2()
+    outcome = _interval_outcome()
+    breakdown = compute(
+        outcome,
+        config=PlantConfig(),
+        constraints=Constraints(),
+        terminal=False,
+    )
+
+    with pytest.raises(ValueError, match="terminal hydrogen inventory"):
+        metrics.record(
+            outcome,
+            breakdown,
+            (),
+            corrected_physics_steps=0,
+            electrolyser_applied_energy_kwh=0.0,
+            dac_applied_energy_kwh=0.0,
+            methanator_applied_energy_kwh=0.0,
+            terminal_state=PlantState(h2_level_kg=float("nan")),
+        )
 
 
 def test_share_accounting_uses_the_realized_interval_bus_not_prior_solar() -> None:

@@ -170,7 +170,7 @@ def test_json_contains_complete_runs_and_configuration(tmp_path: Path) -> None:
     target = write(result, tmp_path / "v2.json")
     payload = json.loads(target.read_text(encoding="utf-8"))
 
-    assert payload["schema_version"] == 3
+    assert payload["schema_version"] == 4
     assert payload["study"] == "environment_v2_commitment_alpha_paired_baselines"
     assert payload["episode_config"]["horizon_h"] == 0.5
     assert len(payload["runs"]) == 4

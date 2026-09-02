@@ -124,7 +124,20 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
         # originally sampled manifest identity.
         self.simulator.set_delivery_schedule(drawn.commitments, freeze=True)
         self.encoder.reset()
-        self.metrics = EpisodeMetricsV2()
+        initial = self.telemetry
+        self.metrics = EpisodeMetricsV2(
+            initial_h2_kg=initial.h2_level_kg,
+            initial_co2_kg=initial.co2_level_kg,
+            initial_ch4_kg=initial.ch4_level_kg,
+            initial_battery_soc=initial.battery_soc,
+            initial_battery_energy_kwh=initial.battery_energy_kwh,
+            terminal_h2_kg=initial.h2_level_kg,
+            terminal_co2_kg=initial.co2_level_kg,
+            terminal_ch4_kg=initial.ch4_level_kg,
+            terminal_battery_soc=initial.battery_soc,
+            terminal_battery_energy_kwh=initial.battery_energy_kwh,
+            min_battery_soc=initial.battery_soc,
+        )
         self.physics_steps_taken = 0
         self.decisions_taken = 0
         self.control_state = ControlStateV2(
@@ -147,13 +160,17 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
     def step_action(
         self,
         action: Action,
+        *,
+        controller_invalid: bool = False,
     ) -> tuple[np.ndarray, float, bool, bool, dict[str, Any]]:
         """Controller door sharing the exact V2 guard, reward, and metrics path."""
+        if not isinstance(controller_invalid, bool):
+            raise TypeError("controller_invalid must be a bool")
         safe = Action.sanitised(action)
         bus_kw = max(0.0, self.telemetry.solar_available_kw)
         decoded = DecodedAction(
             action=safe,
-            clipped=safe != action,
+            clipped=safe != action or controller_invalid,
             requested_kw={
                 "battery": safe.battery_share * bus_kw,
                 "electrolyser": safe.electrolyser_share * bus_kw
@@ -276,6 +293,10 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
             breakdown,
             settlements,
             corrected_physics_steps=corrected_steps,
+            electrolyser_applied_energy_kwh=power.applied_kwh["electrolyser"],
+            dac_applied_energy_kwh=power.applied_kwh["dac"],
+            methanator_applied_energy_kwh=power.applied_kwh["methanator"],
+            terminal_state=after,
         )
         requested = decoded.to_dict()
         requested["requested_kw_basis"] = (

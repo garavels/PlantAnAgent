@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
+from numbers import Real
 from typing import Any, Iterable
 
-from plant_sim import DeliverySettlement
+from plant_sim import DeliverySettlement, PlantState
 
 from .boundary import COMMITMENT_MODE_NAMES
 from .reward import IntervalOutcome, RewardBreakdownV2
@@ -26,10 +28,22 @@ class EpisodeMetricsV2:
     unmet_kg: float = 0.0
     worst_commitment_fill_rate: float = 1.0
     ch4_produced_kg: float = 0.0
+    initial_h2_kg: float = 0.0
+    initial_co2_kg: float = 0.0
+    initial_ch4_kg: float = 0.0
+    initial_battery_soc: float = 0.0
+    initial_battery_energy_kwh: float = 0.0
+    terminal_h2_kg: float = 0.0
+    terminal_co2_kg: float = 0.0
     terminal_ch4_kg: float = 0.0
+    terminal_battery_soc: float = 0.0
+    terminal_battery_energy_kwh: float = 0.0
     solar_kwh: float = 0.0
     curtailed_kwh: float = 0.0
     battery_discharged_kwh: float = 0.0
+    electrolyser_applied_energy_kwh: float = 0.0
+    dac_applied_energy_kwh: float = 0.0
+    methanator_applied_energy_kwh: float = 0.0
     min_battery_soc: float = 1.0
     shutdown_steps: int = 0
     guard_interventions: int = 0
@@ -61,7 +75,50 @@ class EpisodeMetricsV2:
         settlements: Iterable[DeliverySettlement],
         *,
         corrected_physics_steps: int,
+        electrolyser_applied_energy_kwh: float,
+        dac_applied_energy_kwh: float,
+        methanator_applied_energy_kwh: float,
+        terminal_state: PlantState,
     ) -> None:
+        if not isinstance(terminal_state, PlantState):
+            raise TypeError("terminal_state must be PlantState")
+        terminal_inventory = {
+            "terminal hydrogen inventory": terminal_state.h2_level_kg,
+            "terminal carbon-dioxide inventory": terminal_state.co2_level_kg,
+            "terminal methane inventory": terminal_state.ch4_level_kg,
+            "terminal battery energy": terminal_state.battery_energy_kwh,
+        }
+        for name, value in terminal_inventory.items():
+            if (
+                isinstance(value, bool)
+                or not isinstance(value, Real)
+                or not math.isfinite(float(value))
+                or value < 0.0
+            ):
+                raise ValueError(f"{name} must be finite and non-negative")
+        terminal_soc = terminal_state.battery_soc
+        if (
+            isinstance(terminal_soc, bool)
+            or not isinstance(terminal_soc, Real)
+            or not math.isfinite(float(terminal_soc))
+            or not 0.0 <= terminal_soc <= 1.0
+        ):
+            raise ValueError("terminal battery SOC must be finite and within [0, 1]")
+        applied_process_energy = {
+            "electrolyser": electrolyser_applied_energy_kwh,
+            "dac": dac_applied_energy_kwh,
+            "methanator": methanator_applied_energy_kwh,
+        }
+        for name, value in applied_process_energy.items():
+            if (
+                isinstance(value, bool)
+                or not isinstance(value, Real)
+                or not math.isfinite(float(value))
+                or value < 0.0
+            ):
+                raise ValueError(
+                    f"{name} applied process energy must be finite and non-negative"
+                )
         self.decisions += 1
         self.physical_steps += outcome.physical_steps
         self.hours += outcome.hours
@@ -72,10 +129,19 @@ class EpisodeMetricsV2:
         self.delivered_kg += outcome.delivered_kg
         self.unmet_kg += outcome.unmet_kg
         self.ch4_produced_kg += outcome.produced_kg
-        self.terminal_ch4_kg = outcome.terminal_ch4_kg
+        self.terminal_h2_kg = terminal_state.h2_level_kg
+        self.terminal_co2_kg = terminal_state.co2_level_kg
+        self.terminal_ch4_kg = terminal_state.ch4_level_kg
+        self.terminal_battery_soc = terminal_state.battery_soc
+        self.terminal_battery_energy_kwh = terminal_state.battery_energy_kwh
         self.solar_kwh += outcome.solar_kwh
         self.curtailed_kwh += outcome.curtailed_kwh
         self.battery_discharged_kwh += outcome.battery_discharged_kwh
+        self.electrolyser_applied_energy_kwh += float(
+            electrolyser_applied_energy_kwh
+        )
+        self.dac_applied_energy_kwh += float(dac_applied_energy_kwh)
+        self.methanator_applied_energy_kwh += float(methanator_applied_energy_kwh)
         self.min_battery_soc = min(self.min_battery_soc, outcome.min_battery_soc)
         self.shutdown_steps += outcome.shutdown_steps
         self.guard_interventions += outcome.corrections
@@ -137,6 +203,38 @@ class EpisodeMetricsV2:
             + self.electrolyser_standby_energy_kwh
         )
 
+    @property
+    def accepted_process_energy_kwh(self) -> float:
+        """Electrical energy physically accepted by the three conversion units."""
+        return (
+            self.electrolyser_applied_energy_kwh
+            + self.dac_applied_energy_kwh
+            + self.methanator_applied_energy_kwh
+        )
+
+    @property
+    def accepted_process_energy_per_delivered_kg(self) -> float | None:
+        """Accepted process energy intensity, undefined before any delivery."""
+        if self.delivered_kg <= 0.0:
+            return None
+        return self.accepted_process_energy_kwh / self.delivered_kg
+
+    @property
+    def h2_inventory_change_kg(self) -> float:
+        return self.terminal_h2_kg - self.initial_h2_kg
+
+    @property
+    def co2_inventory_change_kg(self) -> float:
+        return self.terminal_co2_kg - self.initial_co2_kg
+
+    @property
+    def ch4_inventory_change_kg(self) -> float:
+        return self.terminal_ch4_kg - self.initial_ch4_kg
+
+    @property
+    def battery_energy_change_kwh(self) -> float:
+        return self.terminal_battery_energy_kwh - self.initial_battery_energy_kwh
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "stage": STAGE,
@@ -154,11 +252,33 @@ class EpisodeMetricsV2:
             "delivery_fill_rate": self.delivery_fill_rate,
             "worst_commitment_fill_rate": self.worst_commitment_fill_rate,
             "ch4_produced_kg": self.ch4_produced_kg,
+            "initial_h2_kg": self.initial_h2_kg,
+            "initial_co2_kg": self.initial_co2_kg,
+            "initial_ch4_kg": self.initial_ch4_kg,
+            "initial_battery_soc": self.initial_battery_soc,
+            "initial_battery_energy_kwh": self.initial_battery_energy_kwh,
+            "terminal_h2_kg": self.terminal_h2_kg,
+            "terminal_co2_kg": self.terminal_co2_kg,
             "terminal_ch4_kg": self.terminal_ch4_kg,
+            "terminal_battery_soc": self.terminal_battery_soc,
+            "terminal_battery_energy_kwh": self.terminal_battery_energy_kwh,
+            "h2_inventory_change_kg": self.h2_inventory_change_kg,
+            "co2_inventory_change_kg": self.co2_inventory_change_kg,
+            "ch4_inventory_change_kg": self.ch4_inventory_change_kg,
+            "battery_energy_change_kwh": self.battery_energy_change_kwh,
             "solar_kwh": self.solar_kwh,
             "curtailed_kwh": self.curtailed_kwh,
             "solar_utilisation": self.solar_utilisation,
             "battery_discharged_kwh": self.battery_discharged_kwh,
+            "electrolyser_applied_energy_kwh": (
+                self.electrolyser_applied_energy_kwh
+            ),
+            "dac_applied_energy_kwh": self.dac_applied_energy_kwh,
+            "methanator_applied_energy_kwh": self.methanator_applied_energy_kwh,
+            "accepted_process_energy_kwh": self.accepted_process_energy_kwh,
+            "accepted_process_energy_per_delivered_kg": (
+                self.accepted_process_energy_per_delivered_kg
+            ),
             "min_battery_soc": self.min_battery_soc,
             "shutdown_steps": self.shutdown_steps,
             "guard_interventions": self.guard_interventions,
