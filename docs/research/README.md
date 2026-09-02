@@ -25,6 +25,9 @@ fallback behavior.
   acceptance gates.
 - [`ENVIRONMENT_V2_ALPHA_RESULTS.md`](ENVIRONMENT_V2_ALPHA_RESULTS.md) records the
   first clean, paired delivery-only calibration and the decision it supports.
+- [`ENVIRONMENT_V2_WEATHER_RESULTS.md`](ENVIRONMENT_V2_WEATHER_RESULTS.md) records
+  the clean, paired weather-alpha calibration, independent replay audit, failure-tail
+  analysis, and resulting Gate B decision.
 
 Small canonical benchmark outputs may be committed under [`results/`](results/) when
 they make a reported conclusion directly auditable. Large generated datasets, model

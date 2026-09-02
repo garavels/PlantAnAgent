@@ -1,0 +1,5485 @@
+{
+  "schema_version": 2,
+  "study": "environment_v2_weather_alpha_paired_baselines",
+  "evidence_scope": "baseline_only",
+  "disclaimer": "BASELINE ONLY: no trained RL policy, MPC, or perfect-foresight oracle is included, and these legacy/open-loop diagnostic arms do not share the full V2 information set. Results validate task discrimination and evaluation wiring; they do not establish RL performance, optimality, or commercial superiority.",
+  "statistics": {
+    "standard_deviation": "population (ddof=0)"
+  },
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19
+  ],
+  "episode_config": {
+    "horizon_h": 168.0,
+    "decision_interval_s": 900.0,
+    "start_hour": 6.0,
+    "delivery_period_h": 6.0,
+    "delivery_rate_kg_h": 40.0,
+    "battery_soc": [
+      0.25,
+      0.65
+    ],
+    "h2_fill": [
+      0.05,
+      0.3
+    ],
+    "co2_fill": [
+      0.1,
+      0.4
+    ],
+    "ch4_coverage_h": [
+      3.0,
+      9.0
+    ],
+    "weather": {
+      "latent_median_resource_factor": 0.7,
+      "latent_stationary_sd": 0.75,
+      "autocorrelation_half_life_h": 1.0,
+      "forecast_ensemble_members": 32,
+      "forecast_analysis_latent_sd": 0.05,
+      "forecast_innovation_scale": 1.0,
+      "forecast_windows_h": [
+        [
+          0.0,
+          1.0
+        ],
+        [
+          1.0,
+          6.0
+        ],
+        [
+          6.0,
+          12.0
+        ],
+        [
+          12.0,
+          24.0
+        ]
+      ]
+    }
+  },
+  "labels": {
+    "heuristic": "Legacy forecast-blind heuristic",
+    "idle": "Idle",
+    "balanced": "Fixed balanced mix",
+    "production_mix": "Fixed production mix"
+  },
+  "information_sets": {
+    "heuristic": "latest one-minute V2 telemetry plus safety constraints; no preceding-interval aggregate, delivery context, or issued forecast",
+    "idle": "constant action; observes no environment information",
+    "balanced": "constant action; observes no environment information",
+    "production_mix": "constant action; observes no environment information"
+  },
+  "pairing": {
+    "common_random_numbers": true,
+    "manifest_match_by_seed": true,
+    "all_arms_present_by_seed": true,
+    "manifest_sha256_by_seed": {
+      "0": [
+        "b669ec53208a5f971755ec9b5dc314a76665643902a71c8f1dbb0a828e84ad7b"
+      ],
+      "1": [
+        "dec5c5f83580018a1563ca2d61a6310a1d74357183c13a58a93cfd3e9da6d144"
+      ],
+      "2": [
+        "d37cb1400d4e38f6fd467170ab3dd2dc035a0d773108523f4970985ceb73b0d4"
+      ],
+      "3": [
+        "c782c539bf2c9c928fec3fb15b3b2d46613c9a7fd9ae7f615f83458735233312"
+      ],
+      "4": [
+        "a23d61a7275e5278259940c8509a961984e51fd17dac4fec2d529034f76db022"
+      ],
+      "5": [
+        "dbef49c0e6220256d3d537a7f841a1f11c33eb9614844d55ec01e917115a9718"
+      ],
+      "6": [
+        "34024cb27380e9bc4c3a847ba7b4e2e3a144ae61be6f553abc1f30495b7dbca7"
+      ],
+      "7": [
+        "c203e71d58ec0a05f3098f23ac61fb7ee592aa24b32a1842b3b0c74c8f8c381e"
+      ],
+      "8": [
+        "077a34d5c845f373b2a492ba6f8b2b80fce893021df6662c9f7c34f3cdb12ec3"
+      ],
+      "9": [
+        "51e86f5ee3dcb729016e109984d2371a3be67e063b785953c550e410050a2336"
+      ],
+      "10": [
+        "46756a928afc05ac8f8614dfe1e73ca9060bb13398edd163ace62136a668e9f9"
+      ],
+      "11": [
+        "9e2a354deffb13cfd0876ccf1e103fc5daf8d9337be43ad61c8359af8291ae55"
+      ],
+      "12": [
+        "df9768b2362f11400e80f755d41fb927fbd698a955007d31182e2084fd366242"
+      ],
+      "13": [
+        "a589ba2ab9cf8d2ef73606d17744fe442978028691f79579643c17a1908af54c"
+      ],
+      "14": [
+        "1d060757c7e0021377e271075eea08b561bf656b3e8589d41b506db939ed4c7d"
+      ],
+      "15": [
+        "77820d40d9d7514ac6a2539bd26c6f04d3993359252ae25064df61d6387c9330"
+      ],
+      "16": [
+        "74a284aa9cb1af1dffa7a5dc0a9341f26a0e67251dc4ef67afe04d51259ce6eb"
+      ],
+      "17": [
+        "87c00228008b9e48b62f17677564615dc84f59213b677e6e51021909ec37584a"
+      ],
+      "18": [
+        "2031aeff66303837ce9341d41601489dcaefdb5589d489f2a8af5889420ec3ef"
+      ],
+      "19": [
+        "08181b8333957eb7b2b3a721de655858df426fee7de3ffa9c0f5f2eda4fcd1e4"
+      ]
+    }
+  },
+  "provenance": {
+    "source": {
+      "repository_root": "/Users/filippogombac/Developer/GitHub/PlantAnAgent",
+      "git_revision": "129624ad6668d3286b431a76cb5e616fc87fa034",
+      "git_dirty": false
+    },
+    "dependency_lock": {
+      "path": "uv.lock",
+      "sha256": "cb346b6cace28625107c93cc446181b8f85a6916741393c98e8e5ab00f91e3af"
+    },
+    "runtime": {
+      "python": "3.12.7",
+      "implementation": "CPython",
+      "platform": "macOS-26.6.2-arm64-arm-64bit"
+    },
+    "environment": {
+      "environment_id": "plant-env-v2-weather-alpha",
+      "spec_version": 2,
+      "stage": "weather-forecast-alpha",
+      "observation_size": 42,
+      "action_size": 5,
+      "observation_fields": [
+        {
+          "name": "time_of_day_sin",
+          "source": "ControlStateV2.boundary.time_of_day_h (current decision boundary)",
+          "unit": "h",
+          "normalisation": "sin(2*pi*h/24)",
+          "low": -1.0,
+          "high": 1.0
+        },
+        {
+          "name": "time_of_day_cos",
+          "source": "ControlStateV2.boundary.time_of_day_h (current decision boundary)",
+          "unit": "h",
+          "normalisation": "cos(2*pi*h/24)",
+          "low": -1.0,
+          "high": 1.0
+        },
+        {
+          "name": "solar_available",
+          "source": "ControlStateV2.boundary.solar_available_kw (latest completed one-minute dispatch sample reported at the current decision boundary; reset uses the initial boundary sample)",
+          "unit": "kW",
+          "normalisation": "kw / solar.peak_kw",
+          "low": 0.0,
+          "high": 1.0
+        },
+        {
+          "name": "solar_potential",
+          "source": "ControlStateV2.boundary.solar_potential_kw (clear-sky value sampled for the latest completed one-minute dispatch; reset uses the initial boundary sample)",
+          "unit": "kW",
+          "normalisation": "kw / solar.peak_kw",
+          "low": 0.0,
+          "high": 1.0
+        },
+        {
+          "name": "solar_output_factor",
+          "source": "V2 controller telemetry solar_available_kw / solar_potential_kw for the latest completed one-minute dispatch sample; zero when clear-sky power is zero",
+          "unit": "fraction",
+          "normalisation": "identity (already 0..1)",
+          "low": 0.0,
+          "high": 1.0
+        },
+        {
+          "name": "solar_trend",
+          "source": "final one-minute solar dispatch samples reported at the current and previous decision boundaries",
+          "unit": "kW",
+          "normalisation": "(latest dispatch-sample kw - previous decision-boundary dispatch-sample kw) / solar.peak_kw, clipped to [-1, 1]",
+          "low": -1.0,
+          "high": 1.0
+        },
+        {
+          "name": "battery_soc",
+          "source": "ControlStateV2.boundary.battery_soc (current boundary inventory)",
+          "unit": "fraction",
+          "normalisation": "identity (already 0..1)",
+          "low": 0.0,
+          "high": 1.0
+        },
+        {
+          "name": "battery_power",
+          "source": "ControlStateV2.previous_interval.battery_power_mean_kw (mean over the previous completed decision interval)",
+          "unit": "kW (>0 charging)",
+          "normalisation": "kw / battery.max_discharge_kw, clipped to [-1, 1]",
+          "low": -1.0,
+          "high": 1.0
+        },
+        {
+          "name": "battery_reserve_margin",
+          "source": "ControlStateV2.boundary.battery_soc (current boundary inventory), Constraints.reserve_soc",
+          "unit": "fraction",
+          "normalisation": "soc - reserve_soc, clipped to [-1, 1]",
+          "low": -1.0,
+          "high": 1.0
+        },
+        {
+          "name": "h2_fill",
+          "source": "ControlStateV2.boundary.h2_fill (current boundary inventory)",
+          "unit": "fraction",
+          "normalisation": "identity (already 0..1)",
+          "low": 0.0,
+          "high": 1.0
+        },
+        {
+          "name": "co2_fill",
+          "source": "ControlStateV2.boundary.co2_fill (current boundary inventory)",
+          "unit": "fraction",
+          "normalisation": "identity (already 0..1)",
+          "low": 0.0,
+          "high": 1.0
+        },
+        {
+          "name": "ch4_fill",
+          "source": "ControlStateV2.boundary.ch4_fill (current boundary inventory)",
+          "unit": "fraction",
+          "normalisation": "identity (already 0..1)",
+          "low": 0.0,
+          "high": 1.0
+        },
+        {
+          "name": "electrolyser_load",
+          "source": "ControlStateV2.previous_interval.electrolyser_load_mean (mean over the previous completed decision interval)",
+          "unit": "fraction of rating",
+          "normalisation": "identity (already 0..1)",
+          "low": 0.0,
+          "high": 1.0
+        },
+        {
+          "name": "electrolyser_online",
+          "source": "ControlStateV2.boundary.electrolyser_online (status during the latest completed physical interval)",
+          "unit": "bool",
+          "normalisation": "1.0 if online else 0.0",
+          "low": 0.0,
+          "high": 1.0
+        },
+        {
+          "name": "electrolyser_health",
+          "source": "ControlStateV2.boundary.health['electrolyser'] (condition during the latest completed physical interval)",
+          "unit": "fraction",
+          "normalisation": "0 if offline else 1 - degradation",
+          "low": 0.0,
+          "high": 1.0
+        },
+        {
+          "name": "dac_load",
+          "source": "ControlStateV2.previous_interval.dac_load_mean (mean over the previous completed decision interval)",
+          "unit": "fraction of rating",
+          "normalisation": "identity (already 0..1)",
+          "low": 0.0,
+          "high": 1.0
+        },
+        {
+          "name": "dac_online",
+          "source": "ControlStateV2.boundary.dac_online (status during the latest completed physical interval)",
+          "unit": "bool",
+          "normalisation": "1.0 if online else 0.0",
+          "low": 0.0,
+          "high": 1.0
+        },
+        {
+          "name": "dac_health",
+          "source": "ControlStateV2.boundary.health['dac'] (condition during the latest completed physical interval)",
+          "unit": "fraction",
+          "normalisation": "0 if offline else 1 - degradation",
+          "low": 0.0,
+          "high": 1.0
+        },
+        {
+          "name": "methanator_load",
+          "source": "ControlStateV2.previous_interval.methanator_load_mean (mean over the previous completed decision interval)",
+          "unit": "fraction of rating",
+          "normalisation": "identity (already 0..1)",
+          "low": 0.0,
+          "high": 1.0
+        },
+        {
+          "name": "methanator_online",
+          "source": "ControlStateV2.boundary.methanator_online (status during the latest completed physical interval)",
+          "unit": "bool",
+          "normalisation": "1.0 if online else 0.0",
+          "low": 0.0,
+          "high": 1.0
+        },
+        {
+          "name": "methanator_health",
+          "source": "ControlStateV2.boundary.health['methanator'] (condition during the latest completed physical interval)",
+          "unit": "fraction",
+          "normalisation": "0 if offline else 1 - degradation",
+          "low": 0.0,
+          "high": 1.0
+        },
+        {
+          "name": "h2_production",
+          "source": "ControlStateV2.previous_interval.h2_production_mean_kg_h (mean over the previous completed decision interval)",
+          "unit": "kg/h",
+          "normalisation": "kg_h / (electrolyser.rated_kw / specific_energy_kwh_per_kg)",
+          "low": 0.0,
+          "high": 1.0
+        },
+        {
+          "name": "co2_production",
+          "source": "ControlStateV2.previous_interval.co2_capture_mean_kg_h (mean over the previous completed decision interval)",
+          "unit": "kg/h",
+          "normalisation": "kg_h / (dac.rated_kw / specific_energy_kwh_per_kg)",
+          "low": 0.0,
+          "high": 1.0
+        },
+        {
+          "name": "ch4_production",
+          "source": "ControlStateV2.previous_interval.ch4_production_mean_kg_h (mean over the previous completed decision interval)",
+          "unit": "kg/h",
+          "normalisation": "kg_h / (methanator.rated_kw / specific_energy_kwh_per_kg)",
+          "low": 0.0,
+          "high": 1.0
+        },
+        {
+          "name": "electrolyser_cap",
+          "source": "Constraints.electrolyser_limit_kw at current decision boundary",
+          "unit": "kW",
+          "normalisation": "limit_kw / electrolyser.rated_kw",
+          "low": 0.0,
+          "high": 1.0
+        },
+        {
+          "name": "dac_cap",
+          "source": "Constraints.dac_limit_kw at current decision boundary",
+          "unit": "kW",
+          "normalisation": "limit_kw / dac.rated_kw",
+          "low": 0.0,
+          "high": 1.0
+        },
+        {
+          "name": "methanator_cap",
+          "source": "Constraints.methanator_limit_kw at current decision boundary",
+          "unit": "kW",
+          "normalisation": "limit_kw / methanator.rated_kw",
+          "low": 0.0,
+          "high": 1.0
+        },
+        {
+          "name": "support_cap",
+          "source": "Constraints.support_limit_kw at current decision boundary",
+          "unit": "kW",
+          "normalisation": "limit_kw / battery.max_discharge_kw",
+          "low": 0.0,
+          "high": 1.0
+        },
+        {
+          "name": "reserve_soc",
+          "source": "Constraints.reserve_soc at current decision boundary",
+          "unit": "fraction",
+          "normalisation": "identity (already 0..1)",
+          "low": 0.0,
+          "high": 1.0
+        },
+        {
+          "name": "episode_progress",
+          "source": "PlantEnvV2 decision counter at current decision boundary",
+          "unit": "steps",
+          "normalisation": "decisions_taken / episode_decisions",
+          "low": 0.0,
+          "high": 1.0
+        },
+        {
+          "name": "delivery_time_to_next",
+          "source": "DeliveryLedger.next_pending.due_step and current physics boundary",
+          "unit": "delivery periods",
+          "normalisation": "remaining physics ticks / delivery-period ticks, clipped to [0, 1]",
+          "low": 0.0,
+          "high": 1.0
+        },
+        {
+          "name": "delivery_next_amount",
+          "source": "DeliveryLedger.next_pending.requested_kg",
+          "unit": "kg",
+          "normalisation": "requested kg / CH4 tank capacity",
+          "low": 0.0,
+          "high": 1.0
+        },
+        {
+          "name": "delivery_inventory_coverage",
+          "source": "ControlStateV2.boundary.ch4_level_kg (current boundary inventory), next requested delivery",
+          "unit": "commitments",
+          "normalisation": "CH4 kg / next requested kg, clipped to [0, 2]",
+          "low": 0.0,
+          "high": 2.0
+        },
+        {
+          "name": "delivery_fill_rate_to_date",
+          "source": "DeliveryLedger cumulative delivered/requested kg",
+          "unit": "fraction",
+          "normalisation": "delivered kg / requested kg; 1 before the first deadline",
+          "low": 0.0,
+          "high": 1.0
+        },
+        {
+          "name": "solar_forecast_0_1h_mean",
+          "source": "ForecastIssueV2.windows['0-1h'].mean_peak_power_fraction",
+          "unit": "fraction of PV nameplate",
+          "normalisation": "identity (window-mean available PV kW / solar.peak_kw)",
+          "low": 0.0,
+          "high": 1.0
+        },
+        {
+          "name": "solar_forecast_0_1h_p10",
+          "source": "ForecastIssueV2.windows['0-1h'].p10_peak_power_fraction",
+          "unit": "fraction of PV nameplate",
+          "normalisation": "identity (10th ensemble percentile after member-wise window aggregation, divided by solar.peak_kw)",
+          "low": 0.0,
+          "high": 1.0
+        },
+        {
+          "name": "solar_forecast_1_6h_mean",
+          "source": "ForecastIssueV2.windows['1-6h'].mean_peak_power_fraction",
+          "unit": "fraction of PV nameplate",
+          "normalisation": "identity (window-mean available PV kW / solar.peak_kw)",
+          "low": 0.0,
+          "high": 1.0
+        },
+        {
+          "name": "solar_forecast_1_6h_p10",
+          "source": "ForecastIssueV2.windows['1-6h'].p10_peak_power_fraction",
+          "unit": "fraction of PV nameplate",
+          "normalisation": "identity (10th ensemble percentile after member-wise window aggregation, divided by solar.peak_kw)",
+          "low": 0.0,
+          "high": 1.0
+        },
+        {
+          "name": "solar_forecast_6_12h_mean",
+          "source": "ForecastIssueV2.windows['6-12h'].mean_peak_power_fraction",
+          "unit": "fraction of PV nameplate",
+          "normalisation": "identity (window-mean available PV kW / solar.peak_kw)",
+          "low": 0.0,
+          "high": 1.0
+        },
+        {
+          "name": "solar_forecast_6_12h_p10",
+          "source": "ForecastIssueV2.windows['6-12h'].p10_peak_power_fraction",
+          "unit": "fraction of PV nameplate",
+          "normalisation": "identity (10th ensemble percentile after member-wise window aggregation, divided by solar.peak_kw)",
+          "low": 0.0,
+          "high": 1.0
+        },
+        {
+          "name": "solar_forecast_12_24h_mean",
+          "source": "ForecastIssueV2.windows['12-24h'].mean_peak_power_fraction",
+          "unit": "fraction of PV nameplate",
+          "normalisation": "identity (window-mean available PV kW / solar.peak_kw)",
+          "low": 0.0,
+          "high": 1.0
+        },
+        {
+          "name": "solar_forecast_12_24h_p10",
+          "source": "ForecastIssueV2.windows['12-24h'].p10_peak_power_fraction",
+          "unit": "fraction of PV nameplate",
+          "normalisation": "identity (10th ensemble percentile after member-wise window aggregation, divided by solar.peak_kw)",
+          "low": 0.0,
+          "high": 1.0
+        }
+      ],
+      "action_fields": [
+        {
+          "name": "battery_share",
+          "target": "Action.battery_share",
+          "conversion": "(a + 1) / 2, then shares normalised by Action.sanitised if they sum above 1",
+          "low": -1.0,
+          "high": 1.0
+        },
+        {
+          "name": "electrolyser_share",
+          "target": "Action.electrolyser_share",
+          "conversion": "(a + 1) / 2, then shares normalised by Action.sanitised if they sum above 1",
+          "low": -1.0,
+          "high": 1.0
+        },
+        {
+          "name": "dac_share",
+          "target": "Action.dac_share",
+          "conversion": "(a + 1) / 2, then shares normalised by Action.sanitised if they sum above 1",
+          "low": -1.0,
+          "high": 1.0
+        },
+        {
+          "name": "methanator_share",
+          "target": "Action.methanator_share",
+          "conversion": "(a + 1) / 2, then shares normalised by Action.sanitised if they sum above 1",
+          "low": -1.0,
+          "high": 1.0
+        },
+        {
+          "name": "battery_support",
+          "target": "Action.battery_support_kw",
+          "conversion": "(a + 1) / 2 * Constraints.support_limit_kw(config)",
+          "low": -1.0,
+          "high": 1.0
+        }
+      ],
+      "environment_contract_digest": "2f664d7fc5c2aaf37e2bfef62697cf5aa48200597799afcb6ad349ea1ec30ec3",
+      "digest_scope": "observation/action interface only",
+      "full_checkpoint_contract": "PlantEnvV2.checkpoint_contract",
+      "limitations": [
+        "synthetic weather and forecast uncertainty are engineering fixtures, not calibrated site data",
+        "mean and p10 forecast summaries do not expose a full predictive distribution",
+        "memoryless V1 process equipment",
+        "delivery objective and plant model are not a calibrated physical twin"
+      ]
+    },
+    "checkpoint_contract": {
+      "checkpoint_contract_digest": "89bcd56a211f3228419d7fce530c1039bd9902c8d7ab7d08b82f8cba7b08476d",
+      "schema_version": 2,
+      "environment_id": "plant-env-v2-weather-alpha",
+      "interface_contract": {
+        "environment_id": "plant-env-v2-weather-alpha",
+        "spec_version": 2,
+        "stage": "weather-forecast-alpha",
+        "observation_size": 42,
+        "action_size": 5,
+        "observation_fields": [
+          {
+            "name": "time_of_day_sin",
+            "source": "ControlStateV2.boundary.time_of_day_h (current decision boundary)",
+            "unit": "h",
+            "normalisation": "sin(2*pi*h/24)",
+            "low": -1.0,
+            "high": 1.0
+          },
+          {
+            "name": "time_of_day_cos",
+            "source": "ControlStateV2.boundary.time_of_day_h (current decision boundary)",
+            "unit": "h",
+            "normalisation": "cos(2*pi*h/24)",
+            "low": -1.0,
+            "high": 1.0
+          },
+          {
+            "name": "solar_available",
+            "source": "ControlStateV2.boundary.solar_available_kw (latest completed one-minute dispatch sample reported at the current decision boundary; reset uses the initial boundary sample)",
+            "unit": "kW",
+            "normalisation": "kw / solar.peak_kw",
+            "low": 0.0,
+            "high": 1.0
+          },
+          {
+            "name": "solar_potential",
+            "source": "ControlStateV2.boundary.solar_potential_kw (clear-sky value sampled for the latest completed one-minute dispatch; reset uses the initial boundary sample)",
+            "unit": "kW",
+            "normalisation": "kw / solar.peak_kw",
+            "low": 0.0,
+            "high": 1.0
+          },
+          {
+            "name": "solar_output_factor",
+            "source": "V2 controller telemetry solar_available_kw / solar_potential_kw for the latest completed one-minute dispatch sample; zero when clear-sky power is zero",
+            "unit": "fraction",
+            "normalisation": "identity (already 0..1)",
+            "low": 0.0,
+            "high": 1.0
+          },
+          {
+            "name": "solar_trend",
+            "source": "final one-minute solar dispatch samples reported at the current and previous decision boundaries",
+            "unit": "kW",
+            "normalisation": "(latest dispatch-sample kw - previous decision-boundary dispatch-sample kw) / solar.peak_kw, clipped to [-1, 1]",
+            "low": -1.0,
+            "high": 1.0
+          },
+          {
+            "name": "battery_soc",
+            "source": "ControlStateV2.boundary.battery_soc (current boundary inventory)",
+            "unit": "fraction",
+            "normalisation": "identity (already 0..1)",
+            "low": 0.0,
+            "high": 1.0
+          },
+          {
+            "name": "battery_power",
+            "source": "ControlStateV2.previous_interval.battery_power_mean_kw (mean over the previous completed decision interval)",
+            "unit": "kW (>0 charging)",
+            "normalisation": "kw / battery.max_discharge_kw, clipped to [-1, 1]",
+            "low": -1.0,
+            "high": 1.0
+          },
+          {
+            "name": "battery_reserve_margin",
+            "source": "ControlStateV2.boundary.battery_soc (current boundary inventory), Constraints.reserve_soc",
+            "unit": "fraction",
+            "normalisation": "soc - reserve_soc, clipped to [-1, 1]",
+            "low": -1.0,
+            "high": 1.0
+          },
+          {
+            "name": "h2_fill",
+            "source": "ControlStateV2.boundary.h2_fill (current boundary inventory)",
+            "unit": "fraction",
+            "normalisation": "identity (already 0..1)",
+            "low": 0.0,
+            "high": 1.0
+          },
+          {
+            "name": "co2_fill",
+            "source": "ControlStateV2.boundary.co2_fill (current boundary inventory)",
+            "unit": "fraction",
+            "normalisation": "identity (already 0..1)",
+            "low": 0.0,
+            "high": 1.0
+          },
+          {
+            "name": "ch4_fill",
+            "source": "ControlStateV2.boundary.ch4_fill (current boundary inventory)",
+            "unit": "fraction",
+            "normalisation": "identity (already 0..1)",
+            "low": 0.0,
+            "high": 1.0
+          },
+          {
+            "name": "electrolyser_load",
+            "source": "ControlStateV2.previous_interval.electrolyser_load_mean (mean over the previous completed decision interval)",
+            "unit": "fraction of rating",
+            "normalisation": "identity (already 0..1)",
+            "low": 0.0,
+            "high": 1.0
+          },
+          {
+            "name": "electrolyser_online",
+            "source": "ControlStateV2.boundary.electrolyser_online (status during the latest completed physical interval)",
+            "unit": "bool",
+            "normalisation": "1.0 if online else 0.0",
+            "low": 0.0,
+            "high": 1.0
+          },
+          {
+            "name": "electrolyser_health",
+            "source": "ControlStateV2.boundary.health['electrolyser'] (condition during the latest completed physical interval)",
+            "unit": "fraction",
+            "normalisation": "0 if offline else 1 - degradation",
+            "low": 0.0,
+            "high": 1.0
+          },
+          {
+            "name": "dac_load",
+            "source": "ControlStateV2.previous_interval.dac_load_mean (mean over the previous completed decision interval)",
+            "unit": "fraction of rating",
+            "normalisation": "identity (already 0..1)",
+            "low": 0.0,
+            "high": 1.0
+          },
+          {
+            "name": "dac_online",
+            "source": "ControlStateV2.boundary.dac_online (status during the latest completed physical interval)",
+            "unit": "bool",
+            "normalisation": "1.0 if online else 0.0",
+            "low": 0.0,
+            "high": 1.0
+          },
+          {
+            "name": "dac_health",
+            "source": "ControlStateV2.boundary.health['dac'] (condition during the latest completed physical interval)",
+            "unit": "fraction",
+            "normalisation": "0 if offline else 1 - degradation",
+            "low": 0.0,
+            "high": 1.0
+          },
+          {
+            "name": "methanator_load",
+            "source": "ControlStateV2.previous_interval.methanator_load_mean (mean over the previous completed decision interval)",
+            "unit": "fraction of rating",
+            "normalisation": "identity (already 0..1)",
+            "low": 0.0,
+            "high": 1.0
+          },
+          {
+            "name": "methanator_online",
+            "source": "ControlStateV2.boundary.methanator_online (status during the latest completed physical interval)",
+            "unit": "bool",
+            "normalisation": "1.0 if online else 0.0",
+            "low": 0.0,
+            "high": 1.0
+          },
+          {
+            "name": "methanator_health",
+            "source": "ControlStateV2.boundary.health['methanator'] (condition during the latest completed physical interval)",
+            "unit": "fraction",
+            "normalisation": "0 if offline else 1 - degradation",
+            "low": 0.0,
+            "high": 1.0
+          },
+          {
+            "name": "h2_production",
+            "source": "ControlStateV2.previous_interval.h2_production_mean_kg_h (mean over the previous completed decision interval)",
+            "unit": "kg/h",
+            "normalisation": "kg_h / (electrolyser.rated_kw / specific_energy_kwh_per_kg)",
+            "low": 0.0,
+            "high": 1.0
+          },
+          {
+            "name": "co2_production",
+            "source": "ControlStateV2.previous_interval.co2_capture_mean_kg_h (mean over the previous completed decision interval)",
+            "unit": "kg/h",
+            "normalisation": "kg_h / (dac.rated_kw / specific_energy_kwh_per_kg)",
+            "low": 0.0,
+            "high": 1.0
+          },
+          {
+            "name": "ch4_production",
+            "source": "ControlStateV2.previous_interval.ch4_production_mean_kg_h (mean over the previous completed decision interval)",
+            "unit": "kg/h",
+            "normalisation": "kg_h / (methanator.rated_kw / specific_energy_kwh_per_kg)",
+            "low": 0.0,
+            "high": 1.0
+          },
+          {
+            "name": "electrolyser_cap",
+            "source": "Constraints.electrolyser_limit_kw at current decision boundary",
+            "unit": "kW",
+            "normalisation": "limit_kw / electrolyser.rated_kw",
+            "low": 0.0,
+            "high": 1.0
+          },
+          {
+            "name": "dac_cap",
+            "source": "Constraints.dac_limit_kw at current decision boundary",
+            "unit": "kW",
+            "normalisation": "limit_kw / dac.rated_kw",
+            "low": 0.0,
+            "high": 1.0
+          },
+          {
+            "name": "methanator_cap",
+            "source": "Constraints.methanator_limit_kw at current decision boundary",
+            "unit": "kW",
+            "normalisation": "limit_kw / methanator.rated_kw",
+            "low": 0.0,
+            "high": 1.0
+          },
+          {
+            "name": "support_cap",
+            "source": "Constraints.support_limit_kw at current decision boundary",
+            "unit": "kW",
+            "normalisation": "limit_kw / battery.max_discharge_kw",
+            "low": 0.0,
+            "high": 1.0
+          },
+          {
+            "name": "reserve_soc",
+            "source": "Constraints.reserve_soc at current decision boundary",
+            "unit": "fraction",
+            "normalisation": "identity (already 0..1)",
+            "low": 0.0,
+            "high": 1.0
+          },
+          {
+            "name": "episode_progress",
+            "source": "PlantEnvV2 decision counter at current decision boundary",
+            "unit": "steps",
+            "normalisation": "decisions_taken / episode_decisions",
+            "low": 0.0,
+            "high": 1.0
+          },
+          {
+            "name": "delivery_time_to_next",
+            "source": "DeliveryLedger.next_pending.due_step and current physics boundary",
+            "unit": "delivery periods",
+            "normalisation": "remaining physics ticks / delivery-period ticks, clipped to [0, 1]",
+            "low": 0.0,
+            "high": 1.0
+          },
+          {
+            "name": "delivery_next_amount",
+            "source": "DeliveryLedger.next_pending.requested_kg",
+            "unit": "kg",
+            "normalisation": "requested kg / CH4 tank capacity",
+            "low": 0.0,
+            "high": 1.0
+          },
+          {
+            "name": "delivery_inventory_coverage",
+            "source": "ControlStateV2.boundary.ch4_level_kg (current boundary inventory), next requested delivery",
+            "unit": "commitments",
+            "normalisation": "CH4 kg / next requested kg, clipped to [0, 2]",
+            "low": 0.0,
+            "high": 2.0
+          },
+          {
+            "name": "delivery_fill_rate_to_date",
+            "source": "DeliveryLedger cumulative delivered/requested kg",
+            "unit": "fraction",
+            "normalisation": "delivered kg / requested kg; 1 before the first deadline",
+            "low": 0.0,
+            "high": 1.0
+          },
+          {
+            "name": "solar_forecast_0_1h_mean",
+            "source": "ForecastIssueV2.windows['0-1h'].mean_peak_power_fraction",
+            "unit": "fraction of PV nameplate",
+            "normalisation": "identity (window-mean available PV kW / solar.peak_kw)",
+            "low": 0.0,
+            "high": 1.0
+          },
+          {
+            "name": "solar_forecast_0_1h_p10",
+            "source": "ForecastIssueV2.windows['0-1h'].p10_peak_power_fraction",
+            "unit": "fraction of PV nameplate",
+            "normalisation": "identity (10th ensemble percentile after member-wise window aggregation, divided by solar.peak_kw)",
+            "low": 0.0,
+            "high": 1.0
+          },
+          {
+            "name": "solar_forecast_1_6h_mean",
+            "source": "ForecastIssueV2.windows['1-6h'].mean_peak_power_fraction",
+            "unit": "fraction of PV nameplate",
+            "normalisation": "identity (window-mean available PV kW / solar.peak_kw)",
+            "low": 0.0,
+            "high": 1.0
+          },
+          {
+            "name": "solar_forecast_1_6h_p10",
+            "source": "ForecastIssueV2.windows['1-6h'].p10_peak_power_fraction",
+            "unit": "fraction of PV nameplate",
+            "normalisation": "identity (10th ensemble percentile after member-wise window aggregation, divided by solar.peak_kw)",
+            "low": 0.0,
+            "high": 1.0
+          },
+          {
+            "name": "solar_forecast_6_12h_mean",
+            "source": "ForecastIssueV2.windows['6-12h'].mean_peak_power_fraction",
+            "unit": "fraction of PV nameplate",
+            "normalisation": "identity (window-mean available PV kW / solar.peak_kw)",
+            "low": 0.0,
+            "high": 1.0
+          },
+          {
+            "name": "solar_forecast_6_12h_p10",
+            "source": "ForecastIssueV2.windows['6-12h'].p10_peak_power_fraction",
+            "unit": "fraction of PV nameplate",
+            "normalisation": "identity (10th ensemble percentile after member-wise window aggregation, divided by solar.peak_kw)",
+            "low": 0.0,
+            "high": 1.0
+          },
+          {
+            "name": "solar_forecast_12_24h_mean",
+            "source": "ForecastIssueV2.windows['12-24h'].mean_peak_power_fraction",
+            "unit": "fraction of PV nameplate",
+            "normalisation": "identity (window-mean available PV kW / solar.peak_kw)",
+            "low": 0.0,
+            "high": 1.0
+          },
+          {
+            "name": "solar_forecast_12_24h_p10",
+            "source": "ForecastIssueV2.windows['12-24h'].p10_peak_power_fraction",
+            "unit": "fraction of PV nameplate",
+            "normalisation": "identity (10th ensemble percentile after member-wise window aggregation, divided by solar.peak_kw)",
+            "low": 0.0,
+            "high": 1.0
+          }
+        ],
+        "action_fields": [
+          {
+            "name": "battery_share",
+            "target": "Action.battery_share",
+            "conversion": "(a + 1) / 2, then shares normalised by Action.sanitised if they sum above 1",
+            "low": -1.0,
+            "high": 1.0
+          },
+          {
+            "name": "electrolyser_share",
+            "target": "Action.electrolyser_share",
+            "conversion": "(a + 1) / 2, then shares normalised by Action.sanitised if they sum above 1",
+            "low": -1.0,
+            "high": 1.0
+          },
+          {
+            "name": "dac_share",
+            "target": "Action.dac_share",
+            "conversion": "(a + 1) / 2, then shares normalised by Action.sanitised if they sum above 1",
+            "low": -1.0,
+            "high": 1.0
+          },
+          {
+            "name": "methanator_share",
+            "target": "Action.methanator_share",
+            "conversion": "(a + 1) / 2, then shares normalised by Action.sanitised if they sum above 1",
+            "low": -1.0,
+            "high": 1.0
+          },
+          {
+            "name": "battery_support",
+            "target": "Action.battery_support_kw",
+            "conversion": "(a + 1) / 2 * Constraints.support_limit_kw(config)",
+            "low": -1.0,
+            "high": 1.0
+          }
+        ]
+      },
+      "interface_contract_digest": "2f664d7fc5c2aaf37e2bfef62697cf5aa48200597799afcb6ad349ea1ec30ec3",
+      "timing": {
+        "physics_timestep_s": 60.0,
+        "decision_interval_s": 900.0,
+        "time_semantics": "observe boundary t; hold one decision over [t,t+decision_interval); settle a deadline after production in its final physical interval; expose only the causal forecast issued at t with half-open lead windows",
+        "flow_sampling_semantics": "timestamp and inventories are current after the preceding decision interval; solar availability/potential/output factor and equipment health/online state are the final one-minute dispatch sample in that interval; power, load, and production are time-weighted means over the whole interval (reset uses the initial boundary sample because no interval exists)",
+        "guard_semantics": "controllers decide from causal boundary telemetry; before every physical step the actuator guard applies absolute kW caps against the simulator-owned solar bus that same step will dispatch",
+        "episode_end_semantics": "the configured contract horizon is an intrinsic finite-horizon termination (terminated=true, truncated=false); terminal inventory is valued once and value functions must not bootstrap beyond the final observation"
+      },
+      "dynamics_versions": {
+        "plant_sim": "0.4.0",
+        "solar_forcing": "boundary-end-factor-v1",
+        "clear_sky_envelope": "plant-sim-half-sine-v1",
+        "weather_generator": "synthetic-logit-ou-v1"
+      },
+      "episode_distribution": {
+        "horizon_h": 168.0,
+        "decision_interval_s": 900.0,
+        "start_hour": 6.0,
+        "delivery_period_h": 6.0,
+        "delivery_rate_kg_h": 40.0,
+        "battery_soc": [
+          0.25,
+          0.65
+        ],
+        "h2_fill": [
+          0.05,
+          0.3
+        ],
+        "co2_fill": [
+          0.1,
+          0.4
+        ],
+        "ch4_coverage_h": [
+          3.0,
+          9.0
+        ],
+        "weather": {
+          "latent_median_resource_factor": 0.7,
+          "latent_stationary_sd": 0.75,
+          "autocorrelation_half_life_h": 1.0,
+          "forecast_ensemble_members": 32,
+          "forecast_analysis_latent_sd": 0.05,
+          "forecast_innovation_scale": 1.0,
+          "forecast_windows_h": [
+            [
+              0.0,
+              1.0
+            ],
+            [
+              1.0,
+              6.0
+            ],
+            [
+              6.0,
+              12.0
+            ],
+            [
+              12.0,
+              24.0
+            ]
+          ]
+        }
+      },
+      "plant_config": {
+        "dt_s": 60.0,
+        "solar": {
+          "peak_kw": 5000.0,
+          "sunrise_h": 6.0,
+          "sunset_h": 19.5
+        },
+        "battery": {
+          "capacity_kwh": 8000.0,
+          "max_charge_kw": 2500.0,
+          "max_discharge_kw": 2500.0,
+          "charge_efficiency": 0.96,
+          "discharge_efficiency": 0.96,
+          "min_soc": 0.05,
+          "initial_soc": 0.35
+        },
+        "electrolyser": {
+          "rated_kw": 3000.0,
+          "min_load_frac": 0.15,
+          "specific_energy_kwh_per_kg": 52.0,
+          "ambient_temperature_c": 22.0,
+          "nominal_temperature_c": 62.0,
+          "fault_temperature_rise_c": 45.0
+        },
+        "h2_tank": {
+          "capacity_kg": 2000.0,
+          "initial_kg": 120.0
+        },
+        "dac": {
+          "rated_kw": 1200.0,
+          "specific_energy_kwh_per_kg": 2.0
+        },
+        "co2_tank": {
+          "capacity_kg": 6000.0,
+          "initial_kg": 800.0
+        },
+        "methanator": {
+          "rated_kw": 180.0,
+          "specific_energy_kwh_per_kg": 1.2,
+          "h2_kg_per_kg_ch4": 0.5,
+          "co2_kg_per_kg_ch4": 2.75
+        },
+        "ch4_tank": {
+          "capacity_kg": 3000.0,
+          "initial_kg": 0.0
+        }
+      },
+      "constraints": {
+        "electrolyser_max_kw": null,
+        "dac_max_kw": null,
+        "methanator_max_kw": null,
+        "battery_support_max_kw": null,
+        "battery_min_soc": 0.15
+      },
+      "objective": {
+        "version": 2,
+        "reward_weights": {
+          "delivery": 1.0,
+          "terminal_inventory": 0.1,
+          "shortfall": 4.0,
+          "curtailment": 0.1,
+          "battery_drain": 0.02,
+          "reserve_breach": 4.0,
+          "shutdown": 0.5,
+          "correction": 0.05
+        }
+      }
+    },
+    "episode_config": {
+      "horizon_h": 168.0,
+      "decision_interval_s": 900.0,
+      "start_hour": 6.0,
+      "delivery_period_h": 6.0,
+      "delivery_rate_kg_h": 40.0,
+      "battery_soc": [
+        0.25,
+        0.65
+      ],
+      "h2_fill": [
+        0.05,
+        0.3
+      ],
+      "co2_fill": [
+        0.1,
+        0.4
+      ],
+      "ch4_coverage_h": [
+        3.0,
+        9.0
+      ],
+      "weather": {
+        "latent_median_resource_factor": 0.7,
+        "latent_stationary_sd": 0.75,
+        "autocorrelation_half_life_h": 1.0,
+        "forecast_ensemble_members": 32,
+        "forecast_analysis_latent_sd": 0.05,
+        "forecast_innovation_scale": 1.0,
+        "forecast_windows_h": [
+          [
+            0.0,
+            1.0
+          ],
+          [
+            1.0,
+            6.0
+          ],
+          [
+            6.0,
+            12.0
+          ],
+          [
+            12.0,
+            24.0
+          ]
+        ]
+      }
+    },
+    "plant_config": {
+      "dt_s": 60.0,
+      "solar": {
+        "peak_kw": 5000.0,
+        "sunrise_h": 6.0,
+        "sunset_h": 19.5
+      },
+      "battery": {
+        "capacity_kwh": 8000.0,
+        "max_charge_kw": 2500.0,
+        "max_discharge_kw": 2500.0,
+        "charge_efficiency": 0.96,
+        "discharge_efficiency": 0.96,
+        "min_soc": 0.05,
+        "initial_soc": 0.35
+      },
+      "electrolyser": {
+        "rated_kw": 3000.0,
+        "min_load_frac": 0.15,
+        "specific_energy_kwh_per_kg": 52.0,
+        "ambient_temperature_c": 22.0,
+        "nominal_temperature_c": 62.0,
+        "fault_temperature_rise_c": 45.0
+      },
+      "h2_tank": {
+        "capacity_kg": 2000.0,
+        "initial_kg": 120.0
+      },
+      "dac": {
+        "rated_kw": 1200.0,
+        "specific_energy_kwh_per_kg": 2.0
+      },
+      "co2_tank": {
+        "capacity_kg": 6000.0,
+        "initial_kg": 800.0
+      },
+      "methanator": {
+        "rated_kw": 180.0,
+        "specific_energy_kwh_per_kg": 1.2,
+        "h2_kg_per_kg_ch4": 0.5,
+        "co2_kg_per_kg_ch4": 2.75
+      },
+      "ch4_tank": {
+        "capacity_kg": 3000.0,
+        "initial_kg": 0.0
+      }
+    },
+    "constraints": {
+      "electrolyser_max_kw": null,
+      "dac_max_kw": null,
+      "methanator_max_kw": null,
+      "battery_support_max_kw": null,
+      "battery_min_soc": 0.15
+    },
+    "reward_weights": {
+      "delivery": 1.0,
+      "terminal_inventory": 0.1,
+      "shortfall": 4.0,
+      "curtailment": 0.1,
+      "battery_drain": 0.02,
+      "reserve_breach": 4.0,
+      "shutdown": 0.5,
+      "correction": 0.05
+    }
+  },
+  "summary": {
+    "heuristic": {
+      "runs": 20,
+      "metrics": {
+        "battery_discharged_kwh": {
+          "count": 20,
+          "mean": 18227.458859504666,
+          "std": 1442.7343256481788,
+          "min": 15869.384444841173,
+          "max": 20368.10730958792
+        },
+        "ch4_produced_kg": {
+          "count": 20,
+          "mean": 6561.486577596214,
+          "std": 273.9298855063474,
+          "min": 6135.740224850714,
+          "max": 7008.159317271296
+        },
+        "commitment_service_level": {
+          "count": 20,
+          "mean": 0.9642857142857142,
+          "std": 0.0529728463363976,
+          "min": 0.8571428571428571,
+          "max": 1.0
+        },
+        "commitments_met": {
+          "count": 20,
+          "mean": 27.0,
+          "std": 1.4832396974191326,
+          "min": 24.0,
+          "max": 28.0
+        },
+        "commitments_settled": {
+          "count": 20,
+          "mean": 28.0,
+          "std": 0.0,
+          "min": 28.0,
+          "max": 28.0
+        },
+        "corrected_physics_steps": {
+          "count": 20,
+          "mean": 1995.0,
+          "std": 92.01412934979062,
+          "min": 1828.0,
+          "max": 2151.0
+        },
+        "curtailed_kwh": {
+          "count": 20,
+          "mean": 403.0619162808474,
+          "std": 83.19445355272438,
+          "min": 270.85607262444574,
+          "max": 565.6567820613499
+        },
+        "decisions": {
+          "count": 20,
+          "mean": 672.0,
+          "std": 0.0,
+          "min": 672.0,
+          "max": 672.0
+        },
+        "delivered_kg": {
+          "count": 20,
+          "mean": 6624.565192774045,
+          "std": 144.68989334529303,
+          "min": 6296.310527278945,
+          "max": 6720.0
+        },
+        "delivery_fill_rate": {
+          "count": 20,
+          "mean": 0.9857983917818519,
+          "std": 0.021531234128763847,
+          "min": 0.9369509713212716,
+          "max": 1.0
+        },
+        "guard_intervention_kwh": {
+          "count": 20,
+          "mean": 3727.0305331820323,
+          "std": 465.2408880267907,
+          "min": 2810.353525305655,
+          "max": 4595.047152913359
+        },
+        "guard_interventions": {
+          "count": 20,
+          "mean": 2508.25,
+          "std": 193.05798999264445,
+          "min": 2134.0,
+          "max": 2919.0
+        },
+        "hours": {
+          "count": 20,
+          "mean": 168.0,
+          "std": 0.0,
+          "min": 168.0,
+          "max": 168.0
+        },
+        "min_battery_soc": {
+          "count": 20,
+          "mean": 0.15008996884802905,
+          "std": 7.186848797487448e-05,
+          "min": 0.1500012076826909,
+          "max": 0.15022602583464556
+        },
+        "out_of_range_decisions": {
+          "count": 20,
+          "mean": 0.0,
+          "std": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "physical_steps": {
+          "count": 20,
+          "mean": 10080.0,
+          "std": 0.0,
+          "min": 10080.0,
+          "max": 10080.0
+        },
+        "requested_kg": {
+          "count": 20,
+          "mean": 6720.0,
+          "std": 0.0,
+          "min": 6720.0,
+          "max": 6720.0
+        },
+        "reward_total": {
+          "count": 20,
+          "mean": 25.918815697539475,
+          "std": 3.0389209270078155,
+          "min": 19.041276977433853,
+          "max": 27.96082393315888
+        },
+        "shutdown_steps": {
+          "count": 20,
+          "mean": 0.0,
+          "std": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "solar_kwh": {
+          "count": 20,
+          "mean": 203578.95353697514,
+          "std": 7143.323010808107,
+          "min": 193366.42292272378,
+          "max": 213714.5821081129
+        },
+        "solar_utilisation": {
+          "count": 20,
+          "mean": 0.9980156099278693,
+          "std": 0.0004297995519185661,
+          "min": 0.9971054629876605,
+          "max": 0.9986785742946073
+        },
+        "terminal_ch4_kg": {
+          "count": 20,
+          "mean": 156.42357316893353,
+          "std": 159.7063001432849,
+          "min": 0.0,
+          "max": 473.42572278552257
+        },
+        "unmet_kg": {
+          "count": 20,
+          "mean": 95.4348072259549,
+          "std": 144.68989334529303,
+          "min": 0.0,
+          "max": 423.689472721055
+        },
+        "worst_commitment_fill_rate": {
+          "count": 20,
+          "mean": 0.788089257894107,
+          "std": 0.2827277009078822,
+          "min": 0.22059442608454086,
+          "max": 1.0
+        }
+      },
+      "reward_components": {
+        "battery_drain": {
+          "count": 20,
+          "mean": -0.02430327847933964,
+          "std": 0.0019236457675309159,
+          "min": -0.027157476412783984,
+          "max": -0.021159179259788302
+        },
+        "correction": {
+          "count": 20,
+          "mean": -0.11612268518518506,
+          "std": 0.008937869907066864,
+          "min": -0.13513888888888884,
+          "max": -0.09879629629629613
+        },
+        "curtailment": {
+          "count": 20,
+          "mean": -0.001343539720936158,
+          "std": 0.00027731484517574793,
+          "min": -0.0018855226068711657,
+          "max": -0.0009028535754148193
+        },
+        "delivery": {
+          "count": 20,
+          "mean": 27.602354969891856,
+          "std": 0.6028745556053878,
+          "min": 26.234627196995607,
+          "max": 28.0
+        },
+        "reserve_breach": {
+          "count": 20,
+          "mean": 0.0,
+          "std": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "shortfall": {
+          "count": 20,
+          "mean": -1.5905801204325818,
+          "std": 2.411498222421551,
+          "min": -7.061491212017584,
+          "max": 0.0
+        },
+        "shutdown": {
+          "count": 20,
+          "mean": 0.0,
+          "std": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "terminal_inventory": {
+          "count": 20,
+          "mean": 0.04881035146574133,
+          "std": 0.04255777241011425,
+          "min": 0.0,
+          "max": 0.1
+        }
+      }
+    },
+    "idle": {
+      "runs": 20,
+      "metrics": {
+        "battery_discharged_kwh": {
+          "count": 20,
+          "mean": 0.0,
+          "std": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "ch4_produced_kg": {
+          "count": 20,
+          "mean": 0.0,
+          "std": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "commitment_service_level": {
+          "count": 20,
+          "mean": 0.0125,
+          "std": 0.01703462859673117,
+          "min": 0.0,
+          "max": 0.03571428571428571
+        },
+        "commitments_met": {
+          "count": 20,
+          "mean": 0.35,
+          "std": 0.47696960070847283,
+          "min": 0.0,
+          "max": 1.0
+        },
+        "commitments_settled": {
+          "count": 20,
+          "mean": 28.0,
+          "std": 0.0,
+          "min": 28.0,
+          "max": 28.0
+        },
+        "corrected_physics_steps": {
+          "count": 20,
+          "mean": 0.0,
+          "std": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "curtailed_kwh": {
+          "count": 20,
+          "mean": 203578.95353697514,
+          "std": 7143.323010808107,
+          "min": 193366.42292272378,
+          "max": 213714.5821081129
+        },
+        "decisions": {
+          "count": 20,
+          "mean": 672.0,
+          "std": 0.0,
+          "min": 672.0,
+          "max": 672.0
+        },
+        "delivered_kg": {
+          "count": 20,
+          "mean": 219.50218834678262,
+          "std": 60.74457569239083,
+          "min": 124.98032410377246,
+          "max": 328.5180344040565
+        },
+        "delivery_fill_rate": {
+          "count": 20,
+          "mean": 0.03266401612303312,
+          "std": 0.009039371382796256,
+          "min": 0.018598262515442332,
+          "max": 0.04888661226250841
+        },
+        "guard_intervention_kwh": {
+          "count": 20,
+          "mean": 0.0,
+          "std": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "guard_interventions": {
+          "count": 20,
+          "mean": 0.0,
+          "std": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "hours": {
+          "count": 20,
+          "mean": 168.0,
+          "std": 0.0,
+          "min": 168.0,
+          "max": 168.0
+        },
+        "min_battery_soc": {
+          "count": 20,
+          "mean": 0.5311162473577171,
+          "std": 0.09401025198351307,
+          "min": 0.32623638457482806,
+          "max": 0.6455270409123771
+        },
+        "out_of_range_decisions": {
+          "count": 20,
+          "mean": 0.0,
+          "std": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "physical_steps": {
+          "count": 20,
+          "mean": 10080.0,
+          "std": 0.0,
+          "min": 10080.0,
+          "max": 10080.0
+        },
+        "requested_kg": {
+          "count": 20,
+          "mean": 6720.0,
+          "std": 0.0,
+          "min": 6720.0,
+          "max": 6720.0
+        },
+        "reward_total": {
+          "count": 20,
+          "mean": -108.10563425456527,
+          "std": 1.2652794810073686,
+          "min": -110.10527291372416,
+          "max": -105.86825622360915
+        },
+        "shutdown_steps": {
+          "count": 20,
+          "mean": 0.0,
+          "std": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "solar_kwh": {
+          "count": 20,
+          "mean": 203578.95353697514,
+          "std": 7143.323010808107,
+          "min": 193366.42292272378,
+          "max": 213714.5821081129
+        },
+        "solar_utilisation": {
+          "count": 20,
+          "mean": 0.0,
+          "std": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "terminal_ch4_kg": {
+          "count": 20,
+          "mean": 0.0,
+          "std": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "unmet_kg": {
+          "count": 20,
+          "mean": 6500.4978116532175,
+          "std": 60.74457569239082,
+          "min": 6391.481965595944,
+          "max": 6595.019675896227
+        },
+        "worst_commitment_fill_rate": {
+          "count": 20,
+          "mean": 0.0,
+          "std": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        }
+      },
+      "reward_components": {
+        "battery_drain": {
+          "count": 20,
+          "mean": 0.0,
+          "std": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "correction": {
+          "count": 20,
+          "mean": 0.0,
+          "std": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "curtailment": {
+          "count": 20,
+          "mean": -0.6785965117899171,
+          "std": 0.023811076702693623,
+          "min": -0.7123819403603756,
+          "max": -0.6445547430757463
+        },
+        "delivery": {
+          "count": 20,
+          "mean": 0.9145924514449275,
+          "std": 0.25310239871829515,
+          "min": 0.5207513504323853,
+          "max": 1.3688251433502354
+        },
+        "reserve_breach": {
+          "count": 20,
+          "mean": 0.0,
+          "std": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "shortfall": {
+          "count": 20,
+          "mean": -108.34163019422029,
+          "std": 1.0124095948731815,
+          "min": -109.91699459827046,
+          "max": -106.52469942659906
+        },
+        "shutdown": {
+          "count": 20,
+          "mean": 0.0,
+          "std": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "terminal_inventory": {
+          "count": 20,
+          "mean": 0.0,
+          "std": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        }
+      }
+    },
+    "balanced": {
+      "runs": 20,
+      "metrics": {
+        "battery_discharged_kwh": {
+          "count": 20,
+          "mean": 0.0,
+          "std": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "ch4_produced_kg": {
+          "count": 20,
+          "mean": 4374.911342458115,
+          "std": 299.841200040799,
+          "min": 3922.0253390340486,
+          "max": 4892.844125255504
+        },
+        "commitment_service_level": {
+          "count": 20,
+          "mean": 0.5125,
+          "std": 0.07429515736683827,
+          "min": 0.35714285714285715,
+          "max": 0.6071428571428571
+        },
+        "commitments_met": {
+          "count": 20,
+          "mean": 14.35,
+          "std": 2.080264406271472,
+          "min": 10.0,
+          "max": 17.0
+        },
+        "commitments_settled": {
+          "count": 20,
+          "mean": 28.0,
+          "std": 0.0,
+          "min": 28.0,
+          "max": 28.0
+        },
+        "corrected_physics_steps": {
+          "count": 20,
+          "mean": 3455.0,
+          "std": 155.23369479594305,
+          "min": 3137.0,
+          "max": 3706.0
+        },
+        "curtailed_kwh": {
+          "count": 20,
+          "mean": 63573.052186520756,
+          "std": 3278.8192306137466,
+          "min": 57119.131376151396,
+          "max": 69554.37740623526
+        },
+        "decisions": {
+          "count": 20,
+          "mean": 672.0,
+          "std": 0.0,
+          "min": 672.0,
+          "max": 672.0
+        },
+        "delivered_kg": {
+          "count": 20,
+          "mean": 4594.413530804895,
+          "std": 298.38708067913194,
+          "min": 4089.232636478506,
+          "max": 5052.142413892375
+        },
+        "delivery_fill_rate": {
+          "count": 20,
+          "mean": 0.6836924897031096,
+          "std": 0.04440283938677558,
+          "min": 0.6085167613807301,
+          "max": 0.7518069068292225
+        },
+        "guard_intervention_kwh": {
+          "count": 20,
+          "mean": 13020.765998829726,
+          "std": 1274.9593377447388,
+          "min": 11044.797332645225,
+          "max": 14786.060263744246
+        },
+        "guard_interventions": {
+          "count": 20,
+          "mean": 3455.0,
+          "std": 155.23369479594305,
+          "min": 3137.0,
+          "max": 3706.0
+        },
+        "hours": {
+          "count": 20,
+          "mean": 168.0,
+          "std": 0.0,
+          "min": 168.0,
+          "max": 168.0
+        },
+        "min_battery_soc": {
+          "count": 20,
+          "mean": 0.5311162473577171,
+          "std": 0.09401025198351307,
+          "min": 0.32623638457482806,
+          "max": 0.6455270409123771
+        },
+        "out_of_range_decisions": {
+          "count": 20,
+          "mean": 0.0,
+          "std": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "physical_steps": {
+          "count": 20,
+          "mean": 10080.0,
+          "std": 0.0,
+          "min": 10080.0,
+          "max": 10080.0
+        },
+        "requested_kg": {
+          "count": 20,
+          "mean": 6720.0,
+          "std": 0.0,
+          "min": 6720.0,
+          "max": 6720.0
+        },
+        "reward_total": {
+          "count": 20,
+          "mean": -16.65491531922344,
+          "std": 6.217262377648964,
+          "min": -27.18554215052737,
+          "max": -7.115765933425635
+        },
+        "shutdown_steps": {
+          "count": 20,
+          "mean": 0.0,
+          "std": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "solar_kwh": {
+          "count": 20,
+          "mean": 203578.95353697514,
+          "std": 7143.323010808107,
+          "min": 193366.42292272378,
+          "max": 213714.5821081129
+        },
+        "solar_utilisation": {
+          "count": 20,
+          "mean": 0.6876463532942207,
+          "std": 0.01373443142418525,
+          "min": 0.6687265726720241,
+          "max": 0.7101234922076757
+        },
+        "terminal_ch4_kg": {
+          "count": 20,
+          "mean": 0.0,
+          "std": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "unmet_kg": {
+          "count": 20,
+          "mean": 2125.5864691951037,
+          "std": 298.3870806791319,
+          "min": 1667.8575861076247,
+          "max": 2630.7673635214937
+        },
+        "worst_commitment_fill_rate": {
+          "count": 20,
+          "mean": 0.0,
+          "std": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        }
+      },
+      "reward_components": {
+        "battery_drain": {
+          "count": 20,
+          "mean": 0.0,
+          "std": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "correction": {
+          "count": 20,
+          "mean": -0.1599537037037033,
+          "std": 0.00718674512944177,
+          "min": -0.1715740740740736,
+          "max": -0.14523148148148116
+        },
+        "curtailment": {
+          "count": 20,
+          "mean": -0.2119101739550692,
+          "std": 0.0109293974353792,
+          "min": -0.23184792468745097,
+          "max": -0.19039710458717135
+        },
+        "delivery": {
+          "count": 20,
+          "mean": 19.143389711687067,
+          "std": 1.2432795028297172,
+          "min": 17.038469318660443,
+          "max": 21.050593391218232
+        },
+        "reserve_breach": {
+          "count": 20,
+          "mean": 0.0,
+          "std": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "shortfall": {
+          "count": 20,
+          "mean": -35.42644115325173,
+          "std": 4.973118011318865,
+          "min": -43.84612272535823,
+          "max": -27.797626435127082
+        },
+        "shutdown": {
+          "count": 20,
+          "mean": 0.0,
+          "std": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "terminal_inventory": {
+          "count": 20,
+          "mean": 0.0,
+          "std": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        }
+      }
+    },
+    "production_mix": {
+      "runs": 20,
+      "metrics": {
+        "battery_discharged_kwh": {
+          "count": 20,
+          "mean": 0.0,
+          "std": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "ch4_produced_kg": {
+          "count": 20,
+          "mean": 5583.581414180464,
+          "std": 321.53657478786903,
+          "min": 5101.634501791799,
+          "max": 6153.732664626318
+        },
+        "commitment_service_level": {
+          "count": 20,
+          "mean": 0.7785714285714286,
+          "std": 0.07457361792078963,
+          "min": 0.6428571428571429,
+          "max": 0.8928571428571429
+        },
+        "commitments_met": {
+          "count": 20,
+          "mean": 21.8,
+          "std": 2.08806130178211,
+          "min": 18.0,
+          "max": 25.0
+        },
+        "commitments_settled": {
+          "count": 20,
+          "mean": 28.0,
+          "std": 0.0,
+          "min": 28.0,
+          "max": 28.0
+        },
+        "corrected_physics_steps": {
+          "count": 20,
+          "mean": 3455.0,
+          "std": 155.23369479594305,
+          "min": 3137.0,
+          "max": 3706.0
+        },
+        "curtailed_kwh": {
+          "count": 20,
+          "mean": 24522.579072999888,
+          "std": 2089.658351111729,
+          "min": 21022.832654563073,
+          "max": 28345.245986622318
+        },
+        "decisions": {
+          "count": 20,
+          "mean": 672.0,
+          "std": 0.0,
+          "min": 672.0,
+          "max": 672.0
+        },
+        "delivered_kg": {
+          "count": 20,
+          "mean": 5803.083602527247,
+          "std": 320.1221399541422,
+          "min": 5243.509184025273,
+          "max": 6307.922744113778
+        },
+        "delivery_fill_rate": {
+          "count": 20,
+          "mean": 0.8635541075189355,
+          "std": 0.04763722320746164,
+          "min": 0.7802841047656656,
+          "max": 0.9386789797788361
+        },
+        "guard_intervention_kwh": {
+          "count": 20,
+          "mean": 13029.552054530937,
+          "std": 1280.273212281419,
+          "min": 11044.797332645227,
+          "max": 14786.060263744246
+        },
+        "guard_interventions": {
+          "count": 20,
+          "mean": 3463.1,
+          "std": 157.48203072096828,
+          "min": 3137.0,
+          "max": 3714.0
+        },
+        "hours": {
+          "count": 20,
+          "mean": 168.0,
+          "std": 0.0,
+          "min": 168.0,
+          "max": 168.0
+        },
+        "min_battery_soc": {
+          "count": 20,
+          "mean": 0.5311162473577171,
+          "std": 0.09401025198351307,
+          "min": 0.32623638457482806,
+          "max": 0.6455270409123771
+        },
+        "out_of_range_decisions": {
+          "count": 20,
+          "mean": 0.0,
+          "std": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "physical_steps": {
+          "count": 20,
+          "mean": 10080.0,
+          "std": 0.0,
+          "min": 10080.0,
+          "max": 10080.0
+        },
+        "requested_kg": {
+          "count": 20,
+          "mean": 6720.0,
+          "std": 0.0,
+          "min": 6720.0,
+          "max": 6720.0
+        },
+        "reward_total": {
+          "count": 20,
+          "mean": 8.655504418703952,
+          "std": 6.6696289883802,
+          "min": -2.9980109360307408,
+          "max": 19.177654518518
+        },
+        "shutdown_steps": {
+          "count": 20,
+          "mean": 0.0,
+          "std": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "solar_kwh": {
+          "count": 20,
+          "mean": 203578.95353697514,
+          "std": 7143.323010808107,
+          "min": 193366.42292272378,
+          "max": 213714.5821081129
+        },
+        "solar_utilisation": {
+          "count": 20,
+          "mean": 0.879464492963838,
+          "std": 0.010279078959290084,
+          "min": 0.8641776869463305,
+          "max": 0.8966155687247245
+        },
+        "terminal_ch4_kg": {
+          "count": 20,
+          "mean": 0.0,
+          "std": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "unmet_kg": {
+          "count": 20,
+          "mean": 916.9163974727526,
+          "std": 320.12213995414226,
+          "min": 412.0772558862217,
+          "max": 1476.4908159747274
+        },
+        "worst_commitment_fill_rate": {
+          "count": 20,
+          "mean": 0.019460863094732512,
+          "std": 0.05172810079753514,
+          "min": 0.0,
+          "max": 0.2067800461886674
+        }
+      },
+      "reward_components": {
+        "battery_drain": {
+          "count": 20,
+          "mean": 0.0,
+          "std": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "correction": {
+          "count": 20,
+          "mean": -0.16032870370370328,
+          "std": 0.007290834755600345,
+          "min": -0.17194444444444396,
+          "max": -0.14523148148148116
+        },
+        "curtailment": {
+          "count": 20,
+          "mean": -0.08174193024333297,
+          "std": 0.0069655278370391056,
+          "min": -0.09448415328874106,
+          "max": -0.07007610884854357
+        },
+        "delivery": {
+          "count": 20,
+          "mean": 24.1795150105302,
+          "std": 1.3338422498089266,
+          "min": 21.84795493343864,
+          "max": 26.283011433807413
+        },
+        "reserve_breach": {
+          "count": 20,
+          "mean": 0.0,
+          "std": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "shortfall": {
+          "count": 20,
+          "mean": -15.281939957879208,
+          "std": 5.335368999235704,
+          "min": -24.60818026624546,
+          "max": -6.867954264770361
+        },
+        "shutdown": {
+          "count": 20,
+          "mean": 0.0,
+          "std": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "terminal_inventory": {
+          "count": 20,
+          "mean": 0.0,
+          "std": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        }
+      }
+    }
+  },
+  "runs": [
+    {
+      "controller": "heuristic",
+      "seed": 0,
+      "manifest_sha256": "b669ec53208a5f971755ec9b5dc314a76665643902a71c8f1dbb0a828e84ad7b",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": 27.91490396474474,
+        "reward_components": {
+          "delivery": 28.0,
+          "terminal_inventory": 0.06329020542250992,
+          "shortfall": 0.0,
+          "curtailment": -0.0014139494500799309,
+          "battery_drain": -0.027157476412783984,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.11981481481481465
+        },
+        "commitments_settled": 28,
+        "commitments_met": 28,
+        "commitment_service_level": 1.0,
+        "requested_kg": 6720.0,
+        "delivered_kg": 6720.0,
+        "unmet_kg": 0.0,
+        "delivery_fill_rate": 1.0,
+        "worst_commitment_fill_rate": 1.0,
+        "ch4_produced_kg": 6721.751752510179,
+        "terminal_ch4_kg": 151.8964930140238,
+        "solar_kwh": 209599.6716538335,
+        "curtailed_kwh": 424.1848350239792,
+        "solar_utilisation": 0.9979762142198173,
+        "battery_discharged_kwh": 20368.10730958792,
+        "min_battery_soc": 0.15018052999536052,
+        "shutdown_steps": 0,
+        "guard_interventions": 2588,
+        "guard_intervention_kwh": 3779.0543201244213,
+        "corrected_physics_steps": 2037,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "idle",
+      "seed": 0,
+      "manifest_sha256": "b669ec53208a5f971755ec9b5dc314a76665643902a71c8f1dbb0a828e84ad7b",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -109.57065014501592,
+        "reward_components": {
+          "delivery": 0.6256030854326933,
+          "terminal_inventory": 0.0,
+          "shortfall": -109.49758765826923,
+          "curtailment": -0.6986655721794447,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": 0.0
+        },
+        "commitments_settled": 28,
+        "commitments_met": 0,
+        "commitment_service_level": 0.0,
+        "requested_kg": 6720.0,
+        "delivered_kg": 150.14474050384638,
+        "unmet_kg": 6569.855259496154,
+        "delivery_fill_rate": 0.022342967336881903,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 0.0,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 209599.6716538335,
+        "curtailed_kwh": 209599.6716538335,
+        "solar_utilisation": 0.0,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.6271750211531518,
+        "shutdown_steps": 0,
+        "guard_interventions": 0,
+        "guard_intervention_kwh": 0.0,
+        "corrected_physics_steps": 0,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "balanced",
+      "seed": 0,
+      "manifest_sha256": "b669ec53208a5f971755ec9b5dc314a76665643902a71c8f1dbb0a828e84ad7b",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -17.80311861306177,
+        "reward_components": {
+          "delivery": 18.91749435891158,
+          "terminal_inventory": 0.0,
+          "shortfall": -36.33002256435368,
+          "curtailment": -0.22721077799003286,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.1633796296296292
+        },
+        "commitments_settled": 28,
+        "commitments_met": 15,
+        "commitment_service_level": 0.5357142857142857,
+        "requested_kg": 6720.0,
+        "delivered_kg": 4540.198646138779,
+        "unmet_kg": 2179.8013538612213,
+        "delivery_fill_rate": 0.6756247985325563,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 4390.053905634938,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 209599.6716538335,
+        "curtailed_kwh": 68163.23339700983,
+        "solar_utilisation": 0.6747932243444278,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.6271750211531518,
+        "shutdown_steps": 0,
+        "guard_interventions": 3529,
+        "guard_intervention_kwh": 14034.64254086568,
+        "corrected_physics_steps": 3529,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "production_mix",
+      "seed": 0,
+      "manifest_sha256": "b669ec53208a5f971755ec9b5dc314a76665643902a71c8f1dbb0a828e84ad7b",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": 8.361123996406729,
+        "reward_components": {
+          "delivery": 24.12327291407135,
+          "terminal_inventory": 0.0,
+          "shortfall": -15.50690834371461,
+          "curtailment": -0.09102761098705324,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.16421296296296253
+        },
+        "commitments_settled": 28,
+        "commitments_met": 22,
+        "commitment_service_level": 0.7857142857142857,
+        "requested_kg": 6720.0,
+        "delivered_kg": 5789.585499377123,
+        "unmet_kg": 930.4145006228765,
+        "delivery_fill_rate": 0.8615454612168337,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 5639.440758873267,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 209599.6716538335,
+        "curtailed_kwh": 27308.28329611599,
+        "solar_utilisation": 0.8697121847537181,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.6271750211531518,
+        "shutdown_steps": 0,
+        "guard_interventions": 3547,
+        "guard_intervention_kwh": 14056.008522802766,
+        "corrected_physics_steps": 3529,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "heuristic",
+      "seed": 1,
+      "manifest_sha256": "dec5c5f83580018a1563ca2d61a6310a1d74357183c13a58a93cfd3e9da6d144",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": 19.794032713532904,
+        "reward_components": {
+          "delivery": 26.38578665681108,
+          "terminal_inventory": 0.0,
+          "shortfall": -6.456853372755673,
+          "curtailment": -0.0017021859239611456,
+          "battery_drain": -0.023522458672571522,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.10967592592592586
+        },
+        "commitments_settled": 28,
+        "commitments_met": 24,
+        "commitment_service_level": 0.8571428571428571,
+        "requested_kg": 6720.0,
+        "delivered_kg": 6332.588797634659,
+        "unmet_kg": 387.4112023653404,
+        "delivery_fill_rate": 0.9423495234575386,
+        "worst_commitment_fill_rate": 0.3035839067616765,
+        "ch4_produced_kg": 6135.740224850714,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 195285.13808223885,
+        "curtailed_kwh": 510.6557771883437,
+        "solar_utilisation": 0.9973850760882106,
+        "battery_discharged_kwh": 17641.844004428574,
+        "min_battery_soc": 0.1500012076826909,
+        "shutdown_steps": 0,
+        "guard_interventions": 2369,
+        "guard_intervention_kwh": 3373.732379872043,
+        "corrected_physics_steps": 1958,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "idle",
+      "seed": 1,
+      "manifest_sha256": "dec5c5f83580018a1563ca2d61a6310a1d74357183c13a58a93cfd3e9da6d144",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -108.54993852727537,
+        "reward_components": {
+          "delivery": 0.8202023865997371,
+          "terminal_inventory": 0.0,
+          "shortfall": -108.71919045360104,
+          "curtailment": -0.6509504602741294,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": 0.0
+        },
+        "commitments_settled": 28,
+        "commitments_met": 0,
+        "commitment_service_level": 0.0,
+        "requested_kg": 6720.0,
+        "delivered_kg": 196.8485727839369,
+        "unmet_kg": 6523.151427216063,
+        "delivery_fill_rate": 0.029292942378562038,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 0.0,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 195285.13808223885,
+        "curtailed_kwh": 195285.13808223885,
+        "solar_utilisation": 0.0,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.5296138189747343,
+        "shutdown_steps": 0,
+        "guard_interventions": 0,
+        "guard_intervention_kwh": 0.0,
+        "corrected_physics_steps": 0,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "balanced",
+      "seed": 1,
+      "manifest_sha256": "dec5c5f83580018a1563ca2d61a6310a1d74357183c13a58a93cfd3e9da6d144",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -26.117193232800837,
+        "reward_components": {
+          "delivery": 17.249231239784248,
+          "terminal_inventory": 0.0,
+          "shortfall": -43.003075040862996,
+          "curtailment": -0.212284616907267,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.15106481481481443
+        },
+        "commitments_settled": 28,
+        "commitments_met": 11,
+        "commitment_service_level": 0.39285714285714285,
+        "requested_kg": 6720.0,
+        "delivered_kg": 4139.81549754822,
+        "unmet_kg": 2580.18450245178,
+        "delivery_fill_rate": 0.6160439728494376,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 3942.9669247642855,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 195285.13808223885,
+        "curtailed_kwh": 63685.38507218009,
+        "solar_utilisation": 0.6738851420154626,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.5296138189747343,
+        "shutdown_steps": 0,
+        "guard_interventions": 3263,
+        "guard_intervention_kwh": 12137.180309866599,
+        "corrected_physics_steps": 3263,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "production_mix",
+      "seed": 1,
+      "manifest_sha256": "dec5c5f83580018a1563ca2d61a6310a1d74357183c13a58a93cfd3e9da6d144",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -1.3373465940390483,
+        "reward_components": {
+          "delivery": 22.179405893747074,
+          "terminal_inventory": 0.0,
+          "shortfall": -23.2823764250117,
+          "curtailment": -0.08331124795959918,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.15106481481481443
+        },
+        "commitments_settled": 28,
+        "commitments_met": 18,
+        "commitment_service_level": 0.6428571428571429,
+        "requested_kg": 6720.0,
+        "delivered_kg": 5323.057414499299,
+        "unmet_kg": 1396.9425855007025,
+        "delivery_fill_rate": 0.7921216390623956,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 5126.208841715343,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 195285.13808223885,
+        "curtailed_kwh": 24993.374387879754,
+        "solar_utilisation": 0.872015993468205,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.5296138189747343,
+        "shutdown_steps": 0,
+        "guard_interventions": 3263,
+        "guard_intervention_kwh": 12137.180309866599,
+        "corrected_physics_steps": 3263,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "heuristic",
+      "seed": 2,
+      "manifest_sha256": "d37cb1400d4e38f6fd467170ab3dd2dc035a0d773108523f4970985ceb73b0d4",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": 24.055387437720416,
+        "reward_components": {
+          "delivery": 27.236655000138242,
+          "terminal_inventory": 0.0,
+          "shortfall": -3.0533799994470314,
+          "curtailment": -0.0010635867270835679,
+          "battery_drain": -0.02316656883624848,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.10365740740740736
+        },
+        "commitments_settled": 28,
+        "commitments_met": 26,
+        "commitment_service_level": 0.9285714285714286,
+        "requested_kg": 6720.0,
+        "delivered_kg": 6536.797200033178,
+        "unmet_kg": 183.20279996682189,
+        "delivery_fill_rate": 0.9727376785763658,
+        "worst_commitment_fill_rate": 0.24081530639063947,
+        "ch4_produced_kg": 6272.450211781128,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 200489.59118776326,
+        "curtailed_kwh": 319.0760181250703,
+        "solar_utilisation": 0.9984085157925917,
+        "battery_discharged_kwh": 17374.9266271863,
+        "min_battery_soc": 0.15006322209265016,
+        "shutdown_steps": 0,
+        "guard_interventions": 2239,
+        "guard_intervention_kwh": 3310.8740732957826,
+        "corrected_physics_steps": 1843,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "idle",
+      "seed": 2,
+      "manifest_sha256": "d37cb1400d4e38f6fd467170ab3dd2dc035a0d773108523f4970985ceb73b0d4",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -107.16106971537438,
+        "reward_components": {
+          "delivery": 1.1014457843836345,
+          "terminal_inventory": 0.0,
+          "shortfall": -107.59421686246546,
+          "curtailment": -0.6682986372925442,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": 0.0
+        },
+        "commitments_settled": 28,
+        "commitments_met": 1,
+        "commitment_service_level": 0.03571428571428571,
+        "requested_kg": 6720.0,
+        "delivered_kg": 264.34698825207226,
+        "unmet_kg": 6455.653011747928,
+        "delivery_fill_rate": 0.03933734944227266,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 0.0,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 200489.59118776326,
+        "curtailed_kwh": 200489.59118776326,
+        "solar_utilisation": 0.0,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.6243155165806481,
+        "shutdown_steps": 0,
+        "guard_interventions": 0,
+        "guard_intervention_kwh": 0.0,
+        "corrected_physics_steps": 0,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "balanced",
+      "seed": 2,
+      "manifest_sha256": "d37cb1400d4e38f6fd467170ab3dd2dc035a0d773108523f4970985ceb73b0d4",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -22.96161832451112,
+        "reward_components": {
+          "delivery": 17.883623584800873,
+          "terminal_inventory": 0.0,
+          "shortfall": -40.4655056607965,
+          "curtailment": -0.2181158781451213,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.16162037037037
+        },
+        "commitments_settled": 28,
+        "commitments_met": 12,
+        "commitment_service_level": 0.42857142857142855,
+        "requested_kg": 6720.0,
+        "delivered_kg": 4292.06966035221,
+        "unmet_kg": 2427.93033964779,
+        "delivery_fill_rate": 0.638700842314317,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 4027.7226721001316,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 200489.59118776326,
+        "curtailed_kwh": 65434.76344353636,
+        "solar_utilisation": 0.673625134073643,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.6243155165806481,
+        "shutdown_steps": 0,
+        "guard_interventions": 3491,
+        "guard_intervention_kwh": 12652.870203846123,
+        "corrected_physics_steps": 3491,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "production_mix",
+      "seed": 2,
+      "manifest_sha256": "d37cb1400d4e38f6fd467170ab3dd2dc035a0d773108523f4970985ceb73b0d4",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": 2.30105904547289,
+        "reward_components": {
+          "delivery": 22.909861780557474,
+          "terminal_inventory": 0.0,
+          "shortfall": -20.360552877770093,
+          "curtailment": -0.08662948694412807,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.16162037037037
+        },
+        "commitments_settled": 28,
+        "commitments_met": 20,
+        "commitment_service_level": 0.7142857142857143,
+        "requested_kg": 6720.0,
+        "delivered_kg": 5498.3668273337935,
+        "unmet_kg": 1221.6331726662056,
+        "delivery_fill_rate": 0.8182093493056241,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 5234.019839081739,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 200489.59118776326,
+        "curtailed_kwh": 25988.84608323842,
+        "solar_utilisation": 0.8703730905466347,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.6243155165806481,
+        "shutdown_steps": 0,
+        "guard_interventions": 3491,
+        "guard_intervention_kwh": 12652.870203846122,
+        "corrected_physics_steps": 3491,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "heuristic",
+      "seed": 3,
+      "manifest_sha256": "c782c539bf2c9c928fec3fb15b3b2d46613c9a7fd9ae7f615f83458735233312",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": 27.96082393315888,
+        "reward_components": {
+          "delivery": 28.0,
+          "terminal_inventory": 0.1,
+          "shortfall": 0.0,
+          "curtailment": -0.0011885800627716558,
+          "battery_drain": -0.02562637566713739,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.11236111111111104
+        },
+        "commitments_settled": 28,
+        "commitments_met": 28,
+        "commitment_service_level": 1.0,
+        "requested_kg": 6720.0,
+        "delivered_kg": 6720.0,
+        "unmet_kg": 0.0,
+        "delivery_fill_rate": 1.0,
+        "worst_commitment_fill_rate": 1.0,
+        "ch4_produced_kg": 6695.098364246261,
+        "terminal_ch4_kg": 243.22120624829404,
+        "solar_kwh": 207814.1835405493,
+        "curtailed_kwh": 356.57401883149674,
+        "solar_utilisation": 0.9982841689977242,
+        "battery_discharged_kwh": 19219.78175035298,
+        "min_battery_soc": 0.15000671831483317,
+        "shutdown_steps": 0,
+        "guard_interventions": 2427,
+        "guard_intervention_kwh": 3939.234428369882,
+        "corrected_physics_steps": 1957,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "idle",
+      "seed": 3,
+      "manifest_sha256": "c782c539bf2c9c928fec3fb15b3b2d46613c9a7fd9ae7f615f83458735233312",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -107.10682140342554,
+        "reward_components": {
+          "delivery": 1.117178508341929,
+          "terminal_inventory": 0.0,
+          "shortfall": -107.53128596663228,
+          "curtailment": -0.6927139451351637,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": 0.0
+        },
+        "commitments_settled": 28,
+        "commitments_met": 1,
+        "commitment_service_level": 0.03571428571428571,
+        "requested_kg": 6720.0,
+        "delivered_kg": 268.12284200206295,
+        "unmet_kg": 6451.877157997937,
+        "delivery_fill_rate": 0.03989923244078318,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 0.0,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 207814.1835405493,
+        "curtailed_kwh": 207814.1835405493,
+        "solar_utilisation": 0.0,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.4665478597053578,
+        "shutdown_steps": 0,
+        "guard_interventions": 0,
+        "guard_intervention_kwh": 0.0,
+        "corrected_physics_steps": 0,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "balanced",
+      "seed": 3,
+      "manifest_sha256": "c782c539bf2c9c928fec3fb15b3b2d46613c9a7fd9ae7f615f83458735233312",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -14.800983187970184,
+        "reward_components": {
+          "delivery": 19.5166982501062,
+          "terminal_inventory": 0.0,
+          "shortfall": -33.933206999575205,
+          "curtailment": -0.22151147553821446,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.16296296296296253
+        },
+        "commitments_settled": 28,
+        "commitments_met": 16,
+        "commitment_service_level": 0.5714285714285714,
+        "requested_kg": 6720.0,
+        "delivered_kg": 4684.007580025488,
+        "unmet_kg": 2035.9924199745124,
+        "delivery_fill_rate": 0.6970249375037929,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 4415.8847380234365,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 207814.1835405493,
+        "curtailed_kwh": 66453.44266146433,
+        "solar_utilisation": 0.6802266258765839,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.4665478597053578,
+        "shutdown_steps": 0,
+        "guard_interventions": 3520,
+        "guard_intervention_kwh": 13991.646039802883,
+        "corrected_physics_steps": 3520,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "production_mix",
+      "seed": 3,
+      "manifest_sha256": "c782c539bf2c9c928fec3fb15b3b2d46613c9a7fd9ae7f615f83458735233312",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": 11.262391813525264,
+        "reward_components": {
+          "delivery": 24.70241749325108,
+          "terminal_inventory": 0.0,
+          "shortfall": -13.190330026995678,
+          "curtailment": -0.08585306013754422,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.16384259259259218
+        },
+        "commitments_settled": 28,
+        "commitments_met": 23,
+        "commitment_service_level": 0.8214285714285714,
+        "requested_kg": 6720.0,
+        "delivered_kg": 5928.580198380259,
+        "unmet_kg": 791.4198016197406,
+        "delivery_fill_rate": 0.8822291961875386,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 5660.457356378188,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 207814.1835405493,
+        "curtailed_kwh": 25755.91804126326,
+        "solar_utilisation": 0.8760627518177185,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.4665478597053578,
+        "shutdown_steps": 0,
+        "guard_interventions": 3539,
+        "guard_intervention_kwh": 14014.222683173999,
+        "corrected_physics_steps": 3520,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "heuristic",
+      "seed": 4,
+      "manifest_sha256": "a23d61a7275e5278259940c8509a961984e51fd17dac4fec2d529034f76db022",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": 25.66128965708677,
+        "reward_components": {
+          "delivery": 27.556482736472432,
+          "terminal_inventory": 0.0,
+          "shortfall": -1.7740690541102688,
+          "curtailment": -0.0009793656801923155,
+          "battery_drain": -0.021348363298852015,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.09879629629629613
+        },
+        "commitments_settled": 28,
+        "commitments_met": 27,
+        "commitment_service_level": 0.9642857142857143,
+        "requested_kg": 6720.0,
+        "delivered_kg": 6613.5558567533835,
+        "unmet_kg": 106.44414324661614,
+        "delivery_fill_rate": 0.9841600977311583,
+        "worst_commitment_fill_rate": 0.5564827364724327,
+        "ch4_produced_kg": 6297.117860783343,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 195939.16105816714,
+        "curtailed_kwh": 293.80970405769466,
+        "solar_utilisation": 0.9985005054504114,
+        "battery_discharged_kwh": 16011.272474138956,
+        "min_battery_soc": 0.15014155310766614,
+        "shutdown_steps": 0,
+        "guard_interventions": 2134,
+        "guard_intervention_kwh": 2942.8424679196414,
+        "corrected_physics_steps": 1828,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "idle",
+      "seed": 4,
+      "manifest_sha256": "a23d61a7275e5278259940c8509a961984e51fd17dac4fec2d529034f76db022",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -106.0606722874846,
+        "reward_components": {
+          "delivery": 1.3184916498751817,
+          "terminal_inventory": 0.0,
+          "shortfall": -106.72603340049928,
+          "curtailment": -0.653130536860557,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": 0.0
+        },
+        "commitments_settled": 28,
+        "commitments_met": 1,
+        "commitment_service_level": 0.03571428571428571,
+        "requested_kg": 6720.0,
+        "delivered_kg": 316.43799597004363,
+        "unmet_kg": 6403.562004029956,
+        "delivery_fill_rate": 0.04708898749554221,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 0.0,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 195939.16105816714,
+        "curtailed_kwh": 195939.16105816714,
+        "solar_utilisation": 0.0,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.61141593765923,
+        "shutdown_steps": 0,
+        "guard_interventions": 0,
+        "guard_intervention_kwh": 0.0,
+        "corrected_physics_steps": 0,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "balanced",
+      "seed": 4,
+      "manifest_sha256": "a23d61a7275e5278259940c8509a961984e51fd17dac4fec2d529034f76db022",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -20.67695245035665,
+        "reward_components": {
+          "delivery": 18.338554188036504,
+          "terminal_inventory": 0.0,
+          "shortfall": -38.64578324785397,
+          "curtailment": -0.21120487202067761,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.15851851851851814
+        },
+        "commitments_settled": 28,
+        "commitments_met": 13,
+        "commitment_service_level": 0.4642857142857143,
+        "requested_kg": 6720.0,
+        "delivered_kg": 4401.253005128761,
+        "unmet_kg": 2318.7469948712383,
+        "delivery_fill_rate": 0.6549483638584466,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 4084.8150091587218,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 195939.16105816714,
+        "curtailed_kwh": 63361.461606203295,
+        "solar_utilisation": 0.6766268607866827,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.61141593765923,
+        "shutdown_steps": 0,
+        "guard_interventions": 3424,
+        "guard_intervention_kwh": 11044.797332645225,
+        "corrected_physics_steps": 3424,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "production_mix",
+      "seed": 4,
+      "manifest_sha256": "a23d61a7275e5278259940c8509a961984e51fd17dac4fec2d529034f76db022",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": 3.4204155960428215,
+        "reward_components": {
+          "delivery": 23.13294355216329,
+          "terminal_inventory": 0.0,
+          "shortfall": -19.468225791346818,
+          "curtailment": -0.08578364625512064,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.15851851851851814
+        },
+        "commitments_settled": 28,
+        "commitments_met": 18,
+        "commitment_service_level": 0.6428571428571429,
+        "requested_kg": 6720.0,
+        "delivered_kg": 5551.906452519191,
+        "unmet_kg": 1168.093547480809,
+        "delivery_fill_rate": 0.8261765554344034,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 5235.468456549133,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 195939.16105816714,
+        "curtailed_kwh": 25735.093876536197,
+        "solar_utilisation": 0.8686577316267248,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.61141593765923,
+        "shutdown_steps": 0,
+        "guard_interventions": 3424,
+        "guard_intervention_kwh": 11044.797332645227,
+        "corrected_physics_steps": 3424,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "heuristic",
+      "seed": 5,
+      "manifest_sha256": "dbef49c0e6220256d3d537a7f841a1f11c33eb9614844d55ec01e917115a9718",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": 27.937229268467966,
+        "reward_components": {
+          "delivery": 28.0,
+          "terminal_inventory": 0.1,
+          "shortfall": 0.0,
+          "curtailment": -0.0016150307352907683,
+          "battery_drain": -0.026016811907792113,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.13513888888888884
+        },
+        "commitments_settled": 28,
+        "commitments_met": 28,
+        "commitment_service_level": 1.0,
+        "requested_kg": 6720.0,
+        "delivered_kg": 6720.0,
+        "unmet_kg": 0.0,
+        "delivery_fill_rate": 1.0,
+        "worst_commitment_fill_rate": 1.0,
+        "ch4_produced_kg": 7008.159317271296,
+        "terminal_ch4_kg": 413.1396413750323,
+        "solar_kwh": 212708.89976586078,
+        "curtailed_kwh": 484.50922058723035,
+        "solar_utilisation": 0.997722195821987,
+        "battery_discharged_kwh": 19512.608930844013,
+        "min_battery_soc": 0.15014044037015237,
+        "shutdown_steps": 0,
+        "guard_interventions": 2919,
+        "guard_intervention_kwh": 4158.583766393234,
+        "corrected_physics_steps": 2151,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "idle",
+      "seed": 5,
+      "manifest_sha256": "dbef49c0e6220256d3d537a7f841a1f11c33eb9614844d55ec01e917115a9718",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -110.10527291372416,
+        "reward_components": {
+          "delivery": 0.5207513504323853,
+          "terminal_inventory": 0.0,
+          "shortfall": -109.91699459827046,
+          "curtailment": -0.7090296658862029,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": 0.0
+        },
+        "commitments_settled": 28,
+        "commitments_met": 0,
+        "commitment_service_level": 0.0,
+        "requested_kg": 6720.0,
+        "delivered_kg": 124.98032410377246,
+        "unmet_kg": 6595.019675896227,
+        "delivery_fill_rate": 0.018598262515442332,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 0.0,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 212708.89976586078,
+        "curtailed_kwh": 212708.89976586078,
+        "solar_utilisation": 0.0,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.41124739024977675,
+        "shutdown_steps": 0,
+        "guard_interventions": 0,
+        "guard_intervention_kwh": 0.0,
+        "corrected_physics_steps": 0,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "balanced",
+      "seed": 5,
+      "manifest_sha256": "dbef49c0e6220256d3d537a7f841a1f11c33eb9614844d55ec01e917115a9718",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -7.830085691324995,
+        "reward_components": {
+          "delivery": 20.907601872330275,
+          "terminal_inventory": 0.0,
+          "shortfall": -28.369592510678913,
+          "curtailment": -0.206382090013395,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.16171296296296253
+        },
+        "commitments_settled": 28,
+        "commitments_met": 17,
+        "commitment_service_level": 0.6071428571428571,
+        "requested_kg": 6720.0,
+        "delivered_kg": 5017.824449359266,
+        "unmet_kg": 1702.1755506407344,
+        "delivery_fill_rate": 0.7467000668689383,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 4892.844125255504,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 212708.89976586078,
+        "curtailed_kwh": 61914.62700401849,
+        "solar_utilisation": 0.7089231946939174,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.41124739024977675,
+        "shutdown_steps": 0,
+        "guard_interventions": 3493,
+        "guard_intervention_kwh": 14786.060263744246,
+        "corrected_physics_steps": 3493,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "production_mix",
+      "seed": 5,
+      "manifest_sha256": "dbef49c0e6220256d3d537a7f841a1f11c33eb9614844d55ec01e917115a9718",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": 18.56923194922894,
+        "reward_components": {
+          "delivery": 26.161304119708568,
+          "terminal_inventory": 0.0,
+          "shortfall": -7.354783521165728,
+          "curtailment": -0.07557568635093376,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.16171296296296253
+        },
+        "commitments_settled": 28,
+        "commitments_met": 25,
+        "commitment_service_level": 0.8928571428571429,
+        "requested_kg": 6720.0,
+        "delivered_kg": 6278.712988730056,
+        "unmet_kg": 441.28701126994366,
+        "delivery_fill_rate": 0.9343322899895917,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 6153.732664626318,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 212708.89976586078,
+        "curtailed_kwh": 22672.705905280123,
+        "solar_utilisation": 0.8934096978065464,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.41124739024977675,
+        "shutdown_steps": 0,
+        "guard_interventions": 3493,
+        "guard_intervention_kwh": 14786.060263744246,
+        "corrected_physics_steps": 3493,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "heuristic",
+      "seed": 6,
+      "manifest_sha256": "34024cb27380e9bc4c3a847ba7b4e2e3a144ae61be6f553abc1f30495b7dbca7",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": 19.041276977433853,
+        "reward_components": {
+          "delivery": 26.234627196995607,
+          "terminal_inventory": 0.0,
+          "shortfall": -7.061491212017584,
+          "curtailment": -0.0014307326408814457,
+          "battery_drain": -0.022511608236564774,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.10791666666666658
+        },
+        "commitments_settled": 28,
+        "commitments_met": 25,
+        "commitment_service_level": 0.8928571428571429,
+        "requested_kg": 6720.0,
+        "delivered_kg": 6296.310527278945,
+        "unmet_kg": 423.689472721055,
+        "delivery_fill_rate": 0.9369509713212716,
+        "worst_commitment_fill_rate": 0.22059442608454086,
+        "ch4_produced_kg": 6154.435845045467,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 193366.42292272378,
+        "curtailed_kwh": 429.2197922644337,
+        "solar_utilisation": 0.9977802775384848,
+        "battery_discharged_kwh": 16883.706177423526,
+        "min_battery_soc": 0.1500306254609531,
+        "shutdown_steps": 0,
+        "guard_interventions": 2331,
+        "guard_intervention_kwh": 2810.353525305655,
+        "corrected_physics_steps": 1924,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "idle",
+      "seed": 6,
+      "manifest_sha256": "34024cb27380e9bc4c3a847ba7b4e2e3a144ae61be6f553abc1f30495b7dbca7",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -109.68883219654498,
+        "reward_components": {
+          "delivery": 0.5911445093061716,
+          "terminal_inventory": 0.0,
+          "shortfall": -109.63542196277531,
+          "curtailment": -0.6445547430757463,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": 0.0
+        },
+        "commitments_settled": 28,
+        "commitments_met": 0,
+        "commitment_service_level": 0.0,
+        "requested_kg": 6720.0,
+        "delivered_kg": 141.87468223348117,
+        "unmet_kg": 6578.1253177665185,
+        "delivery_fill_rate": 0.02111230390379184,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 0.0,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 193366.42292272378,
+        "curtailed_kwh": 193366.42292272378,
+        "solar_utilisation": 0.0,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.5734799619933925,
+        "shutdown_steps": 0,
+        "guard_interventions": 0,
+        "guard_intervention_kwh": 0.0,
+        "corrected_physics_steps": 0,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "balanced",
+      "seed": 6,
+      "manifest_sha256": "34024cb27380e9bc4c3a847ba7b4e2e3a144ae61be6f553abc1f30495b7dbca7",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -26.862642464217807,
+        "reward_components": {
+          "delivery": 17.099870605007574,
+          "terminal_inventory": 0.0,
+          "shortfall": -43.60051757996972,
+          "curtailment": -0.21000474851493497,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.15199074074074034
+        },
+        "commitments_settled": 28,
+        "commitments_met": 12,
+        "commitment_service_level": 0.42857142857142855,
+        "requested_kg": 6720.0,
+        "delivered_kg": 4103.968945201817,
+        "unmet_kg": 2616.031054798182,
+        "delivery_fill_rate": 0.6107096644645562,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 3962.094262968331,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 193366.42292272378,
+        "curtailed_kwh": 63001.42455448046,
+        "solar_utilisation": 0.6741863266526986,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.5734799619933925,
+        "shutdown_steps": 0,
+        "guard_interventions": 3283,
+        "guard_intervention_kwh": 11348.572885638583,
+        "corrected_physics_steps": 3283,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "production_mix",
+      "seed": 6,
+      "manifest_sha256": "34024cb27380e9bc4c3a847ba7b4e2e3a144ae61be6f553abc1f30495b7dbca7",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -2.9980109360307408,
+        "reward_components": {
+          "delivery": 21.84795493343864,
+          "terminal_inventory": 0.0,
+          "shortfall": -24.60818026624546,
+          "curtailment": -0.08579486248317833,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.15199074074074034
+        },
+        "commitments_settled": 28,
+        "commitments_met": 19,
+        "commitment_service_level": 0.6785714285714286,
+        "requested_kg": 6720.0,
+        "delivered_kg": 5243.509184025273,
+        "unmet_kg": 1476.4908159747274,
+        "delivery_fill_rate": 0.7802841047656656,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 5101.634501791799,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 193366.42292272378,
+        "curtailed_kwh": 25738.458744953492,
+        "solar_utilisation": 0.8668928226735646,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.5734799619933925,
+        "shutdown_steps": 0,
+        "guard_interventions": 3283,
+        "guard_intervention_kwh": 11348.572885638583,
+        "corrected_physics_steps": 3283,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "heuristic",
+      "seed": 7,
+      "manifest_sha256": "c203e71d58ec0a05f3098f23ac61fb7ee592aa24b32a1842b3b0c74c8f8c381e",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": 27.926676978454584,
+        "reward_components": {
+          "delivery": 28.0,
+          "terminal_inventory": 0.07802796500052239,
+          "shortfall": 0.0,
+          "curtailment": -0.0011697873904627796,
+          "battery_drain": -0.02712564359980747,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.12305555555555547
+        },
+        "commitments_settled": 28,
+        "commitments_met": 28,
+        "commitment_service_level": 1.0,
+        "requested_kg": 6720.0,
+        "delivered_kg": 6720.0,
+        "unmet_kg": 0.0,
+        "delivery_fill_rate": 1.0,
+        "worst_commitment_fill_rate": 1.0,
+        "ch4_produced_kg": 6578.749081597225,
+        "terminal_ch4_kg": 187.26711600125373,
+        "solar_kwh": 213714.5821081129,
+        "curtailed_kwh": 350.93621713883385,
+        "solar_utilisation": 0.9983579210474215,
+        "battery_discharged_kwh": 20344.23269985552,
+        "min_battery_soc": 0.1501742947282628,
+        "shutdown_steps": 0,
+        "guard_interventions": 2658,
+        "guard_intervention_kwh": 3753.0062310182648,
+        "corrected_physics_steps": 2122,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "idle",
+      "seed": 7,
+      "manifest_sha256": "c203e71d58ec0a05f3098f23ac61fb7ee592aa24b32a1842b3b0c74c8f8c381e",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -105.86825622360915,
+        "reward_components": {
+          "delivery": 1.3688251433502354,
+          "terminal_inventory": 0.0,
+          "shortfall": -106.52469942659906,
+          "curtailment": -0.7123819403603756,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": 0.0
+        },
+        "commitments_settled": 28,
+        "commitments_met": 1,
+        "commitment_service_level": 0.03571428571428571,
+        "requested_kg": 6720.0,
+        "delivered_kg": 328.5180344040565,
+        "unmet_kg": 6391.481965595944,
+        "delivery_fill_rate": 0.04888661226250841,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 0.0,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 213714.5821081129,
+        "curtailed_kwh": 213714.5821081129,
+        "solar_utilisation": 0.0,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.5691436747373425,
+        "shutdown_steps": 0,
+        "guard_interventions": 0,
+        "guard_intervention_kwh": 0.0,
+        "corrected_physics_steps": 0,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "balanced",
+      "seed": 7,
+      "manifest_sha256": "c203e71d58ec0a05f3098f23ac61fb7ee592aa24b32a1842b3b0c74c8f8c381e",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -17.329719120884157,
+        "reward_components": {
+          "delivery": 19.0139627977977,
+          "terminal_inventory": 0.0,
+          "shortfall": -35.94414880880921,
+          "curtailment": -0.23184792468745097,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.16768518518518474
+        },
+        "commitments_settled": 28,
+        "commitments_met": 16,
+        "commitment_service_level": 0.5714285714285714,
+        "requested_kg": 6720.0,
+        "delivered_kg": 4563.3510714714475,
+        "unmet_kg": 2156.6489285285525,
+        "delivery_fill_rate": 0.6790700999213464,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 4234.833037067396,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 213714.5821081129,
+        "curtailed_kwh": 69554.37740623526,
+        "solar_utilisation": 0.6745454768685395,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.5691436747373425,
+        "shutdown_steps": 0,
+        "guard_interventions": 3622,
+        "guard_intervention_kwh": 14677.860451160914,
+        "corrected_physics_steps": 3622,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "production_mix",
+      "seed": 7,
+      "manifest_sha256": "c203e71d58ec0a05f3098f23ac61fb7ee592aa24b32a1842b3b0c74c8f8c381e",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": 9.061864039496484,
+        "reward_components": {
+          "delivery": 24.264871490408893,
+          "terminal_inventory": 0.0,
+          "shortfall": -14.940514038364418,
+          "curtailment": -0.09448415328874106,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.16800925925925883
+        },
+        "commitments_settled": 28,
+        "commitments_met": 23,
+        "commitment_service_level": 0.8214285714285714,
+        "requested_kg": 6720.0,
+        "delivered_kg": 5823.569157698134,
+        "unmet_kg": 896.4308423018651,
+        "delivery_fill_rate": 0.866602553228889,
+        "worst_commitment_fill_rate": 0.062143053248010345,
+        "ch4_produced_kg": 5495.051123294081,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 213714.5821081129,
+        "curtailed_kwh": 28345.245986622318,
+        "solar_utilisation": 0.8673686853418212,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.5691436747373425,
+        "shutdown_steps": 0,
+        "guard_interventions": 3629,
+        "guard_intervention_kwh": 14680.186219244482,
+        "corrected_physics_steps": 3622,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "heuristic",
+      "seed": 8,
+      "manifest_sha256": "077a34d5c845f373b2a492ba6f8b2b80fce893021df6662c9f7c34f3cdb12ec3",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": 27.88006175567158,
+        "reward_components": {
+          "delivery": 28.0,
+          "terminal_inventory": 0.023496185181393042,
+          "shortfall": 0.0,
+          "curtailment": -0.0009028535754148193,
+          "battery_drain": -0.02614268704541583,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.11638888888888872
+        },
+        "commitments_settled": 28,
+        "commitments_met": 28,
+        "commitment_service_level": 1.0,
+        "requested_kg": 6720.0,
+        "delivered_kg": 6720.0,
+        "unmet_kg": 0.0,
+        "delivery_fill_rate": 1.0,
+        "worst_commitment_fill_rate": 1.0,
+        "ch4_produced_kg": 6507.251794828135,
+        "terminal_ch4_kg": 56.3908444353433,
+        "solar_kwh": 204972.60763059015,
+        "curtailed_kwh": 270.85607262444574,
+        "solar_utilisation": 0.9986785742946073,
+        "battery_discharged_kwh": 19607.015284061803,
+        "min_battery_soc": 0.15018510250083808,
+        "shutdown_steps": 0,
+        "guard_interventions": 2514,
+        "guard_intervention_kwh": 3901.9464630246152,
+        "corrected_physics_steps": 1975,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "idle",
+      "seed": 8,
+      "manifest_sha256": "077a34d5c845f373b2a492ba6f8b2b80fce893021df6662c9f7c34f3cdb12ec3",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -107.07617849195184,
+        "reward_components": {
+          "delivery": 1.1214127066966995,
+          "terminal_inventory": 0.0,
+          "shortfall": -107.5143491732132,
+          "curtailment": -0.6832420254353002,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": 0.0
+        },
+        "commitments_settled": 28,
+        "commitments_met": 1,
+        "commitment_service_level": 0.03571428571428571,
+        "requested_kg": 6720.0,
+        "delivered_kg": 269.1390496072079,
+        "unmet_kg": 6450.860950392792,
+        "delivery_fill_rate": 0.04005045381059641,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 0.0,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 204972.60763059015,
+        "curtailed_kwh": 204972.60763059015,
+        "solar_utilisation": 0.0,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.4638480413584036,
+        "shutdown_steps": 0,
+        "guard_interventions": 0,
+        "guard_intervention_kwh": 0.0,
+        "corrected_physics_steps": 0,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "balanced",
+      "seed": 8,
+      "manifest_sha256": "077a34d5c845f373b2a492ba6f8b2b80fce893021df6662c9f7c34f3cdb12ec3",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -16.89705774397884,
+        "reward_components": {
+          "delivery": 19.09305632484696,
+          "terminal_inventory": 0.0,
+          "shortfall": -35.627774700612164,
+          "curtailment": -0.2113208496951116,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.15101851851851816
+        },
+        "commitments_settled": 28,
+        "commitments_met": 13,
+        "commitment_service_level": 0.4642857142857143,
+        "requested_kg": 6720.0,
+        "delivered_kg": 4582.3335179632695,
+        "unmet_kg": 2137.66648203673,
+        "delivery_fill_rate": 0.6818948687445342,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 4313.194468356063,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 204972.60763059015,
+        "curtailed_kwh": 63396.25490853351,
+        "solar_utilisation": 0.6907086481390294,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.4638480413584036,
+        "shutdown_steps": 0,
+        "guard_interventions": 3262,
+        "guard_intervention_kwh": 13464.185282009705,
+        "corrected_physics_steps": 3262,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "production_mix",
+      "seed": 8,
+      "manifest_sha256": "077a34d5c845f373b2a492ba6f8b2b80fce893021df6662c9f7c34f3cdb12ec3",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": 8.355737250181093,
+        "reward_components": {
+          "delivery": 24.117779674815612,
+          "terminal_inventory": 0.0,
+          "shortfall": -15.528881300737554,
+          "curtailment": -0.07987408685993283,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.1532870370370367
+        },
+        "commitments_settled": 28,
+        "commitments_met": 22,
+        "commitment_service_level": 0.7857142857142857,
+        "requested_kg": 6720.0,
+        "delivered_kg": 5788.267121955746,
+        "unmet_kg": 931.7328780442533,
+        "delivery_fill_rate": 0.8613492741005574,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 5519.128072348521,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 204972.60763059015,
+        "curtailed_kwh": 23962.226057979817,
+        "solar_utilisation": 0.8830954714633601,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.4638480413584036,
+        "shutdown_steps": 0,
+        "guard_interventions": 3311,
+        "guard_intervention_kwh": 13512.717805232945,
+        "corrected_physics_steps": 3262,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "heuristic",
+      "seed": 9,
+      "manifest_sha256": "51e86f5ee3dcb729016e109984d2371a3be67e063b785953c550e410050a2336",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": 27.89911570874436,
+        "reward_components": {
+          "delivery": 28.0,
+          "terminal_inventory": 0.046831731578121684,
+          "shortfall": 0.0,
+          "curtailment": -0.001574626072340637,
+          "battery_drain": -0.023548804168702284,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.12259259259259253
+        },
+        "commitments_settled": 28,
+        "commitments_met": 28,
+        "commitment_service_level": 1.0,
+        "requested_kg": 6720.0,
+        "delivered_kg": 6720.0,
+        "unmet_kg": 0.0,
+        "delivery_fill_rate": 1.0,
+        "worst_commitment_fill_rate": 1.0,
+        "ch4_produced_kg": 6650.409492995682,
+        "terminal_ch4_kg": 112.39615578749203,
+        "solar_kwh": 204917.33312198104,
+        "curtailed_kwh": 472.387821702191,
+        "solar_utilisation": 0.9976947395590934,
+        "battery_discharged_kwh": 17661.603126526665,
+        "min_battery_soc": 0.15022602583464556,
+        "shutdown_steps": 0,
+        "guard_interventions": 2648,
+        "guard_intervention_kwh": 3876.7695286435846,
+        "corrected_physics_steps": 2064,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "idle",
+      "seed": 9,
+      "manifest_sha256": "51e86f5ee3dcb729016e109984d2371a3be67e063b785953c550e410050a2336",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -108.89166896890981,
+        "reward_components": {
+          "delivery": 0.7582777616327003,
+          "terminal_inventory": 0.0,
+          "shortfall": -108.9668889534692,
+          "curtailment": -0.6830577770732698,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": 0.0
+        },
+        "commitments_settled": 28,
+        "commitments_met": 0,
+        "commitment_service_level": 0.0,
+        "requested_kg": 6720.0,
+        "delivered_kg": 181.9866627918481,
+        "unmet_kg": 6538.013337208152,
+        "delivery_fill_rate": 0.0270813486297393,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 0.0,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 204917.33312198104,
+        "curtailed_kwh": 204917.33312198104,
+        "solar_utilisation": 0.0,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.35643594408050533,
+        "shutdown_steps": 0,
+        "guard_interventions": 0,
+        "guard_intervention_kwh": 0.0,
+        "corrected_physics_steps": 0,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "balanced",
+      "seed": 9,
+      "manifest_sha256": "51e86f5ee3dcb729016e109984d2371a3be67e063b785953c550e410050a2336",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -15.907378695848823,
+        "reward_components": {
+          "delivery": 19.294326137683964,
+          "terminal_inventory": 0.0,
+          "shortfall": -34.82269544926414,
+          "curtailment": -0.21100012500939813,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.16800925925925878
+        },
+        "commitments_settled": 28,
+        "commitments_met": 13,
+        "commitment_service_level": 0.4642857142857143,
+        "requested_kg": 6720.0,
+        "delivered_kg": 4630.638273044152,
+        "unmet_kg": 2089.361726955848,
+        "delivery_fill_rate": 0.689083076345856,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 4448.651610252292,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 204917.33312198104,
+        "curtailed_kwh": 63300.03750281944,
+        "solar_utilisation": 0.6910947622710917,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.35643594408050533,
+        "shutdown_steps": 0,
+        "guard_interventions": 3629,
+        "guard_intervention_kwh": 12918.83622953582,
+        "corrected_physics_steps": 3629,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "production_mix",
+      "seed": 9,
+      "manifest_sha256": "51e86f5ee3dcb729016e109984d2371a3be67e063b785953c550e410050a2336",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": 9.475862541228969,
+        "reward_components": {
+          "delivery": 24.34476345999217,
+          "terminal_inventory": 0.0,
+          "shortfall": -14.620946160031316,
+          "curtailment": -0.07888068465781509,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.1690740740740736
+        },
+        "commitments_settled": 28,
+        "commitments_met": 22,
+        "commitment_service_level": 0.7857142857142857,
+        "requested_kg": 6720.0,
+        "delivered_kg": 5842.74323039812,
+        "unmet_kg": 877.2567696018789,
+        "delivery_fill_rate": 0.8694558378568632,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 5660.756567606283,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 204917.33312198104,
+        "curtailed_kwh": 23664.20539734452,
+        "solar_utilisation": 0.8845182833642582,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.35643594408050533,
+        "shutdown_steps": 0,
+        "guard_interventions": 3652,
+        "guard_intervention_kwh": 12957.317479781059,
+        "corrected_physics_steps": 3629,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "heuristic",
+      "seed": 10,
+      "manifest_sha256": "46756a928afc05ac8f8614dfe1e73ca9060bb13398edd163ace62136a668e9f9",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": 27.954383253456342,
+        "reward_components": {
+          "delivery": 28.0,
+          "terminal_inventory": 0.1,
+          "shortfall": 0.0,
+          "curtailment": -0.0010313245894580296,
+          "battery_drain": -0.027131718250396973,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.11745370370370364
+        },
+        "commitments_settled": 28,
+        "commitments_met": 28,
+        "commitment_service_level": 1.0,
+        "requested_kg": 6720.0,
+        "delivered_kg": 6720.0,
+        "unmet_kg": 0.0,
+        "delivery_fill_rate": 1.0,
+        "worst_commitment_fill_rate": 1.0,
+        "ch4_produced_kg": 6844.936561760829,
+        "terminal_ch4_kg": 359.8500679500934,
+        "solar_kwh": 213525.16435560115,
+        "curtailed_kwh": 309.3973768374089,
+        "solar_utilisation": 0.998551002745877,
+        "battery_discharged_kwh": 20348.78868779765,
+        "min_battery_soc": 0.15005695511837724,
+        "shutdown_steps": 0,
+        "guard_interventions": 2537,
+        "guard_intervention_kwh": 3850.0010027853623,
+        "corrected_physics_steps": 2000,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "idle",
+      "seed": 10,
+      "manifest_sha256": "46756a928afc05ac8f8614dfe1e73ca9060bb13398edd163ace62136a668e9f9",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -107.81771916890848,
+        "reward_components": {
+          "delivery": 0.9788062757887147,
+          "terminal_inventory": 0.0,
+          "shortfall": -108.08477489684515,
+          "curtailment": -0.7117505478520036,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": 0.0
+        },
+        "commitments_settled": 28,
+        "commitments_met": 0,
+        "commitment_service_level": 0.0,
+        "requested_kg": 6720.0,
+        "delivered_kg": 234.91350618929152,
+        "unmet_kg": 6485.086493810708,
+        "delivery_fill_rate": 0.034957366992454095,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 0.0,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 213525.16435560115,
+        "curtailed_kwh": 213525.16435560115,
+        "solar_utilisation": 0.0,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.6455270409123771,
+        "shutdown_steps": 0,
+        "guard_interventions": 0,
+        "guard_intervention_kwh": 0.0,
+        "corrected_physics_steps": 0,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "balanced",
+      "seed": 10,
+      "manifest_sha256": "46756a928afc05ac8f8614dfe1e73ca9060bb13398edd163ace62136a668e9f9",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -13.332481151372857,
+        "reward_components": {
+          "delivery": 19.81355060279459,
+          "terminal_inventory": 0.0,
+          "shortfall": -32.745797588821645,
+          "curtailment": -0.22866009127173353,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.1715740740740736
+        },
+        "commitments_settled": 28,
+        "commitments_met": 15,
+        "commitment_service_level": 0.5357142857142857,
+        "requested_kg": 6720.0,
+        "delivered_kg": 4755.252144670701,
+        "unmet_kg": 1964.7478553292985,
+        "delivery_fill_rate": 0.7076268072426639,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 4520.338638481412,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 213525.16435560115,
+        "curtailed_kwh": 68598.02738151999,
+        "solar_utilisation": 0.6787356301139382,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.6455270409123771,
+        "shutdown_steps": 0,
+        "guard_interventions": 3706,
+        "guard_intervention_kwh": 14387.11428223659,
+        "corrected_physics_steps": 3706,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "production_mix",
+      "seed": 10,
+      "manifest_sha256": "46756a928afc05ac8f8614dfe1e73ca9060bb13398edd163ace62136a668e9f9",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": 13.049464914272384,
+        "reward_components": {
+          "delivery": 25.06255111929538,
+          "terminal_inventory": 0.0,
+          "shortfall": -11.749795522818479,
+          "curtailment": -0.09134623776007272,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.17194444444444396
+        },
+        "commitments_settled": 28,
+        "commitments_met": 22,
+        "commitment_service_level": 0.7857142857142857,
+        "requested_kg": 6720.0,
+        "delivered_kg": 6015.0122686308905,
+        "unmet_kg": 704.9877313691087,
+        "delivery_fill_rate": 0.8950911114034064,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 5780.098762441592,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 213525.16435560115,
+        "curtailed_kwh": 27403.87132802179,
+        "solar_utilisation": 0.8716597577118177,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.6455270409123771,
+        "shutdown_steps": 0,
+        "guard_interventions": 3714,
+        "guard_intervention_kwh": 14391.96008852374,
+        "corrected_physics_steps": 3706,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "heuristic",
+      "seed": 11,
+      "manifest_sha256": "9e2a354deffb13cfd0876ccf1e103fc5daf8d9337be43ad61c8359af8291ae55",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": 27.950678712203615,
+        "reward_components": {
+          "delivery": 28.0,
+          "terminal_inventory": 0.07962629782482822,
+          "shortfall": 0.0,
+          "curtailment": -0.0009886060244304468,
+          "battery_drain": -0.02161638700413379,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.10634259259259253
+        },
+        "commitments_settled": 28,
+        "commitments_met": 28,
+        "commitment_service_level": 1.0,
+        "requested_kg": 6720.0,
+        "delivered_kg": 6720.0,
+        "unmet_kg": 0.0,
+        "delivery_fill_rate": 1.0,
+        "worst_commitment_fill_rate": 1.0,
+        "ch4_produced_kg": 6735.992474720104,
+        "terminal_ch4_kg": 191.1031147795877,
+        "solar_kwh": 196630.46574136178,
+        "curtailed_kwh": 296.581807329134,
+        "solar_utilisation": 0.9984916792715162,
+        "battery_discharged_kwh": 16212.29025310029,
+        "min_battery_soc": 0.15020478657799619,
+        "shutdown_steps": 0,
+        "guard_interventions": 2297,
+        "guard_intervention_kwh": 3251.876205385821,
+        "corrected_physics_steps": 1846,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "idle",
+      "seed": 11,
+      "manifest_sha256": "9e2a354deffb13cfd0876ccf1e103fc5daf8d9337be43ad61c8359af8291ae55",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -109.0072965512311,
+        "reward_components": {
+          "delivery": 0.729627666914689,
+          "terminal_inventory": 0.0,
+          "shortfall": -109.08148933234125,
+          "curtailment": -0.655434885804539,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": 0.0
+        },
+        "commitments_settled": 28,
+        "commitments_met": 0,
+        "commitment_service_level": 0.0,
+        "requested_kg": 6720.0,
+        "delivered_kg": 175.11064005952537,
+        "unmet_kg": 6544.889359940475,
+        "delivery_fill_rate": 0.026058130961238893,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 0.0,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 196630.46574136178,
+        "curtailed_kwh": 196630.46574136178,
+        "solar_utilisation": 0.0,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.6061861212105412,
+        "shutdown_steps": 0,
+        "guard_interventions": 0,
+        "guard_intervention_kwh": 0.0,
+        "corrected_physics_steps": 0,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "balanced",
+      "seed": 11,
+      "manifest_sha256": "9e2a354deffb13cfd0876ccf1e103fc5daf8d9337be43ad61c8359af8291ae55",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -10.912092109763531,
+        "reward_components": {
+          "delivery": 20.28925456035499,
+          "terminal_inventory": 0.0,
+          "shortfall": -30.842981758580038,
+          "curtailment": -0.19493898561255307,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.1634259259259255
+        },
+        "commitments_settled": 28,
+        "commitments_met": 15,
+        "commitment_service_level": 0.5357142857142857,
+        "requested_kg": 6720.0,
+        "delivered_kg": 4869.4210944851975,
+        "unmet_kg": 1850.5789055148025,
+        "delivery_fill_rate": 0.7246162342983925,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 4694.310454425676,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 196630.46574136178,
+        "curtailed_kwh": 58481.69568376595,
+        "solar_utilisation": 0.7025806989610148,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.6061861212105412,
+        "shutdown_steps": 0,
+        "guard_interventions": 3530,
+        "guard_intervention_kwh": 11314.687427330422,
+        "corrected_physics_steps": 3530,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "production_mix",
+      "seed": 11,
+      "manifest_sha256": "9e2a354deffb13cfd0876ccf1e103fc5daf8d9337be43ad61c8359af8291ae55",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": 13.362238149888128,
+        "reward_components": {
+          "delivery": 25.119693281130925,
+          "terminal_inventory": 0.0,
+          "shortfall": -11.521226875476309,
+          "curtailment": -0.07280232984056537,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.1634259259259255
+        },
+        "commitments_settled": 28,
+        "commitments_met": 23,
+        "commitment_service_level": 0.8214285714285714,
+        "requested_kg": 6720.0,
+        "delivered_kg": 6028.726387471421,
+        "unmet_kg": 691.2736125285785,
+        "delivery_fill_rate": 0.8971319028975329,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 5853.615747411895,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 196630.46574136178,
+        "curtailed_kwh": 21840.6989521696,
+        "solar_utilisation": 0.8889251527232926,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.6061861212105412,
+        "shutdown_steps": 0,
+        "guard_interventions": 3530,
+        "guard_intervention_kwh": 11314.687427330422,
+        "corrected_physics_steps": 3530,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "heuristic",
+      "seed": 12,
+      "manifest_sha256": "df9768b2362f11400e80f755d41fb927fbd698a955007d31182e2084fd366242",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": 27.949767004456604,
+        "reward_components": {
+          "delivery": 28.0,
+          "terminal_inventory": 0.1,
+          "shortfall": 0.0,
+          "curtailment": -0.001216851479507112,
+          "battery_drain": -0.024155032952692786,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.124861111111111
+        },
+        "commitments_settled": 28,
+        "commitments_met": 28,
+        "commitment_service_level": 1.0,
+        "requested_kg": 6720.0,
+        "delivered_kg": 6720.0,
+        "unmet_kg": 0.0,
+        "delivery_fill_rate": 1.0,
+        "worst_commitment_fill_rate": 1.0,
+        "ch4_produced_kg": 6756.27419420313,
+        "terminal_ch4_kg": 305.8517076970145,
+        "solar_kwh": 208162.9323432514,
+        "curtailed_kwh": 365.05544385213364,
+        "solar_utilisation": 0.9982462994744417,
+        "battery_discharged_kwh": 18116.274714519524,
+        "min_battery_soc": 0.15003955578314238,
+        "shutdown_steps": 0,
+        "guard_interventions": 2697,
+        "guard_intervention_kwh": 4595.047152913359,
+        "corrected_physics_steps": 2069,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "idle",
+      "seed": 12,
+      "manifest_sha256": "df9768b2362f11400e80f755d41fb927fbd698a955007d31182e2084fd366242",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -107.07767824335477,
+        "reward_components": {
+          "delivery": 1.1232396395578863,
+          "terminal_inventory": 0.0,
+          "shortfall": -107.50704144176845,
+          "curtailment": -0.6938764411441716,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": 0.0
+        },
+        "commitments_settled": 28,
+        "commitments_met": 1,
+        "commitment_service_level": 0.03571428571428571,
+        "requested_kg": 6720.0,
+        "delivered_kg": 269.5775134938927,
+        "unmet_kg": 6450.422486506108,
+        "delivery_fill_rate": 0.04011570141278165,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 0.0,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 208162.9323432514,
+        "curtailed_kwh": 208162.9323432514,
+        "solar_utilisation": 0.0,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.537887130064181,
+        "shutdown_steps": 0,
+        "guard_interventions": 0,
+        "guard_intervention_kwh": 0.0,
+        "corrected_physics_steps": 0,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "balanced",
+      "seed": 12,
+      "manifest_sha256": "df9768b2362f11400e80f755d41fb927fbd698a955007d31182e2084fd366242",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -11.585727549798117,
+        "reward_components": {
+          "delivery": 20.15887461807252,
+          "terminal_inventory": 0.0,
+          "shortfall": -31.36450152770992,
+          "curtailment": -0.21255434386442149,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.1675462962962959
+        },
+        "commitments_settled": 28,
+        "commitments_met": 17,
+        "commitment_service_level": 0.6071428571428571,
+        "requested_kg": 6720.0,
+        "delivered_kg": 4838.129908337404,
+        "unmet_kg": 1881.8700916625953,
+        "delivery_fill_rate": 0.7199598077883042,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 4568.552394843506,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 208162.9323432514,
+        "curtailed_kwh": 63766.30315932642,
+        "solar_utilisation": 0.6936711909199154,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.537887130064181,
+        "shutdown_steps": 0,
+        "guard_interventions": 3619,
+        "guard_intervention_kwh": 13601.743049693523,
+        "corrected_physics_steps": 3619,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "production_mix",
+      "seed": 12,
+      "manifest_sha256": "df9768b2362f11400e80f755d41fb927fbd698a955007d31182e2084fd366242",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": 13.979014332222954,
+        "reward_components": {
+          "delivery": 25.245211281056005,
+          "terminal_inventory": 0.0,
+          "shortfall": -11.019154875775982,
+          "curtailment": -0.07949577676077386,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.1675462962962959
+        },
+        "commitments_settled": 28,
+        "commitments_met": 23,
+        "commitment_service_level": 0.8214285714285714,
+        "requested_kg": 6720.0,
+        "delivered_kg": 6058.850707453442,
+        "unmet_kg": 661.1492925465589,
+        "delivery_fill_rate": 0.9016146886091432,
+        "worst_commitment_fill_rate": 0.12029416245797246,
+        "ch4_produced_kg": 5789.273193959547,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 208162.9323432514,
+        "curtailed_kwh": 23848.73302823213,
+        "solar_utilisation": 0.885432373767167,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.537887130064181,
+        "shutdown_steps": 0,
+        "guard_interventions": 3619,
+        "guard_intervention_kwh": 13601.743049693523,
+        "corrected_physics_steps": 3619,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "heuristic",
+      "seed": 13,
+      "manifest_sha256": "a589ba2ab9cf8d2ef73606d17744fe442978028691f79579643c17a1908af54c",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": 26.303655653703885,
+        "reward_components": {
+          "delivery": 27.690532251051806,
+          "terminal_inventory": 0.0,
+          "shortfall": -1.2378709957927791,
+          "curtailment": -0.001504451316051074,
+          "battery_drain": -0.02569559468346563,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.1218055555555554
+        },
+        "commitments_settled": 28,
+        "commitments_met": 27,
+        "commitment_service_level": 0.9642857142857143,
+        "requested_kg": 6720.0,
+        "delivered_kg": 6645.727740252433,
+        "unmet_kg": 74.27225974756675,
+        "delivery_fill_rate": 0.9889475803947073,
+        "worst_commitment_fill_rate": 0.6905322510518052,
+        "ch4_produced_kg": 6505.579041243776,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 203592.3989681688,
+        "curtailed_kwh": 451.3353948153221,
+        "solar_utilisation": 0.9977831422140377,
+        "battery_discharged_kwh": 19271.696012599154,
+        "min_battery_soc": 0.15004983899299076,
+        "shutdown_steps": 0,
+        "guard_interventions": 2631,
+        "guard_intervention_kwh": 4420.741111756531,
+        "corrected_physics_steps": 2039,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "idle",
+      "seed": 13,
+      "manifest_sha256": "a589ba2ab9cf8d2ef73606d17744fe442978028691f79579643c17a1908af54c",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -109.75887676721315,
+        "reward_components": {
+          "delivery": 0.5839529125361517,
+          "terminal_inventory": 0.0,
+          "shortfall": -109.6641883498554,
+          "curtailment": -0.6786413298938963,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": 0.0
+        },
+        "commitments_settled": 28,
+        "commitments_met": 0,
+        "commitment_service_level": 0.0,
+        "requested_kg": 6720.0,
+        "delivered_kg": 140.1486990086764,
+        "unmet_kg": 6579.851300991324,
+        "delivery_fill_rate": 0.020855461162005418,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 0.0,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 203592.3989681688,
+        "curtailed_kwh": 203592.3989681688,
+        "solar_utilisation": 0.0,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.5175886355385964,
+        "shutdown_steps": 0,
+        "guard_interventions": 0,
+        "guard_intervention_kwh": 0.0,
+        "corrected_physics_steps": 0,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "balanced",
+      "seed": 13,
+      "manifest_sha256": "a589ba2ab9cf8d2ef73606d17744fe442978028691f79579643c17a1908af54c",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -19.190531533976856,
+        "reward_components": {
+          "delivery": 18.63504651122434,
+          "terminal_inventory": 0.0,
+          "shortfall": -37.45981395510264,
+          "curtailment": -0.20988446046892392,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.1558796296296293
+        },
+        "commitments_settled": 28,
+        "commitments_met": 14,
+        "commitment_service_level": 0.5,
+        "requested_kg": 6720.0,
+        "delivered_kg": 4472.411162693842,
+        "unmet_kg": 2247.588837306159,
+        "delivery_fill_rate": 0.6655373754008693,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 4332.262463685169,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 203592.3989681688,
+        "curtailed_kwh": 62965.3381406772,
+        "solar_utilisation": 0.6907284434006709,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.5175886355385964,
+        "shutdown_steps": 0,
+        "guard_interventions": 3367,
+        "guard_intervention_kwh": 13374.067543336181,
+        "corrected_physics_steps": 3367,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "production_mix",
+      "seed": 13,
+      "manifest_sha256": "a589ba2ab9cf8d2ef73606d17744fe442978028691f79579643c17a1908af54c",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": 6.2066169715574375,
+        "reward_components": {
+          "delivery": 23.688038955860854,
+          "terminal_inventory": 0.0,
+          "shortfall": -17.247844176556562,
+          "curtailment": -0.07769817811723236,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.1558796296296293
+        },
+        "commitments_settled": 28,
+        "commitments_met": 22,
+        "commitment_service_level": 0.7857142857142857,
+        "requested_kg": 6720.0,
+        "delivered_kg": 5685.129349406605,
+        "unmet_kg": 1034.8706505933937,
+        "delivery_fill_rate": 0.8460013912807448,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 5544.980650397919,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 203592.3989681688,
+        "curtailed_kwh": 23309.45343516971,
+        "solar_utilisation": 0.8855092157010533,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.5175886355385964,
+        "shutdown_steps": 0,
+        "guard_interventions": 3367,
+        "guard_intervention_kwh": 13374.06754333618,
+        "corrected_physics_steps": 3367,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "heuristic",
+      "seed": 14,
+      "manifest_sha256": "1d060757c7e0021377e271075eea08b561bf656b3e8589d41b506db939ed4c7d",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": 27.924018043413184,
+        "reward_components": {
+          "delivery": 28.0,
+          "terminal_inventory": 0.0657664489836186,
+          "shortfall": 0.0,
+          "curtailment": -0.0018855226068711657,
+          "battery_drain": -0.021159179259788302,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.11870370370370352
+        },
+        "commitments_settled": 28,
+        "commitments_met": 28,
+        "commitment_service_level": 1.0,
+        "requested_kg": 6720.0,
+        "delivered_kg": 6720.0,
+        "unmet_kg": 0.0,
+        "delivery_fill_rate": 1.0,
+        "worst_commitment_fill_rate": 1.0,
+        "ch4_produced_kg": 6650.018356252211,
+        "terminal_ch4_kg": 157.8394775606846,
+        "solar_kwh": 195422.1969351018,
+        "curtailed_kwh": 565.6567820613499,
+        "solar_utilisation": 0.9971054629876605,
+        "battery_discharged_kwh": 15869.384444841173,
+        "min_battery_soc": 0.1500367365341889,
+        "shutdown_steps": 0,
+        "guard_interventions": 2564,
+        "guard_intervention_kwh": 3409.2756211133274,
+        "corrected_physics_steps": 1984,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "idle",
+      "seed": 14,
+      "manifest_sha256": "1d060757c7e0021377e271075eea08b561bf656b3e8589d41b506db939ed4c7d",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -107.90513396252359,
+        "reward_components": {
+          "delivery": 0.9492546721186935,
+          "terminal_inventory": 0.0,
+          "shortfall": -108.20298131152522,
+          "curtailment": -0.6514073231170061,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": 0.0
+        },
+        "commitments_settled": 28,
+        "commitments_met": 0,
+        "commitment_service_level": 0.0,
+        "requested_kg": 6720.0,
+        "delivered_kg": 227.82112130848645,
+        "unmet_kg": 6492.178878691513,
+        "delivery_fill_rate": 0.033901952575667624,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 0.0,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 195422.1969351018,
+        "curtailed_kwh": 195422.1969351018,
+        "solar_utilisation": 0.0,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.5452743930726887,
+        "shutdown_steps": 0,
+        "guard_interventions": 0,
+        "guard_intervention_kwh": 0.0,
+        "corrected_physics_steps": 0,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "balanced",
+      "seed": 14,
+      "manifest_sha256": "1d060757c7e0021377e271075eea08b561bf656b3e8589d41b506db939ed4c7d",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -10.427014064393777,
+        "reward_components": {
+          "delivery": 20.382334758331996,
+          "terminal_inventory": 0.0,
+          "shortfall": -30.470660966672007,
+          "curtailment": -0.19053970790561833,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.1481481481481478
+        },
+        "commitments_settled": 28,
+        "commitments_met": 16,
+        "commitment_service_level": 0.5714285714285714,
+        "requested_kg": 6720.0,
+        "delivered_kg": 4891.76034199968,
+        "unmet_kg": 1828.23965800032,
+        "delivery_fill_rate": 0.7279405270832857,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 4663.939220691202,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 195422.1969351018,
+        "curtailed_kwh": 57161.912371685525,
+        "solar_utilisation": 0.7074952934304154,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.5452743930726887,
+        "shutdown_steps": 0,
+        "guard_interventions": 3200,
+        "guard_intervention_kwh": 12127.328531021534,
+        "corrected_physics_steps": 3200,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "production_mix",
+      "seed": 14,
+      "manifest_sha256": "1d060757c7e0021377e271075eea08b561bf656b3e8589d41b506db939ed4c7d",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": 14.062944680225556,
+        "reward_components": {
+          "delivery": 25.256659139434355,
+          "terminal_inventory": 0.0,
+          "shortfall": -10.973363442262574,
+          "curtailment": -0.07220286879808291,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.1481481481481478
+        },
+        "commitments_settled": 28,
+        "commitments_met": 24,
+        "commitment_service_level": 0.8571428571428571,
+        "requested_kg": 6720.0,
+        "delivered_kg": 6061.598193464246,
+        "unmet_kg": 658.4018065357545,
+        "delivery_fill_rate": 0.9020235406940842,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 5833.777072155766,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 195422.1969351018,
+        "curtailed_kwh": 21660.86063942488,
+        "solar_utilisation": 0.8891586473842668,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.5452743930726887,
+        "shutdown_steps": 0,
+        "guard_interventions": 3200,
+        "guard_intervention_kwh": 12127.328531021538,
+        "corrected_physics_steps": 3200,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "heuristic",
+      "seed": 15,
+      "manifest_sha256": "77820d40d9d7514ac6a2539bd26c6f04d3993359252ae25064df61d6387c9330",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": 27.947967371825712,
+        "reward_components": {
+          "delivery": 28.0,
+          "terminal_inventory": 0.1,
+          "shortfall": 0.0,
+          "curtailment": -0.0015744675265178699,
+          "battery_drain": -0.02536556805507361,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.12509259259259234
+        },
+        "commitments_settled": 28,
+        "commitments_met": 28,
+        "commitment_service_level": 1.0,
+        "requested_kg": 6720.0,
+        "delivered_kg": 6720.0,
+        "unmet_kg": 0.0,
+        "delivery_fill_rate": 1.0,
+        "worst_commitment_fill_rate": 1.0,
+        "ch4_produced_kg": 6953.211944429174,
+        "terminal_ch4_kg": 430.08624696713025,
+        "solar_kwh": 212387.08575842172,
+        "curtailed_kwh": 472.3402579553609,
+        "solar_utilisation": 0.9977760405899038,
+        "battery_discharged_kwh": 19024.176041305138,
+        "min_battery_soc": 0.15001186016533774,
+        "shutdown_steps": 0,
+        "guard_interventions": 2702,
+        "guard_intervention_kwh": 4163.090656590484,
+        "corrected_physics_steps": 2087,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "idle",
+      "seed": 15,
+      "manifest_sha256": "77820d40d9d7514ac6a2539bd26c6f04d3993359252ae25064df61d6387c9330",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -108.60640898298676,
+        "reward_components": {
+          "delivery": 0.8203095939082489,
+          "terminal_inventory": 0.0,
+          "shortfall": -108.718761624367,
+          "curtailment": -0.7079569525280732,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": 0.0
+        },
+        "commitments_settled": 28,
+        "commitments_met": 0,
+        "commitment_service_level": 0.0,
+        "requested_kg": 6720.0,
+        "delivered_kg": 196.87430253797973,
+        "unmet_kg": 6523.12569746202,
+        "delivery_fill_rate": 0.02929677121100889,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 0.0,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 212387.08575842172,
+        "curtailed_kwh": 212387.08575842172,
+        "solar_utilisation": 0.0,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.41033716675404097,
+        "shutdown_steps": 0,
+        "guard_interventions": 0,
+        "guard_intervention_kwh": 0.0,
+        "corrected_physics_steps": 0,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "balanced",
+      "seed": 15,
+      "manifest_sha256": "77820d40d9d7514ac6a2539bd26c6f04d3993359252ae25064df61d6387c9330",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -7.77559166288451,
+        "reward_components": {
+          "delivery": 20.920937185418257,
+          "terminal_inventory": 0.0,
+          "shortfall": -28.31625125832698,
+          "curtailment": -0.212268330716525,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.1680092592592588
+        },
+        "commitments_settled": 28,
+        "commitments_met": 17,
+        "commitment_service_level": 0.6071428571428571,
+        "requested_kg": 6720.0,
+        "delivered_kg": 5021.024924500381,
+        "unmet_kg": 1698.975075499619,
+        "delivery_fill_rate": 0.7471763280506519,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 4824.150621962404,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 212387.08575842172,
+        "curtailed_kwh": 63680.49921495749,
+        "solar_utilisation": 0.7001677433090708,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.41033716675404097,
+        "shutdown_steps": 0,
+        "guard_interventions": 3629,
+        "guard_intervention_kwh": 14631.909605502015,
+        "corrected_physics_steps": 3629,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "production_mix",
+      "seed": 15,
+      "manifest_sha256": "77820d40d9d7514ac6a2539bd26c6f04d3993359252ae25064df61d6387c9330",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": 18.35401226231087,
+        "reward_components": {
+          "delivery": 26.119884414014276,
+          "terminal_inventory": 0.0,
+          "shortfall": -7.520462343942901,
+          "curtailment": -0.07633573368643194,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.16907407407407363
+        },
+        "commitments_settled": 28,
+        "commitments_met": 24,
+        "commitment_service_level": 0.8571428571428571,
+        "requested_kg": 6720.0,
+        "delivered_kg": 6268.772259363425,
+        "unmet_kg": 451.2277406365741,
+        "delivery_fill_rate": 0.932853014786224,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 6071.897956825439,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 212387.08575842172,
+        "curtailed_kwh": 22900.72010592958,
+        "solar_utilisation": 0.892174611162668,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.41033716675404097,
+        "shutdown_steps": 0,
+        "guard_interventions": 3652,
+        "guard_intervention_kwh": 14656.488215379622,
+        "corrected_physics_steps": 3629,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "heuristic",
+      "seed": 16,
+      "manifest_sha256": "74a284aa9cb1af1dffa7a5dc0a9341f26a0e67251dc4ef67afe04d51259ce6eb",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": 21.491489063181533,
+        "reward_components": {
+          "delivery": 26.72182498098071,
+          "terminal_inventory": 0.019168195323832675,
+          "shortfall": -5.112700076077151,
+          "curtailment": -0.0017763289968132723,
+          "battery_drain": -0.02488881916009591,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.1101388888888888
+        },
+        "commitments_settled": 28,
+        "commitments_met": 24,
+        "commitment_service_level": 0.8571428571428571,
+        "requested_kg": 6720.0,
+        "delivered_kg": 6413.237995435371,
+        "unmet_kg": 306.7620045646291,
+        "delivery_fill_rate": 0.9543508921778826,
+        "worst_commitment_fill_rate": 0.586657453291613,
+        "ch4_produced_kg": 6265.173938990088,
+        "terminal_ch4_kg": 46.00366877719841,
+        "solar_kwh": 198306.93044840315,
+        "curtailed_kwh": 532.8986990439815,
+        "solar_utilisation": 0.99731275806731,
+        "battery_discharged_kwh": 18666.614370071864,
+        "min_battery_soc": 0.15000414693094616,
+        "shutdown_steps": 0,
+        "guard_interventions": 2379,
+        "guard_intervention_kwh": 3707.3078561666525,
+        "corrected_physics_steps": 1935,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "idle",
+      "seed": 16,
+      "manifest_sha256": "74a284aa9cb1af1dffa7a5dc0a9341f26a0e67251dc4ef67afe04d51259ce6eb",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -108.61794549269253,
+        "reward_components": {
+          "delivery": 0.8086155217604172,
+          "terminal_inventory": 0.0,
+          "shortfall": -108.76553791295834,
+          "curtailment": -0.6610231014946769,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": 0.0
+        },
+        "commitments_settled": 28,
+        "commitments_met": 0,
+        "commitment_service_level": 0.0,
+        "requested_kg": 6720.0,
+        "delivered_kg": 194.06772522250012,
+        "unmet_kg": 6525.9322747775,
+        "delivery_fill_rate": 0.028879125777157757,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 0.0,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 198306.93044840315,
+        "curtailed_kwh": 198306.93044840315,
+        "solar_utilisation": 0.0,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.6144668868703972,
+        "shutdown_steps": 0,
+        "guard_interventions": 0,
+        "guard_intervention_kwh": 0.0,
+        "corrected_physics_steps": 0,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "balanced",
+      "seed": 16,
+      "manifest_sha256": "74a284aa9cb1af1dffa7a5dc0a9341f26a0e67251dc4ef67afe04d51259ce6eb",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -23.139695388854765,
+        "reward_components": {
+          "delivery": 17.846611274049597,
+          "terminal_inventory": 0.0,
+          "shortfall": -40.61355490380161,
+          "curtailment": -0.21395546280645006,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.15879629629629588
+        },
+        "commitments_settled": 28,
+        "commitments_met": 13,
+        "commitment_service_level": 0.4642857142857143,
+        "requested_kg": 6720.0,
+        "delivered_kg": 4283.186705771903,
+        "unmet_kg": 2436.813294228096,
+        "delivery_fill_rate": 0.6373789740731998,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 4089.1189805494178,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 198306.93044840315,
+        "curtailed_kwh": 64186.63884193505,
+        "solar_utilisation": 0.6763267995889051,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.6144668868703972,
+        "shutdown_steps": 0,
+        "guard_interventions": 3430,
+        "guard_intervention_kwh": 11990.302580012602,
+        "corrected_physics_steps": 3430,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "production_mix",
+      "seed": 16,
+      "manifest_sha256": "74a284aa9cb1af1dffa7a5dc0a9341f26a0e67251dc4ef67afe04d51259ce6eb",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": 1.6895388811004892,
+        "reward_components": {
+          "delivery": 22.7866120440122,
+          "terminal_inventory": 0.0,
+          "shortfall": -20.853551823951193,
+          "curtailment": -0.0847250426642284,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.15879629629629588
+        },
+        "commitments_settled": 28,
+        "commitments_met": 20,
+        "commitment_service_level": 0.7142857142857143,
+        "requested_kg": 6720.0,
+        "delivered_kg": 5468.786890562928,
+        "unmet_kg": 1251.2131094370716,
+        "delivery_fill_rate": 0.8138075730004358,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 5274.719165340429,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 198306.93044840315,
+        "curtailed_kwh": 25417.512799268516,
+        "solar_utilisation": 0.8718274104601613,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.6144668868703972,
+        "shutdown_steps": 0,
+        "guard_interventions": 3430,
+        "guard_intervention_kwh": 11990.302580012603,
+        "corrected_physics_steps": 3430,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "heuristic",
+      "seed": 17,
+      "manifest_sha256": "87c00228008b9e48b62f17677564615dc84f59213b677e6e51021909ec37584a",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": 26.192017091852044,
+        "reward_components": {
+          "delivery": 27.666641077676186,
+          "terminal_inventory": 0.0,
+          "shortfall": -1.3334356892952504,
+          "curtailment": -0.0012877699781361051,
+          "battery_drain": -0.021706082106226997,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.11819444444444428
+        },
+        "commitments_settled": 28,
+        "commitments_met": 27,
+        "commitment_service_level": 0.9642857142857143,
+        "requested_kg": 6720.0,
+        "delivered_kg": 6639.993858642285,
+        "unmet_kg": 80.00614135771502,
+        "delivery_fill_rate": 0.988094324202721,
+        "worst_commitment_fill_rate": 0.6666410776761874,
+        "ch4_produced_kg": 6325.933030635909,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 194121.52373850142,
+        "curtailed_kwh": 386.33099344083155,
+        "solar_utilisation": 0.9980098497786302,
+        "battery_discharged_kwh": 16279.561579670202,
+        "min_battery_soc": 0.15006675980229345,
+        "shutdown_steps": 0,
+        "guard_interventions": 2553,
+        "guard_intervention_kwh": 3724.818805341406,
+        "corrected_physics_steps": 2077,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "idle",
+      "seed": 17,
+      "manifest_sha256": "87c00228008b9e48b62f17677564615dc84f59213b677e6e51021909ec37584a",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -106.10413782899518,
+        "reward_components": {
+          "delivery": 1.3085867833599694,
+          "terminal_inventory": 0.0,
+          "shortfall": -106.76565286656012,
+          "curtailment": -0.6470717457950053,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": 0.0
+        },
+        "commitments_settled": 28,
+        "commitments_met": 1,
+        "commitment_service_level": 0.03571428571428571,
+        "requested_kg": 6720.0,
+        "delivered_kg": 314.0608280063926,
+        "unmet_kg": 6405.9391719936075,
+        "delivery_fill_rate": 0.046735242262856046,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 0.0,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 194121.52373850142,
+        "curtailed_kwh": 194121.52373850142,
+        "solar_utilisation": 0.0,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.5413041514257851,
+        "shutdown_steps": 0,
+        "guard_interventions": 0,
+        "guard_intervention_kwh": 0.0,
+        "corrected_physics_steps": 0,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "balanced",
+      "seed": 17,
+      "manifest_sha256": "87c00228008b9e48b62f17677564615dc84f59213b677e6e51021909ec37584a",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -15.247115314516167,
+        "reward_components": {
+          "delivery": 19.417702654310496,
+          "terminal_inventory": 0.0,
+          "shortfall": -34.32918938275802,
+          "curtailment": -0.19039710458717135,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.14523148148148116
+        },
+        "commitments_settled": 28,
+        "commitments_met": 15,
+        "commitment_service_level": 0.5357142857142857,
+        "requested_kg": 6720.0,
+        "delivered_kg": 4660.248637034518,
+        "unmet_kg": 2059.7513629654804,
+        "delivery_fill_rate": 0.693489380511089,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 4346.187809028122,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 194121.52373850142,
+        "curtailed_kwh": 57119.131376151396,
+        "solar_utilisation": 0.7057558055587085,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.5413041514257851,
+        "shutdown_steps": 0,
+        "guard_interventions": 3137,
+        "guard_intervention_kwh": 11388.749612222759,
+        "corrected_physics_steps": 3137,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "production_mix",
+      "seed": 17,
+      "manifest_sha256": "87c00228008b9e48b62f17677564615dc84f59213b677e6e51021909ec37584a",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": 9.127045100589207,
+        "reward_components": {
+          "delivery": 24.26847053818385,
+          "terminal_inventory": 0.0,
+          "shortfall": -14.926117847264617,
+          "curtailment": -0.07007610884854357,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.14523148148148116
+        },
+        "commitments_settled": 28,
+        "commitments_met": 22,
+        "commitment_service_level": 0.7857142857142857,
+        "requested_kg": 6720.0,
+        "delivered_kg": 5824.4329291641225,
+        "unmet_kg": 895.567070835877,
+        "delivery_fill_rate": 0.866731090649423,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 5510.372101157736,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 194121.52373850142,
+        "curtailed_kwh": 21022.832654563073,
+        "solar_utilisation": 0.8917027218327286,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.5413041514257851,
+        "shutdown_steps": 0,
+        "guard_interventions": 3137,
+        "guard_intervention_kwh": 11388.749612222757,
+        "corrected_physics_steps": 3137,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "heuristic",
+      "seed": 18,
+      "manifest_sha256": "2031aeff66303837ce9341d41601489dcaefdb5589d489f2a8af5889420ec3ef",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": 27.94907640831412,
+        "reward_components": {
+          "delivery": 28.0,
+          "terminal_inventory": 0.1,
+          "shortfall": 0.0,
+          "curtailment": -0.001280980122554693,
+          "battery_drain": -0.02394816711881031,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.12569444444444433
+        },
+        "commitments_settled": 28,
+        "commitments_met": 28,
+        "commitment_service_level": 1.0,
+        "requested_kg": 6720.0,
+        "delivered_kg": 6720.0,
+        "unmet_kg": 0.0,
+        "delivery_fill_rate": 1.0,
+        "worst_commitment_fill_rate": 1.0,
+        "ch4_produced_kg": 6965.563481773407,
+        "terminal_ch4_kg": 473.42572278552257,
+        "solar_kwh": 212381.16799579904,
+        "curtailed_kwh": 384.2940367664078,
+        "solar_utilisation": 0.9981905456100797,
+        "battery_discharged_kwh": 17961.125339107683,
+        "min_battery_soc": 0.15011082675192547,
+        "shutdown_steps": 0,
+        "guard_interventions": 2715,
+        "guard_intervention_kwh": 4292.983456206239,
+        "corrected_physics_steps": 2087,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "idle",
+      "seed": 18,
+      "manifest_sha256": "2031aeff66303837ce9341d41601489dcaefdb5589d489f2a8af5889420ec3ef",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -107.96080720556651,
+        "reward_components": {
+          "delivery": 0.9494260042172323,
+          "terminal_inventory": 0.0,
+          "shortfall": -108.20229598313107,
+          "curtailment": -0.7079372266526631,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": 0.0
+        },
+        "commitments_settled": 28,
+        "commitments_met": 0,
+        "commitment_service_level": 0.0,
+        "requested_kg": 6720.0,
+        "delivered_kg": 227.86224101213577,
+        "unmet_kg": 6492.137758987865,
+        "delivery_fill_rate": 0.03390807157918687,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 0.0,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 212381.16799579904,
+        "curtailed_kwh": 212381.16799579904,
+        "solar_utilisation": 0.0,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.32623638457482806,
+        "shutdown_steps": 0,
+        "guard_interventions": 0,
+        "guard_intervention_kwh": 0.0,
+        "corrected_physics_steps": 0,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "balanced",
+      "seed": 18,
+      "manifest_sha256": "2031aeff66303837ce9341d41601489dcaefdb5589d489f2a8af5889420ec3ef",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -7.115765933425635,
+        "reward_components": {
+          "delivery": 21.050593391218232,
+          "terminal_inventory": 0.0,
+          "shortfall": -27.797626435127082,
+          "curtailment": -0.20521437099825734,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.16351851851851806
+        },
+        "commitments_settled": 28,
+        "commitments_met": 17,
+        "commitment_service_level": 0.6071428571428571,
+        "requested_kg": 6720.0,
+        "delivered_kg": 5052.142413892375,
+        "unmet_kg": 1667.8575861076247,
+        "delivery_fill_rate": 0.7518069068292225,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 4824.280172880245,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 212381.16799579904,
+        "curtailed_kwh": 61564.31129947718,
+        "solar_utilisation": 0.7101234922076757,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.32623638457482806,
+        "shutdown_steps": 0,
+        "guard_interventions": 3532,
+        "guard_intervention_kwh": 14749.380047200088,
+        "corrected_physics_steps": 3532,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "production_mix",
+      "seed": 18,
+      "manifest_sha256": "2031aeff66303837ce9341d41601489dcaefdb5589d489f2a8af5889420ec3ef",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": 19.177654518518,
+        "reward_components": {
+          "delivery": 26.283011433807413,
+          "terminal_inventory": 0.0,
+          "shortfall": -6.867954264770361,
+          "curtailment": -0.07318968755608143,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.1642129629629625
+        },
+        "commitments_settled": 28,
+        "commitments_met": 25,
+        "commitment_service_level": 0.8928571428571429,
+        "requested_kg": 6720.0,
+        "delivered_kg": 6307.922744113778,
+        "unmet_kg": 412.0772558862217,
+        "delivery_fill_rate": 0.9386789797788361,
+        "worst_commitment_fill_rate": 0.2067800461886674,
+        "ch4_produced_kg": 6080.0605031016485,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 212381.16799579904,
+        "curtailed_kwh": 21956.90626682444,
+        "solar_utilisation": 0.8966155687247245,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.32623638457482806,
+        "shutdown_steps": 0,
+        "guard_interventions": 3547,
+        "guard_intervention_kwh": 14762.394578199343,
+        "corrected_physics_steps": 3532,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "heuristic",
+      "seed": 19,
+      "manifest_sha256": "08181b8333957eb7b2b3a721de655858df426fee7de3ffa9c0f5f2eda4fcd1e4",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": 20.642462953366433,
+        "reward_components": {
+          "delivery": 26.554549497711022,
+          "terminal_inventory": 0.0,
+          "shortfall": -5.7818020091558955,
+          "curtailment": -0.001283793519904327,
+          "battery_drain": -0.0242322231502326,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.10476851851851843
+        },
+        "commitments_settled": 28,
+        "commitments_met": 24,
+        "commitment_service_level": 0.8571428571428571,
+        "requested_kg": 6720.0,
+        "delivered_kg": 6373.091879450646,
+        "unmet_kg": 346.9081205493537,
+        "delivery_fill_rate": 0.9483767677753937,
+        "worst_commitment_fill_rate": 0.49647800015324417,
+        "ch4_produced_kg": 6205.884582006241,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 198241.61338307208,
+        "curtailed_kwh": 385.138055971298,
+        "solar_utilisation": 0.9980572290075793,
+        "battery_discharged_kwh": 18174.167362674383,
+        "min_battery_soc": 0.15006819021533,
+        "shutdown_steps": 0,
+        "guard_interventions": 2263,
+        "guard_intervention_kwh": 3279.0716114143356,
+        "corrected_physics_steps": 1917,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "idle",
+      "seed": 19,
+      "manifest_sha256": "08181b8333957eb7b2b3a721de655858df426fee7de3ffa9c0f5f2eda4fcd1e4",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -109.17732001451762,
+        "reward_components": {
+          "delivery": 0.6966970726851802,
+          "terminal_inventory": 0.0,
+          "shortfall": -109.21321170925928,
+          "curtailment": -0.6608053779435731,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": 0.0
+        },
+        "commitments_settled": 28,
+        "commitments_met": 0,
+        "commitment_service_level": 0.0,
+        "requested_kg": 6720.0,
+        "delivered_kg": 167.20729744444324,
+        "unmet_kg": 6552.792702555556,
+        "delivery_fill_rate": 0.024882038310185005,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 0.0,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 198241.61338307208,
+        "curtailed_kwh": 198241.61338307208,
+        "solar_utilisation": 0.0,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.644293870238363,
+        "shutdown_steps": 0,
+        "guard_interventions": 0,
+        "guard_intervention_kwh": 0.0,
+        "corrected_physics_steps": 0,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "balanced",
+      "seed": 19,
+      "manifest_sha256": "08181b8333957eb7b2b3a721de655858df426fee7de3ffa9c0f5f2eda4fcd1e4",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -27.18554215052737,
+        "reward_components": {
+          "delivery": 17.038469318660443,
+          "terminal_inventory": 0.0,
+          "shortfall": -43.84612272535823,
+          "curtailment": -0.218907262348126,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.15898148148148109
+        },
+        "commitments_settled": 28,
+        "commitments_met": 10,
+        "commitment_service_level": 0.35714285714285715,
+        "requested_kg": 6720.0,
+        "delivered_kg": 4089.232636478506,
+        "unmet_kg": 2630.7673635214937,
+        "delivery_fill_rate": 0.6085167613807301,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 3922.0253390340486,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 198241.61338307208,
+        "curtailed_kwh": 65672.17870443783,
+        "solar_utilisation": 0.6687265726720241,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.644293870238363,
+        "shutdown_steps": 0,
+        "guard_interventions": 3434,
+        "guard_intervention_kwh": 11793.385758923021,
+        "corrected_physics_steps": 3434,
+        "out_of_range_decisions": 0
+      }
+    },
+    {
+      "controller": "production_mix",
+      "seed": 19,
+      "manifest_sha256": "08181b8333957eb7b2b3a721de655858df426fee7de3ffa9c0f5f2eda4fcd1e4",
+      "metrics": {
+        "stage": "weather-forecast-alpha",
+        "decisions": 672,
+        "physical_steps": 10080,
+        "hours": 168.0,
+        "reward_total": -2.3707701381193775,
+        "reward_components": {
+          "delivery": 21.97559269165454,
+          "terminal_inventory": 0.0,
+          "shortfall": -24.097629233381834,
+          "curtailment": -0.08975211491060052,
+          "battery_drain": 0.0,
+          "reserve_breach": 0.0,
+          "shutdown": 0.0,
+          "correction": -0.15898148148148109
+        },
+        "commitments_settled": 28,
+        "commitments_met": 19,
+        "commitment_service_level": 0.6785714285714286,
+        "requested_kg": 6720.0,
+        "delivered_kg": 5274.14224599709,
+        "unmet_kg": 1445.85775400291,
+        "delivery_fill_rate": 0.7848425961305193,
+        "worst_commitment_fill_rate": 0.0,
+        "ch4_produced_kg": 5106.934948552644,
+        "terminal_ch4_kg": 0.0,
+        "solar_kwh": 198241.61338307208,
+        "curtailed_kwh": 26925.63447318013,
+        "solar_utilisation": 0.8641776869463305,
+        "battery_discharged_kwh": 0.0,
+        "min_battery_soc": 0.644293870238363,
+        "shutdown_steps": 0,
+        "guard_interventions": 3434,
+        "guard_intervention_kwh": 11793.385758923021,
+        "corrected_physics_steps": 3434,
+        "out_of_range_decisions": 0
+      }
+    }
+  ]
+}

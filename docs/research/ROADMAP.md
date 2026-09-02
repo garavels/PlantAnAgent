@@ -25,6 +25,9 @@ equipment consequences.
   been supplied for identical replay.
 - B1 and B3 now have alpha implementations: private stochastic solar truth, causal
   forecast vintages, recurring delivery commitments, and multi-rate accounting.
+- The clean weather-alpha diagnostic is replay-audited over 20 paired seeds. It breaks
+  universal heuristic saturation (98.58% mean fill; eight shortage episodes) but still
+  contains no forecast-consuming or optimizer arm.
 - B2 is **not implemented**: process equipment remains memoryless, so the decisive
   startup/ramp/commitment trade-off is still missing.
 - Gate B is **not passed**: no forecast-aware heuristic, MPC, or perfect-information

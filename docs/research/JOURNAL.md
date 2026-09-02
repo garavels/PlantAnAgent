@@ -891,3 +891,78 @@ delivery-alpha result. This is still not the benchmark on which to claim RL valu
 substantive physics increment remains technology-labelled equipment commitment, followed by
 a forecast-aware heuristic, deterministic MPC, stochastic/risk-aware MPC where tractable,
 and a perfect-information oracle before any headline multi-seed PPO campaign.
+
+## 2026-09-02 — Formal weather-alpha baseline evidence
+
+### Frozen run
+
+The maintained evaluator ran from clean revision
+`129624ad6668d3286b431a76cb5e616fc87fa034`:
+
+```text
+.venv/bin/python -m plant_backend.rl.v2 --seed-start 0 --count 20 --hours 168 \
+  --delivery-rate 40 \
+  --json docs/research/results/v2_weather_alpha_baselines_seed0_19.json
+```
+
+The run evaluated four diagnostic arms over seeds 0--19, 168 hours per episode, for
+80 runs and 806,400 one-minute physical transitions. It took roughly two minutes on the
+development machine. Most of that overhead is consistent with the already-measured eager
+construction of 672 forecast vintages and approximately 31 million innovations at every
+reset; throughput must be addressed before large training sweeps.
+
+The committed artifact's SHA-256 is
+`d5af5bee853dd5729792753fe8d5c47d50dd45e6a56ef588f1b6b3b47c7f6721`.
+It records result schema 2, Python 3.12.7, the clean source revision, dependency-lock
+digest `cb346b6cace28625107c93cc446181b8f85a6916741393c98e8e5ab00f91e3af`,
+the 42-field interface digest
+`2f664d7fc5c2aaf37e2bfef62697cf5aa48200597799afcb6ad349ea1ec30ec3`,
+and full checkpoint digest
+`89bcd56a211f3228419d7fce530c1039bd9902c8d7ab7d08b82f8cba7b08476d`.
+All arms share one manifest identity within each seed; all seeds have complete arms and
+distinct manifests.
+
+### Result and interpretation
+
+The forecast-blind heuristic produced 98.58% +/- 2.15% mean delivery fill, 96.43% +/-
+5.30% service, and 95.4 +/- 144.7 kg unmet methane. Twelve of 20 episodes achieved
+perfect fill and service; eight did not. Seed 6 was the principal tail case at 93.70%
+aggregate fill, 423.7 kg unmet, and only 22.06% fill on its worst commitment. The strongest
+open-loop diagnostic, the fixed production mix, achieved 86.36% +/- 4.76% fill and left
+916.9 +/- 320.1 kg unmet. In paired comparisons, the heuristic improved fill by 12.22
+percentage points and reduced unmet methane by 821.5 kg on average, winning both metrics
+on all 20 seeds.
+
+The heuristic also reached the 15% battery reserve in effectively every episode and its
+requests accumulated 3.7 MWh of guard projection on average. These are important control-
+authority findings rather than hard-safety failures: no reserve breach, shutdown, or
+out-of-range action occurred.
+
+This passes the weather increment's narrow calibration condition. It breaks universal
+heuristic saturation and creates a meaningful seed-dependent failure tail while retaining
+nominal feasibility. It does not demonstrate forecast value, RL value, optimality, or
+commercial value: no arm uses the forecast, controller information sets are unequal,
+equipment remains memoryless, and the 20 seeds come from one synthetic in-distribution
+regime. The comparison with delivery alpha is also confounded by the changed contract
+rate and several interface/guard/accounting corrections; it is stage-to-stage evidence,
+not a controlled weather ablation.
+
+### Independent evidence audit
+
+An independent read-only audit regenerated all 20 episode manifests and matched every
+identity. It replayed all four controllers on seeds 0, 6, and 19 and matched every stored
+metric to `1e-12`, recomputed all population summaries, confirmed the interface and full
+checkpoint digests against current code, and found no non-finite values or violation of
+delivery identities, reward decomposition, solar utilisation, reserve SOC, or inferred
+methane conservation. The only archival limitations are that the raw JSON itself does not
+store its generation timestamp, exact command, or its own external checksum; this journal
+entry supplies those identities.
+
+### Decision
+
+Gate B remains **not passed**. The next scientific bottleneck is an opt-in, technology-
+labelled electrolyser commitment model with a compatibility-off replay mode. A formal
+controller tournament is deferred until that stateful physics exists and forecast-blind,
+forecast-aware, MPC, risk-aware, and feasible perfect-information comparators share a
+controller-neutral information contract. Weather generation can be optimized in parallel,
+but speed alone would only make the present near-ceiling task cheaper to overfit.
