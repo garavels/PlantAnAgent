@@ -230,6 +230,7 @@ def test_private_audit_manifest_contains_replay_data_and_detached_accounting() -
     assert before["episode"]["seed"] == 23
     assert len(before["episode"]["commitments"]) == 2
     assert before["delivery_accounting"]["pending_count"] == 2
+    assert before["delivery_accounting"]["frozen"] is True
     digest = before["manifest_sha256"]
 
     for _ in range(4):
@@ -237,3 +238,15 @@ def test_private_audit_manifest_contains_replay_data_and_detached_accounting() -
     after = env.audit_manifest()
     assert after["manifest_sha256"] == digest
     assert after["delivery_accounting"]["pending_count"] < 2
+
+
+def test_v2_delivery_schedule_cannot_be_replaced_mid_episode() -> None:
+    env = PlantEnvV2(episode=SHORT)
+    env.reset(seed=31)
+    env.step_action(Action.idle())
+    before = env.simulator.delivery_audit()
+
+    with pytest.raises(RuntimeError, match="frozen"):
+        env.simulator.set_delivery_schedule([])
+
+    assert env.simulator.delivery_audit() == before

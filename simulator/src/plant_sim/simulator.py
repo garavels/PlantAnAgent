@@ -215,6 +215,8 @@ class PlantSimulator:
     def set_delivery_schedule(
         self,
         commitments: Iterable[DeliveryCommitment | Mapping[str, Any]],
+        *,
+        freeze: bool = False,
     ) -> DeliveryStepResult:
         """Install an episode-relative methane delivery schedule atomically.
 
@@ -223,10 +225,13 @@ class PlantSimulator:
         every deadline must still be in the future.  A reset or scenario load
         clears both the schedule and all delivery accounting.
         """
-        return self.delivery_ledger.set_schedule(
+        result = self.delivery_ledger.set_schedule(
             commitments,
             current_step=self.step_index,
         )
+        if freeze:
+            self.delivery_ledger.freeze()
+        return result
 
     @property
     def delivery_step(self) -> DeliveryStepResult:

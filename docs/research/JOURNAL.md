@@ -525,3 +525,13 @@ V2 now rejects a non-finite or over-capacity commitment amount during episode va
 and requires every reward weight to be finite and non-negative at environment construction
 and direct reward computation. These are experiment-contract errors, not conditions a
 controller should learn around.
+
+### Immutable delivery episodes
+
+Successful mid-episode delivery-schedule replacement previously began a fresh ledger,
+which intentionally suited an interactive simulator but could erase benchmark settlement
+history without changing V2's sampled manifest hash. The delivery ledger now has an
+opt-in freeze. V2 freezes the complete schedule immediately after reset; replacement then
+raises without altering schedule or accounting. A simulator reset clears the ledger and
+its freeze, preserving the interactive/V1 default. The ledger audit explicitly records
+its frozen state.

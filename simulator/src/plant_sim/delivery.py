@@ -165,6 +165,7 @@ class DeliveryLedger:
     def clear(self, *, current_step: int = 0) -> None:
         """Remove the schedule, settlements, and all cumulative accounting."""
         step = _tick(current_step, name="current_step", minimum=0)
+        self._frozen = False
         self._commitments: tuple[DeliveryCommitment, ...] = ()
         self._pending: dict[str, DeliveryCommitment] = {}
         self._by_step: dict[int, tuple[DeliveryCommitment, ...]] = {}
@@ -187,6 +188,8 @@ class DeliveryLedger:
         call.  Consequently, a schedule installed after tick zero may only
         contain commitments whose deadlines are still in the future.
         """
+        if self._frozen:
+            raise RuntimeError("delivery schedule is frozen for this episode")
         step = _tick(current_step, name="current_step", minimum=0)
         try:
             parsed = tuple(DeliveryCommitment.parse(item) for item in commitments)
@@ -230,6 +233,10 @@ class DeliveryLedger:
             next_commitment=self._find_next_pending(),
         )
         return self._current
+
+    def freeze(self) -> None:
+        """Prevent schedule replacement until the ledger is cleared by reset."""
+        self._frozen = True
 
     def settle(self, step: int, *, available_kg: float) -> DeliveryStepResult:
         """Settle all commitments due at ``step`` against available methane.
@@ -307,9 +314,15 @@ class DeliveryLedger:
         """Immutable settlement history, oldest first."""
         return tuple(self._settlements)
 
+    @property
+    def frozen(self) -> bool:
+        """Whether ordinary callers may replace the installed schedule."""
+        return self._frozen
+
     def audit(self) -> dict[str, Any]:
         """Serialize the complete schedule and accounting for offline audit."""
         return {
+            "frozen": self._frozen,
             "schedule": [commitment.to_dict() for commitment in self._commitments],
             "settlements": [settlement.to_dict() for settlement in self._settlements],
             "current": self._current.to_dict(),

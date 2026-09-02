@@ -85,7 +85,10 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
         self.episode_physics_steps = drawn.physics_steps
         self.episode_decisions = drawn.physics_steps // drawn.decision_stride
         self.simulator.load_scenario(drawn.scenario)
-        self.simulator.set_delivery_schedule(drawn.commitments)
+        # Evaluation episodes are immutable after reset. Allowing schedule
+        # replacement would erase settlement history while retaining the
+        # originally sampled manifest identity.
+        self.simulator.set_delivery_schedule(drawn.commitments, freeze=True)
         self.encoder.reset()
         self.metrics = EpisodeMetricsV2()
         self.physics_steps_taken = 0

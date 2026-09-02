@@ -188,6 +188,31 @@ def test_schedule_deadlines_are_relative_to_episode_not_install_call() -> None:
     assert [item.id for item in simulator.delivery_step.settlements] == ["future"]
 
 
+def test_frozen_schedule_cannot_erase_accounting_and_reset_unlocks_it() -> None:
+    simulator = PlantSimulator(
+        PlantConfig(ch4_tank=StorageConfig(capacity_kg=10.0, initial_kg=2.0))
+    )
+    simulator.set_delivery_schedule(
+        [DeliveryCommitment(id="immutable", due_step=1, requested_kg=1.0)],
+        freeze=True,
+    )
+    simulator.step(Action.idle())
+    before = simulator.delivery_audit()
+
+    assert before["frozen"] is True
+    with pytest.raises(RuntimeError, match="frozen"):
+        simulator.set_delivery_schedule(
+            [DeliveryCommitment(id="replacement", due_step=2, requested_kg=1.0)]
+        )
+    assert simulator.delivery_audit() == before
+
+    simulator.reset()
+    assert simulator.delivery_audit()["frozen"] is False
+    simulator.set_delivery_schedule(
+        [DeliveryCommitment(id="new-episode", due_step=1, requested_kg=0.0)]
+    )
+
+
 def test_views_are_immutable_and_audit_serialization_is_detached() -> None:
     simulator = PlantSimulator()
     simulator.set_delivery_schedule(
