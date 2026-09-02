@@ -98,6 +98,34 @@ def test_heuristic_lends_from_the_battery_above_the_reserve(sim: PlantSimulator)
     assert decision.action.battery_support_kw > 0.0
 
 
+def test_heuristic_counts_discharge_losses_near_the_reserve(sim: PlantSimulator) -> None:
+    """A top-up that would cross the reserve after losses is not dispatched."""
+    reserve_soc = 0.4
+    usable_kwh = 2.0
+    capacity_kwh = sim.get_telemetry().battery_capacity_kwh
+    naive_support_kw = usable_kwh / sim.config.dt_h
+    deliverable_support_kw = naive_support_kw * sim.config.battery.discharge_efficiency
+    required_support_kw = (naive_support_kw + deliverable_support_kw) / 2.0
+    min_load_kw = sim.config.electrolyser.min_load_frac * sim.config.electrolyser.rated_kw
+    observation = observe(
+        sim,
+        # The near-reserve recharge rule leaves half of this power for the stack.
+        solar_available_kw=2.0 * (min_load_kw - required_support_kw),
+        battery_soc=reserve_soc + usable_kwh / capacity_kwh,
+        co2_fill=1.0,
+        ch4_fill=1.0,
+    )
+    decision = HeuristicController().compute_action(
+        observation,
+        constraints=Constraints(battery_min_soc=reserve_soc),
+        config=sim.config,
+    )
+
+    assert deliverable_support_kw < required_support_kw < naive_support_kw
+    assert decision.action.battery_support_kw == 0.0
+    assert decision.action.electrolyser_share == 0.0
+
+
 def test_heuristic_does_not_command_offline_units(sim: PlantSimulator) -> None:
     sim.inject_fault({"type": "dac_outage"})
     sim.inject_fault({"type": "methanator_outage"})
@@ -193,6 +221,30 @@ def test_validation_protects_the_battery_reserve(sim: PlantSimulator) -> None:
         config=sim.config,
     )
     assert validated.action.battery_support_kw == 400.0
+
+
+def test_validation_counts_discharge_losses_at_reserve_boundary(sim: PlantSimulator) -> None:
+    reserve_soc = 0.4
+    usable_kwh = 2.0
+    capacity_kwh = sim.get_telemetry().battery_capacity_kwh
+    observation = observe(
+        sim,
+        battery_soc=reserve_soc + usable_kwh / capacity_kwh,
+    )
+    validated = validate(
+        Action(battery_support_kw=5000.0),
+        observation,
+        constraints=Constraints(battery_min_soc=reserve_soc),
+        config=sim.config,
+    )
+
+    support_kw = validated.action.battery_support_kw
+    assert support_kw == pytest.approx(
+        usable_kwh * sim.config.battery.discharge_efficiency / sim.config.dt_h
+    )
+    energy_draw_kwh = support_kw * sim.config.dt_h / sim.config.battery.discharge_efficiency
+    ending_soc = observation.battery_soc - energy_draw_kwh / observation.battery_capacity_kwh
+    assert ending_soc == pytest.approx(reserve_soc)
 
 
 def test_validation_rejects_junk_without_raising(sim: PlantSimulator) -> None:

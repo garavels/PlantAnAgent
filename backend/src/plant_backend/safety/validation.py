@@ -127,7 +127,8 @@ def _support_kw(
         return 0.0
 
     usable_kwh = (observation.battery_soc - reserve_soc) * observation.battery_capacity_kwh
-    limit_kw = min(constraints.support_limit_kw(config), usable_kwh / config.dt_h, headroom_kw)
+    deliverable_kw = usable_kwh * config.battery.discharge_efficiency / config.dt_h
+    limit_kw = min(constraints.support_limit_kw(config), deliverable_kw, headroom_kw)
     if requested_kw > limit_kw:
         adjustments.append(
             f"Battery support clamped to {limit_kw:.0f} kW (asked for {requested_kw:.0f} kW)"

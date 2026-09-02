@@ -153,3 +153,43 @@ The exploratory 73/100 result used the shifted seed range 1--100. Both are retai
 the record. The conclusion is insensitive to that choice: roughly three quarters of
 default episodes terminate against storage headroom, and their production is nearly a
 deterministic function of randomized starting inventory.
+
+## 2026-09-02 — Battery reserve consistency correction
+
+### Finding
+
+The V1 audit found a mismatch between the supervisory control envelope and the
+physical battery. `Battery.discharge_headroom_kw` correctly converts stored energy
+into bus-side power through discharge efficiency, but both the safety validator and
+the heuristic divided usable stored energy by timestep duration without applying the
+efficiency loss. Near the configured reserve, they could therefore request more
+bus-side support than the battery could deliver without crossing that reserve.
+
+The correct relationship is:
+
+```text
+deliverable bus power = usable stored kWh * discharge efficiency / timestep hours
+```
+
+### Change and verification
+
+The validator and heuristic now use the same relationship as the physical component.
+Two regression tests cover different failure modes:
+
+- the validator clamps a deliberately excessive request to the loss-adjusted boundary
+  and the projected ending SOC is exactly the declared reserve;
+- the heuristic refuses a minimum-stack-load top-up for which the lossless estimate
+  appears sufficient but the physically deliverable power is insufficient.
+
+Focused verification before commit:
+
+```text
+backend/tests/test_control.py                         22 passed
+simulator battery-focused tests                       5 passed
+```
+
+This fix preserves existing nominal behavior away from the boundary. The envelope
+still operates on reported SOC and reported effective capacity by design; a positive
+SOC sensor bias can consequently make it optimistic. Sensor uncertainty and robust
+reserve estimation are separate V2 research questions and are not silently folded
+into this correctness fix.

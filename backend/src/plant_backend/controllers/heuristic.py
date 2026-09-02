@@ -183,7 +183,8 @@ class HeuristicController(Controller):
         lendable_kw = 0.0
         if observation.battery_soc > reserve_soc:
             usable_kwh = (observation.battery_soc - reserve_soc) * observation.battery_capacity_kwh
-            lendable_kw = min(constraints.support_limit_kw(config), usable_kwh / config.dt_h)
+            deliverable_kw = usable_kwh * config.battery.discharge_efficiency / config.dt_h
+            lendable_kw = min(constraints.support_limit_kw(config), deliverable_kw)
         support_kw = min(max(0.0, min_load_kw - stack_kw), lendable_kw)
         if stack_kw + support_kw < min_load_kw:
             notes.append("Not enough power for the stack floor: buffering instead")
