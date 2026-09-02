@@ -535,3 +535,19 @@ opt-in freeze. V2 freezes the complete schedule immediately after reset; replace
 raises without altering schedule or accounting. A simulator reset clears the ledger and
 its freeze, preserving the interactive/V1 default. The ledger audit explicitly records
 its frozen state.
+
+### Full checkpoint compatibility identity
+
+The static V2 digest initially covered only the ordered observation/action descriptor.
+Changing the 15-minute cadence to 30 minutes, the delivery rate, plant sizing, safety
+envelope, or reward weights therefore retained that digest even though it changed the
+task a policy had learned. There is not yet a V2 checkpoint loader, making the
+specification's stronger compatibility promise premature.
+
+V2 now exposes a second, canonical checkpoint-contract digest over the interface,
+physics and decision timing, time/flow semantics, complete episode distribution,
+plant configuration, constraints, objective version, and reward weights. A validation
+function refuses a missing, wrong-environment, or mismatched full digest. The static
+digest remains explicitly labelled interface-only. The evaluator and private replay
+manifest record both identities. Any future V2 trainer/loader must use the full digest;
+the existing V1 loader remains V1-only.

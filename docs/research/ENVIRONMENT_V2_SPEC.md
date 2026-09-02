@@ -83,7 +83,14 @@ bind to them. V2 checkpoint loading requires an environment identifier and contr
 digest; an artifact without those fields is V1-only. Cross-version loading fails
 loudly—vectors are never padded and weights are never silently reused.
 
-V2 will have an explicit environment contract containing at least:
+V2 has two deliberately different identities. The static descriptor digest covers only
+observation/action layout and normalization. `PlantEnvV2.checkpoint_contract` is the
+full compatibility identity and also covers timing, episode distribution, plant and
+constraint parameters, objective version, and reward weights. Future V2 checkpoint
+writers/loaders must store and require that full digest; no V2 loader exists in the
+delivery alpha, so V1's loader must not be used for it.
+
+The full V2 checkpoint contract contains at least:
 
 - environment contract identifier and semantic version;
 - simulator package version and source revision;

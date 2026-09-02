@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from copy import deepcopy
 from typing import Any
 
 import gymnasium as gym
@@ -22,6 +23,7 @@ from ...safety.validation import validate
 from ..actions import ActionAdapter, DecodedAction
 from . import spaces
 from .config import EpisodeConfigV2, EpisodeV2, sample_episode
+from .contract import describe_checkpoint_contract
 from .metrics import EpisodeMetricsV2
 from .observation import DeliveryObservation, ObservationEncoderV2
 from .reward import OBJECTIVE_VERSION, IntervalOutcome, RewardWeightsV2, compute
@@ -44,6 +46,12 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
         self.episode_config = (episode or EpisodeConfigV2()).validate(self.config)
         self.constraints = constraints or Constraints()
         self.weights = (weights or RewardWeightsV2()).validate()
+        self._checkpoint_contract = describe_checkpoint_contract(
+            plant=self.config,
+            episode=self.episode_config,
+            constraints=self.constraints,
+            weights=self.weights,
+        )
 
         self.simulator = PlantSimulator(self.config)
         self.encoder = ObservationEncoderV2(self.config)
@@ -267,6 +275,7 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
         return {
             "environment_id": spaces.ENVIRONMENT_ID,
             "environment_contract_digest": spaces.ENVIRONMENT_CONTRACT_DIGEST,
+            "checkpoint_contract_digest": self.checkpoint_contract_digest,
             "stage": spaces.STAGE,
             "clock": self.telemetry.clock,
             "decision_index": self.decisions_taken,
@@ -288,6 +297,7 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
         immutable = {
             "manifest_schema_version": 1,
             "environment": spaces.describe(),
+            "checkpoint_contract": self.checkpoint_contract,
             "objective_version": OBJECTIVE_VERSION,
             "episode_config": self.episode_config.to_dict(),
             "plant_config": self.config.to_dict(),
@@ -310,6 +320,15 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
             **immutable,
             "delivery_accounting": self.simulator.delivery_audit(),
         }
+
+    @property
+    def checkpoint_contract_digest(self) -> str:
+        return str(self._checkpoint_contract["checkpoint_contract_digest"])
+
+    @property
+    def checkpoint_contract(self) -> dict[str, Any]:
+        """Detached full identity that every future V2 checkpoint must declare."""
+        return deepcopy(self._checkpoint_contract)
 
 
 __all__ = ["PlantEnvV2"]

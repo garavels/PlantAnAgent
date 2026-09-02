@@ -121,6 +121,8 @@ def describe() -> dict[str, object]:
     return {
         **contract_payload(),
         "environment_contract_digest": ENVIRONMENT_CONTRACT_DIGEST,
+        "digest_scope": "observation/action interface only",
+        "full_checkpoint_contract": "PlantEnvV2.checkpoint_contract",
         "limitations": [
             "deterministic V1 clear-sky solar; no forecast uncertainty yet",
             "memoryless V1 process equipment",

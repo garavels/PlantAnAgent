@@ -14,6 +14,10 @@ from plant_backend.rl import spaces as v1_spaces
 from plant_backend.rl.v2 import EpisodeConfigV2, PlantEnvV2, RewardWeightsV2
 from plant_backend.rl.v2 import spaces as v2_spaces
 from plant_backend.rl.v2.config import sample_episode
+from plant_backend.rl.v2.contract import (
+    CheckpointContractError,
+    require_compatible_checkpoint,
+)
 
 
 SHORT = EpisodeConfigV2(horizon_h=2.0, delivery_period_h=1.0)
@@ -47,6 +51,55 @@ def test_v2_descriptor_digest_is_complete_and_deterministic() -> None:
     assert isinstance(observation_fields, list)
     assert len(observation_fields) == v2_spaces.OBSERVATION_SIZE
     assert len(set(v2_spaces.OBSERVATION_NAMES)) == v2_spaces.OBSERVATION_SIZE
+    assert described["digest_scope"] == "observation/action interface only"
+
+
+def test_full_checkpoint_contract_changes_with_timing_and_objective() -> None:
+    base = PlantEnvV2(episode=SHORT)
+    slower = PlantEnvV2(
+        episode=EpisodeConfigV2(
+            horizon_h=2.0,
+            decision_interval_s=1_800.0,
+            delivery_period_h=1.0,
+        )
+    )
+    reweighted = PlantEnvV2(
+        episode=SHORT,
+        weights=RewardWeightsV2(shortfall=5.0),
+    )
+
+    assert base.checkpoint_contract_digest != slower.checkpoint_contract_digest
+    assert base.checkpoint_contract_digest != reweighted.checkpoint_contract_digest
+    assert (
+        base.checkpoint_contract["interface_contract_digest"]
+        == slower.checkpoint_contract["interface_contract_digest"]
+    )
+
+
+def test_v2_checkpoint_compatibility_requires_the_full_exact_digest() -> None:
+    env = PlantEnvV2(episode=SHORT)
+    expected = env.checkpoint_contract
+    require_compatible_checkpoint(
+        {
+            "environment_id": v2_spaces.ENVIRONMENT_ID,
+            "checkpoint_contract_digest": env.checkpoint_contract_digest,
+        },
+        expected=expected,
+    )
+
+    with pytest.raises(CheckpointContractError, match="missing"):
+        require_compatible_checkpoint(
+            {"environment_id": v2_spaces.ENVIRONMENT_ID},
+            expected=expected,
+        )
+    with pytest.raises(CheckpointContractError, match="mismatch"):
+        require_compatible_checkpoint(
+            {
+                "environment_id": v2_spaces.ENVIRONMENT_ID,
+                "checkpoint_contract_digest": "0" * 64,
+            },
+            expected=expected,
+        )
 
 
 @pytest.mark.parametrize(
@@ -109,6 +162,7 @@ def test_public_info_contains_current_contract_context_but_no_future_tape() -> N
     assert "fault" not in serialized
     assert "schedule" not in serialized
     assert "commitments" not in serialized
+    assert info["checkpoint_contract_digest"] == env.checkpoint_contract_digest
 
 
 def test_a_decision_holds_one_action_for_fifteen_physics_steps() -> None:
@@ -232,6 +286,10 @@ def test_private_audit_manifest_contains_replay_data_and_detached_accounting() -
     assert before["delivery_accounting"]["pending_count"] == 2
     assert before["delivery_accounting"]["frozen"] is True
     digest = before["manifest_sha256"]
+    assert (
+        before["checkpoint_contract"]["checkpoint_contract_digest"]
+        == env.checkpoint_contract_digest
+    )
 
     for _ in range(4):
         env.step_action(Action.idle())
