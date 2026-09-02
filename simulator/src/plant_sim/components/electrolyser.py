@@ -7,6 +7,7 @@ from dataclasses import replace
 from typing import Any
 
 from ..commitment import (
+    COMMITMENT_INTENT_DEADBAND_FRAC,
     ElectrolyserCommitmentProfile,
     ElectrolyserCommitmentSnapshot,
     ElectrolyserCommitmentState,
@@ -95,6 +96,7 @@ class Electrolyser(Component):
             technology=profile.technology,
             calibration_basis=profile.calibration_basis,
             dynamics_version=profile.dynamics_version,
+            profile_sha256=profile.profile_sha256,
             mode=state.mode,
             mode_elapsed_s=state.mode_elapsed_s,
             startup_remaining_s=state.startup_remaining_s,
@@ -192,11 +194,14 @@ class Electrolyser(Component):
         the caller is responsible for re-routing the power it did not use.
         """
         if self.commitment_profile is not None:
+            intent_threshold_kw = (
+                COMMITMENT_INTENT_DEADBAND_FRAC * self.config.rated_kw
+            )
             return self.advance_commitment(
                 power_kw,
                 dt_h,
                 h2_headroom_kg=math.inf,
-                commitment_intent=power_kw > 0.0,
+                commitment_intent=power_kw > intent_threshold_kw,
             ).h2_produced_kg
         if self.offline or power_kw <= 0.0 or power_kw < self.min_load_kw:
             self.power_kw = 0.0

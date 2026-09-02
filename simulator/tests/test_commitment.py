@@ -8,6 +8,7 @@ import pytest
 
 from plant_sim import (
     COMMITMENT_DYNAMICS_VERSION,
+    COMMITMENT_INTENT_DEADBAND_FRAC,
     DEFAULT_ELECTROLYSER_COMMITMENT_PROFILE,
     Action,
     ComponentEffect,
@@ -59,6 +60,12 @@ def test_default_profile_is_frozen_labelled_and_json_ready() -> None:
     assert profile.technology == "pressurised alkaline"
     assert "not vendor-calibrated" in profile.calibration_basis
     assert profile.dynamics_version == COMMITMENT_DYNAMICS_VERSION
+    assert COMMITMENT_INTENT_DEADBAND_FRAC == 0.01
+    assert len(profile.profile_sha256) == 64
+    assert (
+        replace(profile, cold_start_s=7_200.0).profile_sha256
+        != profile.profile_sha256
+    )
     assert profile.to_dict()["specific_energy_multiplier_anchors"] == [
         [0.4, 1.12],
         [0.6, 1.06],
@@ -347,6 +354,35 @@ def test_premature_stop_is_forced_but_post_minimum_up_stop_is_controlled() -> No
     assert snapshot is not None
     assert snapshot.forced_stops == 0
     assert snapshot.controlled_stops == 1
+
+
+def test_finite_command_deadband_makes_near_endpoint_stop_orderly() -> None:
+    profile = _short_start_profile()
+    near_endpoint = PlantSimulator(electrolyser_commitment=profile)
+    exact_endpoint = PlantSimulator(electrolyser_commitment=profile)
+    running = Action(battery_support_kw=RATED_KW)
+    for simulator in (near_endpoint, exact_endpoint):
+        simulator.step(running)
+        simulator.step(running)
+        snapshot = simulator.electrolyser_commitment
+        assert snapshot is not None
+        assert snapshot.mode is ElectrolyserMode.RUNNING
+        assert snapshot.min_up_remaining_s == 0.0
+
+    # These physical commands correspond to a raw policy output very close to
+    # -1, but not exactly at the endpoint, on both commitment-bearing channels.
+    near_endpoint.step(
+        Action(electrolyser_share=5e-7, battery_support_kw=0.0015)
+    )
+    exact_endpoint.step(Action.idle())
+
+    near_snapshot = near_endpoint.electrolyser_commitment
+    exact_snapshot = exact_endpoint.electrolyser_commitment
+    assert near_snapshot is not None and exact_snapshot is not None
+    assert near_snapshot.mode is ElectrolyserMode.COOLDOWN
+    assert near_snapshot.forced_stops == 0
+    assert near_snapshot.controlled_stops == 1
+    assert near_snapshot.to_dict() == exact_snapshot.to_dict()
 
 
 def test_running_up_and_down_settling_respects_the_frozen_ramp() -> None:

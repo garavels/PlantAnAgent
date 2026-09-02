@@ -34,6 +34,7 @@ from .config import (
 )
 from .commitment import (
     COMMITMENT_DYNAMICS_VERSION,
+    COMMITMENT_INTENT_DEADBAND_FRAC,
     DEFAULT_ELECTROLYSER_COMMITMENT_PROFILE,
     ElectrolyserCommitmentProfile,
     ElectrolyserCommitmentSnapshot,
@@ -64,7 +65,7 @@ from .simulator import PlantSimulator
 from .state import Action, ComponentHealth, PlantState
 from .telemetry import SENSOR_CHANNELS, observe
 
-__version__ = "0.5.0"
+__version__ = "0.5.1"
 
 __all__ = [
     "Action",
@@ -74,6 +75,7 @@ __all__ = [
     "ComponentEffect",
     "ComponentHealth",
     "COMMITMENT_DYNAMICS_VERSION",
+    "COMMITMENT_INTENT_DEADBAND_FRAC",
     "DACConfig",
     "DEFAULT_ELECTROLYSER_COMMITMENT_PROFILE",
     "DirectAirCapture",

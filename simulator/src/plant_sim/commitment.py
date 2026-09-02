@@ -8,6 +8,8 @@ so callers can retain them as audit records without observing later mutation.
 
 from __future__ import annotations
 
+import hashlib
+import json
 import math
 from dataclasses import asdict, dataclass, replace
 from enum import Enum
@@ -15,7 +17,8 @@ from numbers import Real
 from typing import Any
 
 
-COMMITMENT_DYNAMICS_VERSION = "electrolyser-commitment-alpha-v1"
+COMMITMENT_DYNAMICS_VERSION = "electrolyser-commitment-alpha-v2"
+COMMITMENT_INTENT_DEADBAND_FRAC = 0.01
 LEGACY_NOMINAL_SPECIFIC_ENERGY_KWH_PER_KG = 52.0
 
 
@@ -233,6 +236,18 @@ class ElectrolyserCommitmentProfile:
         ]
         return result
 
+    @property
+    def profile_sha256(self) -> str:
+        """Canonical identity for every numerical and provenance parameter."""
+        canonical = json.dumps(
+            self.to_dict(),
+            allow_nan=False,
+            ensure_ascii=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode("utf-8")
+        return hashlib.sha256(canonical).hexdigest()
+
 
 DEFAULT_ELECTROLYSER_COMMITMENT_PROFILE = ElectrolyserCommitmentProfile()
 
@@ -283,6 +298,7 @@ class ElectrolyserCommitmentSnapshot:
     technology: str
     calibration_basis: str
     dynamics_version: str
+    profile_sha256: str
     mode: ElectrolyserMode
     mode_elapsed_s: float
     startup_remaining_s: float
@@ -321,6 +337,7 @@ class ElectrolyserCommitmentSnapshot:
             "technology": self.technology,
             "calibration_basis": self.calibration_basis,
             "dynamics_version": self.dynamics_version,
+            "profile_sha256": self.profile_sha256,
             "mode": self.mode.value,
             "committed": self.committed,
             "mode_elapsed_s": self.mode_elapsed_s,
@@ -357,6 +374,7 @@ class ElectrolyserCommitmentStep:
 
 __all__ = [
     "COMMITMENT_DYNAMICS_VERSION",
+    "COMMITMENT_INTENT_DEADBAND_FRAC",
     "DEFAULT_ELECTROLYSER_COMMITMENT_PROFILE",
     "ElectrolyserCommitmentProfile",
     "ElectrolyserCommitmentSnapshot",
