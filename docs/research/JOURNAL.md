@@ -672,3 +672,102 @@ layer owns the seeded latent process, causal forecast issuances, clear-sky-envel
 and private replay manifest. Keeping generation outside the plant physics lets future
 PVGIS/site traces replace the synthetic fixture without changing downstream equipment or
 dispatch logic.
+
+## 2026-09-02 — Solar truth and causal-forecast evidence review
+
+A targeted primary-source review compared JRC PVGIS, Copernicus CAMS, BSRN, ERA5,
+ECMWF issued forecasts, TIGGE, ENTSO-E, and peer-reviewed forecast-verification
+practice. The central finding is negative but consequential: no preferred open source
+is simultaneously pan-European, plant-level pre-curtailment AC truth, native 15-minute,
+and paired with a long archive of causal forecast vintages. Dataset convenience must not
+be mistaken for operational ground truth.
+
+The resulting data hierarchy is:
+
+- site SCADA with curtailment/outage/inverter/availability flags for eventual plant truth;
+- native 15-minute CAMS all-sky and clear-sky radiation as the first open regional proxy;
+- BSRN one-minute ground observations where available to validate that proxy;
+- PVGIS hourly output for climatology and a convenient modelled-PV adapter, without
+  inventing one-minute ramps;
+- archived issued ECMWF/ENTSO-E products for causal forecast experiments; and
+- ERA5 only as retrospective covariate/reanalysis, never as a historical issued forecast.
+
+The synthetic alpha remains scientifically useful only as a transparent engineering
+fixture. It uses a stationary Gaussian AR(1)/discrete-OU latent transformed by a logistic
+function, with a one-hour autocorrelation half-life and coherent conditional ensemble
+paths. Each ensemble member is first multiplied by the known future clear-sky/nameplate
+envelope and aggregated over a supervisory window; mean and p10 are computed across
+those member-level aggregates. Averaging pointwise quantiles would destroy the intended
+energy-window semantics. Numerical parameters are sensitivity hypotheses, not European
+climatology or site calibration.
+
+The leakage contract now requires that an issued forecast may use the current resource
+state, deterministic future solar geometry, and an independent forecast RNG, but never
+future truth innovations. Evaluation will use rolling origins, a purged maximum-horizon
+gap, daylight and all-hours scores, and per-lead calibration. Point metrics are bias,
+capacity-normalized MAE/RMSE, and skill against smart persistence. Probabilistic metrics
+include CRPS or pinball loss, reliability/coverage and sharpness, while coherent paths
+also require energy and variogram scores. A p10 feature alone is not evidence of a
+calibrated probabilistic model.
+
+Decision: land the causal synthetic fixture and its future-leakage invariant first, then
+add CAMS/PVGIS adapters as separately versioned profiles. Do not tune a learned controller
+to the fixture and describe that as weather generalization; empirical and stress-profile
+splits remain a later evidence gate.
+
+## 2026-09-02 — Causal weather and decision-boundary primitives
+
+The first weather primitive is now implemented independently of the Gym environment. A
+stationary logistic-latent discrete-OU process produces an immutable resource-factor tape
+at the one-minute physics grid. The default median factor (0.70), latent standard deviation
+(0.75), and one-hour autocorrelation half-life are declared challenge parameters. They are
+not fitted weather statistics. Truth and forecast streams are named children of a caller's
+seed hierarchy, snapshotted rather than consumed, and retain canonical initial-state
+descriptors plus SHA-256 identities for replay.
+
+At every 15-minute decision boundary, an issue-specific child stream draws 32 coherent
+conditional trajectories through 24 hours. Only the current resource factor and known
+clear-sky geometry enter the forecast; the constructor never reads truth after the issue
+boundary. Available PV/nameplate fractions are aggregated within each member before mean
+and p10 are computed for `0–1`, `1–6`, `6–12`, and `12–24` hour windows. A counterfactual
+test changes every future truth value and proves the already-issued forecast is byte-for-
+byte unchanged. A one-hot clear-sky envelope test locks half-open interval indexing.
+
+The accompanying `ControlStateV2` keeps current boundary levels, time, online status,
+health, and measured solar separate from time-weighted mean powers, loads, and production
+rates over the preceding controller interval. A strict accumulator integrates every
+physics sample and rejects invalid durations before mutation. This removes the delivery
+alpha's misleading use of the final one-minute flow as if it represented a 15-minute
+decision.
+
+### Independent review and corrections
+
+An independent review confirmed the causal `k -> k+1` forecast mapping and found no direct
+future-truth read. It also reproduced a numerical failure for valid, very short correlation
+half-lives: the vectorized AR closed form divided by underflowed powers. Forecast blocks now
+adapt to the process coefficient, with an exact recurrence for the near-memoryless edge.
+The regression configuration (`0.015 h` half-life at a 15-minute grid) remains finite.
+
+The review also found that MT19937 state arrays and NumPy scalar configuration values were
+accepted but not JSON-hashable, and that reusing a `SeedSequence` advanced only the forecast
+side. Canonicalization now handles NumPy arrays/scalars, all input random sources are cloned
+before use, and tests cover MT19937 plus repeated-source purity. Private manifests embed
+initial RNG states while stating explicitly that synthetic profiles still require the
+matching code/lock and deterministic envelope, and external profiles require retained
+tape/envelope artifacts matching their digests. They no longer imply that a hash alone can
+materialize an arbitrary external episode.
+
+A fixed seed now pins truth, forecast, and complete episode digests to weather-generator
+version `synthetic-logit-ou-v1`. Any stochastic algorithm, stream mapping, or quantile
+change must bump that version and deliberately update the golden evidence. Strict tests
+also cover alignment, immutable issue cadence, bounds, autocorrelation, p10 ordering,
+source separation, envelope provenance, and JSON-safe private metadata.
+
+### Remaining limitation
+
+Precomputing a seven-day episode creates 672 vintages × 32 members × 1,440 minute steps,
+about 31 million innovations. Independent review measured roughly 0.54 seconds per reset,
+material beside roughly 0.27 seconds for 10,080 bare simulator steps. Keep this transparent
+implementation for alpha correctness, but set a throughput gate before large policy sweeps:
+benchmark controller-resolution forecast scenarios, deterministic lazy issuance, or a
+validated conditional-moment approximation without changing the versioned semantics.

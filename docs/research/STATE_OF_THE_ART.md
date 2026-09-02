@@ -136,6 +136,40 @@ such.
 - held-out years, sites, and extreme regimes instead of random-timestep splits;
 - deterministic replay by immutable scenario identifier and seed.
 
+### Solar truth, forecasts, and leakage standard
+
+Three quantities remain distinct throughout the benchmark:
+
+1. the solar-resource factor relative to the declared clear-sky model;
+2. available AC power before controller curtailment; and
+3. a forecast vintage issued at a recorded time using only information available then.
+
+PVGIS, CAMS, ERA5, and NWP output are irradiance or modelled-power proxies rather than
+automatic plant-level truth. Operational validation ultimately requires site SCADA plus
+curtailment, outage, inverter, and availability flags. For an open European regional
+fixture, native 15-minute CAMS all-sky and clear-sky radiation is preferred over
+interpolating PVGIS's hourly product; the two radiation series should pass through the
+same declared PV conversion before their ratio is used. BSRN one-minute ground radiation
+is a sparse reference for proxy validation. ERA5 is retrospective reanalysis and must
+never be presented as a forecast available to the historical controller.
+
+Forecast evaluation uses expanding-window rolling origins rather than random timesteps.
+When data length permits, the final complete year remains an untouched outer test, and
+at least the maximum 24-hour target span is purged between training and later folds.
+Normalization, bias correction, model selection, and probabilistic calibration are fit
+inside their permitted training/calibration blocks. Each record retains issue time,
+valid interval, acquisition latency, NWP cycle/model version, member, timezone, source
+version, and quality flags.
+
+Point forecasts report daylight and all-hours normalized MAE/RMSE, bias, and skill
+against clear-sky-index smart persistence; MAPE is excluded because night zeros make it
+ill-conditioned. Probabilistic forecasts report CRPS or declared quantile pinball loss,
+reliability and interval coverage/width by lead and daylight regime, plus energy and
+variogram scores for coherent trajectories. A single p10 is only a controller risk
+feature: its calibration still requires the empirical event rate
+`P(actual <= p10) ~= 0.10`, stratified by horizon. The decisive test remains an
+end-to-end paired controller comparison on delivery, curtailment, reserve, and cost.
+
 ### Plant dynamics
 
 - technology-specific electrolyser modes: off, cold start, hot standby, and running;
@@ -284,6 +318,31 @@ A future case would need to show:
 18. [CORDIS TURN2X renewable-methane project report](https://cordis.europa.eu/project/id/101189219/reporting).
 19. [IEA, *Global Hydrogen Review 2025: Executive summary*](https://www.iea.org/reports/global-hydrogen-review-2025/executive-summary).
 20. [European Commission JRC, PVGIS hourly radiation and PV output](https://joint-research-centre.ec.europa.eu/photovoltaic-geographical-information-system-pvgis/using-pvgis-5/pvgis-5-tools/hourly-radiation_en).
+21. [European Commission JRC, PVGIS 5.3 user manual](https://joint-research-centre.ec.europa.eu/photovoltaic-geographical-information-system-pvgis/using-pvgis-5/pvgis-5-user-manual_en).
+22. [Copernicus Atmosphere Monitoring Service, solar-radiation point-series
+    dataset](https://doi.org/10.24381/5cab0912) and [15-minute gridded
+    dataset](https://doi.org/10.24381/9ab61afa).
+23. Driemel et al., “Baseline Surface Radiation Network (BSRN): structure and data
+    description,” *Earth System Science Data* 10 (2018),
+    [doi:10.5194/essd-10-1491-2018](https://doi.org/10.5194/essd-10-1491-2018).
+24. Hersbach et al., “The ERA5 global reanalysis,” *Quarterly Journal of the Royal
+    Meteorological Society* 146 (2020),
+    [doi:10.1002/qj.3803](https://doi.org/10.1002/qj.3803).
+25. Tashman, “Out-of-sample tests of forecasting accuracy: an analysis and review,”
+    *International Journal of Forecasting* 16 (2000),
+    [doi:10.1016/S0169-2070(00)00065-0](https://doi.org/10.1016/S0169-2070(00)00065-0).
+26. Lauret, David, and Pinson, “Verification of solar forecasts in the presence of
+    rare events,” *Solar Energy* 194 (2019),
+    [doi:10.1016/j.solener.2019.10.041](https://doi.org/10.1016/j.solener.2019.10.041).
+27. van der Meer, “A benchmark for multivariate probabilistic solar irradiance
+    forecasts,” *Solar Energy* 225 (2021),
+    [doi:10.1016/j.solener.2021.07.010](https://doi.org/10.1016/j.solener.2021.07.010).
+28. Munkhammar and Widén, “An autocorrelation-based copula model for generating
+    realistic clear-sky index time-series,” *Solar Energy* 158 (2017),
+    [doi:10.1016/j.solener.2017.09.028](https://doi.org/10.1016/j.solener.2017.09.028).
+29. [ECMWF Open Data real-time forecast products](https://www.ecmwf.int/en/forecasts/datasets/open-data).
+30. [ENTSO-E Transparency Platform, day-ahead and intraday wind/solar generation
+    forecast semantics](https://transparencyplatform.zendesk.com/hc/en-us/articles/16648445340180-Generation-Forecasts-for-Wind-and-Solar-14-1-D-).
 
 Literature-derived values are candidate priors, not automatically simulator
 parameters. Equipment-specific values require a declared data source and calibration
