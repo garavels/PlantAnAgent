@@ -18,7 +18,7 @@ from typing import Any
 
 @dataclass(frozen=True)
 class SolarConfig:
-    """A deterministic PV array. No weather, no clouds -- yet."""
+    """Deterministic clear-sky PV envelope; optional weather is exogenous."""
 
     peak_kw: float = 5_000.0
     sunrise_h: float = 6.0

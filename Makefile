@@ -1,4 +1,4 @@
-.PHONY: help setup dev backend frontend sim test eval foresight-eval rl-eval rl-ceiling v2-delivery-eval train-dry train \
+.PHONY: help setup dev backend frontend sim test eval foresight-eval rl-eval rl-ceiling v2-weather-eval train-dry train \
 	hepa-collect hepa-pretrain-dry hepa-pretrain hepa-finetune-dry hepa-finetune \
 	hepa-eval build clean
 
@@ -33,10 +33,10 @@ rl-ceiling:       ## diagnose whether CH4 tank headroom caps the V1 benchmark
 		--count $(or $(SEEDS),100) --hours $(or $(HOURS),48) \
 		$(if $(CHECKPOINT),--checkpoint $(CHECKPOINT),) $(if $(JSON),--json $(JSON),)
 
-v2-delivery-eval: ## run paired transparent baselines on the V2 delivery alpha
+v2-weather-eval:  ## run paired transparent baselines on the V2 weather alpha
 	uv run python -m plant_backend.rl.v2 --seed-start $(or $(SEED_START),0) \
 		--count $(or $(SEEDS),20) --hours $(or $(HOURS),168) \
-		--delivery-rate $(or $(DELIVERY_RATE),55) $(if $(JSON),--json $(JSON),)
+		--delivery-rate $(or $(DELIVERY_RATE),40) $(if $(JSON),--json $(JSON),)
 
 train-dry:        ## build the RL environment and print the training plan; trains nothing
 	uv run python -m plant_backend.rl.training.train --dry-run

@@ -3,15 +3,18 @@
 from __future__ import annotations
 
 import math
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from numbers import Integral
 from typing import Any
 
 import numpy as np
-from plant_sim import DeliveryCommitment, InitialState, PlantConfig, Scenario
+from plant_sim import DeliveryCommitment, InitialState, PlantConfig, Scenario, SolarArray
 from plant_sim.state import SECONDS_PER_HOUR
 
+from .weather import WeatherConfigV2, WeatherEpisodeV2, generate_weather_episode
+
 STREAM_NAMES = ("inventories", "weather", "contracts")
+CLEAR_SKY_ENVELOPE_ID = "plant-sim-half-sine-v1"
 
 
 def _span(name: str, span: tuple[float, float], *, unit_interval: bool = False) -> None:
@@ -41,23 +44,32 @@ def _aligned_start(seconds: float, dt_s: float) -> None:
 
 @dataclass(frozen=True)
 class EpisodeConfigV2:
-    """Delivery-only alpha distribution and explicit controller cadence."""
+    """Weather-alpha episode distribution and explicit controller cadence."""
 
     horizon_h: float = 168.0
     decision_interval_s: float = 900.0
     start_hour: float = 6.0
     delivery_period_h: float = 6.0
     #: Provisional benchmark load. It is a hypothesis to calibrate, not plant data.
-    delivery_rate_kg_h: float = 55.0
+    delivery_rate_kg_h: float = 40.0
     battery_soc: tuple[float, float] = (0.25, 0.65)
     h2_fill: tuple[float, float] = (0.05, 0.30)
     co2_fill: tuple[float, float] = (0.10, 0.40)
     #: Starting methane expressed in hours of contracted average delivery.
     ch4_coverage_h: tuple[float, float] = (3.0, 9.0)
+    weather: WeatherConfigV2 = field(default_factory=WeatherConfigV2)
 
     def validate(self, config: PlantConfig) -> "EpisodeConfigV2":
         if not math.isfinite(config.dt_s) or config.dt_s <= 0.0:
             raise ValueError("plant physics timestep must be positive and finite")
+        if not math.isfinite(config.solar.peak_kw) or config.solar.peak_kw <= 0.0:
+            raise ValueError("solar peak power must be positive and finite")
+        if not (
+            math.isfinite(config.solar.sunrise_h)
+            and math.isfinite(config.solar.sunset_h)
+            and 0.0 <= config.solar.sunrise_h < config.solar.sunset_h <= 24.0
+        ):
+            raise ValueError("solar daylight hours must satisfy 0 <= sunrise < sunset <= 24")
         if not math.isfinite(self.start_hour) or not 0.0 <= self.start_hour < 24.0:
             raise ValueError("start_hour must lie within [0, 24)")
         if not math.isfinite(self.delivery_rate_kg_h) or self.delivery_rate_kg_h <= 0.0:
@@ -79,6 +91,10 @@ class EpisodeConfigV2:
             )
         if delivery_stride > physics_steps:
             raise ValueError("horizon_h must contain at least one delivery commitment")
+        if physics_steps % delivery_stride:
+            raise ValueError(
+                "horizon_h must contain a whole number of delivery periods"
+            )
         max_initial_ch4 = self.ch4_coverage_h[1] * self.delivery_rate_kg_h
         if max_initial_ch4 > config.ch4_tank.capacity_kg + 1e-9:
             raise ValueError("ch4_coverage_h exceeds the methane tank capacity")
@@ -88,6 +104,19 @@ class EpisodeConfigV2:
         if delivery_amount > config.ch4_tank.capacity_kg + 1e-9:
             raise ValueError(
                 "one delivery commitment exceeds the methane tank capacity"
+            )
+        self.weather.validate()
+        for start_h, end_h in self.weather.forecast_windows_h:
+            if start_h > 0.0:
+                _ticks(
+                    start_h * SECONDS_PER_HOUR,
+                    config.dt_s,
+                    name=f"forecast window start {start_h:g} h",
+                )
+            _ticks(
+                end_h * SECONDS_PER_HOUR,
+                config.dt_s,
+                name=f"forecast window end {end_h:g} h",
             )
         return self
 
@@ -112,7 +141,9 @@ class EpisodeConfigV2:
         return self.delivery_rate_kg_h * self.delivery_period_h
 
     def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        payload = asdict(self)
+        payload["weather"] = self.weather.to_dict()
+        return payload
 
 
 @dataclass(frozen=True)
@@ -126,6 +157,7 @@ class EpisodeV2:
     physics_steps: int
     decision_stride: int
     delivery_stride: int
+    weather: WeatherEpisodeV2
 
     def audit_manifest(self) -> dict[str, Any]:
         return {
@@ -139,6 +171,7 @@ class EpisodeV2:
             "physics_steps": self.physics_steps,
             "decision_stride": self.decision_stride,
             "delivery_stride": self.delivery_stride,
+            "weather": self.weather.private_audit_manifest(),
         }
 
 
@@ -150,8 +183,8 @@ def sample_episode(
 ) -> EpisodeV2:
     """Sample independent inventory/weather/contract streams from one seed.
 
-    Weather and contract values are deterministic in this alpha, but their named
-    child streams are reserved now so later generators do not perturb inventories.
+    Inventory, weather truth, and forecast uncertainty use independent named
+    child streams so changing one generator cannot silently perturb the others.
     """
     episode.validate(config)
     if isinstance(seed, bool) or not isinstance(seed, Integral) or seed < 0:
@@ -170,14 +203,47 @@ def sample_episode(
             * episode.delivery_rate_kg_h
         ),
     )
+    physics_steps = episode.physics_steps(config)
+    decision_stride = episode.decision_stride(config)
     scenario = Scenario(
-        id="v2_delivery_alpha",
-        name="Environment V2 delivery alpha",
-        description="Recurring methane commitments; deterministic weather and V1 equipment.",
+        id="v2_weather_alpha",
+        name="Environment V2 weather alpha",
+        description=(
+            "Recurring methane commitments with seeded solar-resource truth and "
+            "causal probabilistic forecasts; V1 process equipment."
+        ),
         start_hour=episode.start_hour,
         initial=initial,
     )
-    physics_steps = episode.physics_steps(config)
+
+    # The simulator's legacy flow convention samples clear-sky power at the
+    # start of each physical interval. Forecast windows use the same interval
+    # envelope, extended through 24 h after the final decision issue.
+    final_issue_step = physics_steps - decision_stride
+    max_forecast_h = max(end_h for _, end_h in episode.weather.forecast_windows_h)
+    forecast_horizon_steps = _ticks(
+        max_forecast_h * SECONDS_PER_HOUR,
+        config.dt_s,
+        name="maximum forecast horizon",
+    )
+    required_envelope_intervals = final_issue_step + forecast_horizon_steps
+    solar = SolarArray(config.solar)
+    start_s = episode.start_hour * SECONDS_PER_HOUR
+    clear_sky_peak_fractions = tuple(
+        solar.clear_sky_kw(start_s + interval * config.dt_s) / config.solar.peak_kw
+        for interval in range(required_envelope_intervals)
+    )
+    truth_seed, forecast_seed = streams["weather"].spawn(2)
+    weather = generate_weather_episode(
+        episode.weather,
+        physics_steps=physics_steps,
+        dt_s=config.dt_s,
+        decision_stride=decision_stride,
+        truth_seed=truth_seed,
+        forecast_seed=forecast_seed,
+        clear_sky_peak_fractions=clear_sky_peak_fractions,
+        clear_sky_envelope_id=CLEAR_SKY_ENVELOPE_ID,
+    )
     delivery_stride = episode.delivery_stride(config)
     commitments = tuple(
         DeliveryCommitment(
@@ -195,9 +261,16 @@ def sample_episode(
         seed=seed,
         stream_spawn_keys={name: tuple(sequence.spawn_key) for name, sequence in streams.items()},
         physics_steps=physics_steps,
-        decision_stride=episode.decision_stride(config),
+        decision_stride=decision_stride,
         delivery_stride=delivery_stride,
+        weather=weather,
     )
 
 
-__all__ = ["EpisodeConfigV2", "EpisodeV2", "STREAM_NAMES", "sample_episode"]
+__all__ = [
+    "CLEAR_SKY_ENVELOPE_ID",
+    "EpisodeConfigV2",
+    "EpisodeV2",
+    "STREAM_NAMES",
+    "sample_episode",
+]

@@ -49,7 +49,7 @@ from .faults import (
     FaultRegistry,
     FaultSpec,
 )
-from .forcing import SolarFactorTape
+from .forcing import SOLAR_FORCING_VERSION, SolarFactorTape
 from .scenarios import SCENARIOS, InitialState, Scenario
 from .simulator import PlantSimulator
 from .state import Action, ComponentHealth, PlantState
@@ -90,6 +90,7 @@ __all__ = [
     "PowerFlows",
     "SCENARIOS",
     "SENSOR_CHANNELS",
+    "SOLAR_FORCING_VERSION",
     "Scenario",
     "SolarArray",
     "SolarConfig",

@@ -1,4 +1,4 @@
-"""Explicit decision-boundary telemetry for multi-rate Environment V2."""
+"""Current inventories plus explicit completed-interval telemetry for V2."""
 
 from __future__ import annotations
 
@@ -53,7 +53,7 @@ class IntervalSummaryV2:
     @property
     def solar_output_factor(self) -> float:
         if self.solar_potential_kwh <= 0.0:
-            return 1.0
+            return 0.0
         return self.solar_kwh / self.solar_potential_kwh
 
     @property
@@ -177,13 +177,13 @@ class IntervalTelemetryAccumulator:
 
 @dataclass(frozen=True)
 class ControlStateV2:
-    """Boundary inventories/health plus explicit preceding-interval flows."""
+    """Current inventories plus final-sample and aggregate interval telemetry."""
 
     boundary: PlantState
     previous_interval: IntervalSummaryV2 = IntervalSummaryV2()
 
     def encoder_telemetry(self) -> PlantState:
-        """V1-shaped view whose rate/load fields have declared 15-minute meaning."""
+        """V1-shaped view whose rate/load fields have declared interval meaning."""
         interval = self.previous_interval
         if interval.physical_steps == 0:
             return self.boundary

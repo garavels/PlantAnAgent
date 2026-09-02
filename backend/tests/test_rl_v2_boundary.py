@@ -89,6 +89,13 @@ def test_empty_interval_preserves_the_reset_boundary_exactly() -> None:
     assert control.encoder_telemetry() is boundary
 
 
+def test_dark_interval_reports_unobservable_solar_factor_as_zero() -> None:
+    summary = IntervalSummaryV2(physical_steps=15, hours=0.25)
+
+    assert summary.solar_output_factor == 0.0
+    assert summary.to_dict()["solar_output_factor"] == 0.0
+
+
 @pytest.mark.parametrize("dt_h", [0.0, -0.1, float("nan"), float("inf")])
 def test_accumulator_rejects_invalid_duration_without_mutation(dt_h: float) -> None:
     accumulator = IntervalTelemetryAccumulator()

@@ -18,6 +18,20 @@ The near-term research goal is to show that this separation creates attributable
 on a benchmark whose optimal action depends on uncertain future conditions and delayed
 equipment consequences.
 
+## Progress snapshot — 2026-09-02
+
+- Gate A is **partially complete**: the V1 tank-filling ceiling and heuristic
+  saturation are reproduced, but the colleague's trained-policy artifact has not yet
+  been supplied for identical replay.
+- B1 and B3 now have alpha implementations: private stochastic solar truth, causal
+  forecast vintages, recurring delivery commitments, and multi-rate accounting.
+- B2 is **not implemented**: process equipment remains memoryless, so the decisive
+  startup/ramp/commitment trade-off is still missing.
+- Gate B is **not passed**: no forecast-aware heuristic, MPC, or perfect-information
+  oracle has yet bounded the weather-alpha task.
+- Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
+  full-stack value, site generalization, or a commercial return.
+
 ## Stage A — Establish the Environment V1 ceiling
 
 ### Hypotheses

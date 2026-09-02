@@ -1,4 +1,4 @@
-"""Paired baseline evaluation for the delivery-only Environment V2 alpha.
+"""Paired baseline evaluation for the weather-aware Environment V2 alpha.
 
 This module deliberately evaluates *only* transparent, non-learning baselines.
 It establishes that the task and its accounting can distinguish behavior before
@@ -14,8 +14,9 @@ import platform
 import statistics
 import subprocess
 from dataclasses import dataclass, field
+from numbers import Integral
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any, Literal, Sequence
 
 from plant_sim import Action, PlantConfig
 
@@ -30,9 +31,16 @@ from .reward import RewardWeightsV2
 
 BASELINE_ONLY_DISCLAIMER = (
     "BASELINE ONLY: no trained RL policy, MPC, or perfect-foresight oracle is "
-    "included. These results validate task discrimination and evaluation wiring; "
+    "included, and these legacy/open-loop diagnostic arms do not share the full V2 "
+    "information set. Results validate task discrimination and evaluation wiring; "
     "they do not establish RL performance, optimality, or commercial superiority."
 )
+LEGACY_INFORMATION_SET = (
+    "latest one-minute V2 telemetry plus safety constraints; no preceding-interval "
+    "aggregate, delivery context, or issued forecast"
+)
+OPEN_LOOP_INFORMATION_SET = "constant action; observes no environment information"
+RESULT_SCHEMA_VERSION = 2
 
 
 @dataclass(frozen=True)
@@ -41,15 +49,39 @@ class Baseline:
 
     id: str
     label: str
+    kind: Literal["legacy_heuristic", "fixed_action"]
     action: Action | None = None
+
+    def __post_init__(self) -> None:
+        if not self.id or not self.label:
+            raise ValueError("baseline id and label must not be empty")
+        if self.kind not in ("legacy_heuristic", "fixed_action"):
+            raise ValueError(f"unsupported baseline kind: {self.kind!r}")
+        if self.kind == "legacy_heuristic" and self.action is not None:
+            raise ValueError("a legacy_heuristic baseline cannot define a fixed action")
+        if self.kind == "fixed_action" and self.action is None:
+            raise ValueError("a fixed_action baseline requires an action")
+
+    @property
+    def information_set(self) -> str:
+        return (
+            LEGACY_INFORMATION_SET
+            if self.kind == "legacy_heuristic"
+            else OPEN_LOOP_INFORMATION_SET
+        )
 
 
 BASELINES: tuple[Baseline, ...] = (
-    Baseline("heuristic", "Shipped heuristic"),
-    Baseline("idle", "Idle", Action.idle()),
+    Baseline(
+        "heuristic",
+        "Legacy forecast-blind heuristic",
+        "legacy_heuristic",
+    ),
+    Baseline("idle", "Idle", "fixed_action", Action.idle()),
     Baseline(
         "balanced",
         "Fixed balanced mix",
+        "fixed_action",
         Action(
             battery_share=0.20,
             electrolyser_share=0.50,
@@ -60,6 +92,7 @@ BASELINES: tuple[Baseline, ...] = (
     Baseline(
         "production_mix",
         "Fixed production mix",
+        "fixed_action",
         Action(
             battery_share=0.05,
             electrolyser_share=0.65,
@@ -130,6 +163,7 @@ class BaselineEvaluation:
     provenance: dict[str, Any]
     runs: list[BaselineRun] = field(default_factory=list)
     labels: dict[str, str] = field(default_factory=dict)
+    information_sets: dict[str, str] = field(default_factory=dict)
 
     @property
     def controllers(self) -> list[str]:
@@ -170,14 +204,15 @@ class BaselineEvaluation:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "schema_version": 1,
-            "study": "environment_v2_delivery_alpha_paired_baselines",
+            "schema_version": RESULT_SCHEMA_VERSION,
+            "study": "environment_v2_weather_alpha_paired_baselines",
             "evidence_scope": "baseline_only",
             "disclaimer": BASELINE_ONLY_DISCLAIMER,
             "statistics": {"standard_deviation": "population (ddof=0)"},
             "seeds": list(self.seeds),
             "episode_config": self.episode_config.to_dict(),
             "labels": dict(self.labels),
+            "information_sets": dict(self.information_sets),
             "pairing": self.pairing(),
             "provenance": self.provenance,
             "summary": self.summary(),
@@ -198,12 +233,13 @@ class BaselineEvaluation:
             ("reward", "reward_total", "{:.2f}"),
         )
         lines = [
-            "Environment V2 delivery-alpha paired baseline evaluation",
+            "Environment V2 weather-alpha paired baseline evaluation",
             (
                 f"{len(self.seeds)} seed(s) x {self.episode_config.horizon_h:g} h; "
                 f"contract {self.episode_config.delivery_rate_kg_h:g} kg/h"
             ),
             BASELINE_ONLY_DISCLAIMER,
+            "Information fairness: diagnostic only; equal-information comparators remain open.",
             "",
             "controller".ljust(22)
             + "".join(label.rjust(14) for label, _, _ in columns),
@@ -344,7 +380,7 @@ def run_baseline(
     """Roll one transparent arm through the same guarded environment path."""
     env.reset(seed=seed)
     manifest_sha256 = str(env.audit_manifest()["manifest_sha256"])
-    heuristic = HeuristicController() if baseline.action is None else None
+    heuristic = HeuristicController() if baseline.kind == "legacy_heuristic" else None
     if heuristic is not None:
         heuristic.reset()
     finished = False
@@ -378,11 +414,17 @@ def evaluate(
     baselines: Sequence[Baseline] = BASELINES,
 ) -> BaselineEvaluation:
     """Run paired common-random-number baselines and retain full audit identity."""
-    chosen_seeds = [int(seed) for seed in seeds]
-    if not chosen_seeds:
+    raw_seeds = list(seeds)
+    if not raw_seeds:
         raise ValueError("at least one seed is required")
+    if any(
+        isinstance(seed, bool) or not isinstance(seed, Integral)
+        for seed in raw_seeds
+    ):
+        raise ValueError("seeds must be non-negative integers")
+    chosen_seeds = [int(seed) for seed in raw_seeds]
     if any(seed < 0 for seed in chosen_seeds):
-        raise ValueError("seeds must be non-negative")
+        raise ValueError("seeds must be non-negative integers")
     if len(set(chosen_seeds)) != len(chosen_seeds):
         raise ValueError("seeds must be unique")
     chosen_baselines = tuple(baselines)
@@ -406,6 +448,9 @@ def evaluate(
             weights=weights,
         ),
         labels={baseline.id: baseline.label for baseline in chosen_baselines},
+        information_sets={
+            baseline.id: baseline.information_set for baseline in chosen_baselines
+        },
     )
     for seed in chosen_seeds:
         for baseline in chosen_baselines:
@@ -434,6 +479,7 @@ def write(result: BaselineEvaluation, path: Path | str) -> Path:
 __all__ = [
     "BASELINES",
     "BASELINE_ONLY_DISCLAIMER",
+    "RESULT_SCHEMA_VERSION",
     "Baseline",
     "BaselineEvaluation",
     "BaselineRun",

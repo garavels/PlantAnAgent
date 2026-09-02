@@ -1,4 +1,4 @@
-"""Run the auditable delivery-alpha baseline calibration."""
+"""Run the auditable weather-alpha baseline calibration."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from .evaluation import evaluate, write
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="python -m plant_backend.rl.v2",
-        description="Evaluate transparent baselines on Environment V2 delivery alpha.",
+        description="Evaluate transparent baselines on Environment V2 weather alpha.",
     )
     parser.add_argument("--seed-start", type=int, default=0, help="first episode seed")
     parser.add_argument("--count", type=int, default=20, help="number of consecutive seeds")
@@ -21,7 +21,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--delivery-rate",
         type=float,
-        default=55.0,
+        default=40.0,
         help="contracted average methane delivery in kg/h",
     )
     parser.add_argument("--json", type=Path, help="write complete evidence to this path")

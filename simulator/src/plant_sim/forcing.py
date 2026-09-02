@@ -14,6 +14,8 @@ from dataclasses import dataclass
 from numbers import Integral, Real
 from typing import Any
 
+SOLAR_FORCING_VERSION = "boundary-end-factor-v1"
+
 
 def _index(value: object, *, name: str) -> int:
     """Validate an episode-relative index without treating ``True`` as one."""
@@ -110,4 +112,4 @@ class SolarFactorTape:
         return {"dt_s": self.dt_s, "boundary_factors": list(self.boundary_factors)}
 
 
-__all__ = ["SolarFactorTape"]
+__all__ = ["SOLAR_FORCING_VERSION", "SolarFactorTape"]

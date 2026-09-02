@@ -3,12 +3,13 @@
 Status: **accepted direction; implementation parameters remain provisional until the
 corresponding experiment is committed.**
 
-Implementation status: the delivery-only alpha now provides the recurring contract,
-15-minute decision cadence, service reward, metrics, and private replay manifest under
-an explicit V2 namespace. It intentionally still uses deterministic V1 solar and
-memoryless V1 equipment. Forecast uncertainty, commitment dynamics, a boundary
-`ControlState`, and controller training/evaluation remain open increments; the alpha is
-not the completed V2 benchmark described below.
+Implementation status: the weather alpha now provides recurring contracts, a 15-minute
+decision cadence, service reward and metrics, explicit boundary/preceding-interval
+`ControlState` semantics, seeded solar-resource truth, four causal forecast bands, and a
+private replay manifest under an explicit V2 namespace. It still uses a synthetic,
+uncalibrated weather fixture and memoryless V1 process equipment. Commitment dynamics,
+empirical profiles, model-based comparators, and controller training/evaluation remain
+open increments; this is not the completed V2 benchmark described below.
 
 ## 1. Benchmark question
 
@@ -83,24 +84,29 @@ bind to them. V2 checkpoint loading requires an environment identifier and contr
 digest; an artifact without those fields is V1-only. Cross-version loading fails
 loudly—vectors are never padded and weights are never silently reused.
 
-V2 has two deliberately different identities. The static descriptor digest covers only
-observation/action layout and normalization. `PlantEnvV2.checkpoint_contract` is the
-full compatibility identity and also covers timing, episode distribution, plant and
-constraint parameters, objective version, and reward weights. Future V2 checkpoint
-writers/loaders must store and require that full digest; no V2 loader exists in the
-delivery alpha, so V1's loader must not be used for it.
+V2 has three deliberately different identities. The static descriptor digest covers
+only observation/action layout and normalization. `PlantEnvV2.checkpoint_contract` is
+the policy-compatibility identity: it covers that interface plus timing and guard
+semantics, dynamics implementation versions, episode distribution, complete plant and
+constraint parameters, objective version, and reward weights. The per-reset private
+audit manifest adds the sampled episode seed hierarchy, scenario, commitments, weather
+stream states and content hashes, while the experiment runner adds source revision,
+dependency-lock digest, runtime, and artifact/training provenance. Keeping these scopes
+separate avoids pretending a checkpoint digest identifies one sampled episode or a Git
+tree. Future V2 checkpoint writers/loaders must store and require the compatibility
+digest; no V2 loader exists in the weather alpha, so V1's loader must not be used for it.
 
-The full V2 checkpoint contract contains at least:
+Across those three records, V2 evidence contains at least:
 
 - environment contract identifier and semantic version;
-- simulator package version and source revision;
+- simulator implementation/package versions plus experiment source revision;
 - complete plant-parameter serialization and digest;
 - observation/action field names, order, units, and version;
 - objective/reward configuration and version;
-- scenario/profile generator version, immutable episode identifier, and seed streams;
+- scenario/profile generator version, episode content hashes, and seed streams;
 - physics timestep and policy decision interval;
 - forecast model and issue-time convention;
-- controller/checkpoint training provenance.
+- controller/checkpoint and experiment-run provenance.
 
 Any changed meaning, order, normalization, timing, or control authority invalidates a
 checkpoint. V1 policies may be evaluated only in the frozen V1 environment unless an
@@ -116,7 +122,7 @@ is stamped `t + dt` and reports end-of-interval levels plus flows from the inter
 that just ended.
 
 This convention must be tested at reset, profile boundaries, forecast issue times,
-delivery deadlines, and episode truncation. It resolves the current ambiguity in which
+delivery deadlines, and episode termination. It resolves the current ambiguity in which
 V1 flows are evaluated at the old timestamp and exposed on a state stamped with the
 new timestamp.
 
@@ -131,12 +137,30 @@ The discount factor must be derived from a declared economic time constant and p
 interval, then sensitivity-tested. It must not be inherited from V1's per-minute
 `gamma = 0.995`, whose effective horizon is only a few hours.
 
-V2 constructs an explicit boundary `ControlState` for the observation, guard, reward,
-and accounting at each 15-minute decision. It contains boundary inventories and
-aggregated interval flows. Existing `PlantState` fields describe the last one-minute
-physical interval and are not silently reinterpreted as 15-minute aggregates. This
-separation also permits later changes to physics resolution without changing policy
-semantics.
+The configured V2 horizon is an intrinsic finite-horizon MDP boundary, not an external
+wall-clock time limit. The final transition therefore returns `terminated=True` and
+`truncated=False`. It settles the last delivery and pays the bounded terminal-inventory
+value once. PPO and other value-based learners must not bootstrap through that terminal
+observation; doing so would add a fictitious continuation value to a state with no next
+contract or newly issued forecast. This termination convention is part of the full
+checkpoint identity.
+
+V2 constructs an explicit `ControlStateV2` for policy observation at each 15-minute
+decision. Its timestamp and inventories are current at the boundary. Solar,
+health, and online fields are the final one-minute dispatch sample in the completed
+interval, while power/load/production fields are time-weighted means over that complete
+interval. Reset uses the initial boundary sample because no preceding interval exists.
+Before every V2 physics step, the guard combines causal telemetry with a privileged,
+read-only preview of the exact solar bus that step will dispatch. That preview never
+enters the controller observation; it is the fast interlock's actuation-time input for
+enforcing absolute kW caps. Reward and physical accounting integrate the complete
+interval. Existing `PlantState` fields are not silently reinterpreted as 15-minute
+aggregates.
+
+Environment V1 deliberately retains its established telemetry-based guard path and
+transition identity for replay compatibility. Moving the live operational runtime to
+the exact-bus interlock requires an explicitly versioned adoption of the V2 semantics;
+the weather-alpha implementation does not silently rewrite V1 trajectories.
 
 ## 5. Minimal discriminative feature bundle
 
@@ -175,7 +199,7 @@ being unattainable.
 
 ### 5.2 Stochastic truth and controller-visible forecasts
 
-V2 replaces repeated clear-sky output with a seeded, autocorrelated cloud process
+The weather alpha replaces repeated clear-sky output with a seeded, autocorrelated cloud process
 multiplied by the deterministic solar envelope. Separate random streams generate:
 
 1. physical weather innovations;
@@ -191,10 +215,27 @@ at selected horizons or a fixed scenario ensemble. It must not read realized fut
 weather. A required leakage test changes physical innovations after the issue time and
 proves that the already-issued forecast is unchanged.
 
-Initial forecast horizons are 15 minutes, 1 hour, 6 hours, and 24 hours. Forecast
-uncertainty must grow with lead time and be evaluated for calibration as well as point
-error. Truth, measured current output, forecast, and perfect-future oracle data remain
-distinct types and interfaces.
+The implemented synthetic fixture is a stationary Gaussian AR(1)/discrete-OU latent
+transformed through a logistic function. Its provisional median resource factor is 0.70,
+stationary latent standard deviation is 0.75, and autocorrelation half-life is one hour.
+These are transparent challenge parameters, not European climatology. At every controller
+boundary, 32 independent conditional trajectories are generated from current truth and an
+issue-specific forecast stream. They never read future truth. Each member is multiplied by
+known future clear-sky/nameplate power and aggregated before mean and p10 are taken over
+the half-open `0–1`, `1–6`, `6–12`, and `12–24` hour bands.
+
+Forecast uncertainty must be evaluated for calibration as well as point error. Truth,
+measured current output, the one current immutable issuance, all future issuances, and
+perfect-future oracle data remain distinct interfaces. The environment keeps the full
+weather episode private and exposes only `current_forecast`; Gym observations and public
+info contain no tape, seed, future issue, stream identity, or private hash.
+
+Generating all 672 forecast vintages for a seven-day default episode currently costs
+roughly half a second on the development machine and draws about 31 million ensemble
+innovations. This is acceptable for alpha evaluation but material for large RL sweeps.
+Controller-resolution scenarios, lazy deterministic issuance, or conditional moments
+must be benchmarked before expensive training; optimization may not change forecast
+semantics without a generator-version and golden-digest change.
 
 Agent-facing reset and step information also omits episode seeds, future fault
 schedules, private truth tapes, and split labels. Reproducibility metadata is written
@@ -223,21 +264,25 @@ calibration evidence exists.
 ## 6. Observation and action contracts
 
 V2 uses a separate observation specification rather than appending fields to the
-global V1 vector. It includes:
+global V1 vector. The target mature contract includes:
 
 - cyclic time and episode/contract phase;
-- current measured renewable output and recent trend;
+- latest completed one-minute renewable dispatch sample and recent trend;
 - forecast mean/scenarios and uncertainty at declared horizons;
 - battery, H2, CO2, and CH4 inventory with reserve/buffer margins;
 - next commitment amount, time-to-deadline, and announced horizon aggregate;
 - equipment mode, load, ramp headroom, commitment timers, and health;
 - active supervisor constraints and previous guard intervention magnitude.
 
-The provisional compact contract uses V1's named fields only where their meaning and
-cadence remain valid, plus forecast mean and conservative bound for `0–1`, `1–6`,
-`6–12`, and `12–24` hour windows, normalized time/quantity for the next delivery, and
-electrolyser startup state/timer. The exact field table is committed with the encoder;
-this prose does not substitute for the machine-readable contract.
+The implemented weather-alpha contract has 42 fields. It uses V1's named fields only
+where their meaning is explicitly redeclared, replaces process rates/loads with preceding-
+interval means, adds normalized next-delivery time/quantity/inventory coverage and
+cumulative fill rate, and appends forecast mean and p10 for `0–1`, `1–6`, `6–12`, and
+`12–24` hour windows. It exposes active power/reserve constraints but does **not** yet
+contain equipment commitment mode, ramp headroom, startup/cooldown timers, forecast
+scenarios, or previous guard intervention magnitude. Those arrive only with the
+corresponding versioned increments. The exact field table committed with the encoder is
+authoritative; this prose does not substitute for the machine-readable contract.
 
 The initial action keeps the current five control dimensions to bound the experiment,
 but the benchmark records requested physical kW, applied physical kW, and routing or

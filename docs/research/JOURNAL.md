@@ -771,3 +771,123 @@ material beside roughly 0.27 seconds for 10,080 bare simulator steps. Keep this 
 implementation for alpha correctness, but set a throughput gate before large policy sweeps:
 benchmark controller-resolution forecast scenarios, deterministic lazy issuance, or a
 validated conditional-moment approximation without changing the versioned semantics.
+
+## 2026-09-02 — Weather-alpha environment integration and release review
+
+### Integrated task contract
+
+The causal weather primitive is now connected to Environment V2 as
+`plant-env-v2-weather-alpha`, specification version 2. A reset samples independent named
+inventory, weather, and reserved contract streams. The private weather episode drives an
+immutable simulator forcing tape; only the forecast issuance valid at the current decision
+boundary is exposed. The full truth tape, future vintages, seeds, stream states, and private
+hashes stay out of Gym observations and public step/reset information and remain available
+only through the explicit audit manifest.
+
+The controller observation grows from 34 to 42 fields. It retains current boundary time and
+inventories, reports solar/health/online state as the latest completed one-minute dispatch
+sample, replaces instantaneous process flow/load/rate fields with time-weighted means over
+the preceding 15-minute decision, and appends mean and p10 available-PV/nameplate energy
+fractions for the half-open `0–1`, `1–6`, `6–12`, and `12–24` hour forecast windows. Reset
+uses the initial boundary sample because no preceding decision interval exists. The exact
+ordered descriptor and its digest are the authority; prose is not allowed to silently
+reinterpret a field.
+
+The checkpoint identity now covers the weather configuration and generator version, solar
+forcing convention, clear-sky envelope identity, multi-rate sampling rules, causal forecast
+timing, and guard semantics as well as the existing plant, objective, constraints, and
+interface. The current 42-field interface digest is
+`2f664d7fc5c2aaf37e2bfef62697cf5aa48200597799afcb6ad349ea1ec30ec3`; the default full
+checkpoint-contract digest is
+`89bcd56a211f3228419d7fce530c1039bd9902c8d7ab7d08b82f8cba7b08476d`.
+
+### Provisional load calibration
+
+Before freezing a formal run, a dirty-worktree heuristic sweep tested five common-random
+seeds over seven days. This was a design calibration, not benchmark evidence:
+
+| contracted rate | mean fill | worst-seed fill | mean service level |
+| ---: | ---: | ---: | ---: |
+| 32 kg/h | 100.0% | 100.0% | 100.0% |
+| 35 kg/h | 100.0% | 100.0% | 100.0% |
+| 38 kg/h | 99.8% | 99.0% | 99.3% |
+| 40 kg/h | 98.0% | 94.2% | 95.0% |
+| 42 kg/h | 94.6% | 89.8% | 87.1% |
+| 45 kg/h | 88.5% | 84.1% | 78.6% |
+
+The provisional default moved from the delivery-alpha's 55 kg/h to 40 kg/h. At 55 kg/h,
+the stochastic resource made the legacy heuristic average only 72.1% fill in a two-seed
+probe, confounding controller discrimination with broad infeasibility. At 40 kg/h the
+legacy heuristic is usually feasible but no longer saturated. A five-seed four-arm probe
+then produced mean fill rates of 98.0% (legacy heuristic), 3.6% (idle), 65.6% (fixed
+balanced), and 83.6% (fixed production mix). These values selected a challenge point only.
+The run preceded the final realized-bus guard/accounting correction, came from a dirty
+revision, lacked equal-information forecast-aware and optimizer arms, and must not be cited
+as a formal comparison.
+
+### Independent review findings and corrections
+
+Two independent read-only integration reviews were used as adversarial release gates.
+They produced the following corrections before commit:
+
+1. Share-based requested/guarded energy was initially multiplied by the previous boundary's
+   solar bus. It now uses the solar bus actually realized in every physical interval, so an
+   exogenous weather ramp is not mislabeled as controller or dispatch error.
+2. The guard itself also used the previous interval's bus to convert absolute component caps
+   into shares. A `0.1 -> 1.0` noon resource jump reproduced a 300 kW electrolyser envelope
+   producing 3,000 kW for one interval. The simulator now exposes a side-effect-free preview
+   of the exact next dispatch bus, including forcing and a fault beginning or ending on that
+   boundary. V2 passes it to the guard before every one-minute step. Tests cover electrolyser,
+   DAC, methanator, and combined solar-plus-battery support caps.
+3. Applying that correction to the frozen V1 environment changed legacy transitions and
+   correction rewards without changing V1 identity. The global adoption was therefore
+   rejected. V1 retains its historical telemetry-based guard path for replay; V2 alone uses
+   the exact-bus interlock. A future live-runtime migration must be explicit and versioned.
+4. The first full checkpoint digest omitted weather/forcing implementation identities. The
+   digest now includes all stochastic and clear-sky dynamics versions plus the exact actuator
+   guard convention.
+5. A horizon could end with an un-settled fractional delivery period. V2 now requires the
+   horizon to contain whole delivery periods and reports the weather-alpha stage from the
+   shared contract rather than a stale delivery-only string.
+6. The evaluator coerced booleans, fractional floats, and numeric strings into integer seeds,
+   allowing silent common-random-number aliasing. Seeds are now strictly unique,
+   non-negative integer values before casting.
+7. The baseline report could imply a fair controller tournament even though the shipped
+   heuristic sees neither V2 delivery/aggregate fields nor forecasts and fixed policies see
+   no state. Every arm now records its information set and is labelled diagnostic. Equal-
+   information forecast-aware, MPC, oracle, and RL comparisons remain open.
+8. Descriptor prose called the final one-minute solar sample a simultaneous boundary value.
+   Field sources and timing text now state the simulator's established start-of-interval
+   sampling convention exactly; no physics were silently shifted to make the prose true.
+9. The module-level simulator version used by checkpoint metadata was `0.4.0`, while
+   package metadata still declared `0.1.0`. The package declaration is now aligned and a
+   regression equates the installed distribution and module versions, making the dynamics
+   fingerprint unambiguous.
+10. V2 paid a finite-horizon terminal inventory value while returning a time-limit
+    truncation. PPO commonly bootstraps truncated transitions, which would add a value for
+    a nonexistent continuation and potentially double-count salvage inventory. The V2
+    horizon is now an intrinsic termination (`terminated=True`, `truncated=False`), tested
+    with positive salvage value and fingerprinted in the checkpoint contract. V1's distinct
+    continuing-plant convention remains frozen.
+11. Weather alpha added information-set metadata and changed study semantics but initially
+    retained the delivery result's schema version. The evidence payload is now schema 2;
+    historical delivery-alpha JSON remains schema 1 rather than being rewritten.
+12. An empty/dark interval aggregate reported solar output factor 1 even though the V2
+    controller convention masks an unobservable nighttime factor to 0. Aggregate and
+    boundary conventions now agree, with an explicit dark-interval regression.
+
+### Verification and decision
+
+Final focused simulator, guard, V1-isolation, V2, evaluator, and termination checks passed
+(`169 passed`). The complete
+repository command `.venv/bin/pytest -q` passed (`479 passed`) with one pre-existing
+third-party Starlette/httpx deprecation warning. Preview tests prove no mutation of state,
+time, fault lifecycle, event log, or forcing position before dispatch. Existing all-ones
+forcing equivalence continues to protect the V1 dynamics kernel.
+
+Decision: commit weather alpha, then run the maintained 20-seed/seven-day paired diagnostic
+from that clean revision and preserve its raw JSON separately from the historical
+delivery-alpha result. This is still not the benchmark on which to claim RL value. The next
+substantive physics increment remains technology-labelled equipment commitment, followed by
+a forecast-aware heuristic, deterministic MPC, stochastic/risk-aware MPC where tractable,
+and a perfect-information oracle before any headline multi-seed PPO campaign.

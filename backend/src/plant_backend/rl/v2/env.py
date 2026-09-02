@@ -1,4 +1,4 @@
-"""Delivery-only Environment V2 alpha around the unchanged plant simulator.
+"""Weather-aware Environment V2 alpha around the shared plant simulator.
 
 One policy decision is held for several one-minute physics steps.  The guard is
 re-run before every physical step because storage and availability can change
@@ -10,6 +10,8 @@ from __future__ import annotations
 import hashlib
 import json
 from copy import deepcopy
+from dataclasses import replace
+from numbers import Integral
 from typing import Any
 
 import gymnasium as gym
@@ -23,15 +25,17 @@ from ...safety.validation import validate
 from ..actions import ActionAdapter, DecodedAction
 from . import spaces
 from .accounting import IntervalPowerAccounting
+from .boundary import ControlStateV2, IntervalTelemetryAccumulator
 from .config import EpisodeConfigV2, EpisodeV2, sample_episode
 from .contract import describe_checkpoint_contract
 from .metrics import EpisodeMetricsV2
 from .observation import DeliveryObservation, ObservationEncoderV2
 from .reward import OBJECTIVE_VERSION, IntervalOutcome, RewardWeightsV2, compute
+from .weather import ForecastIssueV2
 
 
 class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
-    """Explicit V2 alpha: recurring delivery service, not tank filling."""
+    """Explicit V2 alpha: delivery service under uncertain solar resource."""
 
     metadata = {"render_modes": []}
 
@@ -69,7 +73,10 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
             dtype=np.float32,
         )
 
-        self.episode: EpisodeV2 | None = None
+        # Full weather truth and future forecast vintages are deliberately
+        # private. Controllers receive only ``current_forecast``.
+        self._episode: EpisodeV2 | None = None
+        self.control_state: ControlStateV2 | None = None
         self.metrics = EpisodeMetricsV2()
         self.physics_steps_taken = 0
         self.decisions_taken = 0
@@ -83,6 +90,10 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
         options: dict[str, Any] | None = None,
     ) -> tuple[np.ndarray, dict[str, Any]]:
         """Draw a replayable episode without returning its private future tape."""
+        if seed is not None and (
+            isinstance(seed, bool) or not isinstance(seed, Integral) or seed < 0
+        ):
+            raise ValueError("seed must be a non-negative integer or None")
         super().reset(seed=seed)
         episode_seed = (
             int(seed)
@@ -90,10 +101,13 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
             else int(self.np_random.integers(0, np.iinfo(np.uint32).max, dtype=np.uint32))
         )
         drawn = sample_episode(self.episode_config, self.config, seed=episode_seed)
-        self.episode = drawn
+        self._episode = drawn
         self.episode_physics_steps = drawn.physics_steps
         self.episode_decisions = drawn.physics_steps // drawn.decision_stride
-        self.simulator.load_scenario(drawn.scenario)
+        self.simulator.load_scenario(
+            drawn.scenario,
+            solar_factor_tape=drawn.weather.tape,
+        )
         # Evaluation episodes are immutable after reset. Allowing schedule
         # replacement would erase settlement history while retaining the
         # originally sampled manifest identity.
@@ -102,6 +116,7 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
         self.metrics = EpisodeMetricsV2()
         self.physics_steps_taken = 0
         self.decisions_taken = 0
+        self.control_state = ControlStateV2(boundary=self.telemetry)
         return self._observe(), self._public_info()
 
     def step(
@@ -140,12 +155,12 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
         self,
         decoded: DecodedAction,
     ) -> tuple[np.ndarray, float, bool, bool, dict[str, Any]]:
-        if self.episode is None:
+        if self._episode is None:
             raise RuntimeError("reset() must be called before step()")
         remaining = self.episode_physics_steps - self.physics_steps_taken
-        inner_steps = min(self.episode.decision_stride, remaining)
+        inner_steps = min(self._episode.decision_stride, remaining)
         if inner_steps <= 0:
-            raise RuntimeError("episode is already truncated; call reset()")
+            raise RuntimeError("episode is already terminated; call reset()")
 
         before = self.simulator.state
         min_soc = before.battery_soc
@@ -157,6 +172,7 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
         requested_kg = delivered_kg = unmet_kg = 0.0
         last_applied = Action.idle()
         power = IntervalPowerAccounting()
+        interval_telemetry = IntervalTelemetryAccumulator()
 
         for _ in range(inner_steps):
             step_before = self.telemetry
@@ -165,16 +181,19 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
                 step_before,
                 constraints=self.constraints,
                 config=self.config,
+                dispatch_solar_available_kw=(
+                    self.simulator.next_dispatch_solar_kw()
+                ),
             )
             last_applied = validated.action
             if validated.adjustments:
                 corrected_steps += 1
                 adjustments.extend(validated.adjustments)
             after_step = self.simulator.step(validated.action)
+            interval_telemetry.record(self.telemetry, dt_h=self.config.dt_h)
             power.record(
                 decoded.action,
                 validated.action,
-                before=step_before,
                 after=after_step,
                 dt_h=self.config.dt_h,
             )
@@ -190,7 +209,11 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
         after = self.simulator.state
         self.physics_steps_taken += inner_steps
         self.decisions_taken += 1
-        truncated = self.physics_steps_taken >= self.episode_physics_steps
+        self.control_state = ControlStateV2(
+            boundary=self.telemetry,
+            previous_interval=interval_telemetry.summary(),
+        )
+        terminated = self.physics_steps_taken >= self.episode_physics_steps
         outcome = IntervalOutcome(
             hours=inner_steps * self.config.dt_h,
             physical_steps=inner_steps,
@@ -218,7 +241,7 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
             outcome,
             config=self.config,
             constraints=self.constraints,
-            terminal=truncated,
+            terminal=terminated,
             weights=self.weights,
         )
         self.metrics.record(
@@ -227,9 +250,14 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
             settlements,
             corrected_physics_steps=corrected_steps,
         )
+        requested = decoded.to_dict()
+        requested["requested_kw_basis"] = (
+            "latest completed one-minute solar sample at the decision boundary; "
+            "authoritative interval energy is reported in interval_power"
+        )
         info = {
             **self._public_info(),
-            "requested": decoded.to_dict(),
+            "requested": requested,
             "applied_action": last_applied.to_dict(),
             "guard": {
                 "interventions": len(adjustments),
@@ -249,11 +277,30 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
             "metrics": self.metrics.to_dict(),
             "plant_status": after.plant_status,
         }
-        return self._observe(), breakdown.total, False, truncated, info
+        # The contract horizon is part of the finite-horizon MDP and pays a
+        # one-time inventory salvage value. It is therefore a true termination,
+        # not an external time-limit truncation that an RL library may bootstrap.
+        return self._observe(), breakdown.total, terminated, False, info
 
     @property
     def telemetry(self) -> PlantState:
-        return self.simulator.get_telemetry()
+        raw = self.simulator.get_telemetry()
+        # The simulator retains the private resource factor even when the
+        # clear-sky envelope is zero. A PV meter cannot observe that latent
+        # cloud state at night, so V2 exposes only the measured power ratio.
+        measured_factor = (
+            raw.solar_available_kw / raw.solar_potential_kw
+            if raw.solar_potential_kw > 1e-12
+            else 0.0
+        )
+        return replace(raw, solar_output_factor=measured_factor)
+
+    @property
+    def current_forecast(self) -> ForecastIssueV2:
+        """Latest immutable issuance available to every controller family."""
+        if self._episode is None:
+            raise RuntimeError("reset() must be called before requesting a forecast")
+        return self._episode.weather.current_issue(self.physics_steps_taken)
 
     @property
     def progress(self) -> float:
@@ -262,6 +309,8 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
         return min(1.0, self.decisions_taken / self.episode_decisions)
 
     def _observe(self) -> np.ndarray:
+        if self._episode is None or self.control_state is None:
+            raise RuntimeError("reset() must be called before observing")
         next_delivery = self.simulator.next_delivery
         current = self.simulator.delivery_step
         delivery = DeliveryObservation(
@@ -278,13 +327,16 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
             cumulative_delivered_kg=current.cumulative_delivered_kg,
         )
         return self.encoder.encode(
-            self.telemetry,
+            self.control_state,
             constraints=self.constraints,
             progress=self.progress,
             delivery=delivery,
+            forecast=self.current_forecast,
         )
 
     def _public_info(self) -> dict[str, Any]:
+        if self._episode is None:
+            raise RuntimeError("reset() must be called before requesting public info")
         next_delivery = self.simulator.next_delivery
         return {
             "environment_id": spaces.ENVIRONMENT_ID,
@@ -294,6 +346,7 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
             "clock": self.telemetry.clock,
             "decision_index": self.decisions_taken,
             "physics_step": self.physics_steps_taken,
+            "forecast": self.current_forecast.to_dict(),
             "next_delivery": (
                 None
                 if next_delivery is None
@@ -306,10 +359,10 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
 
     def audit_manifest(self) -> dict[str, Any]:
         """Private reproducibility record, deliberately separate from Gym info."""
-        if self.episode is None:
+        if self._episode is None:
             raise RuntimeError("reset() must be called before requesting a manifest")
         immutable = {
-            "manifest_schema_version": 1,
+            "manifest_schema_version": 2,
             "environment": spaces.describe(),
             "checkpoint_contract": self.checkpoint_contract,
             "objective_version": OBJECTIVE_VERSION,
@@ -317,7 +370,7 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
             "plant_config": self.config.to_dict(),
             "constraints": self.constraints.to_dict(),
             "reward_weights": self.weights.to_dict(),
-            "episode": self.episode.audit_manifest(),
+            "episode": self._episode.audit_manifest(),
             "provenance_gaps": [
                 "source revision and dependency-lock digest must be added by the experiment runner"
             ],

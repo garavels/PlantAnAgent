@@ -39,11 +39,13 @@ class IntervalPowerAccounting:
         requested: Action,
         guarded: Action,
         *,
-        before: PlantState,
         after: PlantState,
         dt_h: float,
     ) -> None:
-        bus_kw = max(0.0, before.solar_available_kw)
+        # Share actions are fractions of the bus that actually materialises in
+        # this physical interval. Using the prior boundary's solar value would
+        # misclassify an exogenous weather ramp as controller/dispatch error.
+        bus_kw = max(0.0, after.solar_available_kw)
         requested_kw = _commanded_kw(requested, bus_kw)
         guarded_kw = _commanded_kw(guarded, bus_kw)
         applied_kw = {
@@ -105,6 +107,7 @@ class IntervalPowerAccounting:
             "request_application_l1_kwh": self.request_application_l1_kwh,
             "intervention_channels": list(POWER_CHANNELS),
             "battery_support_is_also_in_electrolyser_total": True,
+            "share_command_basis": "realized solar bus in each physical interval",
         }
 
 

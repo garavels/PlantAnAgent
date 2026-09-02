@@ -8,6 +8,7 @@ from typing import Any, Iterable
 from plant_sim import DeliverySettlement
 
 from .reward import IntervalOutcome, RewardBreakdownV2
+from .spaces import STAGE
 
 
 @dataclass
@@ -92,7 +93,7 @@ class EpisodeMetricsV2:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "stage": "delivery-only-alpha",
+            "stage": STAGE,
             "decisions": self.decisions,
             "physical_steps": self.physical_steps,
             "hours": self.hours,
