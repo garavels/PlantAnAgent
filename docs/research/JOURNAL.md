@@ -253,3 +253,42 @@ that cannot read future innovations, and a technology-labelled electrolyser comm
 state. Physics remains one minute while the initial controller interval is 15 minutes.
 HEPA, the supervisor, and natural-language scenario authoring are frozen during the
 routine-controller tournament and introduced later through factorial ablations.
+
+## 2026-09-02 — Frozen V1 interface identity
+
+### Problem
+
+Checkpoint compatibility previously compared the integer specification version and
+ordered field names. A change to a field's normalization, source, bound, target, or
+conversion could therefore retain the same names and accidentally load a policy under
+different semantics. Checkpoints also did not explicitly identify Environment V1.
+
+### Change
+
+The V1 observation/action interface now has the stable identity `plant-env-v1` and a
+SHA-256 digest over its canonical machine-readable descriptor. The digest covers field
+order, names, sources/targets, units, normalization/conversion, bounds, sizes, and the
+specification version. It is serialized into all newly written checkpoint metadata and
+validated when loading.
+
+Metadata written before this change has neither field. It remains explicitly treated
+as legacy V1 and is checked using the prior specification-version and ordered-name
+rules; it cannot retroactively prove its exact descriptor semantics. A checkpoint that
+declares a different environment or a nonempty mismatched digest now fails loudly.
+
+The frozen digest at this commit is:
+
+```text
+3a0f8b9c812e0937f48c5c6a700f1628d8d6d66d845df345c33720001a9ac085
+```
+
+This digest intentionally does not cover reward, episode generation, plant parameters,
+or simulator dynamics. V2 requires a broader environment manifest before training;
+the limited scope is documented rather than overstated.
+
+Verification before commit:
+
+```text
+focused RL tests                              60 passed
+full backend suite                           279 passed, 1 existing warning
+```

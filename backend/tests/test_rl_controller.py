@@ -53,6 +53,16 @@ def test_a_mock_checkpoint_never_claims_to_be_trained(mock_checkpoint: Path) -> 
     assert not metadata.trained
     assert "not a trained policy" in metadata.notes.lower()
     assert metadata.observation_fields == spaces.OBSERVATION_NAMES
+    assert metadata.environment_id == spaces.ENVIRONMENT_ID
+    assert metadata.environment_contract_digest == spaces.ENVIRONMENT_CONTRACT_DIGEST
+
+
+def test_new_checkpoint_metadata_serialises_the_environment_contract(
+    mock_checkpoint: Path,
+) -> None:
+    raw = json.loads(checkpoints.metadata_path(mock_checkpoint).read_text(encoding="utf-8"))
+    assert raw["environment_id"] == "plant-env-v1"
+    assert raw["environment_contract_digest"] == spaces.ENVIRONMENT_CONTRACT_DIGEST
 
 
 def test_missing_checkpoint_is_an_error_not_a_random_policy(tmp_path: Path) -> None:
@@ -100,6 +110,47 @@ def test_an_older_spec_version_is_refused(mock_checkpoint: Path) -> None:
     target.write_text(json.dumps(raw), encoding="utf-8")
     with pytest.raises(checkpoints.IncompatibleCheckpointError, match="spec version"):
         load_policy(mock_checkpoint)
+
+
+def test_a_checkpoint_from_another_environment_is_refused(mock_checkpoint: Path) -> None:
+    target = checkpoints.metadata_path(mock_checkpoint)
+    raw = json.loads(target.read_text(encoding="utf-8"))
+    raw["environment_id"] = "plant-env-v2"
+    target.write_text(json.dumps(raw), encoding="utf-8")
+    with pytest.raises(checkpoints.IncompatibleCheckpointError, match="checkpoint environment"):
+        load_policy(mock_checkpoint)
+
+
+def test_a_normalisation_only_change_is_refused_by_digest(mock_checkpoint: Path) -> None:
+    changed = spaces.contract_payload()
+    observation_fields = changed["observation_fields"]
+    assert isinstance(observation_fields, list)
+    first_field = observation_fields[0]
+    assert isinstance(first_field, dict)
+    first_field["normalisation"] = "sin(2*pi*h/12)"
+    changed_digest = spaces.contract_digest(changed)
+    assert changed_digest != spaces.ENVIRONMENT_CONTRACT_DIGEST
+
+    target = checkpoints.metadata_path(mock_checkpoint)
+    raw = json.loads(target.read_text(encoding="utf-8"))
+    raw["environment_contract_digest"] = changed_digest
+    target.write_text(json.dumps(raw), encoding="utf-8")
+    with pytest.raises(checkpoints.IncompatibleCheckpointError, match="contract digest"):
+        load_policy(mock_checkpoint)
+
+
+def test_legacy_v1_metadata_without_environment_fields_still_loads(
+    mock_checkpoint: Path,
+) -> None:
+    target = checkpoints.metadata_path(mock_checkpoint)
+    raw = json.loads(target.read_text(encoding="utf-8"))
+    raw.pop("environment_id")
+    raw.pop("environment_contract_digest")
+    target.write_text(json.dumps(raw), encoding="utf-8")
+
+    metadata = checkpoints.load_metadata(mock_checkpoint)
+    assert metadata.environment_id == spaces.ENVIRONMENT_ID
+    assert metadata.environment_contract_digest == ""
 
 
 def test_an_unknown_format_is_refused(mock_checkpoint: Path) -> None:

@@ -6,9 +6,9 @@
 
 A checkpoint is a directory rather than a bare file because the artefact alone
 cannot say which observation it expects. The metadata records the field *names*
-in order, the spec version and the plant it was trained against, so loading a
-policy into a plant whose observation gained a slot fails with a message saying
-which one changed instead of silently feeding the network a shifted vector.
+in order, the spec version, the exact observation/action descriptor digest, and
+the plant it was trained against. Loading a policy whose inputs or outputs have
+changed therefore fails loudly instead of silently feeding it different values.
 
 Loading has exactly four failure modes, and each has its own error: the path is
 missing, the metadata is unreadable, the spaces do not match, or the library that
@@ -79,6 +79,10 @@ class CheckpointMetadata:
     #: Format-specific payload, e.g. the constant action of a `fixed` checkpoint.
     extra: dict[str, Any] = field(default_factory=dict)
     notes: str = ""
+    #: Identity and exact descriptor digest of the observation/action contract.
+    #: These fields are last to preserve the positional shape of older callers.
+    environment_id: str = spaces.ENVIRONMENT_ID
+    environment_contract_digest: str = spaces.ENVIRONMENT_CONTRACT_DIGEST
 
     @property
     def observation_size(self) -> int:
@@ -128,6 +132,10 @@ class CheckpointMetadata:
             training_config=dict(raw.get("training_config") or {}),
             extra=dict(raw.get("extra") or {}),
             notes=str(raw.get("notes", "")),
+            # Metadata written before contract digests existed is V1. An empty
+            # digest is its legacy sentinel and is checked by version/names only.
+            environment_id=str(raw.get("environment_id", spaces.ENVIRONMENT_ID)),
+            environment_contract_digest=str(raw.get("environment_contract_digest", "")),
         )
 
     def check_compatible(self, *, path: Path | None = None) -> None:
@@ -157,6 +165,21 @@ class CheckpointMetadata:
             raise IncompatibleCheckpointError(
                 f"checkpoint {label} fields differ from this plant's{where}: "
                 f"{'; '.join(differing)}"
+            )
+        if self.environment_id != spaces.ENVIRONMENT_ID:
+            raise IncompatibleCheckpointError(
+                f"checkpoint environment {self.environment_id!r} does not match "
+                f"this build's {spaces.ENVIRONMENT_ID!r}{where}: retrain the policy"
+            )
+        if (
+            self.environment_contract_digest
+            and self.environment_contract_digest != spaces.ENVIRONMENT_CONTRACT_DIGEST
+        ):
+            raise IncompatibleCheckpointError(
+                "checkpoint environment contract digest "
+                f"{self.environment_contract_digest!r} does not match this build's "
+                f"{spaces.ENVIRONMENT_CONTRACT_DIGEST!r}{where}: the observation/action "
+                "semantics differ; retrain the policy"
             )
 
 

@@ -42,6 +42,16 @@ def test_field_contract_is_self_consistent() -> None:
         assert field.source and field.unit and field.normalisation
 
 
+def test_environment_contract_digest_is_deterministic_and_described() -> None:
+    assert spaces.ENVIRONMENT_ID == "plant-env-v1"
+    assert spaces.contract_digest() == spaces.contract_digest(spaces.contract_payload())
+    assert len(spaces.ENVIRONMENT_CONTRACT_DIGEST) == 64
+    int(spaces.ENVIRONMENT_CONTRACT_DIGEST, 16)
+    described = spaces.describe()
+    assert described["environment_id"] == spaces.ENVIRONMENT_ID
+    assert described["environment_contract_digest"] == spaces.ENVIRONMENT_CONTRACT_DIGEST
+
+
 def test_reset_returns_a_member_of_the_observation_space(env: PlantEnv) -> None:
     observation, info = env.reset(seed=3)
     assert observation.shape == (spaces.OBSERVATION_SIZE,)
