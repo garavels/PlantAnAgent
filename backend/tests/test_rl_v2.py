@@ -234,6 +234,7 @@ def _interval_outcome(**changes: Any) -> IntervalOutcome:
         min_battery_soc=0.50,
         shutdown_steps=0,
         corrections=0,
+        guard_intervention_kwh=0.0,
         out_of_range=False,
         terminal_ch4_kg=0.0,
         reference_delivery_kg=330.0,
@@ -292,6 +293,42 @@ def test_v2_energy_penalty_is_absolute_and_partition_invariant() -> None:
     assert large.components["curtailment"] == pytest.approx(
         1_000.0 * small.components["curtailment"]
     )
+
+
+def test_v2_reports_requested_and_applied_energy_over_the_whole_decision() -> None:
+    env = PlantEnvV2(episode=SHORT)
+    env.reset(seed=4)
+    _, _, _, _, info = env.step_action(Action(battery_support_kw=10_000.0))
+
+    power = info["interval_power"]
+    assert power["hours"] == pytest.approx(0.25)
+    assert power["requested_kwh"]["battery_support"] == pytest.approx(2_500.0)
+    assert power["applied_kwh"]["battery_support"] < 625.0
+    assert power["guard_intervention_l1_kwh"] > 0.0
+    assert power["request_application_l1_kwh"] >= power["guard_intervention_l1_kwh"]
+    assert info["guard"]["intervention_l1_kwh"] == pytest.approx(
+        power["guard_intervention_l1_kwh"]
+    )
+    assert info["metrics"]["guard_intervention_kwh"] == pytest.approx(
+        power["guard_intervention_l1_kwh"]
+    )
+
+
+def test_v2_retains_the_raw_policy_vector_for_aliasing_audits() -> None:
+    env = PlantEnvV2(episode=SHORT)
+    env.reset(seed=2)
+    raw = np.asarray([2.0, -2.0, 0.25, float("nan"), float("inf")])
+    _, _, _, _, info = env.step(raw)
+
+    assert info["requested"]["raw_policy_vector"] == [
+        2.0,
+        -2.0,
+        0.25,
+        "nan",
+        "+inf",
+    ]
+    assert info["guard"]["out_of_range"] is True
+    json.dumps(info, allow_nan=False)
 
 
 def test_delivery_shortfall_drives_service_metrics_and_terminal_ordering() -> None:

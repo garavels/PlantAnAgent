@@ -6,6 +6,8 @@ translation layer, not the plant: the physics already has its own suite.
 
 from __future__ import annotations
 
+import json
+
 import numpy as np
 import pytest
 from plant_sim import Action, PlantConfig, PlantSimulator
@@ -158,10 +160,17 @@ def test_action_decode_flags_and_clips_out_of_range_output() -> None:
 
 
 @pytest.mark.parametrize(
-    "invalid",
-    [float("nan"), float("inf"), -float("inf")],
+    ("invalid", "audit_value"),
+    [
+        (float("nan"), "nan"),
+        (float("inf"), "+inf"),
+        (-float("inf"), "-inf"),
+    ],
 )
-def test_non_finite_policy_output_fails_to_zero_authority(invalid: float) -> None:
+def test_non_finite_policy_output_fails_to_zero_authority(
+    invalid: float,
+    audit_value: str,
+) -> None:
     adapter = ActionAdapter(PlantConfig())
     decoded = adapter.decode(
         np.full(spaces.ACTION_SIZE, invalid),
@@ -178,6 +187,8 @@ def test_non_finite_policy_output_fails_to_zero_authority(invalid: float) -> Non
         "methanator": 0.0,
         "battery_support": 0.0,
     }
+    assert decoded.raw_policy_vector == (audit_value,) * spaces.ACTION_SIZE
+    json.dumps(decoded.to_dict(), allow_nan=False)
 
 
 def test_action_encode_is_the_inverse_of_decode() -> None:

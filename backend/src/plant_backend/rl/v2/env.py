@@ -22,6 +22,7 @@ from ...controllers.base import Constraints
 from ...safety.validation import validate
 from ..actions import ActionAdapter, DecodedAction
 from . import spaces
+from .accounting import IntervalPowerAccounting
 from .config import EpisodeConfigV2, EpisodeV2, sample_episode
 from .contract import describe_checkpoint_contract
 from .metrics import EpisodeMetricsV2
@@ -155,11 +156,13 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
         settlements: list[DeliverySettlement] = []
         requested_kg = delivered_kg = unmet_kg = 0.0
         last_applied = Action.idle()
+        power = IntervalPowerAccounting()
 
         for _ in range(inner_steps):
+            step_before = self.telemetry
             validated = validate(
                 decoded.action,
-                self.telemetry,
+                step_before,
                 constraints=self.constraints,
                 config=self.config,
             )
@@ -168,6 +171,13 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
                 corrected_steps += 1
                 adjustments.extend(validated.adjustments)
             after_step = self.simulator.step(validated.action)
+            power.record(
+                decoded.action,
+                validated.action,
+                before=step_before,
+                after=after_step,
+                dt_h=self.config.dt_h,
+            )
             delivery = self.simulator.delivery_step
             settlements.extend(delivery.settlements)
             requested_kg += delivery.requested_kg
@@ -198,6 +208,7 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
             min_battery_soc=min_soc,
             shutdown_steps=shutdown_steps,
             corrections=len(adjustments),
+            guard_intervention_kwh=power.guard_intervention_l1_kwh,
             out_of_range=decoded.clipped,
             terminal_ch4_kg=after.ch4_level_kg,
             reference_delivery_kg=self.episode_config.delivery_amount_kg,
@@ -224,7 +235,9 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
                 "interventions": len(adjustments),
                 "corrected_physics_steps": corrected_steps,
                 "out_of_range": decoded.clipped,
+                "intervention_l1_kwh": power.guard_intervention_l1_kwh,
             },
+            "interval_power": power.to_dict(),
             "adjustments": adjustments,
             "delivery": {
                 "commitments_settled": len(settlements),

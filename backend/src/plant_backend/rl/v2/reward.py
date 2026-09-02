@@ -52,6 +52,7 @@ class IntervalOutcome:
     min_battery_soc: float
     shutdown_steps: int
     corrections: int
+    guard_intervention_kwh: float
     out_of_range: bool
     terminal_ch4_kg: float
     reference_delivery_kg: float

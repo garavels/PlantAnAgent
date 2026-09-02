@@ -44,12 +44,17 @@ class DecodedAction:
     clipped: bool
     #: Requested power per consumer (kW), for logging and telemetry.
     requested_kw: dict[str, float]
+    #: Exact policy output for aliasing/debug audits; non-finite values are strings.
+    raw_policy_vector: tuple[float | str, ...] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "action": self.action.to_dict(),
             "clipped": self.clipped,
             "requested_kw": dict(self.requested_kw),
+            "raw_policy_vector": (
+                None if self.raw_policy_vector is None else list(self.raw_policy_vector)
+            ),
         }
 
 
@@ -84,6 +89,15 @@ class ActionAdapter:
         bounded = np.where(finite, np.clip(raw, self._low, self._high), self._low)
         unit = (bounded + 1.0) / 2.0
 
+        def audit_value(value: float) -> float | str:
+            if np.isnan(value):
+                return "nan"
+            if np.isposinf(value):
+                return "+inf"
+            if np.isneginf(value):
+                return "-inf"
+            return float(value)
+
         support_kw = float(unit[4]) * constraints.support_limit_kw(self.config)
         action = Action.sanitised(
             {
@@ -105,6 +119,7 @@ class ActionAdapter:
                 "methanator": action.methanator_share * bus_kw,
                 "battery_support": action.battery_support_kw,
             },
+            raw_policy_vector=tuple(audit_value(value) for value in raw),
         )
 
     def encode(self, action: Action, *, constraints: Constraints) -> np.ndarray:

@@ -31,6 +31,7 @@ class EpisodeMetricsV2:
     min_battery_soc: float = 1.0
     shutdown_steps: int = 0
     guard_interventions: int = 0
+    guard_intervention_kwh: float = 0.0
     corrected_physics_steps: int = 0
     out_of_range_decisions: int = 0
 
@@ -59,6 +60,7 @@ class EpisodeMetricsV2:
         self.min_battery_soc = min(self.min_battery_soc, outcome.min_battery_soc)
         self.shutdown_steps += outcome.shutdown_steps
         self.guard_interventions += outcome.corrections
+        self.guard_intervention_kwh += outcome.guard_intervention_kwh
         self.corrected_physics_steps += corrected_physics_steps
         self.out_of_range_decisions += int(outcome.out_of_range)
         for settlement in settlements:
@@ -113,6 +115,7 @@ class EpisodeMetricsV2:
             "min_battery_soc": self.min_battery_soc,
             "shutdown_steps": self.shutdown_steps,
             "guard_interventions": self.guard_interventions,
+            "guard_intervention_kwh": self.guard_intervention_kwh,
             "corrected_physics_steps": self.corrected_physics_steps,
             "out_of_range_decisions": self.out_of_range_decisions,
         }

@@ -565,3 +565,19 @@ references. Their sums are now invariant to partitioning the same physical inter
 and wasting 1,000 times more energy costs 1,000 times more. Delivery and bounded terminal
 inventory semantics are unchanged. The full checkpoint digest makes policies trained
 under objective version 1 incompatible rather than silently reusing them.
+
+### Interval action and guard accounting
+
+The alpha reported requested kW only at the start of a 15-minute decision and the
+share-based action applied in its final minute. Solar, storage, and the guard can change
+during the other fourteen physics steps, so those fields could not substantiate the
+specification's requested-versus-applied power claim. The original raw policy vector was
+also discarded after decoding, hiding action aliasing caused by clipping or share
+normalization.
+
+Every V2 transition now integrates requested and physically applied kWh for battery
+charging, the electrolyser, DAC, methanator, and battery support over all inner physics
+steps. It reports interval mean kW and an L1 request/application energy gap across the
+four dispatch channels; episode metrics accumulate that intervention magnitude. The
+exact raw policy vector is retained in step diagnostics, with non-finite values encoded
+as JSON-safe strings. This accounting is observational and does not alter plant physics.
