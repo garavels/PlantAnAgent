@@ -118,11 +118,11 @@ will label the colleague's reported parity as unverified external evidence.
 
 ### Initial saturation evidence
 
-A 100-seed, 48-hour heuristic audit exposed a structural ceiling: the CH4 tank has no
-offtake, starts at a randomized 0--20% fill, and can only fill. The heuristic deliberately
-stops methanation near 97% fill. In the audit, 73 of 100 runs ended at or above 96% fill;
-within those ceiling-limited runs, the correlation between starting CH4 inventory and
-reported CH4 production was approximately `-0.99994`.
+A 100-seed, 48-hour exploratory heuristic audit exposed a structural ceiling: the CH4
+tank has no offtake, starts at a randomized 0--20% fill, and can only fill. The heuristic
+deliberately stops methanation near 97% fill. Over seeds 1--100, 73 runs ended at or above
+96% fill; within those ceiling-limited runs, the correlation between starting CH4
+inventory and reported CH4 production was approximately `-0.99994`.
 
 This means the headline production metric is, for most nominal episodes, nearly the tank's
 remaining headroom rather than a sensitive measure of dispatch quality. Mean heuristic
@@ -130,3 +130,26 @@ solar utilization was approximately 99.4%, no shutdown step occurred, and the po
 methane reward contribution was roughly two orders of magnitude larger than the combined
 penalties. These observations strongly support `H1`, but they will be reproduced through
 a committed diagnostic command before being treated as a branch result.
+
+### Committed saturation diagnostic
+
+`plant_backend.rl.evaluation.ceiling` now formalizes the preceding exploratory audit. It
+can evaluate the heuristic alone or pair it with any repository-compatible checkpoint on
+identical seeds, prints an explicit evidence scope, and writes every rollout plus
+population distributions to JSON. `make rl-ceiling` is its maintained entry point.
+
+The independently repeated baseline over seeds 0--99 produced:
+
+```text
+72/100 runs at or above 96% terminal CH4 fill
+Pearson r(initial CH4, produced CH4) = -1.000 on those 72 runs
+mean terminal fill                  = 94.7%
+mean CH4 production                 = 2538.69 kg
+mean solar utilization              = 99.4%
+mean shutdown steps                 = 0
+```
+
+The exploratory 73/100 result used the shifted seed range 1--100. Both are retained in
+the record. The conclusion is insensitive to that choice: roughly three quarters of
+default episodes terminate against storage headroom, and their production is nearly a
+deterministic function of randomized starting inventory.

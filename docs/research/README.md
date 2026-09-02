@@ -16,6 +16,8 @@ fallback behavior.
   commands, observations, decisions, failures, and changes of direction.
 - [`ROADMAP.md`](ROADMAP.md) defines hypotheses, experimental gates, benchmark arms,
   and the staged implementation programme.
+- [`ENVIRONMENT_V1_AUDIT.md`](ENVIRONMENT_V1_AUDIT.md) records the reproducible
+  saturation diagnosis that motivates Environment V2.
 
 Large generated datasets, model checkpoints, and raw run outputs remain outside Git.
 Every reported experiment must nevertheless record enough provenance to reproduce it:

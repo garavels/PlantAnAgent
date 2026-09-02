@@ -1,4 +1,4 @@
-.PHONY: help setup dev backend frontend sim test eval foresight-eval rl-eval train-dry train \
+.PHONY: help setup dev backend frontend sim test eval foresight-eval rl-eval rl-ceiling train-dry train \
 	hepa-collect hepa-pretrain-dry hepa-pretrain hepa-finetune-dry hepa-finetune \
 	hepa-eval build clean
 
@@ -27,6 +27,11 @@ foresight-eval:   ## compare controller / +supervisor / +HEPA (fixture forecasts
 rl-eval:          ## evaluate the heuristic baseline (add CHECKPOINT=<dir> for a policy)
 	uv run python -m plant_backend.rl.evaluation --seeds 1 2 3 --hours 24 \
 		$(if $(CHECKPOINT),--checkpoint $(CHECKPOINT),)
+
+rl-ceiling:       ## diagnose whether CH4 tank headroom caps the V1 benchmark
+	uv run python -m plant_backend.rl.evaluation.ceiling --seed-start 0 \
+		--count $(or $(SEEDS),100) --hours $(or $(HOURS),48) \
+		$(if $(CHECKPOINT),--checkpoint $(CHECKPOINT),) $(if $(JSON),--json $(JSON),)
 
 train-dry:        ## build the RL environment and print the training plan; trains nothing
 	uv run python -m plant_backend.rl.training.train --dry-run
