@@ -35,6 +35,7 @@ from .config import PlantConfig
 from .delivery import DeliveryCommitment, DeliveryLedger, DeliveryStepResult
 from .events import EventLog
 from .faults import Fault, FaultRegistry, FaultSpec
+from .forcing import SolarFactorTape
 from .scenarios import Scenario
 from .state import (
     CRITICAL,
@@ -97,6 +98,8 @@ class PlantSimulator:
         self.scenario: str | None = None
         #: Last reported plant status, so status changes emit exactly one event.
         self._status = NORMAL
+        #: Optional episode-relative exogenous solar resource trajectory.
+        self._solar_factor_tape: SolarFactorTape | None = None
 
         self.step_index = 0
         self.time_s = 0.0
@@ -108,12 +111,27 @@ class PlantSimulator:
         self.state = self.reset()
 
     # --- interface --------------------------------------------------------
-    def reset(self, *, keep_faults: bool = False) -> PlantState:
+    def reset(
+        self,
+        *,
+        keep_faults: bool = False,
+        solar_factor_tape: SolarFactorTape | None = None,
+    ) -> PlantState:
         """Return the plant to its initial condition and report the state.
 
         Faults, the event stream and any loaded scenario go with it: a reset
         plant is a healthy plant unless a caller explicitly keeps the faults.
+        A solar factor tape is opt-in and scoped to this episode; passing
+        ``None`` retains the exact clear-sky V1 behaviour.
         """
+        if solar_factor_tape is not None:
+            if not isinstance(solar_factor_tape, SolarFactorTape):
+                raise TypeError("solar_factor_tape must be a SolarFactorTape or None")
+            if solar_factor_tape.dt_s != self.config.dt_s:
+                raise ValueError(
+                    "solar factor tape timestep mismatch: "
+                    f"tape dt_s={solar_factor_tape.dt_s}, simulator dt_s={self.config.dt_s}"
+                )
         for component in self.components.values():
             component.reset()
         if not keep_faults:
@@ -122,6 +140,7 @@ class PlantSimulator:
         self.events.clear()
         self.delivery_ledger.clear()
         self._status = NORMAL
+        self._solar_factor_tape = solar_factor_tape
         self.step_index = 0
         self.time_s = 0.0
         self.energy_produced_kwh = 0.0
@@ -130,7 +149,7 @@ class PlantSimulator:
         self.co2_captured_total_kg = 0.0
         self.ch4_produced_total_kg = 0.0
         self._apply_faults()
-        self.solar.update(self.time_s)
+        self._update_solar(step_index=0)
         self.state = self._build_state(
             PowerFlows(
                 solar_available_kw=self.solar.power_kw,
@@ -157,9 +176,14 @@ class PlantSimulator:
         safe_action = Action.sanitised(action)
         dt_h = self.config.dt_h
 
+        # Exhaustion is checked before advancing faults, events, or equipment,
+        # so a failed call cannot leave a partially advanced episode behind.
+        if self._solar_factor_tape is not None:
+            self._solar_factor_tape.for_interval(self.step_index)
+
         self.events.at(self.time_s, self.state.clock)
         self._apply_faults()
-        solar_kw = self.solar.update(self.time_s)
+        solar_kw = self._update_solar(step_index=self.step_index + 1)
         flows = dispatch(
             safe_action,
             solar_kw,
@@ -278,10 +302,15 @@ class PlantSimulator:
         self.events.emit("info", "fault.cleared_all", "All faults cleared by operator")
         self._apply_faults()
 
-    def load_scenario(self, scenario: Scenario | str) -> PlantState:
+    def load_scenario(
+        self,
+        scenario: Scenario | str,
+        *,
+        solar_factor_tape: SolarFactorTape | None = None,
+    ) -> PlantState:
         """Reset the plant into a repeatable situation and schedule its faults."""
         chosen = scenario_library.get(scenario)
-        self.reset()
+        self.reset(solar_factor_tape=solar_factor_tape)
         self.scenario = chosen.id
         self.time_s = chosen.start_hour * SECONDS_PER_HOUR
 
@@ -304,7 +333,7 @@ class PlantSimulator:
 
         self.events.at(self.time_s, _clock(self.time_s))
         self._apply_faults()
-        self.solar.update(self.time_s)
+        self._update_solar(step_index=0)
         self.state = self._build_state(
             PowerFlows(
                 solar_available_kw=self.solar.power_kw,
@@ -329,6 +358,21 @@ class PlantSimulator:
         return self.state
 
     # --- internals --------------------------------------------------------
+    def _update_solar(self, *, step_index: int) -> float:
+        """Apply one episode-boundary resource factor at the legacy solar time.
+
+        Tape lookup intentionally uses the episode-relative integer step, not
+        the absolute scenario clock.  The clear-sky curve keeps its established
+        V1 sampling convention so an all-ones tape is exactly equivalent to no
+        tape at all.
+        """
+        resource_factor = (
+            1.0
+            if self._solar_factor_tape is None
+            else self._solar_factor_tape.at_boundary(step_index)
+        )
+        return self.solar.update(self.time_s, resource_factor=resource_factor)
+
     def _apply_faults(self) -> None:
         """Advance fault lifecycles and hand each component its current effect."""
         for transition, fault in self.faults.update(self.time_s):

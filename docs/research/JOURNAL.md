@@ -632,3 +632,43 @@ immutable external profile. The European Commission Joint Research Centre's docu
 PVGIS hourly service provides multi-year solar-radiation and PV-output data and is the
 first planned empirical adapter. PVGIS timestamps and database versions must be retained;
 hourly values will not be misrepresented as native one-minute measurements.
+
+## 2026-09-02 — Opt-in exogenous solar-forcing kernel
+
+The simulator now accepts an immutable, episode-relative `SolarFactorTape` at reset or
+scenario load. A tape contains one bounded resource factor at every physics boundary:
+boundary zero initializes the reported reset state, and the factor at boundary `k + 1`
+is consumed by physical interval `[k, k + 1)`. Integer indexing, an exact timestep
+contract, and explicit exhaustion errors make stochastic episodes replayable without
+depending on floating-point wall-clock lookup. Exhaustion is checked before faults,
+events, equipment, inventories, or counters advance, so a malformed episode cannot leave
+the simulator partially mutated.
+
+Resource availability and equipment condition are deliberately separate. The tape factor
+multiplies the solar array's clear-sky power; an active solar-equipment fault multiplies
+that result through component health. Ordinary cloud variability therefore does not
+fabricate equipment degradation, while simultaneous weather and equipment loss compose
+physically and remain distinguishable through resource and health fields.
+
+This is an opt-in seam rather than a V1 behavior change. With no tape, or with an all-ones
+tape, state trajectories, events, and delivery accounting are exactly equal to the prior
+deterministic simulator. The clear-sky curve also retains its existing sampling convention:
+the state at boundary `k + 1` reports flows over the interval just completed using the
+clear-sky value sampled at its start. That legacy convention is now documented and will be
+paired with explicit interval aggregation in the V2 controller view.
+
+### Verification
+
+Focused forcing and boundary-semantics tests cover hand-indexed factors, source-copy
+immutability, strict scalar validation, scenario-clock independence, exact reset replay,
+all-ones equivalence, preflighted exhaustion, and multiplicative fault composition. The
+simulator package's complete test suite passed independently (`90 passed`); the combined
+new forcing and boundary tests passed locally (`25 passed`). Static type checking also
+surfaced two pre-existing errors in delivery/event modules, neither in this increment;
+they remain recorded technical debt rather than being hidden in a feature commit.
+
+This kernel is not itself a weather model and makes no empirical fidelity claim. The next
+layer owns the seeded latent process, causal forecast issuances, clear-sky-envelope digest,
+and private replay manifest. Keeping generation outside the plant physics lets future
+PVGIS/site traces replace the synthetic fixture without changing downstream equipment or
+dispatch logic.
