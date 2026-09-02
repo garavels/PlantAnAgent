@@ -32,6 +32,10 @@ fallback behavior.
   the evidence boundary, assumptions, state semantics, compatibility contract, and
   acceptance tests for the first technology-labelled equipment model now integrated
   into commitment-alpha V2.
+- [`COMMITMENT_ALPHA_CALIBRATION.md`](COMMITMENT_ALPHA_CALIBRATION.md) records the
+  clean, paired 3-seed development screen, selects 35 kg/h as the primary development
+  target and 42 kg/h as a development stress point, and preserves the boundary that
+  neither is formal or held-out evidence.
 
 Small canonical benchmark outputs may be committed under [`results/`](results/) when
 they make a reported conclusion directly auditable. Large generated datasets, model

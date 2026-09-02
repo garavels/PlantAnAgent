@@ -1309,3 +1309,57 @@ still service-oriented and does not claim to price stack wear. Starts, low-load 
 cycling, ramping, and movement remain Pareto scorecard outputs until a defensible economic
 model and sensitivity range are supplied. That limitation is part of the next controller
 tournament rather than an excuse to invent degradation coefficients.
+
+## 2026-09-02 — Commitment-alpha delivery-rate development screen
+
+### Replacement of the interrupted sweep
+
+The first attempted calibration was a 20-seed, 168-hour sweep. It was interrupted before
+complete cells were available, so none of its partial cells is treated as formal evidence
+or combined with later results. It was replaced with a bounded screen over seeds 0--2,
+72 hours per rollout, from clean revision
+`9d94483832b5a1a2ed80e995f36c99edfdfa2c93`.
+
+This replacement is deliberately labelled development work. The seeds, weather regime,
+35 kg/h target, and 42 kg/h stress point were all inspected during calibration and are
+therefore neither validation nor held out.
+
+### Paired result and target decision
+
+Commitment-on and compatibility-off arms shared exogenous episode hashes for every
+controller-specific `(rate, seed)` comparison. The low-rate screen completed 36/36 such
+pairs (3 rates x 3 seeds x 4 controllers); these cover 9 rate-seed episode cells and
+72 rollouts, not 36 independent weather episodes. The high-rate extension completed
+48/48 pairs (4 x 3 x 4), covering 12 rate-seed episode cells and 96 rollouts. Full
+manifests appropriately differ across the on/off dynamics.
+
+At 30 kg/h the commitment-on legacy heuristic remained saturated at 100% delivery fill.
+At 35 kg/h it achieved 97.7% mean fill, two perfect episodes out of three, 57.3 kg mean
+unmet methane, 172.0 kg worst-episode unmet methane, and 97.2% mean service. The fixed
+production and balanced mixes reached only 86.2% and 59.0% fill, while the compatibility-
+off heuristic remained perfect. At 40 kg/h the on heuristic fell to 88.9% fill and 75.0%
+service, compared with 99.7% fill off.
+
+The primary development target is therefore **35 kg/h**: mostly feasible, but able to
+separate both controller behavior and commitment-on/off dynamics. **42 kg/h** is a named
+development stress point. There the heuristic achieved 84.97% fill, 454.5 kg mean unmet,
+641.6 kg worst-episode unmet, and 72.22% service on, versus 98.20%, 54.4 kg, 163.2 kg,
+and 97.22% off. Rates 45, 48, and 50 kg/h reduced heuristic fill to 79.78%, 75.23%, and
+72.51% on and 94.32%, 88.87%, and 85.60% off; those cells increasingly stress delivery
+feasibility even without commitment.
+
+### Controller-contract finding and next comparator
+
+Cold/hot starts, aborted/forced stops, nonproductive energy, and physical dispatch gap
+were invariant by delivery rate within each commitment-on controller at reported
+precision. This is expected from the information boundary: the legacy heuristic is
+called through its older telemetry interface and the fixed arms are open loop, so none
+consumes the V2 contract target even though a causal delivery representation exists in
+the 57-field task observation. The rate sweep changes obligations and scores, not their
+plan. It consequently does not bound the value available to a delivery-aware controller.
+
+The next experiment is an otherwise matched causal comparison: first add a delivery-aware
+forecast-blind rule, then an issued-forecast-aware version under the same safety,
+commitment, cadence, action, forecast-vintage, and exogenous-pairing protocol. The complete
+tables, exact pairing semantics, operating-exposure means, provenance, and evidence limits
+are recorded in `COMMITMENT_ALPHA_CALIBRATION.md`.
