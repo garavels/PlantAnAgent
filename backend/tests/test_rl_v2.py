@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from dataclasses import replace
 from typing import Any
@@ -28,6 +29,13 @@ from plant_backend.rl.v2.weather import WEATHER_GENERATOR_VERSION
 
 
 SHORT = EpisodeConfigV2(horizon_h=2.0, delivery_period_h=1.0)
+
+# Frozen at clean weather-alpha revision e0a0ada before equipment commitment
+# dynamics were introduced.  Future compatibility-off modes must reproduce
+# the controller-visible and physical trace exactly, not merely approximately.
+WEATHER_ALPHA_COMPATIBILITY_SHA256 = (
+    "5858920bf829d5c5bc1c755552ec22943e8c8338b0f67b5c7ce67c34b02324e6"
+)
 
 
 def test_v1_and_v2_are_explicit_coexisting_contracts() -> None:
@@ -523,6 +531,72 @@ def test_same_seed_and_actions_replay_exactly() -> None:
         return observations, rewards, env.metrics.to_dict(), manifest["manifest_sha256"]
 
     assert rollout() == rollout()
+
+
+def test_weather_alpha_has_a_frozen_compatibility_trace() -> None:
+    """Protect the last pre-commitment task behind an exact replay gate."""
+    episode = EpisodeConfigV2(horizon_h=24.0, delivery_period_h=6.0)
+    env = PlantEnvV2(episode=episode)
+    observation, _ = env.reset(seed=101)
+    actions = (
+        Action(
+            battery_share=0.25,
+            electrolyser_share=0.50,
+            dac_share=0.15,
+            methanator_share=0.10,
+            battery_support_kw=400.0,
+        ),
+        Action.idle(),
+        Action(
+            battery_share=0.10,
+            electrolyser_share=0.65,
+            dac_share=0.10,
+            methanator_share=0.15,
+            battery_support_kw=1_200.0,
+        ),
+        Action(
+            battery_share=0.70,
+            electrolyser_share=0.15,
+            dac_share=0.10,
+            methanator_share=0.05,
+        ),
+    )
+    trace: list[dict[str, object]] = [
+        {
+            "observation": observation.tolist(),
+            "state": env.simulator.state.to_dict(),
+        }
+    ]
+    index = 0
+    while True:
+        observation, reward, terminated, truncated, info = env.step_action(
+            actions[index % len(actions)]
+        )
+        trace.append(
+            {
+                "observation": observation.tolist(),
+                "reward": reward,
+                "terminated": terminated,
+                "truncated": truncated,
+                "guard": info["guard"],
+                "interval_power": info["interval_power"],
+                "delivery": info["delivery"],
+                "state": env.simulator.state.to_dict(),
+            }
+        )
+        index += 1
+        if terminated or truncated:
+            break
+
+    assert index == 96
+    canonical = json.dumps(
+        trace,
+        allow_nan=False,
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8")
+    assert hashlib.sha256(canonical).hexdigest() == WEATHER_ALPHA_COMPATIBILITY_SHA256
 
 
 def test_private_audit_manifest_contains_replay_data_and_detached_accounting() -> None:

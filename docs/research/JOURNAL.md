@@ -966,3 +966,15 @@ controller tournament is deferred until that stateful physics exists and forecas
 forecast-aware, MPC, risk-aware, and feasible perfect-information comparators share a
 controller-neutral information contract. Weather generation can be optimized in parallel,
 but speed alone would only make the present near-ceiling task cheaper to overfit.
+
+### Pre-change compatibility fixture
+
+Before touching equipment physics, a 24-hour seed-101 replay was frozen at revision
+`e0a0ada`. The deterministic tape cycles four declared actions through all 96 controller
+decisions and hashes the initial plus post-decision 42-field observations, complete legacy
+plant states, rewards, delivery settlements, guard reports, and requested/applied energy
+accounting. Its canonical SHA-256 is
+`5858920bf829d5c5bc1c755552ec22943e8c8338b0f67b5c7ce67c34b02324e6`.
+The test intentionally excludes task labels and checkpoint identities, which must change
+when the observation and dynamics contract changes. It includes the numerical behavior
+that a compatibility-off implementation is required to preserve exactly.
