@@ -23,15 +23,25 @@ equipment consequences.
 - Gate A is **partially complete**: the V1 tank-filling ceiling and heuristic
   saturation are reproduced, but the colleague's trained-policy artifact has not yet
   been supplied for identical replay.
-- B1 and B3 now have alpha implementations: private stochastic solar truth, causal
-  forecast vintages, recurring delivery commitments, and multi-rate accounting.
+- B1, B2, and B3 now have alpha implementations: private stochastic solar truth,
+  causal forecast vintages, recurring delivery commitments, multi-rate accounting,
+  and an opt-in pressurised-alkaline commitment state machine.
 - The clean weather-alpha diagnostic is replay-audited over 20 paired seeds. It breaks
   universal heuristic saturation (98.58% mean fill; eight shortage episodes) but still
   contains no forecast-consuming or optimizer arm.
-- B2 is **not implemented**: process equipment remains memoryless, so the decisive
-  startup/ramp/commitment trade-off is still missing.
+- B2 is integrated into the default V2 contract: the 57-field observation exposes
+  commitment mode, prior accepted power, ramp headroom, and timers while exact
+  per-decision exposure deltas flow into metrics and two provisional proxy penalties.
+  Explicit `None` retains the weather-alpha physical trajectory and exact 42-field
+  prefix while the 57-field contract's suffix identifies the legacy ablation.
+- Post-review commitment-alpha hardening has 127 focused passing tests, followed by a
+  complete 545-test repository regression. It adds a reachable continuous-policy stop
+  command, exact profile identity, strict finite-state checks, and non-cancelling physical
+  refusal metrics. The formal off/on experiment remains pending, so this remains
+  correctness/compatibility evidence, not performance evidence.
 - Gate B is **not passed**: no forecast-aware heuristic, MPC, or perfect-information
-  oracle has yet bounded the weather-alpha task.
+  oracle has yet bounded the commitment-alpha task, and no multi-seed off/on calibration
+  has yet shown that the new dynamics create a useful controllable gap.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.
 
@@ -88,6 +98,16 @@ ablated.
 - load-dependent efficiency;
 - observable timers and state needed to preserve the Markov contract.
 
+Current alpha status: implemented for one technology-labelled 3 MW pressurised-alkaline
+archetype. Its startup, standby, ramp, minimum up/down, cooldown, and part-load parameters
+are literature-bounded synthetic assumptions, not vendor calibration. The equipment
+kernel is switchable, fingerprinted in the policy/audit contracts, and isolated from V1.
+The present five-field share action expresses on/standby intent implicitly. A fingerprinted
+1% command deadband makes an orderly stop reachable to continuous policies, while exact
+guard-to-plant refusal is accumulated separately from safety projection. The first paired
+experiment must still measure whether this leaves enough controller authority before an
+explicit mode/setpoint action is designed.
+
 ### B3. Product commitments
 
 - methane offtake or delivery schedule;
@@ -108,6 +128,12 @@ forecast while preserving enough inventory to meet a later obligation.
 - perform held-out weather, demand, and parameter stress tests;
 - investigate recurrent policies if partial observability demonstrably requires memory;
 - require a Pareto or risk-adjusted improvement, not merely a larger shaped reward.
+
+The immediate entry gate to Stage C is a paired factorial calibration on identical
+exogenous episodes: commitment off/on × forecast blind/issued/perfect, first with a
+delivery-aware heuristic, MPC, and a feasible future-information planner. PPO training
+begins only if those arms establish feasibility, a meaningful naive-to-credible gap,
+and nonzero value of future information without excessive guard or equipment refusal.
 
 ## Stage D — Progressive operational realism
 

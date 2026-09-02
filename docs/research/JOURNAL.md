@@ -1110,3 +1110,202 @@ through requested electrolyser power. Most importantly, commitment is not yet ac
 Environment V2: observations, objective terms, checkpoint identity, metrics, and paired
 off/on evaluation remain the next integration increment. No controller or commercial claim
 is supported by this simulator commit alone.
+
+## 2026-09-02 — Commitment-alpha Environment V2 integration
+
+### Versioned task contract
+
+The opt-in alkaline equipment kernel is now wired into the default Environment V2 task.
+`EpisodeConfigV2.electrolyser_commitment` defaults to the frozen
+`ael_pressurised_fixed_bop_alpha_v1` profile, validates it against the physics timestep,
+serializes the complete profile into the episode/checkpoint contract, and passes it to the
+shared simulator. Passing `None` is the explicit compatibility-off ablation; it does not
+silently select some second equipment approximation.
+
+This semantic change creates a new policy contract:
+
+```text
+environment id          plant-env-v2-commitment-alpha
+interface spec          3
+stage                   equipment-commitment-alpha
+observation size        57
+action size             5 (unchanged)
+checkpoint schema       3
+private manifest schema 3
+objective version       3
+```
+
+The prior 42 observations remain the exact prefix. Fifteen Markov fields are appended:
+seven one-hot modes in the fixed order `legacy`, `off`, `cold_starting`, `running`,
+`hot_standby`, `hot_starting`, `cooldown`; previous accepted power; upward and downward
+ramp headroom; and startup, cooldown, minimum-up, minimum-down, and shortfall timers.
+Power/headroom values are normalized by equipment nameplate (3 MW in the default plant)
+and timers by the corresponding frozen profile duration. All are bounded in `[0, 1]`.
+Compatibility-off sets only the `legacy` one-hot field to one and every other suffix
+value to zero.
+
+`ControlStateV2` carries the immutable equipment snapshot beside the current
+`PlantState`; no commitment fields were inserted into the shared/V1 state schema. The
+snapshot is exposed in public reset/step information because it is causal controller
+state, while the full fixed profile remains in the checkpoint/audit identity rather than
+being repeated as observation data. Full future weather, seed streams, private hashes,
+and future forecast vintages remain private.
+
+The full checkpoint identity now includes the simulator's commitment dynamics version
+and complete equipment profile. Separately, each reset derives an
+`exogenous_episode_sha256` from sampled initial inventories, weather identity, contracts,
+seed streams, and timing. The latter deliberately excludes the commitment profile: paired
+off/on arms must have the same exogenous digest but different checkpoint and full-manifest
+digests. This creates an auditable pairing key without falsely claiming that two arms have
+identical plant dynamics.
+
+### Exact exposure accounting and objective boundary
+
+At every 15-minute decision boundary, V2 differences the simulator's monotonic cumulative
+counters rather than reconstructing events from final samples. The immutable interval
+record contains exact deltas for:
+
+- cold starts, hot starts, aborted starts, forced stops, and controlled stops;
+- startup and hot-standby energy;
+- productive operating seconds and low-load seconds;
+- ramp-limited interval count and absolute load movement;
+- seconds spent in each equipment mode.
+
+Compatibility-off records the interval as `legacy` mode time with every equipment
+counter at zero. Mode-time deltas must sum to the physical interval, counter regressions
+are rejected, and profile enablement/identity cannot change within a decision. The same
+interval record is returned in step information and accumulated into the human-facing
+episode metrics, making every exposure independently inspectable.
+
+Only two of these new quantities affect objective version 3. `nonproductive_energy`
+penalizes startup plus standby kWh after normalization by electrolyser nameplate times
+one delivery period, with provisional weight `0.05`. `forced_stop` penalizes the exact
+event count with provisional weight `0.10`. Both are additive across interval partitions.
+All other exposure fields remain diagnostic. In particular, the implementation does not
+invent a monetary wear law, a per-start health decrement, or a low-load damage coefficient.
+
+### Focused validation evidence
+
+The integration was checked from the working tree based on simulator commit `d3aa615`:
+
+```text
+pytest -q backend/tests/test_rl_v2.py \
+  backend/tests/test_rl_v2_boundary.py \
+  backend/tests/test_rl_v2_weather_observation.py
+```
+
+Result: **54 passed in 0.68 seconds**. These tests cover the exact 57-field order and
+bounds, one-hot/timer boundaries, immutable sidecar sampling, per-decision exposure
+deltas and mode-time coverage, additive reward signals, profile-sensitive checkpoint
+identity, profile-independent exogenous pairing, prior-contract rejection, public/private
+information separation, controller/vector parity, deterministic replay, and V1 isolation.
+The compatibility-off fixture hashes only the original 42-field prefix plus its established
+physical/reward/accounting payload and retains
+`5858920bf829d5c5bc1c755552ec22943e8c8338b0f67b5c7ce67c34b02324e6`.
+
+This was the first focused integration checkpoint. Subsequent whole-repository regression
+from the same integration working tree ran:
+
+```text
+.venv/bin/pytest -q
+```
+
+Result: **526 passed in 8.74 seconds**, with one pre-existing third-party Starlette/httpx
+deprecation warning. The final integration commit and contract digests must still be
+recorded after adversarial review. One review item is to keep the exposed ramp-headroom
+horizon unambiguous if a future task uses a non-60-second physics grid; the current frozen
+alpha uses the one-minute grid.
+
+### Interpretation and next decision gates
+
+The repository can now pose the intended scheduling question—whether to spend energy
+starting or keeping an alkaline unit warm under uncertain future solar and recurring
+delivery obligations—and measure the resulting operational exposures. It has not yet
+shown that the question is well calibrated or that any sophisticated controller answers
+it better.
+
+Next, run paired commitment-off/on feasibility sweeps on identical exogenous digests,
+then the forecast-blind/issued/perfect information factorial with a delivery-aware
+heuristic, deterministic MPC, and a feasible future-information planner. Inspect physical
+refusal and safety projection before deciding whether the five-field share command must
+be replaced by an explicit equipment mode/setpoint interface. Only after the achievable
+gap and held-out thresholds are predeclared should multi-seed PPO training begin.
+
+The remaining claim limits are material: the weather and equipment parameters are
+synthetic and not site/vendor calibrated; commitment intent is implicit; no MPC, oracle,
+or RL tournament exists; HEPA, supervisor, and natural-language increments have not been
+factorially evaluated; and no technical result yet establishes customer value or
+willingness to pay.
+
+### Adversarial contract hardening before release
+
+An independent read-only review found that the first integration was test-clean but not
+yet fit for continuous-policy training. A controller had to make both commitment-bearing
+commands exactly zero to request an orderly stop. Because the normalized action mapping
+turns only a raw value of exactly `-1` into zero, an arbitrarily close continuous output
+could instead be interpreted as continued commitment, experience a power shortfall, and
+be counted as a forced trip. The review also found that step information called the
+guard-approved command `applied_action` even when equipment physics subsequently refused
+it, that the observation compared only a human profile label, that invalid non-finite
+internal values could be clipped or masked, and that the ramp-headroom horizon was
+ambiguous under a non-one-minute V2 physics grid.
+
+The release-blocking action issue was corrected in simulator commit `7ccb1a8`. Commitment
+dynamics version `electrolyser-commitment-alpha-v2` declares a 1% zero-command deadband:
+intent is false when the electrolyser solar share is at most 1% and battery support is at
+most 1% of electrolyser nameplate. This keeps the off region finite for Gaussian/tanh
+policies while remaining below the frozen 2% hot-standby draw. The constant is part of the
+V2 action descriptor and full task identity; it is controller-interface semantics, not a
+vendor equipment claim. A paired regression proves that near-endpoint and exact-endpoint
+commands produce the same controlled stop once minimum-up time has elapsed. `plant-sim`
+is version 0.5.1.
+
+Every immutable equipment snapshot now carries a canonical digest over the complete
+profile. The encoder and interval-delta boundary compare this digest in addition to the
+human label, closing a case where `replace(profile, cold_start_s=...)` could silently use
+the wrong timer normalization. Simulator-owned commitment fields, interval outcomes, mode
+times, and cumulative deltas now reject non-finite, negative, incomplete, duplicated, or
+backward-moving values. Commitment-alpha V2 explicitly requires a 60-second physics grid;
+the compatibility-off task remains free to use other aligned grids.
+
+Control authority is now reported as three distinct energy distances. The existing
+weather-alpha `interval_power` keys retain their historical interval-total definitions so
+the frozen compatibility SHA remains
+`5858920bf829d5c5bc1c755552ec22943e8c8338b0f67b5c7ce67c34b02324e6`.
+New `control_authority` values integrate the absolute per-physics-step request-to-guard,
+guard-to-plant, and request-to-plant gaps, so opposite routing errors cannot cancel inside
+one controller decision. Episode metrics retain the exact latter two values as
+`dispatch_gap_kwh` and `request_application_gap_kwh`. The final guard-approved command is
+now named `guarded_action`, not physical application.
+
+One attempted implementation initially redefined the historical `dispatch_gap_l1_kwh`
+key as the non-cancelling integral. The frozen weather-alpha trace rejected that change
+with a different SHA. The implementation was revised to add the exact integral under a
+new semantic name while preserving the archival key and replay. This failure is evidence
+that the compatibility gate is detecting accounting drift rather than only physical-state
+drift.
+
+The tightened focused set completed with **127 passed**. Refreshing the editable 0.5.1
+package metadata with a default offline dependency sync removed the optional training and
+HEPA groups; the resulting `500 passed, 2 skipped` run was rejected as incomplete evidence.
+After restoring all locked groups offline, the authoritative full regression was:
+
+```text
+.venv/bin/pytest -q
+545 passed, 1 warning in 8.34s
+```
+
+The warning remains the pre-existing Starlette/httpx deprecation notice. No test was
+skipped. The frozen default identities after hardening are:
+
+```text
+profile SHA-256             551be0136b714758cef7067e44d416cc9df5b69ff5576f21a50c74938c504c60
+V2 interface digest         6a4943d9350ba7c98c749b46a309f478b692c173cbb568809e34b5b6d5fee155
+V2 checkpoint-task digest   ef851793314414c19d3f7442664bf8d09b2b3f9637aa7c1698988bb14625c42f
+```
+
+The review's economic concern is deliberately not papered over: objective version 3 is
+still service-oriented and does not claim to price stack wear. Starts, low-load time,
+cycling, ramping, and movement remain Pareto scorecard outputs until a defensible economic
+model and sensitivity range are supplied. That limitation is part of the next controller
+tournament rather than an excuse to invent degradation coefficients.

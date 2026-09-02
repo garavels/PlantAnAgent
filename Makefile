@@ -1,9 +1,9 @@
-.PHONY: help setup dev backend frontend sim test eval foresight-eval rl-eval rl-ceiling v2-weather-eval train-dry train \
+.PHONY: help setup dev backend frontend sim test eval foresight-eval rl-eval rl-ceiling v2-eval v2-weather-eval train-dry train \
 	hepa-collect hepa-pretrain-dry hepa-pretrain hepa-finetune-dry hepa-finetune \
 	hepa-eval build clean
 
 help:             ## list targets
-	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*##/\t/'
+	@grep -E '^[a-z0-9-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*##/\t/'
 
 setup:            ## install python + node dependencies
 	uv sync
@@ -33,10 +33,12 @@ rl-ceiling:       ## diagnose whether CH4 tank headroom caps the V1 benchmark
 		--count $(or $(SEEDS),100) --hours $(or $(HOURS),48) \
 		$(if $(CHECKPOINT),--checkpoint $(CHECKPOINT),) $(if $(JSON),--json $(JSON),)
 
-v2-weather-eval:  ## run paired transparent baselines on the V2 weather alpha
+v2-eval:          ## run paired transparent baselines on the V2 commitment alpha
 	uv run python -m plant_backend.rl.v2 --seed-start $(or $(SEED_START),0) \
 		--count $(or $(SEEDS),20) --hours $(or $(HOURS),168) \
 		--delivery-rate $(or $(DELIVERY_RATE),40) $(if $(JSON),--json $(JSON),)
+
+v2-weather-eval: v2-eval  ## compatibility alias for the pre-commitment target name
 
 train-dry:        ## build the RL environment and print the training plan; trains nothing
 	uv run python -m plant_backend.rl.training.train --dry-run

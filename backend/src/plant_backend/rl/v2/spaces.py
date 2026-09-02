@@ -1,4 +1,4 @@
-"""Machine-readable observation/action contract for the weather V2 alpha."""
+"""Machine-readable observation/action contract for commitment V2 alpha."""
 
 from __future__ import annotations
 
@@ -8,12 +8,13 @@ from dataclasses import replace
 from typing import Mapping
 
 import numpy as np
+from plant_sim import COMMITMENT_INTENT_DEADBAND_FRAC
 
 from .. import spaces as v1
 
-ENVIRONMENT_ID = "plant-env-v2-weather-alpha"
-SPEC_VERSION = 2
-STAGE = "weather-forecast-alpha"
+ENVIRONMENT_ID = "plant-env-v2-commitment-alpha"
+SPEC_VERSION = 3
+STAGE = "equipment-commitment-alpha"
 
 
 _V2_SOURCES = {
@@ -168,6 +169,80 @@ def _forecast_fields() -> tuple[v1.ObservationField, ...]:
     return tuple(fields)
 
 
+def _commitment_fields() -> tuple[v1.ObservationField, ...]:
+    mode_fields = tuple(
+        v1.ObservationField(
+            f"electrolyser_mode_{mode}",
+            (
+                "ControlStateV2.electrolyser_commitment.mode one-hot; "
+                "legacy is one only when commitment is disabled"
+            ),
+            "binary",
+            "identity",
+        )
+        for mode in (
+            "legacy",
+            "off",
+            "cold_starting",
+            "running",
+            "hot_standby",
+            "hot_starting",
+            "cooldown",
+        )
+    )
+    state_fields = (
+        v1.ObservationField(
+            "electrolyser_previous_power",
+            "ElectrolyserCommitmentSnapshot.previous_power_kw",
+            "fraction of nameplate",
+            "previous accepted one-minute power / electrolyser.rated_kw",
+        ),
+        v1.ObservationField(
+            "electrolyser_ramp_up_headroom",
+            "ElectrolyserCommitmentSnapshot.ramp_up_headroom_kw",
+            "fraction of nameplate",
+            "one-minute upward running headroom / electrolyser.rated_kw",
+        ),
+        v1.ObservationField(
+            "electrolyser_ramp_down_headroom",
+            "ElectrolyserCommitmentSnapshot.ramp_down_headroom_kw",
+            "fraction of nameplate",
+            "one-minute downward running headroom / electrolyser.rated_kw",
+        ),
+        v1.ObservationField(
+            "electrolyser_startup_remaining",
+            "ElectrolyserCommitmentSnapshot.startup_remaining_s",
+            "fraction of maximum startup duration",
+            "remaining seconds / max(cold_start_s, hot_start_s)",
+        ),
+        v1.ObservationField(
+            "electrolyser_cooldown_remaining",
+            "ElectrolyserCommitmentSnapshot.cooldown_remaining_s",
+            "fraction of configured cooldown",
+            "remaining seconds / cooldown_s; zero when configured cooldown is zero",
+        ),
+        v1.ObservationField(
+            "electrolyser_min_up_remaining",
+            "ElectrolyserCommitmentSnapshot.min_up_remaining_s",
+            "fraction of configured minimum-up time",
+            "remaining seconds / min_up_s",
+        ),
+        v1.ObservationField(
+            "electrolyser_min_down_remaining",
+            "ElectrolyserCommitmentSnapshot.min_down_remaining_s",
+            "fraction of configured minimum-down time",
+            "remaining seconds / min_down_s; zero when configured minimum-down is zero",
+        ),
+        v1.ObservationField(
+            "electrolyser_shortfall_elapsed",
+            "ElectrolyserCommitmentSnapshot.shortfall_elapsed_s",
+            "fraction of configured shortfall grace",
+            "elapsed seconds / shortfall_grace_s; zero when configured grace is zero",
+        ),
+    )
+    return mode_fields + state_fields
+
+
 OBSERVATION_FIELDS: tuple[v1.ObservationField, ...] = _v2_prefix() + (
     v1.ObservationField(
         "delivery_time_to_next",
@@ -197,9 +272,46 @@ OBSERVATION_FIELDS: tuple[v1.ObservationField, ...] = _v2_prefix() + (
         "fraction",
         "delivered kg / requested kg; 1 before the first deadline",
     ),
-) + _forecast_fields()
+) + _forecast_fields() + _commitment_fields()
 
-ACTION_FIELDS = v1.ACTION_FIELDS
+
+def _action_fields() -> tuple[v1.ActionField, ...]:
+    """Retain V1 dimensions while declaring commitment-command semantics."""
+    fields: list[v1.ActionField] = []
+    for field in v1.ACTION_FIELDS:
+        if field.name == "electrolyser_share":
+            field = replace(
+                field,
+                target=(
+                    "Action.electrolyser_share; commitment intent is false when "
+                    f"this share and normalized support are <= "
+                    f"{COMMITMENT_INTENT_DEADBAND_FRAC:g}"
+                ),
+                conversion=(
+                    "(a + 1) / 2, then shares normalised by Action.sanitised; "
+                    f"values <= {COMMITMENT_INTENT_DEADBAND_FRAC:g} are inside "
+                    "the commitment-intent deadband"
+                ),
+            )
+        elif field.name == "battery_support":
+            field = replace(
+                field,
+                target=(
+                    "Action.battery_support_kw; commitment intent is false when "
+                    "support/nameplate and electrolyser_share are both inside "
+                    "the declared deadband"
+                ),
+                conversion=(
+                    "(a + 1) / 2 * Constraints.support_limit_kw(config); "
+                    f"support <= {COMMITMENT_INTENT_DEADBAND_FRAC:g} * "
+                    "electrolyser.rated_kw is inside the commitment-intent deadband"
+                ),
+            )
+        fields.append(field)
+    return tuple(fields)
+
+
+ACTION_FIELDS = _action_fields()
 OBSERVATION_NAMES = tuple(field.name for field in OBSERVATION_FIELDS)
 ACTION_NAMES = tuple(field.name for field in ACTION_FIELDS)
 OBSERVATION_SIZE = len(OBSERVATION_FIELDS)
@@ -261,7 +373,15 @@ def describe() -> dict[str, object]:
                 "fixtures, not calibrated site data"
             ),
             "mean and p10 forecast summaries do not expose a full predictive distribution",
-            "memoryless V1 process equipment",
+            (
+                "electrolyser commitment is a literature-bounded synthetic "
+                "archetype, not a vendor-calibrated equipment model"
+            ),
+            (
+                "the five-field share action expresses commitment intent "
+                "implicitly through requested electrolyser power, with a "
+                "synthetic one-percent zero-command deadband"
+            ),
             "delivery objective and plant model are not a calibrated physical twin",
         ],
     }

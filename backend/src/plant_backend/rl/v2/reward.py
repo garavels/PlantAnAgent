@@ -4,13 +4,15 @@ from __future__ import annotations
 
 import math
 from dataclasses import asdict, dataclass, field
+from numbers import Integral, Real
 from typing import Any
 
 from plant_sim import PlantConfig
 
 from ...controllers.base import Constraints
+from .boundary import CommitmentExposureV2
 
-OBJECTIVE_VERSION = 2
+OBJECTIVE_VERSION = 3
 
 
 @dataclass(frozen=True)
@@ -25,6 +27,10 @@ class RewardWeightsV2:
     reserve_breach: float = 4.0
     shutdown: float = 0.50
     correction: float = 0.05
+    #: Provisional opportunity-cost proxy, not a calibrated electricity price.
+    nonproductive_energy: float = 0.05
+    #: Provisional operational-event proxy, not an equipment-life model.
+    forced_stop: float = 0.10
 
     def validate(self) -> "RewardWeightsV2":
         for name, value in asdict(self).items():
@@ -53,10 +59,55 @@ class IntervalOutcome:
     shutdown_steps: int
     corrections: int
     guard_intervention_kwh: float
+    dispatch_gap_kwh: float
+    request_application_gap_kwh: float
     out_of_range: bool
     terminal_ch4_kg: float
     reference_delivery_kg: float
     reference_period_h: float
+    commitment: CommitmentExposureV2 = CommitmentExposureV2()
+
+    def __post_init__(self) -> None:
+        positive_fields = ("hours", "reference_delivery_kg", "reference_period_h")
+        nonnegative_fields = (
+            "requested_kg",
+            "delivered_kg",
+            "unmet_kg",
+            "produced_kg",
+            "solar_kwh",
+            "curtailed_kwh",
+            "battery_discharged_kwh",
+            "guard_intervention_kwh",
+            "dispatch_gap_kwh",
+            "request_application_gap_kwh",
+            "terminal_ch4_kg",
+        )
+        for name in (*positive_fields, *nonnegative_fields, "min_battery_soc"):
+            value = getattr(self, name)
+            if isinstance(value, bool) or not isinstance(value, Real):
+                raise TypeError(f"interval outcome {name} must be a real number")
+            if not math.isfinite(float(value)):
+                raise ValueError(f"interval outcome {name} must be finite")
+        for name in positive_fields:
+            if getattr(self, name) <= 0.0:
+                raise ValueError(f"interval outcome {name} must be positive")
+        for name in nonnegative_fields:
+            if getattr(self, name) < 0.0:
+                raise ValueError(f"interval outcome {name} must be non-negative")
+        if not 0.0 <= self.min_battery_soc <= 1.0:
+            raise ValueError("interval outcome min_battery_soc must lie within [0, 1]")
+        for name in ("physical_steps", "shutdown_steps", "corrections"):
+            value = getattr(self, name)
+            if isinstance(value, bool) or not isinstance(value, Integral):
+                raise TypeError(f"interval outcome {name} must be an integer")
+            if value < 0:
+                raise ValueError(f"interval outcome {name} must be non-negative")
+        if self.physical_steps == 0:
+            raise ValueError("interval outcome physical_steps must be positive")
+        if not isinstance(self.out_of_range, bool):
+            raise TypeError("interval outcome out_of_range must be a bool")
+        if not isinstance(self.commitment, CommitmentExposureV2):
+            raise TypeError("interval outcome commitment must be CommitmentExposureV2")
 
 
 @dataclass(frozen=True)
@@ -94,6 +145,10 @@ def compute(
         config.battery.max_discharge_kw * reference_period_h,
         1e-12,
     )
+    electrolyser_energy_reference = max(
+        config.electrolyser.rated_kw * reference_period_h,
+        1e-12,
+    )
     reference_physical_steps = max(
         1,
         int(round(reference_period_h / config.dt_h)),
@@ -115,8 +170,28 @@ def compute(
             (max(0, outcome.corrections) + (1 if outcome.out_of_range else 0))
             / (3.0 * reference_physical_steps)
         ),
+        "nonproductive_energy": (
+            max(0.0, outcome.commitment.nonproductive_energy_kwh)
+            / electrolyser_energy_reference
+        ),
+        "forced_stop": float(max(0, outcome.commitment.forced_stops)),
         # Visible for diagnosis, deliberately absent from ``components``.
         "raw_production_kg": max(0.0, outcome.produced_kg),
+        "cold_starts": float(max(0, outcome.commitment.cold_starts)),
+        "hot_starts": float(max(0, outcome.commitment.hot_starts)),
+        "aborted_starts": float(max(0, outcome.commitment.aborted_starts)),
+        "controlled_stops": float(max(0, outcome.commitment.controlled_stops)),
+        "startup_energy_kwh": max(0.0, outcome.commitment.startup_energy_kwh),
+        "standby_energy_kwh": max(0.0, outcome.commitment.standby_energy_kwh),
+        "operating_time_s": max(0.0, outcome.commitment.operating_time_s),
+        "low_load_time_s": max(0.0, outcome.commitment.low_load_time_s),
+        "ramp_limited_intervals": float(
+            max(0, outcome.commitment.ramp_limited_intervals)
+        ),
+        "absolute_load_movement_kw": max(
+            0.0,
+            outcome.commitment.absolute_load_movement_kw,
+        ),
     }
     components = {
         "delivery": weights.delivery * signals["delivery"],
@@ -127,6 +202,10 @@ def compute(
         "reserve_breach": -weights.reserve_breach * signals["reserve_breach"],
         "shutdown": -weights.shutdown * signals["shutdown"],
         "correction": -weights.correction * signals["correction"],
+        "nonproductive_energy": (
+            -weights.nonproductive_energy * signals["nonproductive_energy"]
+        ),
+        "forced_stop": -weights.forced_stop * signals["forced_stop"],
     }
     return RewardBreakdownV2(
         total=float(sum(components.values())),

@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
+from numbers import Real
 from typing import Any
 
 from plant_sim import Action, PlantState
@@ -25,6 +27,19 @@ def _commanded_kw(action: Action, bus_kw: float) -> dict[str, float]:
     }
 
 
+def _require_finite_nonnegative(name: str, values: dict[str, float]) -> None:
+    for channel, value in values.items():
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, Real)
+            or not math.isfinite(float(value))
+            or value < 0.0
+        ):
+            raise ValueError(
+                f"{name} power channel {channel} must be finite and non-negative"
+            )
+
+
 @dataclass
 class IntervalPowerAccounting:
     """Integrate requested and physically applied power over one decision."""
@@ -33,6 +48,9 @@ class IntervalPowerAccounting:
     requested_kwh: dict[str, float] = field(default_factory=_zeros)
     guarded_kwh: dict[str, float] = field(default_factory=_zeros)
     applied_kwh: dict[str, float] = field(default_factory=_zeros)
+    _guard_intervention_l1_kwh: float = field(default=0.0, init=False)
+    _dispatch_gap_l1_kwh: float = field(default=0.0, init=False)
+    _request_application_l1_kwh: float = field(default=0.0, init=False)
 
     def record(
         self,
@@ -42,29 +60,52 @@ class IntervalPowerAccounting:
         after: PlantState,
         dt_h: float,
     ) -> None:
+        if isinstance(dt_h, bool) or not isinstance(dt_h, Real):
+            raise TypeError("dt_h must be a real number")
+        if not math.isfinite(float(dt_h)) or dt_h <= 0.0:
+            raise ValueError("dt_h must be positive and finite")
         # Share actions are fractions of the bus that actually materialises in
         # this physical interval. Using the prior boundary's solar value would
         # misclassify an exogenous weather ramp as controller/dispatch error.
-        bus_kw = max(0.0, after.solar_available_kw)
+        if (
+            isinstance(after.solar_available_kw, bool)
+            or not isinstance(after.solar_available_kw, Real)
+            or not math.isfinite(float(after.solar_available_kw))
+            or after.solar_available_kw < 0.0
+        ):
+            raise ValueError("realized solar bus must be finite and non-negative")
+        bus_kw = float(after.solar_available_kw)
         requested_kw = _commanded_kw(requested, bus_kw)
         guarded_kw = _commanded_kw(guarded, bus_kw)
         applied_kw = {
-            "battery": max(0.0, after.solar_to_battery_kw),
-            "electrolyser": max(0.0, after.electrolyser_power_kw),
-            "dac": max(0.0, after.dac_power_kw),
-            "methanator": max(0.0, after.methanator_power_kw),
-            "battery_support": max(0.0, after.battery_to_electrolyser_kw),
+            "battery": after.solar_to_battery_kw,
+            "electrolyser": after.electrolyser_power_kw,
+            "dac": after.dac_power_kw,
+            "methanator": after.methanator_power_kw,
+            "battery_support": after.battery_to_electrolyser_kw,
         }
-        step_hours = max(0.0, float(dt_h))
+        _require_finite_nonnegative("requested", requested_kw)
+        _require_finite_nonnegative("guarded", guarded_kw)
+        _require_finite_nonnegative("applied", applied_kw)
+        step_hours = float(dt_h)
         self.hours += step_hours
         for name in ALL_POWER_CHANNELS:
             self.requested_kwh[name] += requested_kw[name] * step_hours
             self.guarded_kwh[name] += guarded_kw[name] * step_hours
             self.applied_kwh[name] += applied_kw[name] * step_hours
+        self._guard_intervention_l1_kwh += step_hours * sum(
+            abs(requested_kw[name] - guarded_kw[name]) for name in POWER_CHANNELS
+        )
+        self._dispatch_gap_l1_kwh += step_hours * sum(
+            abs(guarded_kw[name] - applied_kw[name]) for name in POWER_CHANNELS
+        )
+        self._request_application_l1_kwh += step_hours * sum(
+            abs(requested_kw[name] - applied_kw[name]) for name in POWER_CHANNELS
+        )
 
     @property
     def guard_intervention_l1_kwh(self) -> float:
-        """Absolute request/guard gap without double-counting support."""
+        """Legacy absolute gap between interval channel-energy totals."""
         return sum(
             abs(self.requested_kwh[name] - self.guarded_kwh[name])
             for name in POWER_CHANNELS
@@ -72,7 +113,7 @@ class IntervalPowerAccounting:
 
     @property
     def dispatch_gap_l1_kwh(self) -> float:
-        """Absolute guard/plant gap caused by routing and physical throttling."""
+        """Legacy absolute gap between guarded/applied interval totals."""
         return sum(
             abs(self.guarded_kwh[name] - self.applied_kwh[name])
             for name in POWER_CHANNELS
@@ -80,11 +121,26 @@ class IntervalPowerAccounting:
 
     @property
     def request_application_l1_kwh(self) -> float:
-        """End-to-end request/application gap without double-counting support."""
+        """Legacy absolute gap between requested/applied interval totals."""
         return sum(
             abs(self.requested_kwh[name] - self.applied_kwh[name])
             for name in POWER_CHANNELS
         )
+
+    @property
+    def guard_intervention_integral_l1_kwh(self) -> float:
+        """Integral of the per-step request/guard L1 distance."""
+        return self._guard_intervention_l1_kwh
+
+    @property
+    def dispatch_gap_integral_l1_kwh(self) -> float:
+        """Integral of per-step guard/plant refusal and routing distance."""
+        return self._dispatch_gap_l1_kwh
+
+    @property
+    def request_application_integral_l1_kwh(self) -> float:
+        """Integral of the per-step end-to-end control-authority distance."""
+        return self._request_application_l1_kwh
 
     def to_dict(self) -> dict[str, Any]:
         divisor = max(self.hours, 1e-12)

@@ -1,4 +1,4 @@
-"""Weather-alpha V2 observation contract and decision-boundary semantics."""
+"""Commitment-alpha V2 observation contract and boundary semantics."""
 
 from __future__ import annotations
 
@@ -6,7 +6,13 @@ from dataclasses import replace
 
 import numpy as np
 import pytest
-from plant_sim import PlantConfig, PlantState
+from plant_sim import (
+    Action,
+    DEFAULT_ELECTROLYSER_COMMITMENT_PROFILE,
+    PlantConfig,
+    PlantSimulator,
+    PlantState,
+)
 
 from plant_backend.controllers import Constraints
 from plant_backend.rl.v2 import spaces
@@ -58,6 +64,21 @@ EXPECTED_NAMES = (
     "solar_forecast_6_12h_p10",
     "solar_forecast_12_24h_mean",
     "solar_forecast_12_24h_p10",
+    "electrolyser_mode_legacy",
+    "electrolyser_mode_off",
+    "electrolyser_mode_cold_starting",
+    "electrolyser_mode_running",
+    "electrolyser_mode_hot_standby",
+    "electrolyser_mode_hot_starting",
+    "electrolyser_mode_cooldown",
+    "electrolyser_previous_power",
+    "electrolyser_ramp_up_headroom",
+    "electrolyser_ramp_down_headroom",
+    "electrolyser_startup_remaining",
+    "electrolyser_cooldown_remaining",
+    "electrolyser_min_up_remaining",
+    "electrolyser_min_down_remaining",
+    "electrolyser_shortfall_elapsed",
 )
 
 
@@ -113,12 +134,12 @@ def _encode(
     )
 
 
-def test_weather_alpha_contract_has_exact_order_size_and_bounds() -> None:
-    assert spaces.ENVIRONMENT_ID == "plant-env-v2-weather-alpha"
-    assert spaces.SPEC_VERSION == 2
-    assert spaces.STAGE == "weather-forecast-alpha"
+def test_commitment_alpha_contract_has_exact_order_size_and_bounds() -> None:
+    assert spaces.ENVIRONMENT_ID == "plant-env-v2-commitment-alpha"
+    assert spaces.SPEC_VERSION == 3
+    assert spaces.STAGE == "equipment-commitment-alpha"
     assert spaces.OBSERVATION_NAMES == EXPECTED_NAMES
-    assert spaces.OBSERVATION_SIZE == 42
+    assert spaces.OBSERVATION_SIZE == 57
 
     negative_low = {
         "time_of_day_sin",
@@ -137,6 +158,14 @@ def test_weather_alpha_contract_has_exact_order_size_and_bounds() -> None:
     )
     np.testing.assert_array_equal(spaces.observation_low(), expected_low)
     np.testing.assert_array_equal(spaces.observation_high(), expected_high)
+    actions = {field.name: field for field in spaces.ACTION_FIELDS}
+    assert "deadband" in actions["electrolyser_share"].conversion
+    assert "0.01" in actions["battery_support"].conversion
+
+
+def test_encoder_rejects_an_invalid_commitment_profile_type() -> None:
+    with pytest.raises(TypeError, match="ElectrolyserCommitmentProfile"):
+        ObservationEncoderV2(PlantConfig(), commitment=True)  # type: ignore[arg-type]
 
 
 def test_contract_describes_boundary_and_previous_interval_sources() -> None:
@@ -152,8 +181,10 @@ def test_contract_describes_boundary_and_previous_interval_sources() -> None:
     assert "boundary.ch4_level_kg" in fields["delivery_inventory_coverage"].source
     assert all(
         field.unit == "fraction of PV nameplate"
-        for field in spaces.OBSERVATION_FIELDS[-8:]
+        for field in spaces.OBSERVATION_FIELDS[34:42]
     )
+    assert "one-hot" in fields["electrolyser_mode_running"].source
+    assert "previous_power_kw" in fields["electrolyser_previous_power"].source
 
 
 def test_encoder_maps_interval_means_but_keeps_inventory_and_latest_solar_sample() -> None:
@@ -203,7 +234,7 @@ def test_encoder_maps_interval_means_but_keeps_inventory_and_latest_solar_sample
     )
     at = {name: index for index, name in enumerate(spaces.OBSERVATION_NAMES)}
 
-    assert encoded.shape == (42,)
+    assert encoded.shape == (57,)
     assert encoded.dtype == np.float32
     assert encoded[at["solar_available"]] == pytest.approx(0.50)
     assert encoded[at["solar_potential"]] == pytest.approx(0.80)
@@ -221,9 +252,84 @@ def test_encoder_maps_interval_means_but_keeps_inventory_and_latest_solar_sample
     assert encoded[at["delivery_inventory_coverage"]] == pytest.approx(1.50)
     assert encoded[at["delivery_fill_rate_to_date"]] == pytest.approx(0.75)
     np.testing.assert_allclose(
-        encoded[-8:],
+        encoded[34:42],
         np.asarray((0.11, 0.01, 0.22, 0.02, 0.33, 0.03, 0.44, 0.04)),
     )
+    np.testing.assert_array_equal(
+        encoded[42:],
+        np.asarray((1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0) + (0.0,) * 8),
+    )
+
+
+def test_commitment_sidecar_encodes_mode_power_and_timer_state() -> None:
+    config = PlantConfig()
+    simulator = PlantSimulator(
+        config,
+        electrolyser_commitment=DEFAULT_ELECTROLYSER_COMMITMENT_PROFILE,
+    )
+    simulator.step(Action(battery_support_kw=3_000.0))
+    snapshot = simulator.electrolyser_commitment
+    assert snapshot is not None
+    assert len(snapshot.profile_sha256) == 64
+    state = ControlStateV2(
+        boundary=simulator.state,
+        electrolyser_commitment=snapshot,
+    )
+
+    encoded = _encode(ObservationEncoderV2(config), state)
+    at = {name: index for index, name in enumerate(spaces.OBSERVATION_NAMES)}
+    mode_values = encoded[42:49]
+
+    np.testing.assert_array_equal(
+        mode_values,
+        np.asarray((0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0)),
+    )
+    assert sum(mode_values) == pytest.approx(1.0)
+    assert encoded[at["electrolyser_previous_power"]] == pytest.approx(0.20)
+    assert encoded[at["electrolyser_ramp_up_headroom"]] == 0.0
+    assert encoded[at["electrolyser_ramp_down_headroom"]] == 0.0
+    assert encoded[at["electrolyser_startup_remaining"]] == pytest.approx(59.0 / 60.0)
+    assert encoded[at["electrolyser_cooldown_remaining"]] == 0.0
+    assert encoded[at["electrolyser_min_up_remaining"]] == 0.0
+    assert encoded[at["electrolyser_min_down_remaining"]] == 0.0
+    assert encoded[at["electrolyser_shortfall_elapsed"]] == 0.0
+
+
+def test_encoder_rejects_same_label_with_different_profile_parameters() -> None:
+    config = PlantConfig()
+    changed = replace(
+        DEFAULT_ELECTROLYSER_COMMITMENT_PROFILE,
+        cold_start_s=7_200.0,
+    )
+    simulator = PlantSimulator(config, electrolyser_commitment=changed)
+    snapshot = simulator.electrolyser_commitment
+    assert snapshot is not None
+    assert snapshot.profile_id == DEFAULT_ELECTROLYSER_COMMITMENT_PROFILE.profile_id
+    assert snapshot.profile_sha256 != DEFAULT_ELECTROLYSER_COMMITMENT_PROFILE.profile_sha256
+
+    state = ControlStateV2(
+        boundary=simulator.state,
+        electrolyser_commitment=snapshot,
+    )
+    with pytest.raises(ValueError, match="identity mismatch"):
+        _encode(ObservationEncoderV2(config), state)
+
+
+def test_encoder_rejects_nonfinite_simulator_owned_commitment_state() -> None:
+    config = PlantConfig()
+    simulator = PlantSimulator(
+        config,
+        electrolyser_commitment=DEFAULT_ELECTROLYSER_COMMITMENT_PROFILE,
+    )
+    snapshot = simulator.electrolyser_commitment
+    assert snapshot is not None
+    state = ControlStateV2(
+        boundary=simulator.state,
+        electrolyser_commitment=replace(snapshot, previous_power_kw=float("nan")),
+    )
+
+    with pytest.raises(ValueError, match="finite and non-negative"):
+        _encode(ObservationEncoderV2(config), state)
 
 
 def test_solar_trend_uses_measured_decision_boundaries_and_reset_clears_it() -> None:

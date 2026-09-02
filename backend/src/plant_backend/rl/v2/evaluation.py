@@ -1,4 +1,4 @@
-"""Paired baseline evaluation for the weather-aware Environment V2 alpha.
+"""Paired baseline evaluation for the commitment-aware Environment V2 alpha.
 
 This module deliberately evaluates *only* transparent, non-learning baselines.
 It establishes that the task and its accounting can distinguish behavior before
@@ -30,17 +30,18 @@ from .metrics import EpisodeMetricsV2
 from .reward import RewardWeightsV2
 
 BASELINE_ONLY_DISCLAIMER = (
-    "BASELINE ONLY: no trained RL policy, MPC, or perfect-foresight oracle is "
-    "included, and these legacy/open-loop diagnostic arms do not share the full V2 "
-    "information set. Results validate task discrimination and evaluation wiring; "
-    "they do not establish RL performance, optimality, or commercial superiority."
+    "BASELINE ONLY: no forecast-aware controller, trained RL policy, MPC, or "
+    "perfect-information planner is included, and these legacy/open-loop diagnostic "
+    "arms do not share the full V2 information set. Results validate commitment-task "
+    "discrimination and evaluation wiring; they do not establish controller "
+    "optimality, RL performance, or commercial superiority."
 )
 LEGACY_INFORMATION_SET = (
     "latest one-minute V2 telemetry plus safety constraints; no preceding-interval "
     "aggregate, delivery context, or issued forecast"
 )
 OPEN_LOOP_INFORMATION_SET = "constant action; observes no environment information"
-RESULT_SCHEMA_VERSION = 2
+RESULT_SCHEMA_VERSION = 3
 
 
 @dataclass(frozen=True)
@@ -143,6 +144,7 @@ class BaselineRun:
     controller: str
     seed: int
     manifest_sha256: str
+    exogenous_episode_sha256: str
     metrics: EpisodeMetricsV2
 
     def to_dict(self) -> dict[str, Any]:
@@ -150,6 +152,7 @@ class BaselineRun:
             "controller": self.controller,
             "seed": self.seed,
             "manifest_sha256": self.manifest_sha256,
+            "exogenous_episode_sha256": self.exogenous_episode_sha256,
             "metrics": self.metrics.to_dict(),
         }
 
@@ -175,19 +178,36 @@ class BaselineEvaluation:
 
     def pairing(self) -> dict[str, Any]:
         manifest_hashes: dict[int, set[str]] = {seed: set() for seed in self.seeds}
+        exogenous_hashes: dict[int, set[str]] = {seed: set() for seed in self.seeds}
         arms_by_seed: dict[int, set[str]] = {seed: set() for seed in self.seeds}
         for run in self.runs:
             manifest_hashes.setdefault(run.seed, set()).add(run.manifest_sha256)
+            exogenous_hashes.setdefault(run.seed, set()).add(
+                run.exogenous_episode_sha256
+            )
             arms_by_seed.setdefault(run.seed, set()).add(run.controller)
         expected = set(self.labels)
+        full_manifest_match = all(
+            len(manifest_hashes.get(seed, set())) == 1 for seed in self.seeds
+        )
         return {
             "common_random_numbers": True,
-            "manifest_match_by_seed": all(
-                len(manifest_hashes.get(seed, set())) == 1 for seed in self.seeds
+            "exogenous_episode_match_by_seed": all(
+                len(exogenous_hashes.get(seed, set())) == 1 for seed in self.seeds
             ),
+            # Kept as an explicit, stronger identity for arms which share the
+            # complete environment configuration. Commitment on/off ablations
+            # legitimately have different full manifests while retaining the
+            # same exogenous episode identity.
+            "full_manifest_match_by_seed": full_manifest_match,
+            "manifest_match_by_seed": full_manifest_match,
             "all_arms_present_by_seed": all(
                 arms_by_seed.get(seed, set()) == expected for seed in self.seeds
             ),
+            "exogenous_episode_sha256_by_seed": {
+                str(seed): sorted(exogenous_hashes.get(seed, set()))
+                for seed in self.seeds
+            },
             "manifest_sha256_by_seed": {
                 str(seed): sorted(manifest_hashes.get(seed, set()))
                 for seed in self.seeds
@@ -205,7 +225,7 @@ class BaselineEvaluation:
     def to_dict(self) -> dict[str, Any]:
         return {
             "schema_version": RESULT_SCHEMA_VERSION,
-            "study": "environment_v2_weather_alpha_paired_baselines",
+            "study": "environment_v2_commitment_alpha_paired_baselines",
             "evidence_scope": "baseline_only",
             "disclaimer": BASELINE_ONLY_DISCLAIMER,
             "statistics": {"standard_deviation": "population (ddof=0)"},
@@ -221,7 +241,7 @@ class BaselineEvaluation:
 
     def report(self) -> str:
         summary = self.summary()
-        columns = (
+        columns = [
             ("fill", "delivery_fill_rate", "{:.1%}"),
             ("unmet kg", "unmet_kg", "{:.1f}"),
             ("service", "commitment_service_level", "{:.1%}"),
@@ -230,10 +250,29 @@ class BaselineEvaluation:
             ("min SOC", "min_battery_soc", "{:.1%}"),
             ("guard", "guard_interventions", "{:.0f}"),
             ("guard kWh", "guard_intervention_kwh", "{:.0f}"),
+            ("dispatch gap", "dispatch_gap_kwh", "{:.0f}"),
             ("reward", "reward_total", "{:.2f}"),
-        )
+        ]
+        if any(run.metrics.electrolyser_commitment_enabled for run in self.runs):
+            columns.extend(
+                (
+                    ("cold starts", "electrolyser_cold_starts", "{:.1f}"),
+                    ("forced stops", "electrolyser_forced_stops", "{:.1f}"),
+                    ("start kWh", "electrolyser_startup_energy_kwh", "{:.0f}"),
+                    (
+                        "nonprod kWh",
+                        "electrolyser_nonproductive_energy_kwh",
+                        "{:.0f}",
+                    ),
+                    (
+                        "ramp hits",
+                        "electrolyser_ramp_limited_intervals",
+                        "{:.1f}",
+                    ),
+                )
+            )
         lines = [
-            "Environment V2 weather-alpha paired baseline evaluation",
+            "Environment V2 commitment-alpha paired baseline evaluation",
             (
                 f"{len(self.seeds)} seed(s) x {self.episode_config.horizon_h:g} h; "
                 f"contract {self.episode_config.delivery_rate_kg_h:g} kg/h"
@@ -258,7 +297,10 @@ class BaselineEvaluation:
             "",
             (
                 "Pairing audit: "
-                f"manifest hashes {'match' if pairing['manifest_match_by_seed'] else 'DO NOT MATCH'}; "
+                "exogenous episode hashes "
+                f"{'match' if pairing['exogenous_episode_match_by_seed'] else 'DO NOT MATCH'}; "
+                "full manifest hashes "
+                f"{'match' if pairing['full_manifest_match_by_seed'] else 'DO NOT MATCH'}; "
                 f"all arms {'present' if pairing['all_arms_present_by_seed'] else 'MISSING'}"
             ),
         ]
@@ -379,7 +421,9 @@ def run_baseline(
 ) -> BaselineRun:
     """Roll one transparent arm through the same guarded environment path."""
     env.reset(seed=seed)
-    manifest_sha256 = str(env.audit_manifest()["manifest_sha256"])
+    manifest = env.audit_manifest()
+    manifest_sha256 = str(manifest["manifest_sha256"])
+    exogenous_episode_sha256 = str(manifest["exogenous_episode_sha256"])
     heuristic = HeuristicController() if baseline.kind == "legacy_heuristic" else None
     if heuristic is not None:
         heuristic.reset()
@@ -400,6 +444,7 @@ def run_baseline(
         controller=baseline.id,
         seed=int(seed),
         manifest_sha256=manifest_sha256,
+        exogenous_episode_sha256=exogenous_episode_sha256,
         metrics=env.metrics,
     )
 
@@ -463,7 +508,11 @@ def evaluate(
             result.runs.append(run_baseline(env, baseline, seed=seed))
 
     pairing = result.pairing()
-    if not pairing["manifest_match_by_seed"] or not pairing["all_arms_present_by_seed"]:
+    if (
+        not pairing["exogenous_episode_match_by_seed"]
+        or not pairing["full_manifest_match_by_seed"]
+        or not pairing["all_arms_present_by_seed"]
+    ):
         raise RuntimeError("paired baseline audit failed")
     return result
 

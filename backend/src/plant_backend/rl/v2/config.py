@@ -2,13 +2,23 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import math
 from dataclasses import asdict, dataclass, field
 from numbers import Integral
 from typing import Any
 
 import numpy as np
-from plant_sim import DeliveryCommitment, InitialState, PlantConfig, Scenario, SolarArray
+from plant_sim import (
+    DEFAULT_ELECTROLYSER_COMMITMENT_PROFILE,
+    DeliveryCommitment,
+    ElectrolyserCommitmentProfile,
+    InitialState,
+    PlantConfig,
+    Scenario,
+    SolarArray,
+)
 from plant_sim.state import SECONDS_PER_HOUR
 
 from .weather import WeatherConfigV2, WeatherEpisodeV2, generate_weather_episode
@@ -44,7 +54,7 @@ def _aligned_start(seconds: float, dt_s: float) -> None:
 
 @dataclass(frozen=True)
 class EpisodeConfigV2:
-    """Weather-alpha episode distribution and explicit controller cadence."""
+    """Commitment-alpha task distribution and explicit controller cadence."""
 
     horizon_h: float = 168.0
     decision_interval_s: float = 900.0
@@ -58,6 +68,10 @@ class EpisodeConfigV2:
     #: Starting methane expressed in hours of contracted average delivery.
     ch4_coverage_h: tuple[float, float] = (3.0, 9.0)
     weather: WeatherConfigV2 = field(default_factory=WeatherConfigV2)
+    #: Stateful equipment physics are part of the task contract, not PlantConfig.
+    electrolyser_commitment: ElectrolyserCommitmentProfile | None = (
+        DEFAULT_ELECTROLYSER_COMMITMENT_PROFILE
+    )
 
     def validate(self, config: PlantConfig) -> "EpisodeConfigV2":
         if not math.isfinite(config.dt_s) or config.dt_s <= 0.0:
@@ -74,6 +88,14 @@ class EpisodeConfigV2:
             raise ValueError("start_hour must lie within [0, 24)")
         if not math.isfinite(self.delivery_rate_kg_h) or self.delivery_rate_kg_h <= 0.0:
             raise ValueError("delivery_rate_kg_h must be positive and finite")
+        if self.electrolyser_commitment is not None and not isinstance(
+            self.electrolyser_commitment,
+            ElectrolyserCommitmentProfile,
+        ):
+            raise TypeError(
+                "electrolyser_commitment must be an "
+                "ElectrolyserCommitmentProfile or None"
+            )
         _span("battery_soc", self.battery_soc, unit_interval=True)
         _span("h2_fill", self.h2_fill, unit_interval=True)
         _span("co2_fill", self.co2_fill, unit_interval=True)
@@ -106,6 +128,13 @@ class EpisodeConfigV2:
                 "one delivery commitment exceeds the methane tank capacity"
             )
         self.weather.validate()
+        if self.electrolyser_commitment is not None:
+            if not math.isclose(config.dt_s, 60.0, rel_tol=0.0, abs_tol=1e-9):
+                raise ValueError(
+                    "commitment alpha requires a 60 s physics timestep so ramp "
+                    "headroom and transition semantics remain exact"
+                )
+            self.electrolyser_commitment.validate_timestep(config.dt_s)
         for start_h, end_h in self.weather.forecast_windows_h:
             if start_h > 0.0:
                 _ticks(
@@ -143,6 +172,11 @@ class EpisodeConfigV2:
     def to_dict(self) -> dict[str, Any]:
         payload = asdict(self)
         payload["weather"] = self.weather.to_dict()
+        payload["electrolyser_commitment"] = (
+            None
+            if self.electrolyser_commitment is None
+            else self.electrolyser_commitment.to_dict()
+        )
         return payload
 
 
@@ -159,19 +193,40 @@ class EpisodeV2:
     delivery_stride: int
     weather: WeatherEpisodeV2
 
-    def audit_manifest(self) -> dict[str, Any]:
+    def exogenous_manifest(self) -> dict[str, Any]:
+        """Controller-independent sampled conditions for paired ablations."""
         return {
             "seed": self.seed,
             "random_streams": {
                 name: {"spawn_key": list(key)}
                 for name, key in self.stream_spawn_keys.items()
             },
-            "scenario": self.scenario.to_dict(),
+            "start_hour": self.scenario.start_hour,
+            "initial": self.scenario.initial.to_dict(),
             "commitments": [item.to_dict() for item in self.commitments],
             "physics_steps": self.physics_steps,
             "decision_stride": self.decision_stride,
             "delivery_stride": self.delivery_stride,
+            "weather_episode_sha256": self.weather.episode_sha256,
+        }
+
+    @property
+    def exogenous_episode_sha256(self) -> str:
+        canonical = json.dumps(
+            self.exogenous_manifest(),
+            allow_nan=False,
+            ensure_ascii=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode("utf-8")
+        return hashlib.sha256(canonical).hexdigest()
+
+    def audit_manifest(self) -> dict[str, Any]:
+        return {
+            **self.exogenous_manifest(),
+            "scenario": self.scenario.to_dict(),
             "weather": self.weather.private_audit_manifest(),
+            "exogenous_episode_sha256": self.exogenous_episode_sha256,
         }
 
 
@@ -206,11 +261,12 @@ def sample_episode(
     physics_steps = episode.physics_steps(config)
     decision_stride = episode.decision_stride(config)
     scenario = Scenario(
-        id="v2_weather_alpha",
-        name="Environment V2 weather alpha",
+        id="v2_commitment_alpha",
+        name="Environment V2 commitment alpha",
         description=(
             "Recurring methane commitments with seeded solar-resource truth and "
-            "causal probabilistic forecasts; V1 process equipment."
+            "causal probabilistic forecasts plus optional stateful electrolyser "
+            "commitment dynamics."
         ),
         start_hour=episode.start_hour,
         initial=initial,

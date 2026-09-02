@@ -66,6 +66,7 @@ an evidence anchor or a benchmark assumption.
 | hot-start power | 20% nameplate | synthetic balance-of-plant proxy |
 | minimum stable running load | 40% nameplate | evidence-bounded fixed-control archetype; does not assume active pressure/flow optimization |
 | hot-standby power | 2% nameplate | synthetic heat/pressure-retention proxy |
+| commitment-command deadband | 1% normalized authority | controller-interface constant, not equipment physics; creates a reachable off region for continuous policies and remains below standby demand |
 | cooldown | 15 min, unpowered | synthetic restart-settling state; unpowered so the simulator never invents energy |
 | minimum committed/up time | 60 min | synthetic unit-commitment challenge parameter |
 | minimum down time | 30 min | synthetic unit-commitment challenge parameter |
@@ -115,9 +116,13 @@ starting/running/standby -> cooldown -> off
 ```
 
 The profile advances on the one-minute physics grid while the supervisory request is
-held for 15 minutes. A power request greater than zero is the alpha's implicit request
-to remain committed because the existing five-dimensional action has no separate mode
-command. This is an acknowledged interface limitation, not hidden semantics.
+held for 15 minutes. The existing five-dimensional action has no separate mode command,
+so commitment intent remains implicit, but it no longer depends on hitting an exact
+floating-point endpoint. Intent is false when both the electrolyser solar-share command
+is at or below 1% and requested battery support is at or below 1% of electrolyser
+nameplate. This synthetic, fingerprinted deadband lies below the 2% standby demand and
+gives continuous policies a finite off-command region. It is an acknowledged interface
+assumption, not vendor control logic.
 
 - An eligible off unit begins a cold start only when the offered power reaches the
   fixed cold-start draw.
@@ -129,10 +134,10 @@ command. This is an acknowledged interface limitation, not hidden semantics.
 - A running request is bounded by the previous one-minute load and the declared ramp.
   The equipment may refuse excess upward power; it never consumes electricity that
   was not physically routed to it.
-- An explicit zero request after minimum-up completion is an orderly stop. An early
+- A request inside the declared deadband after minimum-up completion is an orderly stop. An early
   stop, fault outage, or persistent inability to sustain the required mode is recorded
   as an abort or forced trip.
-- A nonzero request with insufficient power pauses startup/operation for at most the
+- A request outside the deadband with insufficient power pauses startup/operation for at most the
   two-minute grace. Persistent shortfall enters cooldown. The grace counter is part of
   observable Markov state.
 - Cooldown and remaining minimum-down time block restart. No cooldown power is
@@ -169,6 +174,10 @@ existing 42-field prefix. The full profile and calibration labels belong in the 
 audit/checkpoint contract; fixed profile parameters need not be repeated in every
 observation. Cumulative exposure counters are metrics, not policy state unless they
 later influence dynamics or objective.
+
+Every public commitment snapshot carries a canonical SHA-256 of the complete profile.
+The observation encoder and interval accounting compare this digest, not only the human
+profile label, so a numerically changed profile cannot silently reuse timer normalization.
 
 The current action is deliberately retained for the first causal ablation. If physical
 refusal and guard/router projection still dominate policy authority, the next interface

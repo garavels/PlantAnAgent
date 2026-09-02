@@ -5,9 +5,15 @@ from __future__ import annotations
 from dataclasses import replace
 
 import pytest
-from plant_sim import PlantState
+from plant_sim import (
+    Action,
+    DEFAULT_ELECTROLYSER_COMMITMENT_PROFILE,
+    PlantSimulator,
+    PlantState,
+)
 
 from plant_backend.rl.v2.boundary import (
+    CommitmentExposureV2,
     ControlStateV2,
     IntervalSummaryV2,
     IntervalTelemetryAccumulator,
@@ -87,6 +93,86 @@ def test_empty_interval_preserves_the_reset_boundary_exactly() -> None:
 
     assert control.previous_interval == IntervalSummaryV2()
     assert control.encoder_telemetry() is boundary
+
+
+def test_commitment_exposure_uses_exact_counter_deltas_and_covers_interval() -> None:
+    simulator = PlantSimulator(
+        electrolyser_commitment=DEFAULT_ELECTROLYSER_COMMITMENT_PROFILE
+    )
+    before = simulator.electrolyser_commitment
+    simulator.run(15, Action(battery_support_kw=3_000.0))
+    after = simulator.electrolyser_commitment
+
+    exposure = CommitmentExposureV2.between(before, after, interval_s=900.0)
+    payload = exposure.to_dict()
+    assert exposure.enabled is True
+    assert exposure.cold_starts == 1
+    assert exposure.hot_starts == 0
+    assert exposure.startup_energy_kwh == pytest.approx(150.0)
+    assert exposure.nonproductive_energy_kwh == pytest.approx(150.0)
+    assert exposure.operating_time_s == 0.0
+    assert exposure.absolute_load_movement_kw == pytest.approx(600.0)
+    assert payload["mode_time_s"]["cold_starting"] == pytest.approx(900.0)
+    assert sum(payload["mode_time_s"].values()) == pytest.approx(900.0)
+
+
+def test_compatibility_off_exposure_is_explicit_legacy_mode_time() -> None:
+    exposure = CommitmentExposureV2.between(None, None, interval_s=900.0)
+
+    assert exposure.enabled is False
+    assert exposure.to_dict()["mode_time_s"] == {
+        "legacy": 900.0,
+        "off": 0.0,
+        "cold_starting": 0.0,
+        "running": 0.0,
+        "hot_standby": 0.0,
+        "hot_starting": 0.0,
+        "cooldown": 0.0,
+    }
+
+
+def test_commitment_exposure_rejects_a_backwards_mode_counter() -> None:
+    simulator = PlantSimulator(
+        electrolyser_commitment=DEFAULT_ELECTROLYSER_COMMITMENT_PROFILE
+    )
+    before = simulator.electrolyser_commitment
+    simulator.run(15, Action(battery_support_kw=3_000.0))
+    after = simulator.electrolyser_commitment
+    assert after is not None
+    malformed = replace(
+        after,
+        mode_time_s=tuple(
+            (mode, -60.0 if mode.value == "off" else seconds)
+            for mode, seconds in after.mode_time_s
+        ),
+    )
+
+    with pytest.raises(ValueError, match="off moved backwards"):
+        CommitmentExposureV2.between(before, malformed, interval_s=900.0)
+
+
+def test_commitment_exposure_compares_full_profile_identity_not_only_label() -> None:
+    first = PlantSimulator(
+        electrolyser_commitment=DEFAULT_ELECTROLYSER_COMMITMENT_PROFILE
+    ).electrolyser_commitment
+    second = PlantSimulator(
+        electrolyser_commitment=replace(
+            DEFAULT_ELECTROLYSER_COMMITMENT_PROFILE,
+            cold_start_s=7_200.0,
+        )
+    ).electrolyser_commitment
+    assert first is not None and second is not None
+    assert first.profile_id == second.profile_id
+    assert first.profile_sha256 != second.profile_sha256
+
+    with pytest.raises(ValueError, match="profile cannot change"):
+        CommitmentExposureV2.between(first, second, interval_s=0.0)
+
+
+@pytest.mark.parametrize("value", (float("nan"), float("inf"), -1.0))
+def test_commitment_exposure_rejects_corrupt_counters(value: float) -> None:
+    with pytest.raises(ValueError, match="finite and non-negative"):
+        CommitmentExposureV2(enabled=True, startup_energy_kwh=value)
 
 
 def test_dark_interval_reports_unobservable_solar_factor_as_zero() -> None:

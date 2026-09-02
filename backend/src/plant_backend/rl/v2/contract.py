@@ -13,7 +13,7 @@ import json
 from typing import Any, Mapping
 
 import plant_sim
-from plant_sim import PlantConfig, SOLAR_FORCING_VERSION
+from plant_sim import COMMITMENT_DYNAMICS_VERSION, PlantConfig, SOLAR_FORCING_VERSION
 
 from ...controllers.base import Constraints
 from . import spaces
@@ -21,13 +21,14 @@ from .config import CLEAR_SKY_ENVELOPE_ID, EpisodeConfigV2
 from .reward import OBJECTIVE_VERSION, RewardWeightsV2
 from .weather import WEATHER_GENERATOR_VERSION
 
-CHECKPOINT_CONTRACT_SCHEMA_VERSION = 2
+CHECKPOINT_CONTRACT_SCHEMA_VERSION = 3
 FLOW_SAMPLING_SEMANTICS = (
     "timestamp and inventories are current after the preceding decision interval; "
     "solar availability/potential/output factor and equipment health/online state "
     "are the final one-minute dispatch sample in that interval; power, load, and "
     "production are time-weighted means over the whole interval (reset uses the "
-    "initial boundary sample because no interval exists)"
+    "initial boundary sample because no interval exists); electrolyser commitment "
+    "mode, timers, prior accepted power, and ramp headroom are current boundary state"
 )
 GUARD_SEMANTICS = (
     "controllers decide from causal boundary telemetry; before every physical "
@@ -78,6 +79,7 @@ def checkpoint_contract_payload(
             "solar_forcing": SOLAR_FORCING_VERSION,
             "clear_sky_envelope": CLEAR_SKY_ENVELOPE_ID,
             "weather_generator": WEATHER_GENERATOR_VERSION,
+            "electrolyser_commitment": COMMITMENT_DYNAMICS_VERSION,
         },
         "episode_distribution": episode.to_dict(),
         "plant_config": plant.to_dict(),

@@ -3,13 +3,15 @@
 Status: **accepted direction; implementation parameters remain provisional until the
 corresponding experiment is committed.**
 
-Implementation status: the weather alpha now provides recurring contracts, a 15-minute
-decision cadence, service reward and metrics, explicit boundary/preceding-interval
-`ControlState` semantics, seeded solar-resource truth, four causal forecast bands, and a
-private replay manifest under an explicit V2 namespace. It still uses a synthetic,
-uncalibrated weather fixture and memoryless V1 process equipment. Commitment dynamics,
-empirical profiles, model-based comparators, and controller training/evaluation remain
-open increments; this is not the completed V2 benchmark described below.
+Implementation status: the commitment alpha now combines recurring contracts, a
+15-minute decision cadence, seeded solar-resource truth, four causal forecast bands,
+explicit boundary/preceding-interval telemetry, and the opt-in pressurised-alkaline
+commitment profile. Its default 57-field Markov observation and objective/accounting
+contract are versioned independently from V1; explicit `None` disables commitment for
+the controlled compatibility ablation. The weather and equipment parameters remain
+synthetic and uncalibrated. Model-based comparators, controller training/evaluation, and
+physical/site validation remain open increments; this is not yet a completed V2
+benchmark or a validated digital twin.
 
 ## 1. Benchmark question
 
@@ -39,7 +41,7 @@ routine controller ---- proposed action / schedule
     heuristic | MPC | RL | hybrid
                               |
                               v
-independent guard ------ applied action + intervention record
+independent guard ------ guarded action + intervention record
                               |
                               v
 control-oriented simulator ---- truth state ---- accounting / benchmark score
@@ -84,19 +86,24 @@ bind to them. V2 checkpoint loading requires an environment identifier and contr
 digest; an artifact without those fields is V1-only. Cross-version loading fails
 loudly—vectors are never padded and weights are never silently reused.
 
-V2 has three deliberately different identities. The static descriptor digest covers
+V2 has four deliberately different identities. The static descriptor digest covers
 only observation/action layout and normalization. `PlantEnvV2.checkpoint_contract` is
-the policy-compatibility identity: it covers that interface plus timing and guard
-semantics, dynamics implementation versions, episode distribution, complete plant and
-constraint parameters, objective version, and reward weights. The per-reset private
-audit manifest adds the sampled episode seed hierarchy, scenario, commitments, weather
-stream states and content hashes, while the experiment runner adds source revision,
-dependency-lock digest, runtime, and artifact/training provenance. Keeping these scopes
-separate avoids pretending a checkpoint digest identifies one sampled episode or a Git
-tree. Future V2 checkpoint writers/loaders must store and require the compatibility
-digest; no V2 loader exists in the weather alpha, so V1's loader must not be used for it.
+the policy-compatibility identity: at schema 3 it covers that interface plus timing and
+guard semantics, simulator/forcing/weather/commitment dynamics versions, the complete
+equipment profile, episode distribution, plant and constraint parameters, objective
+version, and reward weights. A per-reset `exogenous_episode_sha256` covers only sampled
+inventories, weather, contracts, seed streams, and timing; it deliberately excludes the
+equipment profile so commitment-off/on arms can prove they share the same external
+episode. The private audit manifest, also schema 3, combines the sampled replay record
+with the full task/checkpoint identity and therefore changes when the equipment profile
+changes. The experiment runner must still add source revision, dependency-lock digest,
+runtime, and artifact/training provenance. Keeping these scopes separate avoids
+pretending a checkpoint digest identifies one sampled episode or that a pairing digest
+identifies the equipment model. Future V2 checkpoint writers/loaders must store and
+require the compatibility digest; no V2 loader exists in the commitment alpha, so V1's
+loader must not be used for it.
 
-Across those three records, V2 evidence contains at least:
+Across these records, V2 evidence contains at least:
 
 - environment contract identifier and semantic version;
 - simulator implementation/package versions plus experiment source revision;
@@ -149,7 +156,10 @@ V2 constructs an explicit `ControlStateV2` for policy observation at each 15-min
 decision. Its timestamp and inventories are current at the boundary. Solar,
 health, and online fields are the final one-minute dispatch sample in the completed
 interval, while power/load/production fields are time-weighted means over that complete
-interval. Reset uses the initial boundary sample because no preceding interval exists.
+interval. An immutable commitment snapshot sits beside `PlantState` at the same boundary
+and supplies the current equipment mode, timers, previous accepted power, and ramp
+headroom without changing the shared/V1 state schema. Reset uses the initial boundary
+sample and an `off` commitment snapshot because no preceding interval exists.
 Before every V2 physics step, the guard combines causal telemetry with a privileged,
 read-only preview of the exact solar bus that step will dispatch. That preview never
 enters the controller observation; it is the fast interlock's actuation-time input for
@@ -160,7 +170,7 @@ aggregates.
 Environment V1 deliberately retains its established telemetry-based guard path and
 transition identity for replay compatibility. Moving the live operational runtime to
 the exact-bus interlock requires an explicitly versioned adoption of the V2 semantics;
-the weather-alpha implementation does not silently rewrite V1 trajectories.
+the commitment-alpha implementation does not silently rewrite V1 trajectories.
 
 ## 5. Minimal discriminative feature bundle
 
@@ -244,22 +254,37 @@ may access future truth.
 
 ### 5.3 Electrolyser commitment dynamics
 
-The hydrogen bottleneck gains a technology-labelled operating state machine:
+The default commitment-alpha task now enables the frozen
+`ael_pressurised_fixed_bop_alpha_v1` profile. Its boundary modes are:
 
 ```text
-off -> starting -> running -> standby/cooldown -> off
+off -> cold_starting -> running <-> hot_standby
+                            ^          |
+                            |      hot_starting
+                            +----------+
+
+starting/running/standby -> cooldown -> off
 ```
 
-The initial model includes startup time and energy, minimum stable load, ramp rate,
-minimum up/down commitment, part-load efficiency, and cumulative start/low-load
-exposure. Mode, timers, prior load, and admissible ramp headroom are observable so the
-controller-facing state remains Markov.
+The component accounts for powered cold/hot startup with zero deliverable hydrogen,
+hot-standby power, a minimum stable running load, one-minute ramp headroom, minimum
+up/down and cooldown timers, shortfall grace, and a piecewise part-load specific-energy
+curve. Cold-start completion and first saleable production occupy different physical
+intervals. The V2 boundary sidecar makes mode, timers, previous accepted power, and
+ramp headroom observable so the controller state remains Markov. Cumulative counters
+do not enter the policy vector; exact per-decision differences feed audit metrics.
 
-Parameters begin as documented archetype priors and carry a calibration status; they
-are not presented as vendor-specific truth. Literature values cannot be mixed across
-PEM and alkaline systems without an explicit equipment profile. Thermal and purity
-states are deferred until the commitment experiment shows a need and suitable
-calibration evidence exists.
+The profile is a documented, literature-bounded pressurised-alkaline scheduling
+archetype. Startup/standby power, minimum commitment times, system-production ramp,
+shortfall grace, and the part-load curve are synthetic benchmark assumptions—not
+vendor-specific truth. No start or low-load interval changes physical health. Thermal,
+pressure, lye-flow, gas-purity, venting, and equipment-life dynamics remain absent.
+Passing `electrolyser_commitment=None` retains the pre-commitment simulator trajectory
+and 42-field observation prefix while the new suffix explicitly selects `legacy` mode.
+Each snapshot carries a canonical digest of the full profile so a changed numerical
+parameter cannot reuse the same human label unnoticed. Commitment dynamics version 2
+also defines a 1% zero-command deadband below standby demand; this makes an orderly stop
+a finite region of the continuous action space rather than one exact floating-point value.
 
 ## 6. Observation and action contracts
 
@@ -274,21 +299,33 @@ global V1 vector. The target mature contract includes:
 - equipment mode, load, ramp headroom, commitment timers, and health;
 - active supervisor constraints and previous guard intervention magnitude.
 
-The implemented weather-alpha contract has 42 fields. It uses V1's named fields only
-where their meaning is explicitly redeclared, replaces process rates/loads with preceding-
-interval means, adds normalized next-delivery time/quantity/inventory coverage and
-cumulative fill rate, and appends forecast mean and p10 for `0–1`, `1–6`, `6–12`, and
-`12–24` hour windows. It exposes active power/reserve constraints but does **not** yet
-contain equipment commitment mode, ramp headroom, startup/cooldown timers, forecast
-scenarios, or previous guard intervention magnitude. Those arrive only with the
-corresponding versioned increments. The exact field table committed with the encoder is
-authoritative; this prose does not substitute for the machine-readable contract.
+The implemented commitment-alpha contract is `plant-env-v2-commitment-alpha`, interface
+specification 3, with 57 observations and the unchanged five-dimensional action. The
+first 42 positions are the exact weather-alpha prefix: redeclared V1 telemetry semantics,
+four delivery fields, and forecast mean/p10 for `0–1`, `1–6`, `6–12`, and `12–24` hour
+windows. The 15-field suffix is, in fixed order:
 
-The initial action keeps the current five control dimensions to bound the experiment,
-but the benchmark records requested physical kW, applied physical kW, and routing or
-guard intervention magnitude. If materially different policy outputs still collapse
-onto the same dispatch, V2 will replace solar shares with absolute equipment setpoints
-and explicit common-bus battery charge/discharge authority.
+1. a seven-way one-hot mode vector: `legacy`, `off`, `cold_starting`, `running`,
+   `hot_standby`, `hot_starting`, `cooldown`;
+2. previous accepted power, upward ramp headroom, and downward ramp headroom, each as a
+   fraction of electrolyser nameplate;
+3. normalized startup, cooldown, minimum-up, minimum-down, and shortfall-grace timers.
+
+All suffix values are bounded in `[0, 1]`. With commitment disabled, only `legacy` is
+one and the remaining suffix is zero. The exact field table committed with the encoder
+is authoritative; this prose does not substitute for the machine-readable contract.
+Forecast scenarios and previous guard-intervention magnitude are still absent.
+
+The initial action keeps the current five control dimensions to bound the experiment;
+its machine-readable descriptor includes the commitment-intent deadband.
+The benchmark separately records requested, guard-approved, and physically accepted
+energy. `guard_intervention_kwh` measures request-to-guard distance. The new
+`dispatch_gap_kwh` and `request_application_gap_kwh` metrics integrate absolute per-minute
+guard-to-plant and end-to-end distances, respectively, so opposing errors cannot cancel
+inside one decision. Step information calls the last guard-approved command
+`guarded_action`; it is not mislabeled as physical application. If materially different
+policy outputs still collapse onto the same dispatch, V2 will replace solar shares with
+absolute equipment setpoints and explicit common-bus battery charge/discharge authority.
 
 The controller must never receive:
 
@@ -302,15 +339,31 @@ The controller must never receive:
 Raw methane production is not positively rewarded in V2. Product has value when it is
 delivered on specification or retained as explicitly valued terminal inventory.
 
-The initial scalar training objective combines:
+The mature scalar training objective may combine:
 
 - delivered-product value;
 - unmet-delivery penalty, including a tail-risk-sensitive term;
 - terminal inventory value within a target band;
 - renewable curtailment or purchased-energy cost;
 - battery throughput cost;
-- electrolyser startup, cycling, low-load, and degradation-proxy cost;
+- explicitly justified electrolyser operating/cycling proxies;
 - guard-intervention magnitude and fallback cost.
+
+The implemented objective is version 3. It retains delivery, terminal inventory,
+shortfall, curtailment, battery drain, reserve breach, shutdown, and correction terms,
+and adds only two commitment-related penalties:
+
+- `nonproductive_energy` with provisional weight `0.05`: startup plus standby kWh,
+  normalized by electrolyser nameplate times one delivery period;
+- `forced_stop` with provisional weight `0.10`: the exact forced-stop count, used only
+  as an operational proxy.
+
+Cold/hot and aborted starts, controlled stops, startup/standby energy separately,
+operating and low-load seconds, ramp-limited interval count, absolute load movement,
+and per-mode seconds remain diagnostic. No unvalidated wear, degradation, or monetary
+law is smuggled into the reward. The exposure deltas are derived from monotonic simulator
+counters at each decision boundary, so both metrics and the two penalties are additive
+and invariant to how the same physical horizon is partitioned into controller intervals.
 
 Hard physical limits, safety reserve, forbidden modes, and thermal/purity constraints
 are not exchangeable reward terms. They are enforced and reported separately. Reward
@@ -395,11 +448,22 @@ a different controller.
 - add leakage, calibration, split-integrity, replay, and time-alignment tests;
 - implement forecast-blind and forecast-aware heuristic ablations.
 
+Status: truth/forecast generation and causal observation are implemented; the maintained
+baseline is still forecast-blind, so forecast value remains unmeasured.
+
 ### Increment 3 — electrolyser commitment
 
 - add the parameterized operating state machine and wear exposures;
 - add unit/energy/ramp/timer invariants and compatibility-off tests;
 - measure whether commitment dynamics widen the oracle-to-naive gap.
+
+Status: the opt-in simulator kernel, 57-field V2 interface, schema-3 checkpoint/audit
+identity, exact exposure accounting, and two declared proxy penalties are implemented.
+Post-review hardening has 127 focused tests and a 545-test complete repository regression.
+It pins a finite continuous-policy stop region, canonical profile identity, one-minute V2
+cadence, finite accounting, and the difference between guard approval and physical
+acceptance. The paired off/on calibration has not yet been recorded; the third item
+therefore remains open.
 
 ### Increment 4 — controller tournament
 
@@ -418,6 +482,21 @@ naive policy is materially worse than the tuned baseline, the perfect-informatio
 bound is materially better, and outcomes are not dominated by randomized initial tank
 headroom. No percentage is fixed until the initial sweep makes the achievable scale
 visible; thresholds are then predeclared before training RL.
+
+The next gate sequence is:
+
+1. freeze the reviewed commitment-alpha source revision and contract digest (the complete
+   repository regression is green);
+2. recalibrate delivery feasibility with paired commitment-off/on episodes sharing the
+   same `exogenous_episode_sha256`;
+3. run the forecast blind/issued/perfect factorial with a delivery-aware heuristic,
+   deterministic MPC, and a feasible future-information planner;
+4. inspect component refusal and guard projection to decide whether the implicit
+   five-field command must become an explicit equipment-mode/setpoint action;
+5. predeclare held-out thresholds and only then begin multi-seed PPO training.
+
+Until these gates pass, the repository demonstrates a testable research environment—not
+RL superiority, optimizer optimality, HEPA/supervisor value, or commercial return.
 
 ## 12. Explicit non-goals for the first release
 

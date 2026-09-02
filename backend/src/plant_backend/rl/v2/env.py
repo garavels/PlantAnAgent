@@ -1,4 +1,4 @@
-"""Weather-aware Environment V2 alpha around the shared plant simulator.
+"""Commitment-aware Environment V2 alpha around the shared plant simulator.
 
 One policy decision is held for several one-minute physics steps.  The guard is
 re-run before every physical step because storage and availability can change
@@ -25,7 +25,11 @@ from ...safety.validation import validate
 from ..actions import ActionAdapter, DecodedAction
 from . import spaces
 from .accounting import IntervalPowerAccounting
-from .boundary import ControlStateV2, IntervalTelemetryAccumulator
+from .boundary import (
+    CommitmentExposureV2,
+    ControlStateV2,
+    IntervalTelemetryAccumulator,
+)
 from .config import EpisodeConfigV2, EpisodeV2, sample_episode
 from .contract import describe_checkpoint_contract
 from .metrics import EpisodeMetricsV2
@@ -35,7 +39,7 @@ from .weather import ForecastIssueV2
 
 
 class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
-    """Explicit V2 alpha: delivery service under uncertain solar resource."""
+    """Delivery service under uncertain solar and stateful equipment dynamics."""
 
     metadata = {"render_modes": []}
 
@@ -58,8 +62,14 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
             weights=self.weights,
         )
 
-        self.simulator = PlantSimulator(self.config)
-        self.encoder = ObservationEncoderV2(self.config)
+        self.simulator = PlantSimulator(
+            self.config,
+            electrolyser_commitment=self.episode_config.electrolyser_commitment,
+        )
+        self.encoder = ObservationEncoderV2(
+            self.config,
+            self.episode_config.electrolyser_commitment,
+        )
         self.adapter = ActionAdapter(self.config)
         self.observation_space = Box(
             low=spaces.observation_low(),
@@ -116,7 +126,10 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
         self.metrics = EpisodeMetricsV2()
         self.physics_steps_taken = 0
         self.decisions_taken = 0
-        self.control_state = ControlStateV2(boundary=self.telemetry)
+        self.control_state = ControlStateV2(
+            boundary=self.telemetry,
+            electrolyser_commitment=self.simulator.electrolyser_commitment,
+        )
         return self._observe(), self._public_info()
 
     def step(
@@ -163,6 +176,7 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
             raise RuntimeError("episode is already terminated; call reset()")
 
         before = self.simulator.state
+        commitment_before = self.simulator.electrolyser_commitment
         min_soc = before.battery_soc
         battery_discharged_kwh = 0.0
         shutdown_steps = 0
@@ -207,11 +221,18 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
             shutdown_steps += int(after_step.plant_status in (CRITICAL, OFFLINE))
 
         after = self.simulator.state
+        commitment_after = self.simulator.electrolyser_commitment
         self.physics_steps_taken += inner_steps
         self.decisions_taken += 1
+        commitment_exposure = CommitmentExposureV2.between(
+            commitment_before,
+            commitment_after,
+            interval_s=inner_steps * self.config.dt_s,
+        )
         self.control_state = ControlStateV2(
             boundary=self.telemetry,
             previous_interval=interval_telemetry.summary(),
+            electrolyser_commitment=commitment_after,
         )
         terminated = self.physics_steps_taken >= self.episode_physics_steps
         outcome = IntervalOutcome(
@@ -232,10 +253,15 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
             shutdown_steps=shutdown_steps,
             corrections=len(adjustments),
             guard_intervention_kwh=power.guard_intervention_l1_kwh,
+            dispatch_gap_kwh=power.dispatch_gap_integral_l1_kwh,
+            request_application_gap_kwh=(
+                power.request_application_integral_l1_kwh
+            ),
             out_of_range=decoded.clipped,
             terminal_ch4_kg=after.ch4_level_kg,
             reference_delivery_kg=self.episode_config.delivery_amount_kg,
             reference_period_h=self.episode_config.delivery_period_h,
+            commitment=commitment_exposure,
         )
         breakdown = compute(
             outcome,
@@ -258,7 +284,7 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
         info = {
             **self._public_info(),
             "requested": requested,
-            "applied_action": last_applied.to_dict(),
+            "guarded_action": last_applied.to_dict(),
             "guard": {
                 "interventions": len(adjustments),
                 "corrected_physics_steps": corrected_steps,
@@ -266,6 +292,17 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
                 "intervention_l1_kwh": power.guard_intervention_l1_kwh,
             },
             "interval_power": power.to_dict(),
+            "control_authority": {
+                "guard_intervention_integral_l1_kwh": (
+                    power.guard_intervention_integral_l1_kwh
+                ),
+                "dispatch_gap_integral_l1_kwh": (
+                    power.dispatch_gap_integral_l1_kwh
+                ),
+                "request_application_integral_l1_kwh": (
+                    power.request_application_integral_l1_kwh
+                ),
+            },
             "adjustments": adjustments,
             "delivery": {
                 "commitments_settled": len(settlements),
@@ -273,6 +310,7 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
                 "delivered_kg": delivered_kg,
                 "unmet_kg": unmet_kg,
             },
+            "electrolyser_commitment_interval": commitment_exposure.to_dict(),
             "reward": breakdown.to_dict(),
             "metrics": self.metrics.to_dict(),
             "plant_status": after.plant_status,
@@ -347,6 +385,11 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
             "decision_index": self.decisions_taken,
             "physics_step": self.physics_steps_taken,
             "forecast": self.current_forecast.to_dict(),
+            "electrolyser_commitment": (
+                None
+                if self.simulator.electrolyser_commitment is None
+                else self.simulator.electrolyser_commitment.to_dict()
+            ),
             "next_delivery": (
                 None
                 if next_delivery is None
@@ -362,7 +405,7 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
         if self._episode is None:
             raise RuntimeError("reset() must be called before requesting a manifest")
         immutable = {
-            "manifest_schema_version": 2,
+            "manifest_schema_version": 3,
             "environment": spaces.describe(),
             "checkpoint_contract": self.checkpoint_contract,
             "objective_version": OBJECTIVE_VERSION,
@@ -384,6 +427,7 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
         ).encode("utf-8")
         return {
             "manifest_sha256": hashlib.sha256(canonical).hexdigest(),
+            "exogenous_episode_sha256": self._episode.exogenous_episode_sha256,
             **immutable,
             "delivery_accounting": self.simulator.delivery_audit(),
         }

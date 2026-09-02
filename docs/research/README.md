@@ -21,8 +21,8 @@ fallback behavior.
 - [`STATE_OF_THE_ART.md`](STATE_OF_THE_ART.md) defines the external evidence bar,
   product wedge, benchmark comparators, and limits on current claims.
 - [`ENVIRONMENT_V2_SPEC.md`](ENVIRONMENT_V2_SPEC.md) defines the commercial control
-  problem, layer boundaries, time/forecast contracts, staged simulator changes, and
-  acceptance gates.
+  problem, layer boundaries, time/forecast/commitment contracts, current 57-field
+  interface and objective boundary, staged simulator changes, and acceptance gates.
 - [`ENVIRONMENT_V2_ALPHA_RESULTS.md`](ENVIRONMENT_V2_ALPHA_RESULTS.md) records the
   first clean, paired delivery-only calibration and the decision it supports.
 - [`ENVIRONMENT_V2_WEATHER_RESULTS.md`](ENVIRONMENT_V2_WEATHER_RESULTS.md) records
@@ -30,7 +30,8 @@ fallback behavior.
   analysis, and resulting Gate B decision.
 - [`ELECTROLYSER_COMMITMENT_PROFILE.md`](ELECTROLYSER_COMMITMENT_PROFILE.md) freezes
   the evidence boundary, assumptions, state semantics, compatibility contract, and
-  acceptance tests for the first technology-labelled equipment model.
+  acceptance tests for the first technology-labelled equipment model now integrated
+  into commitment-alpha V2.
 
 Small canonical benchmark outputs may be committed under [`results/`](results/) when
 they make a reported conclusion directly auditable. Large generated datasets, model

@@ -11,7 +11,14 @@ import numpy as np
 import pytest
 from gymnasium.utils.env_checker import check_env
 import plant_sim
-from plant_sim import Action, PlantConfig, PlantState, SOLAR_FORCING_VERSION
+from plant_sim import (
+    COMMITMENT_DYNAMICS_VERSION,
+    DEFAULT_ELECTROLYSER_COMMITMENT_PROFILE,
+    Action,
+    PlantConfig,
+    PlantState,
+    SOLAR_FORCING_VERSION,
+)
 
 from plant_backend.controllers import Constraints
 from plant_backend.rl import PlantEnv as PlantEnvV1
@@ -19,6 +26,7 @@ from plant_backend.rl import spaces as v1_spaces
 from plant_backend.rl.v2 import EpisodeConfigV2, PlantEnvV2, RewardWeightsV2
 from plant_backend.rl.v2 import spaces as v2_spaces
 from plant_backend.rl.v2.accounting import IntervalPowerAccounting
+from plant_backend.rl.v2.boundary import CommitmentExposureV2
 from plant_backend.rl.v2.config import sample_episode
 from plant_backend.rl.v2.contract import (
     CheckpointContractError,
@@ -45,9 +53,9 @@ def test_v1_and_v2_are_explicit_coexisting_contracts() -> None:
     v2_observation, _ = v2.reset(seed=3)
 
     assert v1_spaces.ENVIRONMENT_ID == "plant-env-v1"
-    assert v2_spaces.ENVIRONMENT_ID == "plant-env-v2-weather-alpha"
+    assert v2_spaces.ENVIRONMENT_ID == "plant-env-v2-commitment-alpha"
     assert v1_observation.shape == (30,)
-    assert v2_observation.shape == (42,)
+    assert v2_observation.shape == (57,)
     assert v1_spaces.ENVIRONMENT_CONTRACT_DIGEST != v2_spaces.ENVIRONMENT_CONTRACT_DIGEST
     assert v1.observation_space.contains(v1_observation)
     assert v2.observation_space.contains(v2_observation)
@@ -112,6 +120,7 @@ def test_full_checkpoint_contract_changes_with_timing_and_objective() -> None:
         "solar_forcing": SOLAR_FORCING_VERSION,
         "clear_sky_envelope": "plant-sim-half-sine-v1",
         "weather_generator": WEATHER_GENERATOR_VERSION,
+        "electrolyser_commitment": COMMITMENT_DYNAMICS_VERSION,
     }
     assert "simulator-owned solar bus" in base.checkpoint_contract["timing"][
         "guard_semantics"
@@ -119,6 +128,40 @@ def test_full_checkpoint_contract_changes_with_timing_and_objective() -> None:
     assert "terminated=true" in base.checkpoint_contract["timing"][
         "episode_end_semantics"
     ]
+
+
+def test_commitment_profile_changes_full_identity_but_not_sampled_conditions() -> None:
+    committed = PlantEnvV2(episode=SHORT)
+    compatibility_off = PlantEnvV2(
+        episode=replace(SHORT, electrolyser_commitment=None)
+    )
+    slower_start = PlantEnvV2(
+        episode=replace(
+            SHORT,
+            electrolyser_commitment=replace(
+                DEFAULT_ELECTROLYSER_COMMITMENT_PROFILE,
+                cold_start_s=7_200.0,
+            ),
+        )
+    )
+
+    assert committed.checkpoint_contract_digest != compatibility_off.checkpoint_contract_digest
+    assert committed.checkpoint_contract_digest != slower_start.checkpoint_contract_digest
+    assert committed.episode_config.to_dict()["electrolyser_commitment"][
+        "profile_id"
+    ] == DEFAULT_ELECTROLYSER_COMMITMENT_PROFILE.profile_id
+    assert compatibility_off.episode_config.to_dict()["electrolyser_commitment"] is None
+
+    committed.reset(seed=41)
+    compatibility_off.reset(seed=41)
+    left = committed.audit_manifest()
+    right = compatibility_off.audit_manifest()
+    assert left["manifest_sha256"] != right["manifest_sha256"]
+    assert left["exogenous_episode_sha256"] == right["exogenous_episode_sha256"]
+    assert (
+        left["episode"]["exogenous_episode_sha256"]
+        == left["exogenous_episode_sha256"]
+    )
 
 
 def test_v2_checkpoint_compatibility_requires_the_full_exact_digest() -> None:
@@ -142,6 +185,14 @@ def test_v2_checkpoint_compatibility_requires_the_full_exact_digest() -> None:
             {
                 "environment_id": v2_spaces.ENVIRONMENT_ID,
                 "checkpoint_contract_digest": "0" * 64,
+            },
+            expected=expected,
+        )
+    with pytest.raises(CheckpointContractError, match="incompatible"):
+        require_compatible_checkpoint(
+            {
+                "environment_id": "plant-env-v2-weather-alpha",
+                "checkpoint_contract_digest": env.checkpoint_contract_digest,
             },
             expected=expected,
         )
@@ -169,14 +220,26 @@ def test_v2_checkpoint_compatibility_requires_the_full_exact_digest() -> None:
             ),
             "commitment exceeds",
         ),
+        (
+            EpisodeConfigV2(electrolyser_commitment=True),  # type: ignore[arg-type]
+            "electrolyser_commitment",
+        ),
     ],
 )
 def test_v2_episode_configuration_rejects_misaligned_or_invalid_values(
     config: EpisodeConfigV2,
     message: str,
 ) -> None:
-    with pytest.raises(ValueError, match=message):
+    with pytest.raises((TypeError, ValueError), match=message):
         config.validate(PlantConfig())
+
+
+def test_commitment_alpha_freezes_one_minute_physics_but_off_ablation_does_not() -> None:
+    five_minute_plant = PlantConfig(dt_s=300.0)
+    with pytest.raises(ValueError, match="requires a 60 s physics timestep"):
+        SHORT.validate(five_minute_plant)
+
+    replace(SHORT, electrolyser_commitment=None).validate(five_minute_plant)
 
 
 def test_named_random_streams_keep_inventory_draws_stable() -> None:
@@ -222,6 +285,8 @@ def test_public_info_contains_current_contract_context_but_no_future_tape() -> N
     assert not hasattr(env, "episode")
     assert env.current_forecast.to_dict() == info["forecast"]
     assert info["checkpoint_contract_digest"] == env.checkpoint_contract_digest
+    assert info["electrolyser_commitment"]["mode"] == "off"
+    assert "cold_start_s" not in info["electrolyser_commitment"]
 
 
 def test_environment_consumes_private_weather_at_the_expected_boundaries() -> None:
@@ -235,7 +300,7 @@ def test_environment_consumes_private_weather_at_the_expected_boundaries() -> No
     assert env.telemetry.solar_output_factor == 0.0
     assert initial_observation[factor_index] == 0.0
     assert initial_info["forecast"]["issued_at_physics_boundary_step"] == 0
-    assert initial_observation.shape == (42,)
+    assert initial_observation.shape == (57,)
 
     energy_before = env.simulator.state.energy_produced_kwh
     _, _, _, _, info = env.step_action(Action.idle())
@@ -264,6 +329,75 @@ def test_a_decision_holds_one_action_for_fifteen_physics_steps() -> None:
     assert info["metrics"]["physical_steps"] == 15
     assert info["metrics"]["decisions"] == 1
     assert info["metrics"]["hours"] == pytest.approx(0.25)
+
+
+def test_commitment_timers_and_exposures_advance_on_the_inner_physics_grid() -> None:
+    env = PlantEnvV2(
+        episode=replace(SHORT, battery_soc=(0.65, 0.65))
+    )
+    env.reset(seed=2)
+    timer_at = v2_spaces.OBSERVATION_NAMES.index("electrolyser_startup_remaining")
+    running_at = v2_spaces.OBSERVATION_NAMES.index("electrolyser_mode_running")
+    cold_at = v2_spaces.OBSERVATION_NAMES.index("electrolyser_mode_cold_starting")
+
+    observation, _, _, _, first_info = env.step_action(
+        Action(battery_support_kw=3_000.0)
+    )
+    assert observation[cold_at] == 1.0
+    assert observation[timer_at] == pytest.approx(0.75)
+    assert first_info["electrolyser_commitment"]["startup_remaining_s"] == 2_700.0
+    assert first_info["electrolyser_commitment_interval"]["cold_starts"] == 1
+    assert first_info["electrolyser_commitment_interval"][
+        "startup_energy_kwh"
+    ] == pytest.approx(150.0)
+    assert first_info["reward"]["components"]["nonproductive_energy"] < 0.0
+
+    for _ in range(3):
+        observation, _, _, _, info = env.step_action(
+            Action(battery_support_kw=3_000.0)
+        )
+    assert observation[running_at] == 1.0
+    assert observation[timer_at] == 0.0
+    assert info["electrolyser_commitment"]["mode"] == "running"
+    assert info["electrolyser_commitment"]["min_up_remaining_s"] == 3_600.0
+    assert info["metrics"]["electrolyser_cold_starts"] == 1
+    assert info["metrics"]["electrolyser_startup_energy_kwh"] == pytest.approx(
+        600.0
+    )
+    assert info["metrics"]["electrolyser_mode_time_s"][
+        "cold_starting"
+    ] == pytest.approx(3_600.0)
+
+
+def test_near_endpoint_policy_vector_can_request_an_orderly_stop() -> None:
+    profile = replace(
+        DEFAULT_ELECTROLYSER_COMMITMENT_PROFILE,
+        cold_start_s=60.0,
+        min_up_s=60.0,
+    )
+    env = PlantEnvV2(
+        episode=EpisodeConfigV2(
+            horizon_h=0.5,
+            delivery_period_h=0.5,
+            battery_soc=(0.65, 0.65),
+            electrolyser_commitment=profile,
+        )
+    )
+    env.reset(seed=2)
+    start = np.full(v2_spaces.ACTION_SIZE, -1.0, dtype=np.float32)
+    start[-1] = 1.0
+    env.step(start)
+    assert env.simulator.electrolyser_commitment is not None
+    assert env.simulator.electrolyser_commitment.mode.value == "running"
+
+    near_zero = np.full(v2_spaces.ACTION_SIZE, -1.0, dtype=np.float32)
+    near_zero[1] = -0.999999
+    near_zero[4] = -0.999999
+    _, _, terminated, _, info = env.step(near_zero)
+
+    assert terminated is True
+    assert info["electrolyser_commitment_interval"]["controlled_stops"] == 1
+    assert info["electrolyser_commitment_interval"]["forced_stops"] == 0
 
 
 def test_vector_and_controller_doors_share_the_same_transition_path() -> None:
@@ -318,6 +452,8 @@ def _interval_outcome(**changes: Any) -> IntervalOutcome:
         shutdown_steps=0,
         corrections=0,
         guard_intervention_kwh=0.0,
+        dispatch_gap_kwh=0.0,
+        request_application_gap_kwh=0.0,
         out_of_range=False,
         terminal_ch4_kg=0.0,
         reference_delivery_kg=330.0,
@@ -337,6 +473,11 @@ def test_v2_energy_penalty_is_absolute_and_partition_invariant() -> None:
             battery_discharged_kwh=120.0,
             shutdown_steps=12,
             corrections=18,
+            commitment=CommitmentExposureV2(
+                enabled=True,
+                startup_energy_kwh=300.0,
+                forced_stops=2,
+            ),
         ),
         config=config,
         constraints=constraints,
@@ -350,13 +491,25 @@ def test_v2_energy_penalty_is_absolute_and_partition_invariant() -> None:
             battery_discharged_kwh=60.0,
             shutdown_steps=6,
             corrections=9,
+            commitment=CommitmentExposureV2(
+                enabled=True,
+                startup_energy_kwh=150.0,
+                forced_stops=1,
+            ),
         ),
         config=config,
         constraints=constraints,
         terminal=False,
     )
 
-    for component in ("curtailment", "battery_drain", "shutdown", "correction"):
+    for component in (
+        "curtailment",
+        "battery_drain",
+        "shutdown",
+        "correction",
+        "nonproductive_energy",
+        "forced_stop",
+    ):
         assert whole.components[component] == pytest.approx(
             2.0 * half.components[component]
         )
@@ -378,6 +531,20 @@ def test_v2_energy_penalty_is_absolute_and_partition_invariant() -> None:
     )
 
 
+@pytest.mark.parametrize(
+    "changes",
+    (
+        {"curtailed_kwh": float("nan")},
+        {"dispatch_gap_kwh": float("inf")},
+        {"physical_steps": -1},
+        {"min_battery_soc": 1.01},
+    ),
+)
+def test_interval_outcome_rejects_corrupt_accounting(changes: dict[str, object]) -> None:
+    with pytest.raises((TypeError, ValueError), match="interval outcome"):
+        _interval_outcome(**changes)
+
+
 def test_v2_reports_requested_and_applied_energy_over_the_whole_decision() -> None:
     env = PlantEnvV2(episode=SHORT)
     env.reset(seed=4)
@@ -394,6 +561,16 @@ def test_v2_reports_requested_and_applied_energy_over_the_whole_decision() -> No
     )
     assert info["metrics"]["guard_intervention_kwh"] == pytest.approx(
         power["guard_intervention_l1_kwh"]
+    )
+    assert "applied_action" not in info
+    assert info["guarded_action"]["battery_support_kw"] < 10_000.0
+    authority = info["control_authority"]
+    assert authority["dispatch_gap_integral_l1_kwh"] > 0.0
+    assert info["metrics"]["dispatch_gap_kwh"] == pytest.approx(
+        authority["dispatch_gap_integral_l1_kwh"]
+    )
+    assert info["metrics"]["request_application_gap_kwh"] == pytest.approx(
+        authority["request_application_integral_l1_kwh"]
     )
 
 
@@ -417,6 +594,50 @@ def test_share_accounting_uses_the_realized_interval_bus_not_prior_solar() -> No
     assert result["share_command_basis"] == (
         "realized solar bus in each physical interval"
     )
+
+
+def test_dispatch_gap_integrates_absolute_step_gaps_without_cancellation() -> None:
+    accounting = IntervalPowerAccounting()
+    guarded = Action.all_to_battery()
+    accounting.record(
+        guarded,
+        guarded,
+        after=PlantState(solar_available_kw=100.0, solar_to_battery_kw=0.0),
+        dt_h=1.0,
+    )
+    accounting.record(
+        Action.idle(),
+        Action.idle(),
+        after=PlantState(solar_available_kw=100.0, solar_to_battery_kw=100.0),
+        dt_h=1.0,
+    )
+
+    assert accounting.guarded_kwh["battery"] == accounting.applied_kwh["battery"]
+    assert accounting.dispatch_gap_l1_kwh == 0.0
+    assert accounting.request_application_l1_kwh == 0.0
+    assert accounting.dispatch_gap_integral_l1_kwh == pytest.approx(200.0)
+    assert accounting.request_application_integral_l1_kwh == pytest.approx(200.0)
+
+
+@pytest.mark.parametrize("dt_h", (0.0, -1.0, float("nan"), float("inf")))
+def test_power_accounting_rejects_invalid_interval_duration(dt_h: float) -> None:
+    accounting = IntervalPowerAccounting()
+    with pytest.raises(ValueError, match="positive and finite"):
+        accounting.record(Action.idle(), Action.idle(), after=PlantState(), dt_h=dt_h)
+    assert accounting.hours == 0.0
+
+
+def test_power_accounting_rejects_nonfinite_simulator_flow_without_mutation() -> None:
+    accounting = IntervalPowerAccounting()
+    with pytest.raises(ValueError, match="applied power channel electrolyser"):
+        accounting.record(
+            Action.idle(),
+            Action.idle(),
+            after=PlantState(electrolyser_power_kw=float("nan")),
+            dt_h=0.25,
+        )
+    assert accounting.hours == 0.0
+    assert all(value == 0.0 for value in accounting.applied_kwh.values())
 
 
 def test_v2_enforces_absolute_power_caps_against_each_realized_bus() -> None:
@@ -535,7 +756,11 @@ def test_same_seed_and_actions_replay_exactly() -> None:
 
 def test_weather_alpha_has_a_frozen_compatibility_trace() -> None:
     """Protect the last pre-commitment task behind an exact replay gate."""
-    episode = EpisodeConfigV2(horizon_h=24.0, delivery_period_h=6.0)
+    episode = EpisodeConfigV2(
+        horizon_h=24.0,
+        delivery_period_h=6.0,
+        electrolyser_commitment=None,
+    )
     env = PlantEnvV2(episode=episode)
     observation, _ = env.reset(seed=101)
     actions = (
@@ -563,7 +788,7 @@ def test_weather_alpha_has_a_frozen_compatibility_trace() -> None:
     )
     trace: list[dict[str, object]] = [
         {
-            "observation": observation.tolist(),
+            "observation": observation[:42].tolist(),
             "state": env.simulator.state.to_dict(),
         }
     ]
@@ -574,7 +799,7 @@ def test_weather_alpha_has_a_frozen_compatibility_trace() -> None:
         )
         trace.append(
             {
-                "observation": observation.tolist(),
+                "observation": observation[:42].tolist(),
                 "reward": reward,
                 "terminated": terminated,
                 "truncated": truncated,
@@ -603,7 +828,12 @@ def test_private_audit_manifest_contains_replay_data_and_detached_accounting() -
     env = PlantEnvV2(episode=SHORT)
     env.reset(seed=23)
     before = env.audit_manifest()
-    assert before["manifest_schema_version"] == 2
+    assert before["manifest_schema_version"] == 3
+    assert len(before["exogenous_episode_sha256"]) == 64
+    assert (
+        before["episode"]["exogenous_episode_sha256"]
+        == before["exogenous_episode_sha256"]
+    )
     assert before["episode"]["seed"] == 23
     assert len(before["episode"]["commitments"]) == 2
     assert before["delivery_accounting"]["pending_count"] == 2
