@@ -1037,3 +1037,76 @@ component refusal and guard projection continue to obscure policy authority.
 The detailed frozen profile, source links, state-transition timing, limitations,
 compatibility gate, and required experiment are recorded in
 `ELECTROLYSER_COMMITMENT_PROFILE.md` before implementation begins.
+
+## 2026-09-02 — Opt-in electrolyser commitment kernel
+
+### Implementation
+
+The frozen alkaline alpha profile is now implemented as an opt-in simulator feature.
+`PlantSimulator(..., electrolyser_commitment=profile)` constructs a six-mode equipment
+state machine (`off`, `cold_starting`, `running`, `hot_standby`, `hot_starting`, and
+`cooldown`) while omitting the keyword or passing `None` retains the historical
+memoryless path. The immutable profile, internal state, public snapshot, and interval
+result live outside `PlantConfig` and `PlantState`; this keeps the V1 state/API and HEPA
+telemetry shapes unchanged.
+
+The one-minute transition kernel makes startup electricity physically visible on the
+plant bus but produces no deliverable hydrogen during the final startup minute. A cold
+start therefore consumes exactly 600 kWh at the frozen 3 MW/20%/60-minute settings, and
+hydrogen can begin only in the next physical interval. Minimum-up time starts at that
+running boundary rather than elapsing during cold startup. Hot standby consumes 2%, a
+return from standby requires the five-minute powered hot start, shortfalls receive the
+declared two-minute grace, and trips enter unpowered cooldown plus minimum-down lockout.
+The running branch applies the frozen piecewise specific-energy curve, external fault
+health, storage headroom, and the +/-25% nameplate/minute settling envelope.
+
+The committed dispatch path reserves possible battery support before asking the equipment
+what it can accept. It discharges only the accepted remainder after solar priority, sends
+refused solar back through the existing spill path, and preserves both the solar-bus and
+electrolyser-bus identities. This ordering closes a subtle failure mode in which a
+ramp-limited or starting component could otherwise discharge energy into a load that had
+already refused it.
+
+`plant-sim` advances from 0.4.0 to 0.5.0 in module metadata, package metadata, and the
+workspace lock so future checkpoints can identify the new dynamics explicitly.
+
+### Adversarial corrections
+
+Review during implementation found and corrected five boundary/audit defects before the
+increment was committed:
+
+1. Minimum-up time originally elapsed during the one-hour cold start. It now begins only
+   when cold startup completes; an already-running commitment clock continues across a
+   hot restart.
+2. Every declared duration is required to align exactly to the physics timestep, and the
+   grid must permit the first producing interval to reach minimum stable load from startup
+   power without violating the running ramp.
+3. Powered startup and standby originally exposed a nonzero conversion efficiency through
+   generic telemetry. Committed efficiency is now zero whenever no saleable hydrogen is
+   produced.
+4. Public ramp headroom is mode-aware and respects both nameplate and minimum-running
+   floors.
+5. If routed power falls below the feasible down-ramp trajectory, the simulator does not
+   invent the missing electricity: it falls back to hot standby. That exceptional movement
+   is now counted as a ramp-limit exposure, with a dedicated regression, so it cannot look
+   like a free transition in later controller comparisons.
+
+### Verification and limits
+
+The focused commitment suite contains 36 cases covering frozen-profile validation,
+duration and energy boundaries, hot restart, grace and cooldown, minimum up/down,
+controlled versus forced stops, ramping, part-load efficiency, fault degradation and
+outage, storage headroom, reset/replay, battery-support retraction, bus conservation,
+small-tank mass conservation, and explicit-`None` legacy equivalence. The simulator suite
+passes 128 tests. A separate deterministic randomized probe replayed 25 day-long action
+sequences through paired simulators: 36,000 paired samples/72,000 physical transitions
+preserved exact replay, finite non-negative commitment state, monotonic cumulative
+counters, tank bounds, and both electrical identities.
+
+This is still a control-oriented equipment kernel, not a calibrated thermochemical twin.
+Temperature, pressure, lye flow, product purity, venting, compression, and an equipment-life
+law remain absent. The current five-field action still expresses commitment only implicitly
+through requested electrolyser power. Most importantly, commitment is not yet active in
+Environment V2: observations, objective terms, checkpoint identity, metrics, and paired
+off/on evaluation remain the next integration increment. No controller or commercial claim
+is supported by this simulator commit alone.

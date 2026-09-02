@@ -32,6 +32,15 @@ from .config import (
     SolarConfig,
     StorageConfig,
 )
+from .commitment import (
+    COMMITMENT_DYNAMICS_VERSION,
+    DEFAULT_ELECTROLYSER_COMMITMENT_PROFILE,
+    ElectrolyserCommitmentProfile,
+    ElectrolyserCommitmentSnapshot,
+    ElectrolyserCommitmentState,
+    ElectrolyserCommitmentStep,
+    ElectrolyserMode,
+)
 from .delivery import (
     DeliveryCommitment,
     DeliveryLedger,
@@ -55,7 +64,7 @@ from .simulator import PlantSimulator
 from .state import Action, ComponentHealth, PlantState
 from .telemetry import SENSOR_CHANNELS, observe
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 
 __all__ = [
     "Action",
@@ -64,14 +73,21 @@ __all__ = [
     "Component",
     "ComponentEffect",
     "ComponentHealth",
+    "COMMITMENT_DYNAMICS_VERSION",
     "DACConfig",
+    "DEFAULT_ELECTROLYSER_COMMITMENT_PROFILE",
     "DirectAirCapture",
     "DeliveryCommitment",
     "DeliveryLedger",
     "DeliverySettlement",
     "DeliveryStepResult",
     "Electrolyser",
+    "ElectrolyserCommitmentProfile",
+    "ElectrolyserCommitmentSnapshot",
+    "ElectrolyserCommitmentState",
+    "ElectrolyserCommitmentStep",
     "ElectrolyserConfig",
+    "ElectrolyserMode",
     "Event",
     "EventLevel",
     "EventLog",

@@ -32,6 +32,10 @@ from .components import (
     SolarArray,
 )
 from .config import PlantConfig
+from .commitment import (
+    ElectrolyserCommitmentProfile,
+    ElectrolyserCommitmentSnapshot,
+)
 from .delivery import DeliveryCommitment, DeliveryLedger, DeliveryStepResult
 from .events import EventLog
 from .faults import Fault, FaultRegistry, FaultSpec
@@ -62,11 +66,20 @@ class PlantSimulator:
     tank on the material side.
     """
 
-    def __init__(self, config: PlantConfig | None = None) -> None:
+    def __init__(
+        self,
+        config: PlantConfig | None = None,
+        *,
+        electrolyser_commitment: ElectrolyserCommitmentProfile | None = None,
+    ) -> None:
         self.config = config or PlantConfig()
         self.solar = SolarArray(self.config.solar)
         self.battery = Battery(self.config.battery)
-        self.electrolyser = Electrolyser(self.config.electrolyser)
+        self.electrolyser = Electrolyser(
+            self.config.electrolyser,
+            commitment=electrolyser_commitment,
+        )
+        self.electrolyser.validate_commitment_timestep(self.config.dt_h)
         self.h2_tank = GasStorage(self.config.h2_tank, name="h2_tank", species="H2")
         self.dac = DirectAirCapture(self.config.dac)
         self.co2_tank = GasStorage(self.config.co2_tank, name="co2_tank", species="CO2")
@@ -234,6 +247,11 @@ class PlantSimulator:
         agents and the control room should read *this*, not `state`.
         """
         return self.telemetry
+
+    @property
+    def electrolyser_commitment(self) -> ElectrolyserCommitmentSnapshot | None:
+        """Immutable commitment audit state, absent on the legacy simulator."""
+        return self.electrolyser.commitment_snapshot
 
     def next_dispatch_solar_kw(self) -> float:
         """Return the exact solar bus the next :meth:`step` will dispatch.
