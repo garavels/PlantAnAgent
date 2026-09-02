@@ -53,6 +53,16 @@ validated. They require design-partner interviews, operating data, and ultimatel
 paid pilot or letter of intent. Technical benchmark success is necessary evidence,
 not market validation.
 
+The market context makes cost and offtake risk more important than an “autonomous AI”
+label. The IEA reports that low-emissions hydrogen passed only about 1% of global
+production in 2026, while investment decisions slowed, the announced project pipeline
+contracted, and renewable hydrogen remained more expensive than fossil production in
+most regions. Its 2025 review also found that established industrial uses and
+hydrogen-based fuels accounted for almost all announced firm private-sector offtake.
+The first commercial discovery should therefore target projects with a real contracted
+buyer, a costly operating decision, and accessible plant/design data—not an abstract
+hydrogen operator persona.
+
 ## What the current evidence supports
 
 ### Supported by external evidence
@@ -212,6 +222,12 @@ can contribute to innovation, maturity, replicability, cost efficiency, and quan
 greenhouse-gas avoidance. It does not yet satisfy those criteria. The exact call text
 must be mapped before using commission-specific language.
 
+The control-oriented simulator itself is not a sufficient novelty claim. EU-supported
+renewable-methane projects such as TURN2X already report using a reactor digital twin
+for design and physical-prototype reduction. Differentiation must come from the
+validated whole-chain decision problem, comparative controller evidence, independent
+safety, transferability, and a credible deployment path.
+
 A future case would need to show:
 
 - a novel whole-chain, uncertainty-aware and safety-bounded supervisory method;
@@ -263,6 +279,10 @@ A future case would need to show:
 13. [Clean Hydrogen JU Strategic Research and Innovation Agenda KPIs](https://www.clean-hydrogen.europa.eu/knowledge-management/strategy-map-and-key-performance-indicators/clean-hydrogen-ju-sria-key-performance-indicators-kpis_en).
 14. [Commission Delegated Regulation (EU) 2023/1184, consolidated text](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A02023R1184-20240610).
 15. [EU Innovation Fund scope and award criteria](https://climate.ec.europa.eu/areas-action/eu-funding-climate-action/innovation-fund/what-innovation-fund_en).
+16. [IEA, *Global Hydrogen Review 2026: Production*](https://www.iea.org/reports/global-hydrogen-review-2026/production).
+17. [IEA, *Global Hydrogen Review 2026: Cost acceptability*](https://www.iea.org/reports/global-hydrogen-review-2026/cost-acceptability).
+18. [CORDIS TURN2X renewable-methane project report](https://cordis.europa.eu/project/id/101189219/reporting).
+19. [IEA, *Global Hydrogen Review 2025: Executive summary*](https://www.iea.org/reports/global-hydrogen-review-2025/executive-summary).
 
 Literature-derived values are candidate priors, not automatically simulator
 parameters. Equipment-specific values require a declared data source and calibration

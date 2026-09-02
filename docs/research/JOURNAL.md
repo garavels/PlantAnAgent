@@ -373,3 +373,30 @@ The original pre-fix values were 2538.6929 kg, 987.1268 reward, and 18.1641% min
 SOC. This small, intentional drift is attributable to correcting loss-adjusted reserve
 support; the saturation count and conclusion are unchanged. The generated replay is
 `/tmp/plant-an-agent-v1-ceiling-post-kernel.json` and remains outside Git.
+
+## 2026-09-02 — Commercial and commission context check
+
+An official-source update checked the product thesis against current IEA, European
+Commission, and CORDIS material.
+
+- The IEA's 2026 review reports that low-emissions hydrogen has only just exceeded 1%
+  of global production, investment momentum slowed in 2025, the announced 2030
+  pipeline contracted, and renewable hydrogen remains more expensive than fossil
+  production in most regions. Cost and credible offtake are therefore central product
+  risks, not secondary presentation metrics.
+- The IEA's 2025 review reports that established industrial hydrogen uses and
+  hydrogen-based fuels represented almost all announced firm private-sector offtake.
+  Customer discovery should begin with projects that have a real industrial or fuel
+  buyer and a measurable shortage/operating cost.
+- The current EU Innovation Fund regular-grant criteria are greenhouse-gas avoidance,
+  degree of innovation, project maturity, replicability, and cost efficiency. An RL
+  benchmark can support only part of this case; it cannot substitute for project,
+  financial, physical-validation, or emissions evidence.
+- TURN2X already reports an EU-supported renewable-methane reactor digital twin used
+  for design optimization. “We have a digital twin” is consequently not a defensible
+  differentiator. The research must demonstrate whole-chain operational decisions,
+  comparative performance, bounded safety, transfer, and deployment evidence.
+
+These findings reinforce the delivery-contract benchmark and the algorithm-neutral
+platform thesis. They also raise the priority of finding a design partner and exact
+target call after the first discriminative software benchmark exists.
