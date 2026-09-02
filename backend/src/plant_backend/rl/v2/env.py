@@ -201,6 +201,7 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
             out_of_range=decoded.clipped,
             terminal_ch4_kg=after.ch4_level_kg,
             reference_delivery_kg=self.episode_config.delivery_amount_kg,
+            reference_period_h=self.episode_config.delivery_period_h,
         )
         breakdown = compute(
             outcome,

@@ -10,7 +10,7 @@ from plant_sim import PlantConfig
 
 from ...controllers.base import Constraints
 
-OBJECTIVE_VERSION = 1
+OBJECTIVE_VERSION = 2
 
 
 @dataclass(frozen=True)
@@ -55,6 +55,7 @@ class IntervalOutcome:
     out_of_range: bool
     terminal_ch4_kg: float
     reference_delivery_kg: float
+    reference_period_h: float
 
 
 @dataclass(frozen=True)
@@ -83,10 +84,19 @@ def compute(
     """Score delivered service; raw production is diagnostic and never rewarded."""
     weights = (weights or RewardWeightsV2()).validate()
     reference = max(outcome.reference_delivery_kg, 1e-12)
-    discharge_reference = max(
-        config.battery.max_discharge_kw * max(outcome.hours, 0.0), 1e-12
+    reference_period_h = max(outcome.reference_period_h, 1e-12)
+    solar_energy_reference = max(
+        config.solar.peak_kw * reference_period_h,
+        1e-12,
     )
-    physical_steps = max(1, outcome.physical_steps)
+    discharge_reference = max(
+        config.battery.max_discharge_kw * reference_period_h,
+        1e-12,
+    )
+    reference_physical_steps = max(
+        1,
+        int(round(reference_period_h / config.dt_h)),
+    )
     reserve_deficit = max(0.0, constraints.reserve_soc(config) - outcome.min_battery_soc)
     signals = {
         "delivery": max(0.0, outcome.delivered_kg) / reference,
@@ -94,18 +104,15 @@ def compute(
             min(1.0, max(0.0, outcome.terminal_ch4_kg) / reference) if terminal else 0.0
         ),
         "shortfall": max(0.0, outcome.unmet_kg) / reference,
-        "curtailment": (
-            max(0.0, outcome.curtailed_kwh) / outcome.solar_kwh
-            if outcome.solar_kwh > 0.0
-            else 0.0
-        ),
+        "curtailment": max(0.0, outcome.curtailed_kwh) / solar_energy_reference,
         "battery_drain": max(0.0, outcome.battery_discharged_kwh) / discharge_reference,
-        "reserve_breach": reserve_deficit,
-        "shutdown": max(0, outcome.shutdown_steps) / physical_steps,
-        "correction": min(
-            1.0,
+        "reserve_breach": (
+            reserve_deficit * max(0.0, outcome.hours) / reference_period_h
+        ),
+        "shutdown": max(0, outcome.shutdown_steps) / reference_physical_steps,
+        "correction": (
             (max(0, outcome.corrections) + (1 if outcome.out_of_range else 0))
-            / (3.0 * physical_steps),
+            / (3.0 * reference_physical_steps)
         ),
         # Visible for diagnosis, deliberately absent from ``components``.
         "raw_production_kg": max(0.0, outcome.produced_kg),

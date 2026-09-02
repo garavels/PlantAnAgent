@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import json
+from dataclasses import replace
+from typing import Any
 
 import numpy as np
 import pytest
 from gymnasium.utils.env_checker import check_env
 from plant_sim import Action, PlantConfig
 
+from plant_backend.controllers import Constraints
 from plant_backend.rl import PlantEnv as PlantEnvV1
 from plant_backend.rl import spaces as v1_spaces
 from plant_backend.rl.v2 import EpisodeConfigV2, PlantEnvV2, RewardWeightsV2
@@ -18,6 +21,7 @@ from plant_backend.rl.v2.contract import (
     CheckpointContractError,
     require_compatible_checkpoint,
 )
+from plant_backend.rl.v2.reward import IntervalOutcome, compute
 
 
 SHORT = EpisodeConfigV2(horizon_h=2.0, delivery_period_h=1.0)
@@ -214,6 +218,80 @@ def test_raw_production_before_a_deadline_has_no_positive_reward_component() -> 
     assert info["reward"]["components"]["terminal_inventory"] == 0.0
     assert reward <= 0.0
     assert sum(info["reward"]["components"].values()) == pytest.approx(reward)
+
+
+def _interval_outcome(**changes: Any) -> IntervalOutcome:
+    base = IntervalOutcome(
+        hours=1.0,
+        physical_steps=60,
+        requested_kg=0.0,
+        delivered_kg=0.0,
+        unmet_kg=0.0,
+        produced_kg=0.0,
+        solar_kwh=2_000.0,
+        curtailed_kwh=0.0,
+        battery_discharged_kwh=0.0,
+        min_battery_soc=0.50,
+        shutdown_steps=0,
+        corrections=0,
+        out_of_range=False,
+        terminal_ch4_kg=0.0,
+        reference_delivery_kg=330.0,
+        reference_period_h=6.0,
+    )
+    return replace(base, **changes)
+
+
+def test_v2_energy_penalty_is_absolute_and_partition_invariant() -> None:
+    config = PlantConfig()
+    constraints = Constraints()
+    whole = compute(
+        _interval_outcome(
+            hours=1.0,
+            physical_steps=60,
+            curtailed_kwh=600.0,
+            battery_discharged_kwh=120.0,
+            shutdown_steps=12,
+            corrections=18,
+        ),
+        config=config,
+        constraints=constraints,
+        terminal=False,
+    )
+    half = compute(
+        _interval_outcome(
+            hours=0.5,
+            physical_steps=30,
+            curtailed_kwh=300.0,
+            battery_discharged_kwh=60.0,
+            shutdown_steps=6,
+            corrections=9,
+        ),
+        config=config,
+        constraints=constraints,
+        terminal=False,
+    )
+
+    for component in ("curtailment", "battery_drain", "shutdown", "correction"):
+        assert whole.components[component] == pytest.approx(
+            2.0 * half.components[component]
+        )
+
+    small = compute(
+        _interval_outcome(curtailed_kwh=1.0),
+        config=config,
+        constraints=constraints,
+        terminal=False,
+    )
+    large = compute(
+        _interval_outcome(curtailed_kwh=1_000.0),
+        config=config,
+        constraints=constraints,
+        terminal=False,
+    )
+    assert large.components["curtailment"] == pytest.approx(
+        1_000.0 * small.components["curtailment"]
+    )
 
 
 def test_delivery_shortfall_drives_service_metrics_and_terminal_ordering() -> None:

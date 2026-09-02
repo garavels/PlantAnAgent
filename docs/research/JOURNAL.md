@@ -551,3 +551,17 @@ function refuses a missing, wrong-environment, or mismatched full digest. The st
 digest remains explicitly labelled interface-only. The evaluator and private replay
 manifest record both identities. Any future V2 trainer/loader must use the full digest;
 the existing V1 loader remains V1-only.
+
+### Additive energy and duration costs
+
+The initial curtailment signal divided curtailed energy by solar energy separately in
+every 15-minute decision. Fully wasting 1 kWh and 1,000 kWh therefore incurred the same
+penalty, and splitting an identical energy trajectory into more decisions changed its
+total cost. Battery, shutdown, reserve, and correction terms had related cadence effects.
+
+Objective version 2 normalizes absolute curtailed and discharged kWh, shutdown physics
+steps, guard adjustments, and reserve-deficit duration against fixed one-delivery-period
+references. Their sums are now invariant to partitioning the same physical interval,
+and wasting 1,000 times more energy costs 1,000 times more. Delivery and bounded terminal
+inventory semantics are unchanged. The full checkpoint digest makes policies trained
+under objective version 1 incompatible rather than silently reusing them.
