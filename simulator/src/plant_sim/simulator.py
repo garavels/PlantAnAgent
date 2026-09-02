@@ -235,6 +235,27 @@ class PlantSimulator:
         """
         return self.telemetry
 
+    def next_dispatch_solar_kw(self) -> float:
+        """Return the exact solar bus the next :meth:`step` will dispatch.
+
+        This is a read-only actuator view: it does not advance time, faults,
+        events, the forcing tape, or any component. Controllers must continue
+        to decide from telemetry. The fast guard uses this value to enforce
+        absolute kW caps against the contemporaneous bus across sunrise,
+        weather ramps, and the end of a solar disturbance.
+        """
+        resource_factor = (
+            1.0
+            if self._solar_factor_tape is None
+            else self._solar_factor_tape.for_interval(self.step_index)
+        )
+        solar_effect = self.faults.effect_for_at("solar", self.time_s)
+        return (
+            self.solar.clear_sky_kw(self.time_s)
+            * resource_factor
+            * solar_effect.health
+        )
+
     # --- deliveries ------------------------------------------------------
     def set_delivery_schedule(
         self,

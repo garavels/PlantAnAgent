@@ -207,3 +207,45 @@ def test_resource_factor_multiplies_solar_fault_health_without_faking_degradatio
         cloudy_state.solar_potential_kw * 0.5 * 0.4
     )
     assert cloudy_state.health["solar"].status == "degraded"
+
+
+def test_next_dispatch_preview_is_exact_and_has_no_side_effects() -> None:
+    simulator = PlantSimulator()
+    simulator.load_scenario(
+        Scenario(
+            id="preview-fault-expiry",
+            name="Preview fault expiry",
+            description="A solar derating ends on the second dispatch boundary.",
+            start_hour=12.0,
+            faults=(
+                FaultSpec(
+                    type="solar_drop",
+                    severity=0.8,
+                    start_s=0.0,
+                    duration_s=60.0,
+                ),
+            ),
+        ),
+        solar_factor_tape=tape(0.2, 0.5, 0.9),
+    )
+
+    state_before = simulator.state
+    events_before = simulator.events.events
+    faults_before = simulator.faults.to_list()
+    first_preview = simulator.next_dispatch_solar_kw()
+
+    assert simulator.state is state_before
+    assert simulator.step_index == 0
+    assert simulator.events.events == events_before
+    assert simulator.faults.to_list() == faults_before
+    first = simulator.step(Action.idle())
+    assert first.solar_available_kw == pytest.approx(first_preview)
+
+    # At this boundary the mutable component still carries the previous
+    # interval's 20% health, but the next step will expire the disturbance.
+    assert simulator.solar.health == pytest.approx(0.2)
+    second_preview = simulator.next_dispatch_solar_kw()
+    assert second_preview > first.solar_available_kw
+    second = simulator.step(Action.idle())
+    assert second.solar_available_kw == pytest.approx(second_preview)
+    assert second.solar_output_factor == pytest.approx(0.9)

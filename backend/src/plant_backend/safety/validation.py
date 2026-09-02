@@ -18,7 +18,9 @@ command, and the adjustment is reported so the control room can see it happened.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
+from numbers import Real
 from typing import Any
 
 from plant_sim import Action, PlantConfig, PlantState
@@ -47,12 +49,32 @@ def validate(
     *,
     constraints: Constraints,
     config: PlantConfig,
+    dispatch_solar_available_kw: float | None = None,
 ) -> ValidatedAction:
-    """Clamp `action` into the operating envelope for the observed plant."""
+    """Clamp ``action`` into the operating envelope for the plant.
+
+    ``observation`` remains the controller-visible telemetry used for health,
+    inventory, and reserve checks. A guarded runtime should additionally pass
+    the exact bus its next physical step will dispatch. This keeps a policy's
+    causal information set separate from a fast interlock's obligation to
+    enforce absolute kW caps at actuation time.
+    """
     safe = Action.sanitised(action)
     adjustments: list[str] = []
 
-    bus_kw = max(0.0, observation.solar_available_kw)
+    if dispatch_solar_available_kw is None:
+        bus_kw = max(0.0, observation.solar_available_kw)
+    else:
+        if (
+            isinstance(dispatch_solar_available_kw, bool)
+            or not isinstance(dispatch_solar_available_kw, Real)
+        ):
+            raise TypeError("dispatch_solar_available_kw must be a real number")
+        bus_kw = float(dispatch_solar_available_kw)
+        if not math.isfinite(bus_kw) or bus_kw < 0.0:
+            raise ValueError(
+                "dispatch_solar_available_kw must be finite and non-negative"
+            )
     offline = {name: health.offline for name, health in observation.health.items()}
     limits = (
         ("electrolyser_share", "electrolyser", constraints.electrolyser_limit_kw(config), "Electrolyser"),

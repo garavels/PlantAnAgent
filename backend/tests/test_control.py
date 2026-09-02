@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import replace
 
 import pytest
-from plant_sim import Action, PlantSimulator, PlantState
+from plant_sim import Action, PlantSimulator, PlantState, Scenario, SolarFactorTape
 
 from plant_backend.controllers import Constraints, HeuristicController
 from plant_backend.orchestration import PlantRuntime
@@ -190,6 +190,119 @@ def test_validation_clamps_power_beyond_a_constraint(sim: PlantSimulator) -> Non
     )
     assert validated.clamped
     assert validated.action.electrolyser_share * observation.solar_available_kw <= 300.0 + 1e-6
+
+
+@pytest.mark.parametrize(
+    ("share_field", "power_field", "constraints"),
+    [
+        (
+            "electrolyser_share",
+            "electrolyser_power_kw",
+            Constraints(electrolyser_max_kw=300.0),
+        ),
+        ("dac_share", "dac_power_kw", Constraints(dac_max_kw=300.0)),
+        (
+            "methanator_share",
+            "methanator_power_kw",
+            Constraints(methanator_max_kw=300.0),
+        ),
+    ],
+)
+def test_validation_uses_the_next_dispatch_bus_for_absolute_caps(
+    share_field: str,
+    power_field: str,
+    constraints: Constraints,
+) -> None:
+    simulator = PlantSimulator()
+    observation = simulator.load_scenario(
+        Scenario(
+            id="guard-bus-jump",
+            name="Guard bus jump",
+            description="Solar resource jumps between two dispatch intervals.",
+            start_hour=12.0,
+        ),
+        solar_factor_tape=SolarFactorTape(
+            dt_s=simulator.config.dt_s,
+            boundary_factors=(0.1, 1.0),
+        ),
+    )
+    dispatch_bus_kw = simulator.next_dispatch_solar_kw()
+    assert dispatch_bus_kw > observation.solar_available_kw
+
+    validated = validate(
+        Action(battery_share=0.0, **{share_field: 1.0}),  # type: ignore[arg-type]
+        observation,
+        constraints=constraints,
+        config=simulator.config,
+        dispatch_solar_available_kw=dispatch_bus_kw,
+    )
+    state = simulator.step(validated.action)
+
+    assert validated.clamped
+    assert getattr(validated.action, share_field) * dispatch_bus_kw <= 300.0 + 1e-9
+    assert state.solar_available_kw == pytest.approx(dispatch_bus_kw)
+    assert getattr(state, power_field) <= 300.0 + 1e-9
+
+
+def test_dispatch_bus_cap_includes_electrolyser_battery_support() -> None:
+    simulator = PlantSimulator()
+    observation = simulator.load_scenario(
+        Scenario(
+            id="guard-support-bus-jump",
+            name="Guard support bus jump",
+            description="Solar and battery support share the stack cap.",
+            start_hour=12.0,
+        ),
+        solar_factor_tape=SolarFactorTape(
+            dt_s=simulator.config.dt_s,
+            boundary_factors=(0.1, 1.0),
+        ),
+    )
+    dispatch_bus_kw = simulator.next_dispatch_solar_kw()
+    validated = validate(
+        Action(
+            battery_share=0.0,
+            electrolyser_share=0.05,
+            battery_support_kw=100.0,
+        ),
+        observation,
+        constraints=Constraints(electrolyser_max_kw=300.0),
+        config=simulator.config,
+        dispatch_solar_available_kw=dispatch_bus_kw,
+    )
+
+    guarded_stack_kw = (
+        validated.action.electrolyser_share * dispatch_bus_kw
+        + validated.action.battery_support_kw
+    )
+    state = simulator.step(validated.action)
+    assert guarded_stack_kw <= 300.0 + 1e-9
+    assert state.electrolyser_power_kw <= 300.0 + 1e-9
+
+
+@pytest.mark.parametrize(
+    ("value", "error"),
+    [
+        (True, TypeError),
+        ("100", TypeError),
+        (-1.0, ValueError),
+        (float("nan"), ValueError),
+        (float("inf"), ValueError),
+    ],
+)
+def test_validation_rejects_invalid_dispatch_bus_values(
+    sim: PlantSimulator,
+    value: object,
+    error: type[Exception],
+) -> None:
+    with pytest.raises(error, match="dispatch_solar_available_kw"):
+        validate(
+            Action.idle(),
+            sim.get_telemetry(),
+            constraints=Constraints(),
+            config=sim.config,
+            dispatch_solar_available_kw=value,  # type: ignore[arg-type]
+        )
 
 
 def test_validation_drops_allocations_to_offline_units(sim: PlantSimulator) -> None:
