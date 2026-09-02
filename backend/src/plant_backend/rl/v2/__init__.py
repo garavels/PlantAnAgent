@@ -11,6 +11,7 @@ are later, separately switchable increments.
 
 from .config import EpisodeConfigV2, EpisodeV2, sample_episode
 from .env import PlantEnvV2
+from .evaluation import BaselineEvaluation, evaluate
 from .metrics import EpisodeMetricsV2
 from .reward import RewardWeightsV2
 from .spaces import (
@@ -29,6 +30,7 @@ __all__ = [
     "ACTION_SIZE",
     "ENVIRONMENT_CONTRACT_DIGEST",
     "ENVIRONMENT_ID",
+    "BaselineEvaluation",
     "EpisodeConfigV2",
     "EpisodeMetricsV2",
     "EpisodeV2",
@@ -38,5 +40,6 @@ __all__ = [
     "RewardWeightsV2",
     "SPEC_VERSION",
     "describe",
+    "evaluate",
     "sample_episode",
 ]

@@ -581,3 +581,23 @@ steps. It reports interval mean kW and an L1 request/application energy gap acro
 four dispatch channels; episode metrics accumulate that intervention magnitude. The
 exact raw policy vector is retained in step diagnostics, with non-finite values encoded
 as JSON-safe strings. This accounting is observational and does not alter plant physics.
+
+## 2026-09-02 — Auditable delivery-alpha baseline evaluator
+
+The exploratory calibration loops have been replaced by a maintained paired evaluator,
+available as `python -m plant_backend.rl.v2` or `make v2-delivery-eval`. For every seed it
+constructs a fresh environment for the shipped heuristic, idle control, a fixed balanced
+mix, and a fixed production-oriented mix. It verifies that all four arms carry the same
+immutable episode-manifest hash before accepting the result.
+
+The JSON includes every rollout; population count, mean, standard deviation, minimum,
+and maximum for every numeric physical metric and reward component; the full episode,
+plant, constraint, objective, interface, and checkpoint contracts; Git revision and dirty
+state; Python/platform identity; and the SHA-256 digest of `uv.lock`. The command's human
+report leads with a baseline-only disclaimer: it contains no trained RL policy, MPC, or
+perfect-foresight oracle and cannot establish optimality or commercial superiority.
+
+A two-seed, six-hour smoke run verified CLI and JSON wiring after the independent-review
+corrections. It is not a calibrated result because initial methane coverage dominates the
+first delivery and the worktree was intentionally dirty. The formal 20-seed, seven-day
+delivery-alpha result will be generated only from the clean evaluator commit.
