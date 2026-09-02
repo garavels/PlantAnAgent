@@ -23,11 +23,15 @@ fallback behavior.
 - [`ENVIRONMENT_V2_SPEC.md`](ENVIRONMENT_V2_SPEC.md) defines the commercial control
   problem, layer boundaries, time/forecast contracts, staged simulator changes, and
   acceptance gates.
+- [`ENVIRONMENT_V2_ALPHA_RESULTS.md`](ENVIRONMENT_V2_ALPHA_RESULTS.md) records the
+  first clean, paired delivery-only calibration and the decision it supports.
 
-Large generated datasets, model checkpoints, and raw run outputs remain outside Git.
-Every reported experiment must nevertheless record enough provenance to reproduce it:
-commit, configuration, seeds, environment contract version, dependency versions, and
-the location or digest of generated artifacts.
+Small canonical benchmark outputs may be committed under [`results/`](results/) when
+they make a reported conclusion directly auditable. Large generated datasets, model
+checkpoints, exploratory outputs, and redundant reruns remain outside Git. Every reported
+experiment must record enough provenance to reproduce it: commit, configuration, seeds,
+environment contract version, dependency versions, and the location or digest of
+generated artifacts.
 
 ## Research rules
 

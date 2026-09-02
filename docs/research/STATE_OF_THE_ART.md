@@ -283,6 +283,7 @@ A future case would need to show:
 17. [IEA, *Global Hydrogen Review 2026: Cost acceptability*](https://www.iea.org/reports/global-hydrogen-review-2026/cost-acceptability).
 18. [CORDIS TURN2X renewable-methane project report](https://cordis.europa.eu/project/id/101189219/reporting).
 19. [IEA, *Global Hydrogen Review 2025: Executive summary*](https://www.iea.org/reports/global-hydrogen-review-2025/executive-summary).
+20. [European Commission JRC, PVGIS hourly radiation and PV output](https://joint-research-centre.ec.europa.eu/photovoltaic-geographical-information-system-pvgis/using-pvgis-5/pvgis-5-tools/hourly-radiation_en).
 
 Literature-derived values are candidate priors, not automatically simulator
 parameters. Equipment-specific values require a declared data source and calibration

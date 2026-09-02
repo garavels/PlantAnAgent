@@ -601,3 +601,34 @@ A two-seed, six-hour smoke run verified CLI and JSON wiring after the independen
 corrections. It is not a calibrated result because initial methane coverage dominates the
 first delivery and the worktree was intentionally dirty. The formal 20-seed, seven-day
 delivery-alpha result will be generated only from the clean evaluator commit.
+
+### Formal delivery-alpha result
+
+The planned 20-seed, seven-day evaluation was run from clean revision `1200a61` at the
+provisional 55 kg/h contract rate. The committed raw JSON hash is
+`5d5b34f538f5ec8bb6ff015b80ccfec494a50f01b772606e81e745a5aa8b3711`; its full
+provenance and analysis are in `ENVIRONMENT_V2_ALPHA_RESULTS.md`.
+
+The heuristic achieved 100% delivery fill and service with zero unmet kilograms on all
+20 inventory seeds. Idle, fixed-balanced, and fixed-production mixes achieved mean fill
+rates of 3.3%, 71.4%, and 88.8%, respectively. The delivery feature therefore creates a
+real task gap, but the heuristic again saturates the current deterministic regime.
+
+The new accounting also quantified substantial guard action: the heuristic averaged
+3,216 requested-to-guard L1 kWh per episode, versus 30,083 and 37,979 kWh for the two
+fixed mixes. This strengthens the action-aliasing concern and establishes intervention
+magnitude as a required comparator metric.
+
+Decision: do not train a policy against delivery-only alpha as a headline result. Add
+causal stochastic weather and forecasts, recalibrate the contract, then introduce an
+equipment-commitment consequence and model-based/oracle comparators before evaluating
+whether RL has a meaningful advantage.
+
+### Weather data source decision
+
+The next increment begins with a seeded synthetic process so truth/forecast separation,
+future-leakage tests, and feature ablations are exact. Its interface will also accept an
+immutable external profile. The European Commission Joint Research Centre's documented
+PVGIS hourly service provides multi-year solar-radiation and PV-output data and is the
+first planned empirical adapter. PVGIS timestamps and database versions must be retained;
+hourly values will not be misrepresented as native one-minute measurements.
