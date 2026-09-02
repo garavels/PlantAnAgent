@@ -28,6 +28,9 @@ fallback behavior.
 - [`ENVIRONMENT_V2_WEATHER_RESULTS.md`](ENVIRONMENT_V2_WEATHER_RESULTS.md) records
   the clean, paired weather-alpha calibration, independent replay audit, failure-tail
   analysis, and resulting Gate B decision.
+- [`ELECTROLYSER_COMMITMENT_PROFILE.md`](ELECTROLYSER_COMMITMENT_PROFILE.md) freezes
+  the evidence boundary, assumptions, state semantics, compatibility contract, and
+  acceptance tests for the first technology-labelled equipment model.
 
 Small canonical benchmark outputs may be committed under [`results/`](results/) when
 they make a reported conclusion directly auditable. Large generated datasets, model

@@ -978,3 +978,62 @@ accounting. Its canonical SHA-256 is
 The test intentionally excludes task labels and checkpoint identities, which must change
 when the observation and dynamics contract changes. It includes the numerical behavior
 that a compatibility-off implementation is required to preserve exactly.
+
+## 2026-09-02 — Electrolyser commitment evidence freeze
+
+### Technology choice
+
+The first commitment profile is frozen as
+`ael_pressurised_fixed_bop_alpha_v1`, a system-level pressurised alkaline scheduling
+archetype. This choice is scientific rather than algorithmic: AEL thermal startup and
+low-load gas-purity constraints can affect a 15-minute dispatch decision, whereas PEM
+electrical response is commonly sub-minute and an invented hour-scale PEM commitment
+would manufacture a learning advantage.
+
+Clean Hydrogen JU's 2020 state-of-the-art AEL table anchors a 3,600-second cold start,
+60-second hot-idle ramp, 50 kWh/kg nominal system consumption, and 0.12%/1,000 h steady
+nominal degradation at an AC-power/tap-water to 30-bar purity-5 boundary. JRC reports a
+20--25% practical AEL minimum and 1--5 minute warm response. A 250 kW experiment reports
+42.0% minimum load with lye-flow-only control, falling to 21.2% with pressure control and
+15.6% only with coordinated flow and pressure. Since this simulator has no pressure,
+lye-flow, or gas-purity states, the alpha uses a conservative 40% running minimum and
+retains the existing 52 kWh/kg nominal value.
+
+The source review also prevents three tempting but invalid shortcuts: stack-DC curves
+cannot calibrate an AC system model; electrical current ramp cannot stand in for
+saleable-hydrogen ramp; and steady nominal degradation cannot be converted into an
+invented per-start damage coefficient.
+
+### Declared benchmark assumptions
+
+Cold-start power (20% nameplate), hot-start power (20%), standby power (2%), 15-minute
+unpowered cooldown, 60-minute minimum up, 30-minute minimum down, +/-25% nameplate/min
+system-settling ramp, two-minute power-shortfall grace, 60% low-load reporting threshold,
+and the provisional part-load specific-energy multipliers are explicitly synthetic
+challenge parameters. They are fingerprinted, switchable, and require sensitivity tests.
+At 3 MW, the chosen one-hour start consumes 600 kWh; the project will not present that
+derived benchmark number as a universal equipment fact.
+
+No cycling event changes physical efficiency. The alpha records an exposure vector for
+later economic sensitivity: cold/hot starts, aborted starts, forced and controlled stops,
+mode time, startup/standby energy, operating/low-load time, ramp limiting, and absolute
+load movement.
+
+### Architecture decision
+
+The equipment profile is opt-in and lives outside `PlantConfig` and `PlantState`, which
+protects V1 configuration/state serialization and HEPA input. The legacy allocation
+arithmetic remains a distinct branch when no profile is supplied. The committed branch
+must retract unused battery support before discharge, spill refused solar through the
+existing battery/curtailment route, and conserve both bus energy and hydrogen mass.
+
+The first integration retains the five-dimensional action: any positive electrolyser
+power request is implicit commitment intent. That makes early loss of supplied power a
+recorded trip rather than pretending minimum-up is an enforceable command when no energy
+exists. Mode, timers, shortfall grace, previous load, and ramp headroom become observable.
+An explicit `(desired mode, target load)` action remains the next interface candidate if
+component refusal and guard projection continue to obscure policy authority.
+
+The detailed frozen profile, source links, state-transition timing, limitations,
+compatibility gate, and required experiment are recorded in
+`ELECTROLYSER_COMMITMENT_PROFILE.md` before implementation begins.
