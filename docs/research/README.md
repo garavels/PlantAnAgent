@@ -36,6 +36,9 @@ fallback behavior.
   clean, paired 3-seed development screen, selects 35 kg/h as the primary development
   target and 42 kg/h as a development stress point, and preserves the boundary that
   neither is formal or held-out evidence.
+- [`CAUSAL_CONTROLLER_EXPERIMENT.md`](CAUSAL_CONTROLLER_EXPERIMENT.md) preregisters
+  the transparent A0–A3 development comparison, its causal information boundary,
+  paired estimands, failure handling, tuning boundary, and future prospective gates.
 
 Small canonical benchmark outputs may be committed under [`results/`](results/) when
 they make a reported conclusion directly auditable. Large generated datasets, model

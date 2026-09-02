@@ -1368,9 +1368,9 @@ are recorded in `COMMITMENT_ALPHA_CALIBRATION.md`.
 
 ### Why execution was paused
 
-The three-arm causal controller harness was integrated and its focused tests were green,
-but no 72-hour comparator output was opened. An independent read-only adversarial review
-was run first because a clean test suite does not establish that the experiment measures
+The initial three-arm causal controller harness was integrated and its focused tests were
+green, but no 72-hour comparator output was opened. An independent read-only adversarial
+review was run first because a clean test suite does not establish that the experiment measures
 the estimand it claims. The review found no direct future-truth leakage and no release-
 blocking hard-invariant failure, but it identified several benchmark-invalidating design
 and reporting defects. They are being repaired before the development experiment is
@@ -1440,3 +1440,166 @@ The first offline rebuild failed for that exact reason. After fetching the locke
 dependency and rebuilding the editable package, the package-metadata test and the same
 focused surface completed with **206 passed**. The complete repository regression remains
 required before the complete comparator increment is committed.
+
+## 2026-09-02 — Final pre-outcome causal-protocol hardening
+
+### Scope and frozen-outcome boundary
+
+A second source-level review was performed before executing the frozen development matrix.
+No frozen 72-hour causal-controller outcome for the final core arms was generated or
+opened during this review. The previously disclosed 24-hour seed-0 diagnostic and the
+six-hour seed-3 CLI smoke remain contaminated development observations; this entry neither
+reopens them nor promotes them to evidence. In particular, seed 3 is ineligible for any
+future holdout under the current generator, regardless of horizon.
+
+### Additional findings
+
+The review found that the first repair was still not a clean forecast-information design:
+
+- The analytic clear-sky arm and issued-aggregate arm shared physical planning code, but
+  not temporal resolution. A direct contrast would combine forecast content with a smooth
+  clear-sky integral versus coarse aggregate-band interpretation.
+- Treating only wholly contained aggregate bands as available was conservative but could
+  collapse a short or band-straddling deadline horizon to the one-physics-step floor. The
+  resulting discontinuity was an estimator artifact, not evidence of physical scarcity.
+- Issued mean and downside-band weighting were bundled, so a favorable difference could
+  not be attributed to weather-conditioned mean information or to p10 use.
+- The requested controller action was not retained. Outcomes alone therefore could not
+  establish whether an information treatment ever changed the pre-guard request.
+- Source identity was not yet enforced as a complete start/end audit. A beginning-of-run
+  dirty-tree hash cannot detect source changes during a long execution, and a Boolean
+  dirty flag cannot identify unreadable or omitted content.
+- A controller failure could remain visible while a successful subset still supplied an
+  aggregate-looking contrast, and the CLI could finish successfully despite an incomplete
+  planned study.
+- The CLI accepted arbitrary development seeds without requiring an explicit declaration
+  that doing so consumes their future holdout status.
+- Terminal methane alone was not a sufficient balance check. Delivery and energy intensity
+  can both look better by liquidating initial H2, CO2, CH4, or battery energy.
+- `dispatch_gap_kwh` and `request_application_gap_kwh` mix routing, equipment refusal, and
+  deliberate charge/support overlap cancellation. Assigning either an automatic
+  lower-is-better benefit sign would overstate their interpretation.
+- The running-stack floor check originally consumed scarce solar as charge/support overlap
+  before securing the direct complement. Because overlap substitutes for rather than adds
+  to battery discharge, a physically feasible 600 kW direct-solar plus 600 kW
+  battery-support command for the 1.2 MW stable floor was falsely rejected and all 600 kW
+  solar was sent to storage.
+
+### Controller and estimand remedies
+
+The final pre-outcome design now has four ordered core arms: legacy A0, delivery-aware
+fixed-climatology A1, otherwise identical issued-mean A2, and otherwise identical
+risk-adjusted issued A3. The analytic clear-sky delivery controller remains available as
+a non-core diagnostic. It causally integrates the configured `PlantConfig.solar`
+half-sine from the current boundary time across sunrise, sunset, midnight, and multi-day
+intervals; it never queries realized future weather.
+
+All delivery-aware arms use one deficit, commitment, allocation, and action path. They
+also share the complete availability-to-deadline-horizon and next-delivery transform. The
+same availability source is evaluated over the next inferred delivery period, and
+`clip(1 - equivalent_hours / period_hours, 0, 1)` sets carry between zero and one inferred
+recurring delivery. The stale fixed 50% carry and clock-time-only horizon no longer exist.
+Startup, cooldown, and minimum-down unavailability are removed before computing the
+electrolyser's productive horizon.
+
+For the causal information contrasts, A1--A3 share the same canonical 0--1, 1--6, 6--12,
+and 12--24-hour bands and the same piecewise-constant overlap calculation. Every query
+receives `overlap_duration * band_fraction`. A1's fraction is the analytic clear-sky
+average over the full band multiplied by the frozen unconditional synthetic-prior
+expectation `0.6803843775134744`. That constant is
+`E[sigmoid(N(logit(0.70), 0.75²))]`, evaluated once with 128-node Gauss--Hermite
+quadrature rather than fitted to episode truth. A2 uses the current issued mean, and A3
+uses `0.50 * mean + 0.50 * p10`. Uniform-within-band disaggregation is explicit: it fixes
+the horizon-collapse pathology and matches resolution across the causal arms, but it is
+still an estimator assumption rather than observed sub-band PV timing.
+
+This does not erase the first review's objection to prorating aggregates. That objection
+was to silently treating an aggregate as sub-band truth in only one arm. The final design
+records the approximation as an estimator assumption and applies the identical
+piecewise-constant rule to fixed-prior and issued-information arms.
+
+The planner retains the earlier feedstock-aware methanator cap, commitment-aware
+productive time, zero-boundary-solar forward shares, sustainable battery support, and
+downward closure of floating-point action-simplex residue. It now also secures
+`max(0, running_floor - sustainable_support)` as direct solar before assigning residual
+solar to storage, so the feasible direct-solar plus battery-support floor is not rejected.
+A deterministic running-mode fixture is the required regression for that exact mechanism.
+
+### Evaluator, provenance, and reporting remedies
+
+Every attempted core arm is retained. Copy, reset, descriptor-integrity, computation,
+output-validation, and action-application failures carry their phase, bounded exception,
+partial metrics, completed time, and requested-action prefix. A retained controller
+failure makes the complete core study ineligible: per-seed diagnostics remain visible,
+but no aggregate contrast may be reported from a successful subset. That invalid
+diagnostic artifact is still writable, and the CLI then exits nonzero.
+
+Missing or duplicated arms, undeclared seed/controller runs, and full/exogenous manifest
+mismatches are structural pairing failures instead. Evaluation aborts without returning
+an artifact, and `write()` revalidates mutable results so such evidence cannot be
+serialized. They are not mislabeled as controller failures.
+
+Each run now retains the typed pre-guard request and controller-side invalid/clipping flag
+at every decision, plus a canonical action-trace SHA-256. Pairwise mechanism reporting
+aligns decision indices and separately reports solar-share L1 distance, battery-support
+differences, invalid-flag disagreements, unequal-request counts, and whether the treatment
+was expressed. The environment counts the invalid flag even after a policy adapter has
+converted its raw vector to a finite action. A treatment that never changes a request is a
+negative mechanism result, not evidence that forecasts or quantile bands have no value.
+
+Source provenance now covers the reproducible full-index binary tracked diff plus every
+non-ignored untracked path, kind, byte count, and content hash. It publishes whether the
+identity is complete, captures that identity at both execution boundaries, and invalidates
+the audit if the identity is incomplete or changes. Unlike a retained controller failure,
+either source-audit condition is a fail-closed infrastructure abort: no result is returned
+or written, and the CLI exits nonzero. Normal execution requires clean source at both
+boundaries. `--allow-dirty-development` is an explicit forensic development exception and
+cannot support a prospective claim.
+
+The normal CLI seed allowlist is 0--2. Any other seed requires
+`--acknowledge-seed-contamination`, which explicitly consumes its unseen status; it is not
+a prospective-evaluation switch. Seed 3 remains contaminated from the earlier smoke
+output.
+
+Episode accounting now retains initial and terminal H2, CO2, and CH4 mass, battery SOC,
+and battery stored energy, plus every inventory change. Accepted electrolyser, DAC, and
+methanator energy remains separated and summed without double-counting battery support;
+the per-delivered-kilogram ratio stays `null` when nothing is delivered. Human summaries
+show no intensity mean unless every planned run defines it, and paired intensity aggregates
+are suppressed unless every paired episode defines both values. Delivery and energy
+intensity may be interpreted only together with service and the complete inventory change
+vector. Battery discharge and both action-application gaps are raw diagnostics with no
+benefit sign. Reset-time minimum SOC is initialized from the sampled state so an immediate
+controller failure still has truthful partial accounting.
+
+The additive metrics, summary-scope declaration, and pairing fields materially extend the
+baseline evidence payload, so its result schema advances from 3 to 4 instead of silently
+changing version 3. The causal controller artifact remains schema 5 and additionally
+contains execution, action-trace, source-audit, and predeclared-contrast sections. Older
+checked-in evidence is not rewritten.
+
+### Validation gate
+
+The implementation was split into two auditable commits: `04798fc` adds the causal
+delivery-controller ladder and its deterministic mechanism suite; `8d210d6` adds the
+failure-safe paired evaluator, evidence validation, provenance, accounting, CLI, and
+regressions. The final focused controller/evaluator/CLI/V2 surface completed with
+**165 passed**. After both code commits, the complete repository completed with
+**657 passed** and one pre-existing Starlette/httpx deprecation warning in 12.41 seconds.
+`git diff --check` was clean.
+
+An independent final pre-outcome source audit found no remaining blocker after adversarial
+regressions for duplicate-seed pseudo-replication, post-hoc contrast replacement, causal
+evidence mutated into baseline shape, descriptor mutation, failed-arm survivor bias,
+source-audit abort/no-write behavior, treatment-expression tracing, and the running-stack
+direct-solar/support floor. The audit explicitly confirmed the A0--A3 order and exact
+adjacent contrasts. Its remaining limitations are carried forward: three development
+seeds per rate are descriptive only; the two rates require separately named artifacts;
+piecewise-constant band disaggregation and the climatology are synthetic assumptions;
+equal-representation RL/MPC, site calibration, and commercial evidence remain future work;
+and the installed environment is identified by lock hash plus runtime metadata rather than
+a complete installed-package snapshot.
+
+The protocol and journal will be committed next so the worktree is clean before execution.
+**No frozen 72-hour final-arm outcome or holdout was opened during implementation,
+validation, or review.**
