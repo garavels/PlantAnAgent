@@ -3,6 +3,13 @@
 Status: **accepted direction; implementation parameters remain provisional until the
 corresponding experiment is committed.**
 
+Implementation status: the delivery-only alpha now provides the recurring contract,
+15-minute decision cadence, service reward, metrics, and private replay manifest under
+an explicit V2 namespace. It intentionally still uses deterministic V1 solar and
+memoryless V1 equipment. Forecast uncertainty, commitment dynamics, a boundary
+`ControlState`, and controller training/evaluation remain open increments; the alpha is
+not the completed V2 benchmark described below.
+
 ## 1. Benchmark question
 
 Environment V2 is designed to answer one operationally meaningful question:

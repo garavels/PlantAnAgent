@@ -400,3 +400,100 @@ Commission, and CORDIS material.
 These findings reinforce the delivery-contract benchmark and the algorithm-neutral
 platform thesis. They also raise the priority of finding a design partner and exact
 target call after the first discriminative software benchmark exists.
+
+## 2026-09-02 — Delivery-only Environment V2 alpha
+
+### Implemented contract
+
+The first runnable V2 task now lives under the explicit
+`plant_backend.rl.v2.PlantEnvV2` namespace. The parent package's `PlantEnv` and its
+30-value V1 observation remain unchanged. The alpha identity is
+`plant-env-v2-delivery-alpha`; its 34-value observation/action descriptor digest is:
+
+```text
+7fc3808d1a393fb59ccd34c7b6cd31114530348a37fcb66f054604877951316f
+```
+
+The four appended observations expose only current contractual context: normalized
+time to the next announced delivery, next quantity relative to tank capacity, current
+inventory coverage of that commitment, and cumulative fill rate. Full future schedules,
+seeds, scenario details, fault tapes, and split labels are absent from Gym reset/step
+information. They live in an explicit audit manifest with a canonical SHA-256 digest.
+
+One policy decision is held for 15 one-minute physics steps. The independent safety
+guard is rerun before every inner step rather than assuming that a safe command remains
+safe as inventories change. Both vector policies and normal `Action` controllers share
+one transition, reward, and metrics path.
+
+The default episode is seven days with a commitment every six hours. Inventory,
+weather, and contract generators receive named child seed streams so adding a future
+weather draw cannot silently alter initial inventories. Weather and contracts are
+deterministic in this alpha, but their stream identities are already reserved.
+
+### Objective and reporting
+
+Raw methane production is retained as a diagnostic signal but has no positive reward
+component. Positive value comes only from delivered methane and a bounded terminal
+inventory value. Shortfall is penalized four times the delivery scale, while
+curtailment, battery discharge, reserve breach, shutdown, and guard correction remain
+visible costs. Final evidence will use physical delivery and risk metrics rather than
+this provisional scalarization.
+
+Episode metrics now include commitment count and service level, requested/delivered/
+unmet kilograms, worst individual delivery, product and terminal inventory, renewable
+use, battery use, minimum SOC, shutdown, and guard-intervention frequency.
+
+### Exploratory feasibility sweep
+
+Before fixing the provisional default, the uncommitted alpha was rolled out over seven
+days using identical seeded initial-condition distributions. At a 45 kg/h contract,
+20-seed means were:
+
+| controller | delivery fill | unmet kg | service level | CH4 produced kg | reward |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| shipped heuristic | 100.0% | 0.0 | 100.0% | 9355.5 | 21.60 |
+| fixed production mix | 100.0% | 0.0 | 100.0% | 7903.9 | 14.18 |
+| fixed balanced mix | 86.6% | 1014.3 | 85.0% | 6298.7 | -9.87 |
+| idle | 3.3% | 7313.1 | 1.3% | 0.0 | -145.23 |
+
+Delivery alone therefore removes the terminal tank ceiling and rejects clearly poor
+dispatch, but 45 kg/h still leaves a broad competent plateau. A ten-seed rate sweep
+found:
+
+| rate kg/h | heuristic fill | production-mix fill | balanced fill |
+| ---: | ---: | ---: | ---: |
+| 45 | 100.0% | 100.0% | 85.3% |
+| 50 | 100.0% | 96.2% | 77.1% |
+| 55 | 100.0% | 87.7% | 70.4% |
+| 60 | 95.5% | 80.7% | 64.8% |
+
+A finer 20-seed heuristic sweep gave 100% mean fill at 55 kg/h, 99.96% at 56,
+99.65% at 57, 98.87% at 58, 97.63% at 59, and 96.17% at 60. The alpha default is
+therefore provisionally 55 kg/h: the shipped heuristic is feasible on the explored
+seeds but has limited surplus, while simple fixed allocation is materially worse.
+This value must be recalibrated when stochastic weather changes the available-energy
+distribution.
+
+The sweep is exploratory, not the formal benchmark: it has no MPC/oracle, stochastic
+weather, equipment commitment, training seeds, or held-out regimes. It already confirms
+that product delivery is a better objective than tank headroom, and also confirms that
+delivery alone is insufficient to establish a state-of-the-art control problem.
+
+### Verification
+
+The alpha tests cover coexistence with V1, descriptor identity, configuration/time
+alignment, independent seed streams, public-information leakage, action holding,
+vector/controller path parity, delivery-only reward, terminal settlement ordering,
+observation bounds, exact replay, audit separation, and the Gymnasium environment
+contract.
+
+```text
+V2-focused plus existing RL contract tests            78 passed
+complete repository Python suite                     369 passed, 1 existing warning
+```
+
+Known limitation: decision reward and metrics aggregate all 15 physical steps, but the
+base telemetry fields still sample V1's most recent `PlantState` flow values. The
+explicit boundary `ControlState` and unambiguous forecast-validity convention remain
+part of the weather increment and must be completed before training a policy presented
+as a V2 result.
