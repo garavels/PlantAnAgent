@@ -17,7 +17,7 @@ from numbers import Real
 from typing import Any
 
 
-COMMITMENT_DYNAMICS_VERSION = "electrolyser-commitment-alpha-v2"
+COMMITMENT_DYNAMICS_VERSION = "electrolyser-commitment-alpha-v3"
 COMMITMENT_INTENT_DEADBAND_FRAC = 0.01
 LEGACY_NOMINAL_SPECIFIC_ENERGY_KWH_PER_KG = 52.0
 

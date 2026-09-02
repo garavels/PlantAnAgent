@@ -17,6 +17,7 @@ from plant_sim import (
     ElectrolyserMode,
     PlantConfig,
     PlantSimulator,
+    SolarConfig,
     StorageConfig,
 )
 
@@ -60,6 +61,7 @@ def test_default_profile_is_frozen_labelled_and_json_ready() -> None:
     assert profile.technology == "pressurised alkaline"
     assert "not vendor-calibrated" in profile.calibration_basis
     assert profile.dynamics_version == COMMITMENT_DYNAMICS_VERSION
+    assert COMMITMENT_DYNAMICS_VERSION == "electrolyser-commitment-alpha-v3"
     assert COMMITMENT_INTENT_DEADBAND_FRAC == 0.01
     assert len(profile.profile_sha256) == 64
     assert (
@@ -383,6 +385,53 @@ def test_finite_command_deadband_makes_near_endpoint_stop_orderly() -> None:
     assert near_snapshot.forced_stops == 0
     assert near_snapshot.controlled_stops == 1
     assert near_snapshot.to_dict() == exact_snapshot.to_dict()
+
+
+def test_commitment_intent_uses_offered_kw_not_fraction_of_oversized_bus() -> None:
+    simulator = PlantSimulator(
+        PlantConfig(solar=SolarConfig(peak_kw=120_000.0)),
+        electrolyser_commitment=_short_start_profile(),
+    )
+    simulator.run(round(12.75 / simulator.config.dt_h), Action.idle())
+
+    share = 0.006
+    state = simulator.step(Action(battery_share=0.0, electrolyser_share=share))
+    snapshot = simulator.electrolyser_commitment
+
+    assert share < COMMITMENT_INTENT_DEADBAND_FRAC
+    assert state.solar_available_kw * share > START_KW
+    assert state.electrolyser_power_kw == pytest.approx(START_KW)
+    assert snapshot is not None
+    # The focused profile has a one-interval cold start, so the transition is
+    # already visible even though this interval consumed start-up power only.
+    assert snapshot.mode is ElectrolyserMode.RUNNING
+    assert snapshot.cold_starts == 1
+
+
+def test_offered_kw_at_commitment_deadband_preserves_explicit_off() -> None:
+    simulator = PlantSimulator(
+        PlantConfig(solar=SolarConfig(peak_kw=120_000.0)),
+        electrolyser_commitment=_short_start_profile(),
+    )
+    simulator.run(round(12.75 / simulator.config.dt_h), Action.idle())
+    next_solar_kw = simulator.solar.power_at(
+        simulator.time_s + simulator.config.dt_s
+    )
+    threshold_kw = COMMITMENT_INTENT_DEADBAND_FRAC * RATED_KW
+
+    state = simulator.step(
+        Action(
+            battery_share=0.0,
+            electrolyser_share=threshold_kw / next_solar_kw,
+        )
+    )
+    snapshot = simulator.electrolyser_commitment
+
+    assert state.solar_to_electrolyser_kw == pytest.approx(0.0)
+    assert state.electrolyser_power_kw == pytest.approx(0.0)
+    assert snapshot is not None
+    assert snapshot.mode is ElectrolyserMode.OFF
+    assert snapshot.cold_starts == 0
 
 
 def test_running_up_and_down_settling_respects_the_frozen_ramp() -> None:

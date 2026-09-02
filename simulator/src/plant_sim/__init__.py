@@ -65,7 +65,7 @@ from .simulator import PlantSimulator
 from .state import Action, ComponentHealth, PlantState
 from .telemetry import SENSOR_CHANNELS, observe
 
-__version__ = "0.5.1"
+__version__ = "0.5.2"
 
 __all__ = [
     "Action",

@@ -103,8 +103,9 @@ archetype. Its startup, standby, ramp, minimum up/down, cooldown, and part-load 
 are literature-bounded synthetic assumptions, not vendor calibration. The equipment
 kernel is switchable, fingerprinted in the policy/audit contracts, and isolated from V1.
 The present five-field share action expresses on/standby intent implicitly. A fingerprinted
-1% command deadband makes an orderly stop reachable to continuous policies, while exact
-guard-to-plant refusal is accumulated separately from safety projection. The first paired
+1% stack-nameplate deadband applied to resolved offered kW makes an orderly stop reachable
+to continuous policies without depending on PV/bus sizing, while exact guard-to-plant
+refusal is accumulated separately from safety projection. The first paired
 experiment must still measure whether this leaves enough controller authority before an
 explicit mode/setpoint action is designed.
 

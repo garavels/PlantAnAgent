@@ -106,13 +106,15 @@ def dispatch(
         spill_kw = max(0.0, to_electrolyser - intake_limit_kw)
         to_electrolyser -= spill_kw
         offered_solar_kw = to_electrolyser
+        offered_electrolyser_kw = offered_solar_kw + offered_support_kw
+        # Keep intent in stack-relative kW even when the upstream bus is
+        # resized.  The strict boundary leaves a finite, reachable off command.
         commitment_intent = (
-            action.electrolyser_share > COMMITMENT_INTENT_DEADBAND_FRAC
-            or action.battery_support_kw
+            offered_electrolyser_kw
             > COMMITMENT_INTENT_DEADBAND_FRAC * electrolyser.config.rated_kw
         )
         result = electrolyser.advance_commitment(
-            offered_solar_kw + offered_support_kw,
+            offered_electrolyser_kw,
             dt_h,
             h2_headroom_kg=h2_tank.headroom_kg,
             commitment_intent=commitment_intent,

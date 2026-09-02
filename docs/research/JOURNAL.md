@@ -1363,3 +1363,80 @@ forecast-blind rule, then an issued-forecast-aware version under the same safety
 commitment, cadence, action, forecast-vintage, and exogenous-pairing protocol. The complete
 tables, exact pairing semantics, operating-exposure means, provenance, and evidence limits
 are recorded in `COMMITMENT_ALPHA_CALIBRATION.md`.
+
+## 2026-09-02 — Pre-outcome causal-comparator adversarial review
+
+### Why execution was paused
+
+The three-arm causal controller harness was integrated and its focused tests were green,
+but no 72-hour comparator output was opened. An independent read-only adversarial review
+was run first because a clean test suite does not establish that the experiment measures
+the estimand it claims. The review found no direct future-truth leakage and no release-
+blocking hard-invariant failure, but it identified several benchmark-invalidating design
+and reporting defects. They are being repaired before the development experiment is
+frozen; none will be concealed as an after-the-fact adjustment to a favorable result.
+
+The findings were:
+
+- the evaluator showed only marginal arm summaries rather than the predeclared paired
+  `A1-A0` and `A2-A1` effects;
+- controller exceptions aborted the matrix instead of remaining visible failed outcomes;
+- dirty-tree provenance recorded only a Boolean and therefore could not reconstruct the
+  executed source;
+- the first planner could starve feedstock production by routing scarce power to a
+  methanator that had no immediately usable H2/CO2;
+- its one-minute electrolyser ramp headroom incorrectly capped a command held for 15
+  minutes;
+- startup/cooldown time was not removed from productive time before a deadline;
+- a zero boundary solar sample could produce a held zero-share action even as PV rose,
+  curtailing new solar while contingent support discharged the battery;
+- targeting only one delivery could empty methane at an evening settlement immediately
+  before a sunless overnight commitment;
+- prorating complete-window forecast aggregates over partial windows assumed uniform PV
+  inside a window, which the forecast product does not provide;
+- contingent solar/support routing intentionally creates part of the reported physical
+  routing distance, so the old generic “dispatch gap” label could be misread as pure loss
+  of control authority;
+- accepted conversion-process energy and energy per delivered kilogram were not yet
+  retained at episode level; and
+- commitment intent compared a dimensionless PV-bus share with a stack-nameplate
+  fraction. On a 120 MW PV bus, a 0.6% route can offer more than the 600 kW required to
+  start the 3 MW stack, yet the old test classified it as no intent because 0.6% is below
+  1%.
+
+The reviewer used a 24-hour seed-0 development reproduction while diagnosing the
+inventory-horizon defect. The provisional A1 and A2 implementations delivered 467.7 kg
+and 603.1 kg respectively from 840 kg requested, with the midnight commitment empty.
+Those values are contaminated development observations, not evidence, but they are
+retained here because they motivated the explicit multi-delivery reserve correction.
+
+### Dimensionally correct commitment intent
+
+The simulator now forms commitment intent from the physically resolved power offered to
+the electrolyser: routed solar plus feasible battery support after intake capping and
+charge/support overlap cancellation. This kW value is compared strictly with 1% of stack
+nameplate in kW. Equality and smaller offers remain an explicit off region; infeasible raw
+support cannot create fictional intent. A regression with a 120 MW PV bus proves that an
+adequate sub-1%-share offer starts the stack, and a boundary regression proves that exactly
+30 kW remains off.
+
+This behavioral correction is explicit task evolution, not a silent bug fix:
+
+```text
+plant-sim                         0.5.2
+commitment dynamics              electrolyser-commitment-alpha-v3
+default commitment profile SHA   c6123ad4c30ef29445fa68e37d7f3d55bdeec05129d8535ab9dca2bc4715c4f9
+V2 interface digest              6a4943d9350ba7c98c749b46a309f478b692c173cbb568809e34b5b6d5fee155
+V2 checkpoint-task digest        127a63d3af8aa9e17b7da191aa9f9fae866ccfec203ac811475435fbb7273204
+```
+
+The unchanged interface digest is intentional: the 57 observation values and five action
+fields did not change. The full checkpoint/task digest and profile hash did change because
+their dynamics did. Commitment and all simulator tests passed locally (`39 passed` and
+`131 passed`). A broader 205-test V2/simulator run also passed with the package metadata
+test temporarily excluded: changing the local package version requires rebuilding the
+editable distribution, and the isolated offline build cache did not contain `hatchling`.
+The first offline rebuild failed for that exact reason. After fetching the locked build
+dependency and rebuilding the editable package, the package-metadata test and the same
+focused surface completed with **206 passed**. The complete repository regression remains
+required before the complete comparator increment is committed.

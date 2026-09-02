@@ -282,9 +282,11 @@ pressure, lye-flow, gas-purity, venting, and equipment-life dynamics remain abse
 Passing `electrolyser_commitment=None` retains the pre-commitment simulator trajectory
 and 42-field observation prefix while the new suffix explicitly selects `legacy` mode.
 Each snapshot carries a canonical digest of the full profile so a changed numerical
-parameter cannot reuse the same human label unnoticed. Commitment dynamics version 2
-also defines a 1% zero-command deadband below standby demand; this makes an orderly stop
-a finite region of the continuous action space rather than one exact floating-point value.
+parameter cannot reuse the same human label unnoticed. Commitment dynamics version 3
+defines commitment intent from resolved power offered to the stack in kW and a 1%
+nameplate deadband below standby demand; this makes an orderly stop a finite region of
+the continuous action space rather than one exact floating-point value, without making
+its meaning depend on the upstream PV/bus rating.
 
 ## 6. Observation and action contracts
 

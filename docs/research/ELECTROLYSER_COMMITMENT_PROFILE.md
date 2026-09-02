@@ -66,7 +66,7 @@ an evidence anchor or a benchmark assumption.
 | hot-start power | 20% nameplate | synthetic balance-of-plant proxy |
 | minimum stable running load | 40% nameplate | evidence-bounded fixed-control archetype; does not assume active pressure/flow optimization |
 | hot-standby power | 2% nameplate | synthetic heat/pressure-retention proxy |
-| commitment-command deadband | 1% normalized authority | controller-interface constant, not equipment physics; creates a reachable off region for continuous policies and remains below standby demand |
+| commitment-command deadband | resolved offered power <= 1% stack nameplate | controller-interface constant, not equipment physics; creates a reachable off region for continuous policies and remains below standby demand |
 | cooldown | 15 min, unpowered | synthetic restart-settling state; unpowered so the simulator never invents energy |
 | minimum committed/up time | 60 min | synthetic unit-commitment challenge parameter |
 | minimum down time | 30 min | synthetic unit-commitment challenge parameter |
@@ -118,11 +118,14 @@ starting/running/standby -> cooldown -> off
 The profile advances on the one-minute physics grid while the supervisory request is
 held for 15 minutes. The existing five-dimensional action has no separate mode command,
 so commitment intent remains implicit, but it no longer depends on hitting an exact
-floating-point endpoint. Intent is false when both the electrolyser solar-share command
-is at or below 1% and requested battery support is at or below 1% of electrolyser
-nameplate. This synthetic, fingerprinted deadband lies below the 2% standby demand and
-gives continuous policies a finite off-command region. It is an acknowledged interface
-assumption, not vendor control logic.
+floating-point endpoint. Dynamics version 3 resolves feasible solar routing and battery
+support into one offered stack power in kW after intake capping and overlap cancellation.
+Intent is false when that offer is at or below 1% of electrolyser nameplate. This
+synthetic, fingerprinted deadband lies below the 2% standby demand and gives continuous
+policies a finite off-command region. It is an acknowledged interface assumption, not
+vendor control logic. The earlier comparison of a dimensionless bus share with this
+stack-relative threshold was invalid because resizing the upstream PV bus changed the
+meaning of the same physically adequate stack offer.
 
 - An eligible off unit begins a cold start only when the offered power reaches the
   fixed cold-start draw.
