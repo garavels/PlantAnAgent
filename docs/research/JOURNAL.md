@@ -497,3 +497,18 @@ base telemetry fields still sample V1's most recent `PlantState` flow values. Th
 explicit boundary `ControlState` and unambiguous forecast-validity convention remain
 part of the weather increment and must be completed before training a policy presented
 as a V2 result.
+
+## 2026-09-02 — Independent alpha review: non-finite action correction
+
+An independent read-only review of the delivery alpha found that the shared action
+adapter replaced `NaN` with vector value zero before checking validity. Zero is not a
+neutral physical action in the `[-1, 1]` policy space: it maps to 50% on every channel,
+then share normalization yields 25% for each solar consumer and requests half of the
+battery-support limit. An all-`NaN` policy output could therefore become a strong action
+without being marked out of range.
+
+Non-finite policy outputs now map to the `-1` zero-authority endpoint on their channel
+and always set the invalid/clipped flag. An all-`NaN`, all-`+inf`, or all-`-inf` vector
+therefore produces `Action.idle()`, zero requested power, and the normal correction
+penalty/metric. Finite out-of-range behavior is unchanged. This is a shared V1/V2
+safety correction because both environments use the same adapter.

@@ -157,6 +157,29 @@ def test_action_decode_flags_and_clips_out_of_range_output() -> None:
     assert 0.0 <= decoded.action.battery_share <= 1.0
 
 
+@pytest.mark.parametrize(
+    "invalid",
+    [float("nan"), float("inf"), -float("inf")],
+)
+def test_non_finite_policy_output_fails_to_zero_authority(invalid: float) -> None:
+    adapter = ActionAdapter(PlantConfig())
+    decoded = adapter.decode(
+        np.full(spaces.ACTION_SIZE, invalid),
+        constraints=Constraints(),
+        solar_available_kw=5_000.0,
+    )
+
+    assert decoded.clipped
+    assert decoded.action == Action.idle()
+    assert decoded.requested_kw == {
+        "battery": 0.0,
+        "electrolyser": 0.0,
+        "dac": 0.0,
+        "methanator": 0.0,
+        "battery_support": 0.0,
+    }
+
+
 def test_action_encode_is_the_inverse_of_decode() -> None:
     adapter = ActionAdapter(PlantConfig())
     constraints = Constraints()

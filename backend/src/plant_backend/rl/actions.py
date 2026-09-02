@@ -68,13 +68,21 @@ class ActionAdapter:
         constraints: Constraints,
         solar_available_kw: float,
     ) -> DecodedAction:
-        raw = np.nan_to_num(np.asarray(vector, dtype=np.float64).reshape(-1), nan=0.0)
+        raw = np.asarray(vector, dtype=np.float64).reshape(-1)
         if raw.size != ACTION_SIZE:
             raise ValueError(
                 f"action must have {ACTION_SIZE} entries ({', '.join(ACTION_NAMES)}), got {raw.size}"
             )
-        clipped = bool(np.any(raw < self._low) or np.any(raw > self._high))
-        unit = (np.clip(raw, self._low, self._high) + 1.0) / 2.0
+        # The neutral vector value ``0`` maps to 50% physical authority, so it
+        # is not a safe replacement for NaN.  Map every non-finite output to
+        # the zero-authority endpoint and mark the policy decision invalid.
+        finite = np.isfinite(raw)
+        clipped = bool(
+            np.any(~finite) or np.any(raw[finite] < self._low[finite])
+            or np.any(raw[finite] > self._high[finite])
+        )
+        bounded = np.where(finite, np.clip(raw, self._low, self._high), self._low)
+        unit = (bounded + 1.0) / 2.0
 
         support_kw = float(unit[4]) * constraints.support_limit_kw(self.config)
         action = Action.sanitised(
