@@ -82,6 +82,13 @@ class EpisodeConfigV2:
         max_initial_ch4 = self.ch4_coverage_h[1] * self.delivery_rate_kg_h
         if max_initial_ch4 > config.ch4_tank.capacity_kg + 1e-9:
             raise ValueError("ch4_coverage_h exceeds the methane tank capacity")
+        delivery_amount = self.delivery_amount_kg
+        if not math.isfinite(delivery_amount):
+            raise ValueError("delivery amount must be finite")
+        if delivery_amount > config.ch4_tank.capacity_kg + 1e-9:
+            raise ValueError(
+                "one delivery commitment exceeds the methane tank capacity"
+            )
         return self
 
     def physics_steps(self, config: PlantConfig) -> int:

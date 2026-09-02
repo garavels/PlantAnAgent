@@ -512,3 +512,16 @@ and always set the invalid/clipped flag. An all-`NaN`, all-`+inf`, or all-`-inf`
 therefore produces `Action.idle()`, zero requested power, and the normal correction
 penalty/metric. Finite out-of-range behavior is unchanged. This is a shared V1/V2
 safety correction because both environments use the same adapter.
+
+### Invalid experiment configuration
+
+The same review identified two invalid configurations that previously reached runtime.
+A delivery could exceed the methane tank capacity, making full instantaneous settlement
+physically impossible while the normalized observation clipped away the excess amount.
+Reward weights could also be negative or non-finite, allowing a negative shortfall
+weight to reward missed delivery or a `NaN` to poison both reward and manifest output.
+
+V2 now rejects a non-finite or over-capacity commitment amount during episode validation,
+and requires every reward weight to be finite and non-negative at environment construction
+and direct reward computation. These are experiment-contract errors, not conditions a
+controller should learn around.

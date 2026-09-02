@@ -11,7 +11,7 @@ from plant_sim import Action, PlantConfig
 
 from plant_backend.rl import PlantEnv as PlantEnvV1
 from plant_backend.rl import spaces as v1_spaces
-from plant_backend.rl.v2 import EpisodeConfigV2, PlantEnvV2
+from plant_backend.rl.v2 import EpisodeConfigV2, PlantEnvV2, RewardWeightsV2
 from plant_backend.rl.v2 import spaces as v2_spaces
 from plant_backend.rl.v2.config import sample_episode
 
@@ -58,6 +58,15 @@ def test_v2_descriptor_digest_is_complete_and_deterministic() -> None:
         (EpisodeConfigV2(horizon_h=1.0, delivery_period_h=2.0), "at least one"),
         (EpisodeConfigV2(delivery_rate_kg_h=0.0), "delivery_rate"),
         (EpisodeConfigV2(battery_soc=(0.2, 1.2)), "battery_soc"),
+        (
+            EpisodeConfigV2(
+                horizon_h=1.0,
+                delivery_period_h=1.0,
+                delivery_rate_kg_h=4_000.0,
+                ch4_coverage_h=(0.0, 0.0),
+            ),
+            "commitment exceeds",
+        ),
     ],
 )
 def test_v2_episode_configuration_rejects_misaligned_or_invalid_values(
@@ -81,6 +90,12 @@ def test_named_random_streams_keep_inventory_draws_stable() -> None:
     assert first.scenario.initial.h2_kg == changed_contract.scenario.initial.h2_kg
     assert first.scenario.initial.co2_kg == changed_contract.scenario.initial.co2_kg
     assert first.commitments[0].requested_kg != changed_contract.commitments[0].requested_kg
+
+
+@pytest.mark.parametrize("value", [-0.01, float("nan"), float("inf")])
+def test_v2_rejects_invalid_reward_weights(value: float) -> None:
+    with pytest.raises(ValueError, match="shortfall.*finite and non-negative"):
+        PlantEnvV2(episode=SHORT, weights=RewardWeightsV2(shortfall=value))
 
 
 def test_public_info_contains_current_contract_context_but_no_future_tape() -> None:

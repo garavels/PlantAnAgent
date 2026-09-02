@@ -43,7 +43,7 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
         self.config = config or PlantConfig()
         self.episode_config = (episode or EpisodeConfigV2()).validate(self.config)
         self.constraints = constraints or Constraints()
-        self.weights = weights or RewardWeightsV2()
+        self.weights = (weights or RewardWeightsV2()).validate()
 
         self.simulator = PlantSimulator(self.config)
         self.encoder = ObservationEncoderV2(self.config)

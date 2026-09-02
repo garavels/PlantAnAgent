@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
@@ -24,6 +25,12 @@ class RewardWeightsV2:
     reserve_breach: float = 4.0
     shutdown: float = 0.50
     correction: float = 0.05
+
+    def validate(self) -> "RewardWeightsV2":
+        for name, value in asdict(self).items():
+            if not math.isfinite(value) or value < 0.0:
+                raise ValueError(f"reward weight {name} must be finite and non-negative")
+        return self
 
     def to_dict(self) -> dict[str, float]:
         return asdict(self)
@@ -74,7 +81,7 @@ def compute(
     weights: RewardWeightsV2 | None = None,
 ) -> RewardBreakdownV2:
     """Score delivered service; raw production is diagnostic and never rewarded."""
-    weights = weights or RewardWeightsV2()
+    weights = (weights or RewardWeightsV2()).validate()
     reference = max(outcome.reference_delivery_kg, 1e-12)
     discharge_reference = max(
         config.battery.max_discharge_kw * max(outcome.hours, 0.0), 1e-12
