@@ -18,6 +18,11 @@ fallback behavior.
   and the staged implementation programme.
 - [`ENVIRONMENT_V1_AUDIT.md`](ENVIRONMENT_V1_AUDIT.md) records the reproducible
   saturation diagnosis that motivates Environment V2.
+- [`STATE_OF_THE_ART.md`](STATE_OF_THE_ART.md) defines the external evidence bar,
+  product wedge, benchmark comparators, and limits on current claims.
+- [`ENVIRONMENT_V2_SPEC.md`](ENVIRONMENT_V2_SPEC.md) defines the commercial control
+  problem, layer boundaries, time/forecast contracts, staged simulator changes, and
+  acceptance gates.
 
 Large generated datasets, model checkpoints, and raw run outputs remain outside Git.
 Every reported experiment must nevertheless record enough provenance to reproduce it:

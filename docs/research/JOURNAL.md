@@ -193,3 +193,63 @@ still operates on reported SOC and reported effective capacity by design; a posi
 SOC sensor bias can consequently make it optimistic. Sensor uncertainty and robust
 reserve estimation are separate V2 research questions and are not silently folded
 into this correctness fix.
+
+## 2026-09-02 — External benchmark and product-thesis review
+
+### Research question
+
+What technical claim would be competitive with current research and relevant to a
+commercial or commission evaluation, and which simulator capabilities are necessary
+to test it honestly?
+
+The review screened recent electrolyser scheduling and dynamic-operation reviews,
+process-control comparisons of RL and MPC, safe-learning work, process-control
+benchmark design, power-to-methane process studies, digital-twin verification and
+validation literature, and official Clean Hydrogen JU and EU RFNBO sources. The
+decision-relevant bibliography and the boundary between supported and unsupported
+claims are recorded in `STATE_OF_THE_ART.md`.
+
+### Findings
+
+- “RL works” or “RL matches a heuristic” is below the relevant evidence bar. A recent
+  green-hydrogen study already combines multi-year weather, higher-fidelity PEM
+  behavior, PPO, rule-based and MPC baselines, sizing, and interpretability.
+- MPC is a mandatory comparator, not an intentionally weak baseline. Its explicit
+  treatment of prediction and constraints also makes an RL-MPC hybrid commercially
+  more defensible than assuming standalone RL superiority.
+- Reward penalties cannot stand in for hard safety. Proposed and applied actions,
+  intervention magnitude, fallback activation, and physical violations must be
+  reported separately.
+- Commission- and customer-relevant outcomes are delivered on-spec product, cost,
+  energy consumption, reliability, degradation exposure, carbon qualification, and
+  maturity of validation—not private cumulative reward.
+- Without physical calibration and automated data exchange, the present model is a
+  control-oriented simulator or digital-twin prototype. The journal will not silently
+  promote it to a validated twin.
+
+### Product decision
+
+The working product is a safety-bounded supervisory optimisation and
+virtual-commissioning platform for power-to-X developers, integrators, and operators.
+It begins with sizing/dispatch studies, controller qualification, and shadow-mode
+recommendations above the PLC layer. The first benchmark problem is recurring methane
+delivery under uncertain renewable supply and equipment commitment.
+
+The target claim is deliberately algorithm-neutral: at equal safety and delivery
+reliability, the selected Plant An Agent controller should reduce risk-adjusted cost
+and wear relative to tuned forecast-aware heuristics and stochastic MPC on held-out
+conditions, with the effect surviving hardware-in-the-loop evaluation. If MPC wins,
+the product should use MPC; if a hybrid wins, it should use the hybrid.
+
+Customer willingness to pay and the best initial buyer remain unvalidated. They will
+require design-partner evidence rather than a simulator result.
+
+### Environment V2 contract decision
+
+`ENVIRONMENT_V2_SPEC.md` turns the thesis into a staged, falsifiable program. V1 is
+frozen; V2 gets a separate versioned observation/environment contract. The minimal
+bundle is recurring delivery settlement, stochastic renewable truth with forecasts
+that cannot read future innovations, and a technology-labelled electrolyser commitment
+state. Physics remains one minute while the initial controller interval is 15 minutes.
+HEPA, the supervisor, and natural-language scenario authoring are frozen during the
+routine-controller tournament and introduced later through factorial ablations.
