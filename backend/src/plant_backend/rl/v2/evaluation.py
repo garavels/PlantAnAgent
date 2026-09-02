@@ -1,9 +1,9 @@
-"""Paired baseline evaluation for the commitment-aware Environment V2 alpha.
+"""Paired transparent-controller evaluation for Environment V2.
 
-This module deliberately evaluates *only* transparent, non-learning baselines.
-It establishes that the task and its accounting can distinguish behavior before
-we spend compute training a policy.  A result from this module is not evidence
-that RL works, or that any controller is commercially superior.
+The frozen baseline study and newer typed causal comparators share the same
+common-random-number, provenance, metrics, and guarded-execution machinery.
+Neither development result is evidence that RL works, that a controller is
+optimal, or that this prototype is commercially superior.
 """
 
 from __future__ import annotations
@@ -13,17 +13,19 @@ import json
 import platform
 import statistics
 import subprocess
+from copy import deepcopy
 from dataclasses import dataclass, field
 from numbers import Integral
 from pathlib import Path
 from typing import Any, Literal, Sequence
 
-from plant_sim import Action, PlantConfig
+from plant_sim import Action, ElectrolyserCommitmentProfile, PlantConfig
 
-from ...controllers.base import Constraints
+from ...controllers.base import Constraints, ControlDecision
 from ...controllers.heuristic import HeuristicController
 from . import spaces
 from .config import EpisodeConfigV2
+from .control import ControllerObservationV2, ControllerV2
 from .contract import describe_checkpoint_contract
 from .env import PlantEnvV2
 from .metrics import EpisodeMetricsV2
@@ -42,6 +44,18 @@ LEGACY_INFORMATION_SET = (
 )
 OPEN_LOOP_INFORMATION_SET = "constant action; observes no environment information"
 RESULT_SCHEMA_VERSION = 3
+CAUSAL_RESULT_SCHEMA_VERSION = 4
+CAUSAL_COMPARATOR_DISCLAIMER = (
+    "DEVELOPMENT COMPARISON ONLY: transparent causal controllers are evaluated on "
+    "development seeds selected during task calibration. Results are not held out, "
+    "do not establish optimality, and are not commercial-performance evidence."
+)
+CAUSAL_INFORMATION_FAIRNESS = (
+    "Controllers share one detached causal source and identical actuation/safety paths; "
+    "forecast access differs only where declared. The structured source is richer than "
+    "the current 57-field RL encoding, so this is not yet an equal-representation RL "
+    "comparison."
+)
 
 
 @dataclass(frozen=True)
@@ -159,7 +173,13 @@ class BaselineRun:
 
 @dataclass
 class BaselineEvaluation:
-    """Paired baseline runs, their distributions, and offline provenance."""
+    """Paired controller runs, their distributions, and offline provenance.
+
+    The historical name is retained for compatibility with the frozen baseline
+    evidence.  Configurable study metadata also lets the same audited container
+    represent later transparent-controller comparisons without mislabelling
+    them as baseline-only evidence.
+    """
 
     seeds: list[int]
     episode_config: EpisodeConfigV2
@@ -167,6 +187,15 @@ class BaselineEvaluation:
     runs: list[BaselineRun] = field(default_factory=list)
     labels: dict[str, str] = field(default_factory=dict)
     information_sets: dict[str, str] = field(default_factory=dict)
+    controller_specs: dict[str, dict[str, object]] = field(default_factory=dict)
+    study: str = "environment_v2_commitment_alpha_paired_baselines"
+    evidence_scope: str = "baseline_only"
+    disclaimer: str = BASELINE_ONLY_DISCLAIMER
+    title: str = "Environment V2 commitment-alpha paired baseline evaluation"
+    information_fairness: str = (
+        "Diagnostic only; equal-information comparators remain open."
+    )
+    result_schema_version: int = RESULT_SCHEMA_VERSION
 
     @property
     def controllers(self) -> list[str]:
@@ -223,11 +252,11 @@ class BaselineEvaluation:
         }
 
     def to_dict(self) -> dict[str, Any]:
-        return {
-            "schema_version": RESULT_SCHEMA_VERSION,
-            "study": "environment_v2_commitment_alpha_paired_baselines",
-            "evidence_scope": "baseline_only",
-            "disclaimer": BASELINE_ONLY_DISCLAIMER,
+        payload = {
+            "schema_version": self.result_schema_version,
+            "study": self.study,
+            "evidence_scope": self.evidence_scope,
+            "disclaimer": self.disclaimer,
             "statistics": {"standard_deviation": "population (ddof=0)"},
             "seeds": list(self.seeds),
             "episode_config": self.episode_config.to_dict(),
@@ -238,6 +267,9 @@ class BaselineEvaluation:
             "summary": self.summary(),
             "runs": [run.to_dict() for run in self.runs],
         }
+        if self.controller_specs:
+            payload["controller_specs"] = deepcopy(self.controller_specs)
+        return payload
 
     def report(self) -> str:
         summary = self.summary()
@@ -272,13 +304,13 @@ class BaselineEvaluation:
                 )
             )
         lines = [
-            "Environment V2 commitment-alpha paired baseline evaluation",
+            self.title,
             (
                 f"{len(self.seeds)} seed(s) x {self.episode_config.horizon_h:g} h; "
                 f"contract {self.episode_config.delivery_rate_kg_h:g} kg/h"
             ),
-            BASELINE_ONLY_DISCLAIMER,
-            "Information fairness: diagnostic only; equal-information comparators remain open.",
+            self.disclaimer,
+            f"Information fairness: {self.information_fairness}",
             "",
             "controller".ljust(22)
             + "".join(label.rjust(14) for label, _, _ in columns),
@@ -339,6 +371,23 @@ def _summarise(metrics: Sequence[EpisodeMetricsV2]) -> dict[str, Any]:
             for name in reward_names
         },
     }
+
+
+def _validated_seeds(seeds: Sequence[int]) -> list[int]:
+    raw_seeds = list(seeds)
+    if not raw_seeds:
+        raise ValueError("at least one seed is required")
+    if any(
+        isinstance(seed, bool) or not isinstance(seed, Integral)
+        for seed in raw_seeds
+    ):
+        raise ValueError("seeds must be non-negative integers")
+    chosen = [int(seed) for seed in raw_seeds]
+    if any(seed < 0 for seed in chosen):
+        raise ValueError("seeds must be non-negative integers")
+    if len(set(chosen)) != len(chosen):
+        raise ValueError("seeds must be unique")
+    return chosen
 
 
 def _repository_root(start: Path | None = None) -> Path | None:
@@ -449,6 +498,209 @@ def run_baseline(
     )
 
 
+class LegacyHeuristicControllerV2:
+    """Declared V2 adapter preserving the legacy heuristic information set."""
+
+    id = "legacy_heuristic"
+    label = "Legacy forecast-blind heuristic"
+    description = (
+        "V1 operator heuristic adapted without behavior changes; it receives only "
+        "the latest one-minute boundary telemetry and active safety constraints."
+    )
+    uses_forecast = False
+    information_set = LEGACY_INFORMATION_SET
+
+    def __init__(self) -> None:
+        self._controller = HeuristicController()
+
+    def reset(self) -> None:
+        self._controller.reset()
+
+    def compute_action(
+        self,
+        observation: ControllerObservationV2,
+        *,
+        constraints: Constraints,
+        config: PlantConfig,
+        commitment_profile: ElectrolyserCommitmentProfile | None = None,
+    ) -> ControlDecision:
+        # The commitment profile is deliberately ignored: changing the adapter
+        # must not improve or otherwise alter the historical controller arm.
+        del commitment_profile
+        return self._controller.compute_action(
+            observation.state.boundary,
+            constraints=constraints,
+            config=config,
+        )
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "id": self.id,
+            "label": self.label,
+            "description": self.description,
+            "uses_forecast": self.uses_forecast,
+            "information_set": self.information_set,
+            "adapter": "legacy_v1_boundary_telemetry",
+        }
+
+
+def run_controller(
+    env: PlantEnvV2,
+    controller: ControllerV2,
+    *,
+    seed: int,
+) -> BaselineRun:
+    """Run one typed causal controller without exposing its environment."""
+    if not isinstance(controller.uses_forecast, bool):
+        raise TypeError("controller uses_forecast must be a bool")
+    env.reset(seed=seed)
+    manifest = env.audit_manifest()
+    controller.reset()
+    finished = False
+    while not finished:
+        observation = env.controller_observation
+        if not controller.uses_forecast:
+            observation = observation.without_forecast()
+        decision = controller.compute_action(
+            observation,
+            constraints=env.constraints,
+            config=env.config,
+            commitment_profile=env.episode_config.electrolyser_commitment,
+        )
+        if not isinstance(decision, ControlDecision):
+            raise TypeError("V2 controller must return a ControlDecision")
+        _, _, terminated, truncated, _ = env.step_action(decision.action)
+        finished = terminated or truncated
+    return BaselineRun(
+        controller=controller.id,
+        seed=int(seed),
+        manifest_sha256=str(manifest["manifest_sha256"]),
+        exogenous_episode_sha256=str(manifest["exogenous_episode_sha256"]),
+        metrics=env.metrics,
+    )
+
+
+def evaluate_controllers(
+    *,
+    seeds: Sequence[int],
+    controllers: Sequence[ControllerV2],
+    episode: EpisodeConfigV2 | None = None,
+    plant: PlantConfig | None = None,
+    constraints: Constraints | None = None,
+    weights: RewardWeightsV2 | None = None,
+) -> BaselineEvaluation:
+    """Paired development comparison over the typed causal controller seam."""
+    chosen_seeds = _validated_seeds(seeds)
+
+    chosen_controllers = tuple(controllers)
+    if not chosen_controllers:
+        raise ValueError("at least one controller is required")
+    ids: list[str] = []
+    specs: dict[str, dict[str, object]] = {}
+    for controller in chosen_controllers:
+        controller_id = getattr(controller, "id", None)
+        label = getattr(controller, "label", None)
+        description = getattr(controller, "description", None)
+        information_set = getattr(controller, "information_set", None)
+        uses_forecast = getattr(controller, "uses_forecast", None)
+        if not isinstance(controller_id, str) or not controller_id:
+            raise ValueError("controller id must be a non-empty string")
+        if not isinstance(label, str) or not label:
+            raise ValueError(f"controller {controller_id!r} label must not be empty")
+        if not isinstance(description, str) or not description:
+            raise ValueError(
+                f"controller {controller_id!r} description must not be empty"
+            )
+        if not isinstance(information_set, str) or not information_set:
+            raise ValueError(
+                f"controller {controller_id!r} information_set must not be empty"
+            )
+        if not isinstance(uses_forecast, bool):
+            raise TypeError(
+                f"controller {controller_id!r} uses_forecast must be a bool"
+            )
+        if any(
+            not callable(getattr(controller, name, None))
+            for name in ("compute_action", "reset", "to_dict")
+        ):
+            raise TypeError(f"controller {controller_id!r} does not implement ControllerV2")
+        descriptor = controller.to_dict()
+        if not isinstance(descriptor, dict):
+            raise TypeError(f"controller {controller_id!r} descriptor must be a mapping")
+        try:
+            json.dumps(descriptor, allow_nan=False, sort_keys=True)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                f"controller {controller_id!r} descriptor must be strict JSON"
+            ) from exc
+        if descriptor.get("id") != controller_id:
+            raise ValueError(
+                f"controller {controller_id!r} descriptor id does not match"
+            )
+        declared_fields = {
+            "label": label,
+            "description": description,
+            "uses_forecast": uses_forecast,
+            "information_set": information_set,
+        }
+        for name, declared in declared_fields.items():
+            if descriptor.get(name) != declared:
+                raise ValueError(
+                    f"controller {controller_id!r} descriptor {name} does not match"
+                )
+        ids.append(controller_id)
+        specs[controller_id] = deepcopy(descriptor)
+    if len(set(ids)) != len(ids):
+        raise ValueError("controller ids must be unique")
+
+    plant = plant or PlantConfig()
+    episode = (episode or EpisodeConfigV2()).validate(plant)
+    constraints = constraints or Constraints()
+    weights = weights or RewardWeightsV2()
+    result = BaselineEvaluation(
+        seeds=chosen_seeds,
+        episode_config=episode,
+        provenance=collect_provenance(
+            episode=episode,
+            plant=plant,
+            constraints=constraints,
+            weights=weights,
+        ),
+        labels={controller.id: controller.label for controller in chosen_controllers},
+        information_sets={
+            controller.id: controller.information_set
+            for controller in chosen_controllers
+        },
+        controller_specs=specs,
+        study="environment_v2_commitment_alpha_causal_comparators",
+        evidence_scope="development_comparator",
+        disclaimer=CAUSAL_COMPARATOR_DISCLAIMER,
+        title="Environment V2 commitment-alpha causal controller comparison",
+        information_fairness=CAUSAL_INFORMATION_FAIRNESS,
+        result_schema_version=CAUSAL_RESULT_SCHEMA_VERSION,
+    )
+    for seed in chosen_seeds:
+        for prototype in chosen_controllers:
+            env = PlantEnvV2(
+                config=plant,
+                episode=episode,
+                constraints=constraints,
+                weights=weights,
+            )
+            result.runs.append(
+                run_controller(env, deepcopy(prototype), seed=seed)
+            )
+
+    pairing = result.pairing()
+    if (
+        not pairing["exogenous_episode_match_by_seed"]
+        or not pairing["full_manifest_match_by_seed"]
+        or not pairing["all_arms_present_by_seed"]
+    ):
+        raise RuntimeError("paired causal-controller audit failed")
+    return result
+
+
 def evaluate(
     *,
     seeds: Sequence[int],
@@ -459,19 +711,7 @@ def evaluate(
     baselines: Sequence[Baseline] = BASELINES,
 ) -> BaselineEvaluation:
     """Run paired common-random-number baselines and retain full audit identity."""
-    raw_seeds = list(seeds)
-    if not raw_seeds:
-        raise ValueError("at least one seed is required")
-    if any(
-        isinstance(seed, bool) or not isinstance(seed, Integral)
-        for seed in raw_seeds
-    ):
-        raise ValueError("seeds must be non-negative integers")
-    chosen_seeds = [int(seed) for seed in raw_seeds]
-    if any(seed < 0 for seed in chosen_seeds):
-        raise ValueError("seeds must be non-negative integers")
-    if len(set(chosen_seeds)) != len(chosen_seeds):
-        raise ValueError("seeds must be unique")
+    chosen_seeds = _validated_seeds(seeds)
     chosen_baselines = tuple(baselines)
     if not chosen_baselines:
         raise ValueError("at least one baseline is required")
@@ -528,13 +768,19 @@ def write(result: BaselineEvaluation, path: Path | str) -> Path:
 __all__ = [
     "BASELINES",
     "BASELINE_ONLY_DISCLAIMER",
+    "CAUSAL_COMPARATOR_DISCLAIMER",
+    "CAUSAL_INFORMATION_FAIRNESS",
+    "CAUSAL_RESULT_SCHEMA_VERSION",
     "RESULT_SCHEMA_VERSION",
     "Baseline",
     "BaselineEvaluation",
     "BaselineRun",
     "Distribution",
+    "LegacyHeuristicControllerV2",
     "collect_provenance",
     "evaluate",
+    "evaluate_controllers",
     "run_baseline",
+    "run_controller",
     "write",
 ]

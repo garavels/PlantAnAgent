@@ -139,6 +139,8 @@ class ControllerV2(Protocol):
     id: str
     label: str
     description: str
+    uses_forecast: bool
+    information_set: str
 
     def compute_action(
         self,
@@ -152,6 +154,9 @@ class ControllerV2(Protocol):
 
     def reset(self) -> None:
         """Drop controller-local history before a new episode."""
+
+    def to_dict(self) -> dict[str, object]:
+        """Return stable controller identity, information policy, and settings."""
 
 
 def action_from_controller(
