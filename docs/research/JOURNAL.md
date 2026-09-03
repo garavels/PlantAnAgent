@@ -1704,3 +1704,22 @@ as a locked research dependency for sparse LP now and a possible MILP comparator
 solver failures will remain explicit rather than falling back under an optimizer label.
 The full pre-outcome design and proof obligations are recorded in
 `PLANNING_BENCHMARK_PROTOCOL.md`.
+
+### Split-boundary incident during implementation review
+
+An independent code-review performance probe exceeded the intended unit-fixture-only
+boundary and solved two previously unopened default-configuration cells: 40 kg CH4/h,
+seed 0, at 24 and 72 hours. The reviewer used the fault-free synthetic weather and
+commitment-alpha profile with `PlantConfig()`, `Constraints()`, and otherwise default
+`EpisodeConfigV2`; it built and solved the relaxation directly through the optional
+SciPy/HiGHS runtime. No file or result artifact was written, but terminal output exposed
+the 24-hour 960 kg and 72-hour 2,880 kg certified ceilings, both with zero displayed gap.
+The 72-hour model contained 56,176 variables, 21,604 equalities, and 43,200 inequalities;
+build time was about 2.4 seconds and solve-plus-certificate time about 15.9 seconds on the
+review host.
+
+This is retained as an audit incident, not promoted as a finding. Both rate-40/seed-0
+horizon cells are now explicitly development-contaminated and barred from prospective,
+held-out, or commercial claims. No other new cell was authorized or opened. The incident
+also tightened delegation instructions: implementation review must distinguish
+unit-sized performance fixtures from any full-horizon outcome-producing solve.

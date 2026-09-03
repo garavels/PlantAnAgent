@@ -34,8 +34,11 @@ online information set.
 
 Rates 35 and 42 kg/h, seeds 0--2, 72-hour episodes, the current synthetic weather regime,
 and the commitment-alpha equipment profile are development-contaminated. Seed 3 is also
-contaminated by an earlier smoke run. They may be used to implement and debug this
-benchmark, but no result from them may be relabelled prospective, held out, or commercial.
+contaminated by an earlier smoke run. During implementation review, rate 40 kg/h, seed 0,
+at both 24 and 72 hours was also opened in a solver-performance probe; no artifact was
+retained, but its numeric result was visible. These cells may be used to implement and
+debug this benchmark, but no result from them may be relabelled prospective, held out, or
+commercial.
 
 No uninspected seed or regime will be opened during implementation. A later prospective
 amendment must freeze the code revision, solver version, exact seed list, regimes, sample
