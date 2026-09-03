@@ -2042,3 +2042,57 @@ The combined pure schema, action, state, and upper-bound suite passed 164 tests.
 Python compilation, static type checking of the schema slice, and whitespace validation
 also passed. These checks did not call the LP solver and did not open any new full-horizon
 plant outcome. The registered six-cell development bracket therefore remains unopened.
+
+## 2026-09-02 — Frozen planner action generation implemented
+
+### Scope and architecture
+
+The second implementation slice isolates privileged proposal generation from search and
+simulation. `_planner_actions.py` cannot reset, clone, or step an environment. It owns
+only the frozen 15-template catalogue, live legacy-action capture, the Part-I witness
+projection, the shared future-truth router, binary64 closure, and conversion to immutable
+`ActionRecordV1` provenance. This boundary makes it possible to test every proposal rule
+without observing a plant rollout and prevents the relaxed LP from being mistaken for a
+feasible controller.
+
+The committed template order covers the legacy action, one relaxed-witness proposal,
+idle/charge, warm and cold-start holds, stable/full hydrogen operation, isolated DAC and
+methanation, joint feedstock production, and three clipped stoichiometric operating
+levels. Every nontrivial template is regenerated at its real decision boundary. It uses
+the maximum private solar truth over the exact remaining half-open hold, current active
+component caps, current boundary battery capacity and energy, the registered reserve and
+efficiency limits, and the common proportional binary64 closure. Generated actions are
+sanitised and must remain bit-identical to the closed request before they can be recorded.
+
+### Relaxation binding and tamper resistance
+
+One `RelaxationBindingV1` is created from the sole Part-I model/result pair. Canonical
+admission requires the exact concrete model and result types, model/result/witness hashes,
+checkpoint and exogenous episode identities, task-upper-bound status, solver method,
+frozen solve tolerances and empty options, runtime version/provenance-gap coherence, exact
+solar truth, all four projection arrays, and the complete guidance payload. Synthetic
+stand-ins are accepted only through an explicit noncanonical unit-fixture scope.
+
+Review showed that an ordinary frozen dataclass was still forgeable by direct construction,
+copying, replacement, or mutation through supplied payload objects. The final design uses
+a private factory token and a process-local attestation registry. Full graph validation is
+performed once at admission; every public consumer then verifies object identity plus a
+compact seal over all scalar identities, exact binary64 contents of the five routing
+vectors, and all canonical payload domains/hashes. A constructed, copied, replaced, stale,
+or mutated binding cannot be used to generate evidence actions.
+
+### Adversarial review and validation
+
+The action review also corrected three behavioral risks: merely recording solver settings
+without enforcing them, using nominal rather than boundary battery capacity in discharge
+sustainability, and accepting stale or arbitrary projection vectors under otherwise valid
+hash labels. Tests now independently cover signed zero and one-ULP identity changes,
+half-open left-to-right projections, a within-hold sunrise maximum, each active projection
+cap, degraded-capacity energy limitation and directed `nextafter`, proportional share
+closure, every template/reference vector, repeated fresh legacy-controller instances,
+descriptor drift, source lineage, and all binding-tamper paths.
+
+An independent read-only delta review approved the layer with no remaining protocol defect.
+Its 39 focused tests passed; the combined schema/action/state/upper-bound gate passed 164
+tests. Formatting, compilation, and whitespace checks passed. No solver call, environment
+step, or new full-horizon outcome was opened by this slice.
