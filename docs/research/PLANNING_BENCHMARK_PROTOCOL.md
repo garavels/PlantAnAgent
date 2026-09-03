@@ -2,8 +2,8 @@
 
 Date: **2026-09-02**
 
-Status: **pre-outcome development protocol; no relaxed-bound or future-information
-planner outcome has been generated**
+Status: **development protocol; no retained frozen benchmark artifact or prospective
+bound/planner outcome has been generated. Disclosed development probes are excluded below**
 
 ## Purpose
 

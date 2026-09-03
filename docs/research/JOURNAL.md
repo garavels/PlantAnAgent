@@ -1732,3 +1732,92 @@ derived and included in the relaxation, the artifact must say “dual-certified 
 bound with a numerically validated simulator bridge,” not “bit-exact simulator upper
 bound.” This correction changes no optimizer equation; it prevents the strength of the
 mathematical claim from exceeding the implementation proof.
+
+## 2026-09-02 — Dual-certified delivery relaxation implemented
+
+### Research instrument and mathematical boundary
+
+Part I of the two-sided controllability benchmark is now implemented as an isolated
+research instrument in `backend/src/plant_backend/rl/v2/upper_bound.py`. It is not a
+controller and cannot enter the causal controller path. Given a complete fault-free V2
+episode, it builds a sparse, physics-step linear program with perfect solar truth and the
+declared delivery schedule. The model retains solar-bus balance, battery efficiencies and
+reserve, battery-to-electrolyser-only support, component caps, storage capacities,
+stoichiometry, production-before-settlement order, transient pre-conversion storage
+headroom, and all energy/mass recurrences. It deliberately relaxes commitment state,
+minimum load, ramps, part-load losses, action shares, dispatch priority, and simultaneous
+battery charge/discharge exclusion. Its objective is cumulative delivered methane.
+
+Every physical variable is represented by an affine finite box
+`x = lower + width * z`, with `0 <= z <= 1`. This makes the complete normalized program
+serializable and permits an independent box-Lagrangian calculation. SciPy/HiGHS supplies
+only a candidate primal solution and marginal vector. Inequality marginals are projected
+to the valid non-positive sign convention, then the Lagrangian minimum over every box is
+evaluated with exact `Fraction.from_float` arithmetic over the stored IEEE-754
+coefficients. The resulting delivery ceiling and requested-mass cap are converted back to
+binary floating point only with checked upward rounding. The exact rational certificate
+is compared directly with the numerical primal before any ceiling field is exposed.
+
+The claim boundary is explicit in code and serialization. The certificate formally
+applies to the encoded finite-box LP. Its bridge to the stepwise floating-point simulator
+is numerically validated, not bit-exact certified. Failed solver, primal-validation,
+objective-validation, certificate, or numerical-tightness paths suppress every ceiling
+field and the nested certificate. The endowment-restoring solve is marked as a diagnostic,
+not as the current task's upper bound.
+
+### Provenance and adversarial hardening
+
+Evidence-mode construction defaults to regenerating `sample_episode` from the episode's
+seed, `EpisodeConfigV2`, and `PlantConfig`, then requiring exact canonical audit-manifest
+equality. This covers the initial state, commitments, stream spawn keys, timing, weather
+truth and forecast issues, clear-sky identity, and hashes. Complete checkpoint-contract
+identity is recomputed against the current V2 runtime. Hand-built unit fixtures require
+the explicit `require_canonical_episode=False` opt-out; both model and result then
+serialize `noncanonical research fixture; not evidence-verified`.
+
+The immutable model validates its block layout, affine bounds, solar digest, commitment
+boxes and ordering, objective, physical limits, state/endowment boxes, row counts,
+checkpoint digest, and episode manifest. Solve results retain all four acceptance
+tolerances, canonical solver options, SciPy version, and the linked HiGHS version when the
+SciPy build exposes it. They also disclose that git revision and dependency-lock digest
+must be attached by the future evaluation runner. Therefore the current function can
+produce a mathematically certified development result, but not by itself a publishable
+benchmark artifact with a complete start/end source audit.
+
+An independent adversarial review initially found nine issues: overclaiming the simulator
+bridge, a nested ceiling on failed results, a rounded-float certificate gate, incomplete
+solve provenance, incomplete episode/checkpoint verification, unexercised trace embedding,
+tolerant invalid initial states, a misleading minute-resolution identity, and insufficient
+model-construction invariants. Each material issue was either fixed or narrowed explicitly
+to the defensible encoded-LP claim before this milestone. The final delta review added
+direct regressions for standby embedding, post-certificate failure redaction, the exact-
+rational comparison boundary, and full-runtime checkpoint validation. It also found two
+documentation defects: the affine lower offset is now stated accurately, and the protocol
+status now distinguishes disclosed contaminated probes from retained or prospective
+outcomes.
+
+### Verification and remaining limits
+
+The proof-oriented suite includes hand-solvable zero-resource, abundant-resource,
+battery, deadline, and storage-order cases; exact marginal-sign and rational-rounding
+cases; malformed-input and solver-failure paths; deterministic solves; and actual
+simulator traces for startup/standby with zero production, full-tank refusal,
+charge/support cancellation, same-step production and settlement, sunrise/day wrap, the
+active reserve boundary, and the guarded `PlantEnvV2.step_action` path. Each trace is
+inserted through the model's affine coordinates and every LP row is recomputed
+independently. Delivery-bearing cases, plus the explicit standby regression, also solve
+the relaxation and check observed delivery below its certified ceiling.
+
+After the final-review regressions, the focused suite completed with **66 passed**. The
+complete repository completed with **679 passed, 2 skipped**, plus one pre-existing
+Starlette/httpx deprecation warning, in 39.36 seconds. Python compilation,
+dependency-lock validation, formatter checking, and `git diff --check` were clean. No new
+full-horizon outcome-producing cell was opened; only unit-sized fixtures were solved. The
+previously disclosed rate-40 probes and 35/42 development cells remain contaminated
+exactly as recorded.
+
+The implementation still does not provide a formal rounding-error enclosure for every
+Python simulator operation, support scheduled faults, attach a start/end source audit, or
+construct a realizable five-field action schedule. It therefore answers only the relaxed
+physical side of the bracket. The next work package must freeze and implement the exact-
+simulator feasible-planner search before any additional full-horizon outcome is opened.
