@@ -2625,3 +2625,69 @@ this core behind a fresh child process, collect exact clean start/end source and
 boundaries, record runtime versions, apply the external 5,400-second watchdog, and atomically
 write then reopen a validated artifact outside the repository. The remaining physical
 boundary regressions must pass before the registered six-cell code freeze.
+
+## 2026-09-03 — Source provenance and validating external publication
+
+### Complete boundary capture
+
+The eighth feasible-planner slice adds `_planner_evidence.py`, still without executing a
+planner child or optimisation solver. `capture_source_boundary` delegates repository state
+collection to the existing audited `evaluation.collect_provenance` implementation, but admits
+only its complete content identity. The planner payload deliberately removes repository
+absolute paths and Git command arguments, preserves the full 40-hex revision, binary tracked
+diff identity and byte count, path-sorted untracked file/symlink identities, dirty flag, and
+complete worktree-content identity, then reconstructs the exact
+`planner-source-snapshot-v1` domain record.
+
+The dependency lock is not trusted through the collector alone. The boundary resolves the
+reported repository, reads repository-root `uv.lock` directly, computes its raw SHA-256, and
+requires both the collector path and digest to match those bytes. Callers identify whether the
+sample is the start or end boundary, so an unavailable end audit cannot be mislabeled as a
+start failure. Registered execution can require a clean starting snapshot before any child or
+protected outcome exists; the later end sample need only be complete, allowing a genuine
+changed-source comparison to remain an explicit non-evidence-ready artifact rather than an
+invented partial snapshot.
+
+`capture_runtime_versions` fills every frozen runtime field: Python version,
+implementation/compiler, NumPy, SciPy, linked HiGHS when exposed, Gymnasium, OS release and
+version, machine/processor, pointer width, byte order, and the exact clock/RSS methods frozen
+in planner settings. Completed artifact assembly checks those resource methods against the
+core settings and checks the parent-linked HiGHS identity against the solver settings embedded
+by the child. This prevents two individually well-formed records from claiming one execution
+while referring to different numerical runtimes.
+
+### Artifact state machine and writer
+
+The layer constructs both normal completed wrappers and phase-specific runner failures. An
+ordinary failed core remains embedded when both runner boundaries complete; runner failure is
+reserved for unavailable source, killed/invalid children, unavailable end source, or artifact
+serialization. Evidence readiness is computed only for a successful canonical privileged
+core with a valid bracket, clean byte-identical source snapshots, equal lock hashes, and
+matching resource methods. The schema recomputes this eligibility and the complete artifact
+digest independently.
+
+`write_planner_artifact` is the only publication path. It requires an absolute destination
+whose resolved path lies outside the resolved Git repository and whose parent already exists.
+It serializes only after strict detached graph reconstruction, writes one uniquely named
+temporary sibling, flushes and `fsync`s the file, atomically replaces the destination,
+`fsync`s the containing directory, then reads the exact bytes back. Reopened bytes must be
+canonical UTF-8 JSON, must rebuild through `planner_artifact_from_dict`, and must reproduce the
+same artifact SHA-256. A leftover temporary file is removed on any pre-replace failure.
+
+### Verification and unchanged evidence boundary
+
+Six new tests cover field-exact path-free source capture, independent raw-lock verification,
+correct end-boundary failure attribution, complete runtime fields, a normal runner wrapper
+around an ordinary failed core, atomic reopen/revalidation, temporary-file cleanup, and
+rejection of relative or in-repository destinations. The evidence plus schema gate passes
+**63 tests**. The complete repository passes **866 tests with 2 skips** and the one known
+Starlette `TestClient` deprecation warning. Formatting, strict targeted type checking,
+compilation, and whitespace validation pass; strict type checking uses a disabled cache to
+avoid a tool-internal serializer defect observed with the host mypy cache.
+
+No environment was stepped by this slice, no solver was invoked, and no registered episode or
+holdout outcome was opened. The six preregistered cells remain untouched. The next commit will
+add the minimal registered-cell child entry point and a parent process that samples start
+provenance before spawning, enforces the external 5,400-second watchdog, validates canonical
+child output, captures the end boundary after core serialization, and hands the resulting
+wrapper to this writer.
