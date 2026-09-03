@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import json
 import math
 from dataclasses import asdict, dataclass
 from numbers import Integral, Real
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Mapping
 
 from plant_sim import Action
 
@@ -18,16 +19,22 @@ from .mpc_schema import (
     MPCStageSolveV1,
     SERVICE_MPC_CONTROLLER_ID,
     ServiceMPCPlanError,
+    canonical_json,
     domain_sha256,
     require_sha256,
 )
 
 SERVICE_MPC_ACTION_DOMAIN = "service-mpc-requested-action-v1"
+SERVICE_MPC_APPLICATION_DOMAIN = "service-mpc-decision-application-v1"
+SERVICE_MPC_GUARDED_ACTION_DOMAIN = "service-mpc-guarded-action-v1"
+SERVICE_MPC_INTERVAL_POWER_DOMAIN = "service-mpc-interval-power-v1"
+SERVICE_MPC_REQUEST_DOMAIN = "service-mpc-environment-request-v1"
 SERVICE_MPC_DECISION_DOMAIN = "service-mpc-decision-evidence-v1"
 SERVICE_MPC_FAILURE_DOMAIN = "service-mpc-decision-failure-v1"
 SERVICE_MPC_FORECAST_ISSUE_DOMAIN = "service-mpc-public-forecast-issue-v1"
 SERVICE_MPC_OBSERVATION_DOMAIN = "service-mpc-public-observation-v1"
 SERVICE_MPC_RESIDUAL_DOMAIN = "service-mpc-first-interval-residual-v1"
+SERVICE_MPC_RUN_EVIDENCE_DOMAIN = "service-mpc-controller-run-evidence-v1"
 
 
 def _finite(
@@ -726,15 +733,468 @@ class MPCDecisionFailureV1:
         return {**self.body(), "sha256": self.sha256}
 
 
+@dataclass(frozen=True, slots=True)
+class MPCDecisionApplicationV1:
+    """Evaluator-side binding from one request to guard and exact plant execution."""
+
+    decision_index: int
+    decision_evidence_sha256: str
+    action_sha256: str
+    residual_sha256: str
+    request_json: str
+    guarded_action_json: str
+    interval_power_json: str
+    guard_interventions: int
+    corrected_physics_steps: int
+    out_of_range: bool
+    guard_intervention_integral_l1_kwh: float
+    dispatch_gap_integral_l1_kwh: float
+    request_application_integral_l1_kwh: float
+    guard_changed_request: bool
+    plant_refused_or_rerouted_power: bool
+    adjustments: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        _index("application decision_index", self.decision_index)
+        for name in (
+            "decision_evidence_sha256",
+            "action_sha256",
+            "residual_sha256",
+        ):
+            require_sha256(name, getattr(self, name))
+        for name in ("request_json", "guarded_action_json", "interval_power_json"):
+            value = getattr(self, name)
+            if not isinstance(value, str):
+                raise TypeError(f"{name} must be canonical JSON text")
+            try:
+                decoded = json.loads(value)
+            except json.JSONDecodeError as exc:
+                raise ValueError(f"{name} is invalid JSON") from exc
+            if not isinstance(decoded, dict) or canonical_json(decoded) != value:
+                raise ValueError(f"{name} must be a canonical JSON object")
+        for name in ("guard_interventions", "corrected_physics_steps"):
+            value = getattr(self, name)
+            if isinstance(value, bool) or not isinstance(value, Integral) or value < 0:
+                raise ValueError(f"{name} must be a non-negative integer")
+        for name in (
+            "out_of_range",
+            "guard_changed_request",
+            "plant_refused_or_rerouted_power",
+        ):
+            if not isinstance(getattr(self, name), bool):
+                raise TypeError(f"{name} must be a bool")
+        guard_gap = _finite(
+            "guard_intervention_integral_l1_kwh",
+            self.guard_intervention_integral_l1_kwh,
+            minimum=0.0,
+        )
+        dispatch_gap = _finite(
+            "dispatch_gap_integral_l1_kwh",
+            self.dispatch_gap_integral_l1_kwh,
+            minimum=0.0,
+        )
+        _finite(
+            "request_application_integral_l1_kwh",
+            self.request_application_integral_l1_kwh,
+            minimum=0.0,
+        )
+        expected_guard_change = bool(
+            self.out_of_range
+            or self.corrected_physics_steps > 0
+            or guard_gap > MODEL_BALANCE_TOLERANCE
+        )
+        if self.guard_changed_request != expected_guard_change:
+            raise ValueError("guard-change flag disagrees with guard evidence")
+        expected_refusal = dispatch_gap > MODEL_BALANCE_TOLERANCE
+        if self.plant_refused_or_rerouted_power != expected_refusal:
+            raise ValueError("plant-refusal flag disagrees with dispatch-gap evidence")
+        if not isinstance(self.adjustments, tuple) or any(
+            not isinstance(item, str) or not item for item in self.adjustments
+        ):
+            raise ValueError("application adjustments must be an immutable text tuple")
+        if len(self.adjustments) != self.guard_interventions:
+            raise ValueError("guard intervention count does not match adjustments")
+
+    @property
+    def request(self) -> dict[str, Any]:
+        value = json.loads(self.request_json)
+        assert isinstance(value, dict)
+        return value
+
+    @property
+    def guarded_action(self) -> dict[str, Any]:
+        value = json.loads(self.guarded_action_json)
+        assert isinstance(value, dict)
+        return value
+
+    @property
+    def interval_power(self) -> dict[str, Any]:
+        value = json.loads(self.interval_power_json)
+        assert isinstance(value, dict)
+        return value
+
+    def body(self) -> dict[str, Any]:
+        return {
+            "schema": "service-mpc-decision-application-v1",
+            "controller_id": SERVICE_MPC_CONTROLLER_ID,
+            "decision_index": int(self.decision_index),
+            "decision_evidence_sha256": self.decision_evidence_sha256,
+            "action_sha256": self.action_sha256,
+            "residual_sha256": self.residual_sha256,
+            "request": self.request,
+            "request_sha256": domain_sha256(
+                SERVICE_MPC_REQUEST_DOMAIN,
+                self.request,
+            ),
+            "guarded_action": self.guarded_action,
+            "guarded_action_sha256": domain_sha256(
+                SERVICE_MPC_GUARDED_ACTION_DOMAIN,
+                self.guarded_action,
+            ),
+            "interval_power": self.interval_power,
+            "interval_power_sha256": domain_sha256(
+                SERVICE_MPC_INTERVAL_POWER_DOMAIN,
+                self.interval_power,
+            ),
+            "guard_interventions": int(self.guard_interventions),
+            "corrected_physics_steps": int(self.corrected_physics_steps),
+            "out_of_range": self.out_of_range,
+            "guard_intervention_integral_l1_kwh": float(
+                self.guard_intervention_integral_l1_kwh
+            ),
+            "dispatch_gap_integral_l1_kwh": float(self.dispatch_gap_integral_l1_kwh),
+            "request_application_integral_l1_kwh": float(
+                self.request_application_integral_l1_kwh
+            ),
+            "guard_changed_request": self.guard_changed_request,
+            "plant_refused_or_rerouted_power": self.plant_refused_or_rerouted_power,
+            "adjustments": list(self.adjustments),
+        }
+
+    @property
+    def sha256(self) -> str:
+        return domain_sha256(SERVICE_MPC_APPLICATION_DOMAIN, self.body())
+
+    def to_dict(self) -> dict[str, Any]:
+        return {**self.body(), "sha256": self.sha256}
+
+
+def _mapping_field(source: Mapping[str, Any], name: str) -> Mapping[str, Any]:
+    value = source.get(name)
+    if not isinstance(value, Mapping):
+        raise ValueError(f"service-MPC environment info {name!r} must be a mapping")
+    return value
+
+
+def _count_field(source: Mapping[str, Any], name: str) -> int:
+    value = source.get(name)
+    if isinstance(value, bool) or not isinstance(value, Integral) or value < 0:
+        raise ValueError(f"service-MPC environment info {name!r} is invalid")
+    return int(value)
+
+
+def capture_mpc_application(
+    event: MPCDecisionEvidenceV1,
+    info: Mapping[str, Any],
+) -> MPCDecisionApplicationV1:
+    """Bind one reconciled controller event to evaluator-only execution evidence."""
+
+    if not isinstance(event, MPCDecisionEvidenceV1):
+        raise TypeError("application event must be MPCDecisionEvidenceV1")
+    if event.residual is None:
+        raise ValueError("application event must have a public transition residual")
+    if not isinstance(info, Mapping):
+        raise TypeError("environment info must be a mapping")
+    guard = _mapping_field(info, "guard")
+    authority = _mapping_field(info, "control_authority")
+    request = _mapping_field(info, "requested")
+    guarded_action = _mapping_field(info, "guarded_action")
+    interval_power = _mapping_field(info, "interval_power")
+    if request.get("action") != event.action.action.to_dict():
+        raise ValueError("service-MPC environment request differs from emitted action")
+    if request.get("raw_policy_vector") is not None:
+        raise ValueError("service-MPC action unexpectedly has a raw policy vector")
+    decision_after = _count_field(info, "decision_index")
+    if decision_after != event.decision_index + 1:
+        raise ValueError("service-MPC environment decision index is not contiguous")
+    adjustments_value = info.get("adjustments")
+    if not isinstance(adjustments_value, list) or any(
+        not isinstance(item, str) or not item for item in adjustments_value
+    ):
+        raise ValueError("service-MPC environment adjustments are invalid")
+    out_of_range = guard.get("out_of_range")
+    if not isinstance(out_of_range, bool):
+        raise TypeError("service-MPC environment out_of_range must be a bool")
+    guard_gap = _finite(
+        "environment guard intervention integral",
+        authority.get("guard_intervention_integral_l1_kwh"),
+        minimum=0.0,
+    )
+    dispatch_gap = _finite(
+        "environment dispatch gap integral",
+        authority.get("dispatch_gap_integral_l1_kwh"),
+        minimum=0.0,
+    )
+    request_gap = _finite(
+        "environment request-application gap integral",
+        authority.get("request_application_integral_l1_kwh"),
+        minimum=0.0,
+    )
+    corrected = _count_field(guard, "corrected_physics_steps")
+    interventions = _count_field(guard, "interventions")
+    if request.get("clipped") is not out_of_range:
+        raise ValueError("service-MPC request and guard range flags disagree")
+
+    hours = _finite(
+        "environment interval hours",
+        interval_power.get("hours"),
+        minimum=0.0,
+    )
+    if not math.isclose(
+        hours,
+        event.residual.hours,
+        rel_tol=0.0,
+        abs_tol=MODEL_BALANCE_TOLERANCE,
+    ):
+        raise ValueError("service-MPC public and exact interval durations differ")
+    applied_mean = _mapping_field(interval_power, "applied_mean_kw")
+    observed_power = {
+        "battery": event.residual.observed_battery_net_kw,
+        "electrolyser": event.residual.observed_electrolyser_kw,
+        "dac": event.residual.observed_dac_kw,
+        "methanator": event.residual.observed_methanator_kw,
+    }
+    exact_power = {
+        "battery": _finite(
+            "applied battery",
+            applied_mean.get("battery"),
+            minimum=0.0,
+        )
+        - _finite(
+            "applied battery support",
+            applied_mean.get("battery_support"),
+            minimum=0.0,
+        ),
+        "electrolyser": _finite(
+            "applied electrolyser",
+            applied_mean.get("electrolyser"),
+            minimum=0.0,
+        ),
+        "dac": _finite(
+            "applied DAC",
+            applied_mean.get("dac"),
+            minimum=0.0,
+        ),
+        "methanator": _finite(
+            "applied methanator",
+            applied_mean.get("methanator"),
+            minimum=0.0,
+        ),
+    }
+    for channel in observed_power:
+        if not math.isclose(
+            observed_power[channel],
+            exact_power[channel],
+            rel_tol=0.0,
+            abs_tol=MODEL_BALANCE_TOLERANCE,
+        ):
+            raise ValueError(f"service-MPC public and exact {channel} powers differ")
+    return MPCDecisionApplicationV1(
+        decision_index=event.decision_index,
+        decision_evidence_sha256=event.sha256,
+        action_sha256=event.action.sha256,
+        residual_sha256=event.residual.sha256,
+        request_json=canonical_json(dict(request)),
+        guarded_action_json=canonical_json(dict(guarded_action)),
+        interval_power_json=canonical_json(dict(interval_power)),
+        guard_interventions=interventions,
+        corrected_physics_steps=corrected,
+        out_of_range=out_of_range,
+        guard_intervention_integral_l1_kwh=guard_gap,
+        dispatch_gap_integral_l1_kwh=dispatch_gap,
+        request_application_integral_l1_kwh=request_gap,
+        guard_changed_request=bool(
+            out_of_range or corrected > 0 or guard_gap > MODEL_BALANCE_TOLERANCE
+        ),
+        plant_refused_or_rerouted_power=(dispatch_gap > MODEL_BALANCE_TOLERANCE),
+        adjustments=tuple(adjustments_value),
+    )
+
+
 MPCDecisionEventV1 = MPCDecisionEvidenceV1 | MPCDecisionFailureV1
+
+
+def _latency_summary(values: tuple[int, ...]) -> dict[str, int | float | str]:
+    if not values:
+        return {
+            "count": 0,
+            "mean_ns": 0.0,
+            "minimum_ns": 0,
+            "p99_ns": 0,
+            "maximum_ns": 0,
+            "p99_method": "empirical nearest rank",
+        }
+    ordered = tuple(sorted(values))
+    rank = max(1, math.ceil(0.99 * len(ordered)))
+    return {
+        "count": len(ordered),
+        "mean_ns": math.fsum(ordered) / len(ordered),
+        "minimum_ns": ordered[0],
+        "p99_ns": ordered[rank - 1],
+        "maximum_ns": ordered[-1],
+        "p99_method": "empirical nearest rank",
+    }
+
+
+def build_mpc_run_evidence(
+    events: tuple[MPCDecisionEventV1, ...],
+    applications: tuple[MPCDecisionApplicationV1, ...],
+    *,
+    completed_decisions: int,
+    run_succeeded: bool,
+    pending_transition: bool,
+    runner_failure_phase: str | None,
+) -> dict[str, Any]:
+    """Validate and summarize complete or explicitly incomplete MPC run evidence."""
+
+    if not isinstance(events, tuple) or any(
+        not isinstance(event, (MPCDecisionEvidenceV1, MPCDecisionFailureV1))
+        for event in events
+    ):
+        raise TypeError("service-MPC run events must be an immutable typed tuple")
+    if not isinstance(applications, tuple) or any(
+        not isinstance(item, MPCDecisionApplicationV1) for item in applications
+    ):
+        raise TypeError("service-MPC applications must be an immutable typed tuple")
+    completed = _index("completed_decisions", completed_decisions)
+    if not isinstance(run_succeeded, bool) or not isinstance(pending_transition, bool):
+        raise TypeError("service-MPC run status flags must be bools")
+    if runner_failure_phase is not None and (
+        not isinstance(runner_failure_phase, str) or not runner_failure_phase
+    ):
+        raise ValueError("runner_failure_phase must be non-empty or None")
+    if run_succeeded != (runner_failure_phase is None):
+        raise ValueError("run success and runner failure phase disagree")
+
+    successes = tuple(
+        event for event in events if isinstance(event, MPCDecisionEvidenceV1)
+    )
+    failures = tuple(
+        event for event in events if isinstance(event, MPCDecisionFailureV1)
+    )
+    if tuple(event.decision_index for event in successes) != tuple(
+        range(len(successes))
+    ):
+        raise ValueError("successful MPC decision indices are not contiguous")
+    if len(failures) > 1:
+        raise ValueError("a stopped MPC run cannot contain multiple failure events")
+    if failures and failures[0].decision_index != len(successes):
+        raise ValueError("MPC failure event is not after successful decisions")
+    if events != (*successes, *failures):
+        raise ValueError("MPC failure event must terminate the event sequence")
+    if tuple(item.decision_index for item in applications) != tuple(
+        range(len(applications))
+    ):
+        raise ValueError("MPC application indices are not contiguous")
+    if len(applications) > len(successes) or completed < len(applications):
+        raise ValueError("MPC applications exceed successful/completed decisions")
+    if len(successes) - completed not in (0, 1):
+        raise ValueError("MPC successes and completed decisions cannot be reconciled")
+    if completed - len(applications) not in (0, 1):
+        raise ValueError(
+            "MPC completed decisions and applications cannot be reconciled"
+        )
+    for application, event in zip(applications, successes, strict=False):
+        if event.residual is None:
+            raise ValueError("applied MPC decision has no public residual")
+        if application.decision_evidence_sha256 != event.sha256:
+            raise ValueError("MPC application and decision evidence identities differ")
+        if application.action_sha256 != event.action.sha256:
+            raise ValueError("MPC application and action identities differ")
+        if application.residual_sha256 != event.residual.sha256:
+            raise ValueError("MPC application and residual identities differ")
+
+    if run_succeeded:
+        if failures or pending_transition:
+            raise ValueError("successful MPC run contains failure or pending evidence")
+        if not (
+            len(successes) == len(applications) == completed
+            and all(event.residual is not None for event in successes)
+        ):
+            raise ValueError("successful MPC run evidence is incomplete")
+    else:
+        if completed > len(successes):
+            raise ValueError("failed MPC run completed more decisions than it solved")
+    unreconciled = tuple(event.residual is None for event in successes)
+    if pending_transition != bool(successes and unreconciled[-1]):
+        raise ValueError("MPC pending state and final public residual disagree")
+    if any(unreconciled[:-1]):
+        raise ValueError("only the final MPC success may await reconciliation")
+
+    decision_latencies = tuple(event.decision_elapsed_ns for event in successes)
+    stage_latencies = tuple(
+        stage.elapsed_ns for event in successes for stage in event.stages
+    ) + tuple(
+        failure.stage_evidence.elapsed_ns
+        for failure in failures
+        if failure.stage_evidence is not None
+    )
+    payload: dict[str, Any] = {
+        "format": "service-mpc-controller-run-evidence-v1",
+        "controller_id": SERVICE_MPC_CONTROLLER_ID,
+        "status": "complete" if run_succeeded else "failed",
+        "completed_decisions": completed,
+        "runner_failure_phase": runner_failure_phase,
+        "pending_transition": pending_transition,
+        "event_count": len(events),
+        "successful_decision_count": len(successes),
+        "failed_decision_count": len(failures),
+        "application_count": len(applications),
+        "fallback_action_count": 0,
+        "all_successful_decisions_reconciled": all(
+            event.residual is not None for event in successes
+        ),
+        "decision_latency": _latency_summary(decision_latencies),
+        "solver_stage_latency": _latency_summary(stage_latencies),
+        "guard_intervention_count": sum(
+            item.guard_interventions for item in applications
+        ),
+        "corrected_physics_steps": sum(
+            item.corrected_physics_steps for item in applications
+        ),
+        "out_of_range_decisions": sum(item.out_of_range for item in applications),
+        "guard_changed_decisions": sum(
+            item.guard_changed_request for item in applications
+        ),
+        "plant_refusal_or_reroute_decisions": sum(
+            item.plant_refused_or_rerouted_power for item in applications
+        ),
+        "guard_intervention_integral_l1_kwh": math.fsum(
+            item.guard_intervention_integral_l1_kwh for item in applications
+        ),
+        "dispatch_gap_integral_l1_kwh": math.fsum(
+            item.dispatch_gap_integral_l1_kwh for item in applications
+        ),
+        "request_application_integral_l1_kwh": math.fsum(
+            item.request_application_integral_l1_kwh for item in applications
+        ),
+        "events": [event.to_dict() for event in events],
+        "applications": [item.to_dict() for item in applications],
+    }
+    payload["sha256"] = domain_sha256(SERVICE_MPC_RUN_EVIDENCE_DOMAIN, payload)
+    canonical_json(payload)
+    return payload
 
 
 __all__ = [
     "MPCActionRealizationV1",
+    "MPCDecisionApplicationV1",
     "MPCDecisionEventV1",
     "MPCDecisionEvidenceV1",
     "MPCDecisionFailureV1",
     "MPCFirstIntervalResidualV1",
+    "build_mpc_run_evidence",
+    "capture_mpc_application",
     "public_forecast_issue_sha256",
     "public_observation_sha256",
     "realize_first_mpc_action",

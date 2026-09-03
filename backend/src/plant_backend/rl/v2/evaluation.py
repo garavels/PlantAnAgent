@@ -20,7 +20,7 @@ from copy import deepcopy
 from dataclasses import dataclass, field
 from numbers import Integral, Real
 from pathlib import Path
-from typing import Any, Literal, Sequence
+from typing import Any, Literal, Sequence, TypeGuard
 
 from plant_sim import Action, ElectrolyserCommitmentProfile, PlantConfig
 
@@ -32,6 +32,14 @@ from .control import ControllerObservationV2, ControllerV2
 from .contract import describe_checkpoint_contract
 from .env import PlantEnvV2
 from .metrics import EpisodeMetricsV2
+from .mpc_execution import (
+    MPCDecisionApplicationV1,
+    MPCDecisionEvidenceV1,
+    MPCDecisionFailureV1,
+    build_mpc_run_evidence,
+    capture_mpc_application,
+)
+from .mpc_schema import SERVICE_MPC_CONTROLLER_ID
 from .reward import RewardWeightsV2
 
 BASELINE_ONLY_DISCLAIMER = (
@@ -47,7 +55,7 @@ LEGACY_INFORMATION_SET = (
 )
 OPEN_LOOP_INFORMATION_SET = "constant action; observes no environment information"
 RESULT_SCHEMA_VERSION = 4
-CAUSAL_RESULT_SCHEMA_VERSION = 5
+CAUSAL_RESULT_SCHEMA_VERSION = 6
 CAUSAL_COMPARATOR_DISCLAIMER = (
     "DEVELOPMENT COMPARISON ONLY: transparent causal controllers are evaluated on "
     "development seeds selected during task calibration. Results are not held out, "
@@ -437,6 +445,7 @@ class BaselineRun:
     metrics: EpisodeMetricsV2 | None
     failure: ControllerFailureV2 | None = None
     requested_actions: tuple[RequestedActionV2, ...] | None = None
+    controller_evidence: dict[str, Any] | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.controller, str) or not self.controller:
@@ -479,6 +488,22 @@ class BaselineRun:
                 raise ValueError(
                     "successful requested-action trace length must equal metric decisions"
                 )
+        if self.controller_evidence is not None:
+            if not isinstance(self.controller_evidence, dict):
+                raise TypeError("controller_evidence must be a mapping or None")
+            try:
+                json.dumps(
+                    self.controller_evidence,
+                    allow_nan=False,
+                    sort_keys=True,
+                )
+            except (TypeError, ValueError) as exc:
+                raise ValueError("controller_evidence must be strict JSON") from exc
+            if self.controller == SERVICE_MPC_CONTROLLER_ID and (
+                self.controller_evidence.get("format")
+                != "service-mpc-controller-run-evidence-v1"
+            ):
+                raise ValueError("service-MPC run evidence format is invalid")
 
     @property
     def successful(self) -> bool:
@@ -507,6 +532,8 @@ class BaselineRun:
             payload["requested_action_trace"] = _action_trace_payload(
                 self.requested_actions
             )
+        if self.controller_evidence is not None:
+            payload["controller_evidence"] = deepcopy(self.controller_evidence)
         return payload
 
 
@@ -927,7 +954,7 @@ class CausalControllerEvaluationV2(ControllerEvaluationV2):
 BaselineEvaluation = ControllerEvaluationV2
 
 
-def _finite_numeric(value: object) -> bool:
+def _finite_numeric(value: object) -> TypeGuard[Real]:
     return (
         isinstance(value, Real)
         and not isinstance(value, bool)
@@ -1053,6 +1080,8 @@ def _requested_action_contrast(
         if reasons:
             by_seed.append({"seed": seed, "status": "unavailable", "reasons": reasons})
             continue
+        assert control_trace is not None
+        assert treatment_trace is not None
         if len(control_trace) != len(treatment_trace):
             by_seed.append(
                 {
@@ -1324,6 +1353,8 @@ def _paired_contrast(
                     }
                 )
                 continue
+            assert _finite_numeric(control_value)
+            assert _finite_numeric(treatment_value)
             control_number = float(control_value)
             treatment_number = float(treatment_value)
             raw_delta = treatment_number - control_number
@@ -1765,6 +1796,40 @@ def _safe_failure_message(exception: Exception) -> str:
     return (collapsed or "(no exception message)")[:500]
 
 
+def _controller_run_evidence(
+    controller: object | None,
+    applications: Sequence[MPCDecisionApplicationV1],
+    *,
+    completed_decisions: int,
+    run_succeeded: bool,
+    failure_phase: str | None,
+) -> dict[str, Any] | None:
+    if (
+        controller is None
+        or getattr(controller, "id", None) != SERVICE_MPC_CONTROLLER_ID
+    ):
+        return None
+    events = getattr(controller, "decision_events", None)
+    pending = getattr(controller, "has_pending_transition", None)
+    if not isinstance(events, tuple) or any(
+        not isinstance(event, (MPCDecisionEvidenceV1, MPCDecisionFailureV1))
+        for event in events
+    ):
+        raise TypeError("service-MPC controller did not expose typed decision events")
+    if not isinstance(pending, bool):
+        raise TypeError(
+            "service-MPC controller did not expose pending-transition state"
+        )
+    return build_mpc_run_evidence(
+        events,
+        tuple(applications),
+        completed_decisions=completed_decisions,
+        run_succeeded=run_succeeded,
+        pending_transition=pending,
+        runner_failure_phase=failure_phase,
+    )
+
+
 def _failed_controller_run(
     env: PlantEnvV2,
     *,
@@ -1774,8 +1839,27 @@ def _failed_controller_run(
     phase: str,
     exception: Exception,
     requested_actions: Sequence[RequestedActionV2] = (),
+    controller: object | None = None,
+    applications: Sequence[MPCDecisionApplicationV1] = (),
 ) -> BaselineRun:
     partial_metrics = env.metrics.to_dict()
+    try:
+        controller_evidence = _controller_run_evidence(
+            controller,
+            applications,
+            completed_decisions=env.metrics.decisions,
+            run_succeeded=False,
+            failure_phase=phase,
+        )
+    except Exception as evidence_exception:
+        exception = RuntimeError(
+            f"{type(exception).__name__}: {_safe_failure_message(exception)}; "
+            "controller evidence collection also failed: "
+            f"{type(evidence_exception).__name__}: "
+            f"{_safe_failure_message(evidence_exception)}"
+        )
+        phase = "controller_evidence_collection"
+        controller_evidence = None
     return BaselineRun(
         controller=controller_id,
         seed=int(seed),
@@ -1791,6 +1875,7 @@ def _failed_controller_run(
             partial_metrics=partial_metrics,
         ),
         requested_actions=tuple(requested_actions),
+        controller_evidence=controller_evidence,
     )
 
 
@@ -1812,6 +1897,7 @@ def run_controller(
         raise ValueError("expected controller descriptor id must not be empty")
     env.reset(seed=seed)
     manifest = env.audit_manifest()
+    applications: list[MPCDecisionApplicationV1] = []
     try:
         controller.reset()
     except Exception as exc:
@@ -1822,6 +1908,8 @@ def run_controller(
             manifest=manifest,
             phase="controller_reset",
             exception=exc,
+            controller=controller,
+            applications=applications,
         )
     try:
         executed_descriptor = _validated_controller_descriptor(controller)
@@ -1837,6 +1925,8 @@ def run_controller(
             manifest=manifest,
             phase="descriptor_integrity_after_reset",
             exception=exc,
+            controller=controller,
+            applications=applications,
         )
     uses_forecast = expected.get("uses_forecast")
     if not isinstance(uses_forecast, bool):
@@ -1863,6 +1953,8 @@ def run_controller(
                 phase="controller_compute_action",
                 exception=exc,
                 requested_actions=requested_actions,
+                controller=controller,
+                applications=applications,
             )
         try:
             if _validated_controller_descriptor(controller) != expected:
@@ -1878,6 +1970,8 @@ def run_controller(
                 phase="descriptor_integrity_after_decision",
                 exception=exc,
                 requested_actions=requested_actions,
+                controller=controller,
+                applications=applications,
             )
         if not isinstance(decision, ControlDecision):
             return _failed_controller_run(
@@ -1888,6 +1982,8 @@ def run_controller(
                 phase="controller_output_validation",
                 exception=TypeError("V2 controller must return a ControlDecision"),
                 requested_actions=requested_actions,
+                controller=controller,
+                applications=applications,
             )
         try:
             requested_actions.append(
@@ -1906,9 +2002,11 @@ def run_controller(
                 phase="controller_output_validation",
                 exception=exc,
                 requested_actions=requested_actions,
+                controller=controller,
+                applications=applications,
             )
         try:
-            _, _, terminated, truncated, _ = env.step_action(
+            _, _, terminated, truncated, info = env.step_action(
                 decision.action,
                 controller_invalid=decision.invalid,
             )
@@ -1921,8 +2019,94 @@ def run_controller(
                 phase="controller_action_application",
                 exception=exc,
                 requested_actions=requested_actions,
+                controller=controller,
+                applications=applications,
             )
+        if controller_id == SERVICE_MPC_CONTROLLER_ID:
+            try:
+                observe_transition = getattr(controller, "observe_transition", None)
+                if not callable(observe_transition):
+                    raise TypeError(
+                        "service-MPC controller does not expose observe_transition"
+                    )
+                observe_transition(env.controller_observation)
+            except Exception as exc:
+                return _failed_controller_run(
+                    env,
+                    controller_id=controller_id,
+                    seed=seed,
+                    manifest=manifest,
+                    phase="controller_transition_observation",
+                    exception=exc,
+                    requested_actions=requested_actions,
+                    controller=controller,
+                    applications=applications,
+                )
+            try:
+                events = getattr(controller, "decision_events", None)
+                decision_index = env.metrics.decisions - 1
+                if not isinstance(events, tuple) or len(events) <= decision_index:
+                    raise ValueError(
+                        "service-MPC controller evidence is missing the applied decision"
+                    )
+                event = events[decision_index]
+                if not isinstance(event, MPCDecisionEvidenceV1):
+                    raise TypeError(
+                        "service-MPC applied decision is not successful evidence"
+                    )
+                if event.decision_index != decision_index:
+                    raise ValueError(
+                        "service-MPC evidence index differs from the applied decision"
+                    )
+                applications.append(capture_mpc_application(event, info))
+            except Exception as exc:
+                return _failed_controller_run(
+                    env,
+                    controller_id=controller_id,
+                    seed=seed,
+                    manifest=manifest,
+                    phase="controller_evidence_capture",
+                    exception=exc,
+                    requested_actions=requested_actions,
+                    controller=controller,
+                    applications=applications,
+                )
+            try:
+                if _validated_controller_descriptor(controller) != expected:
+                    raise ValueError(
+                        "controller descriptor changed while observing a transition"
+                    )
+            except Exception as exc:
+                return _failed_controller_run(
+                    env,
+                    controller_id=controller_id,
+                    seed=seed,
+                    manifest=manifest,
+                    phase="descriptor_integrity_after_transition",
+                    exception=exc,
+                    requested_actions=requested_actions,
+                    controller=controller,
+                    applications=applications,
+                )
         finished = terminated or truncated
+    try:
+        controller_evidence = _controller_run_evidence(
+            controller,
+            applications,
+            completed_decisions=env.metrics.decisions,
+            run_succeeded=True,
+            failure_phase=None,
+        )
+    except Exception as exc:
+        return _failed_controller_run(
+            env,
+            controller_id=controller_id,
+            seed=seed,
+            manifest=manifest,
+            phase="controller_evidence_collection",
+            exception=exc,
+            requested_actions=requested_actions,
+        )
     return BaselineRun(
         controller=controller_id,
         seed=int(seed),
@@ -1930,6 +2114,7 @@ def run_controller(
         exogenous_episode_sha256=str(manifest["exogenous_episode_sha256"]),
         metrics=env.metrics,
         requested_actions=tuple(requested_actions),
+        controller_evidence=controller_evidence,
     )
 
 

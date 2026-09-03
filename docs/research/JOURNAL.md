@@ -3349,3 +3349,55 @@ and **131 focused tests**. The next increment extends the paired evaluator so su
 and failed MPC decision events, exact guard changes, applied-power/refusal evidence, source
 identity, and latency aggregates are retained and validated independently of the
 controller. Until that exists, no full development rollout is authorized.
+
+## 2026-09-03 — Service-MPC evaluator evidence bound to exact execution
+
+The causal evaluator schema advances from version 5 to version 6 so downstream consumers
+cannot silently interpret the new optional controller-evidence record as the older causal
+artifact; the frozen baseline schema remains unchanged. The evaluator now treats service
+MPC as an evidence-producing controller rather than merely another source of five action
+fields. After each request passes through the
+unchanged `PlantEnvV2.step_action` door, the runner gives the controller only the next
+detached public `ControllerObservationV2` so it can close its planned-versus-observed
+residual. Evaluator-only `info` is never returned to the controller. In a separate path,
+the evaluator binds that reconciled event to the environment's decoded request, last
+guarded action, full interval power accounting, exact per-physics-step authority-distance
+integrals, intervention messages, clipping flag, and correction counts.
+
+`MPCDecisionApplicationV1` rejects a mismatched action, non-contiguous environment decision
+index, policy-vector contamination, disagreement between clipping records, duration
+mismatch, and disagreement between the public residual and exact applied battery,
+electrolyser, DAC, or methanator mean power. Request, guarded-action, and interval-power
+objects receive separate domain hashes. Each application also binds the semantic decision,
+requested action, and public residual digests, preserving a reviewable chain from public
+input and mathematical plan through the independent guard to exact plant execution.
+
+The new run-level evidence validates ordered controller events, contiguous applications,
+the only permissible one-decision failure boundary, pending-transition consistency, and
+complete reconciliation before a rollout can be labelled successful. It publishes decision
+and solver-stage latency distributions using an explicit empirical-nearest-rank p99,
+intervention/correction/range counts, exact integral request-to-guard and guard-to-plant
+distances, every underlying event and application, and a content digest. The fallback count
+is structurally zero. A controller-side solve failure retains its failed HiGHS stage and
+produces no request; a runner-side failure retains the valid evidence prefix. Failure of
+evidence collection itself becomes an explicit failed-run phase rather than a successful
+metric record.
+
+The generic paired evaluation behavior is unchanged for other controllers. For service
+MPC, an incomplete or failed arm now makes the whole paired effect summary ineligible while
+retaining the failed cell, its action prefix, and its controller evidence. A deliberate
+solver-timeout fixture confirmed zero fallback actions and invalid aggregate summaries.
+The successful one-hour fixture confirmed four requests, four public residuals, four exact
+applications, eight successful solver stages, matching request/action identities, and
+agreement between serialized interval accounting and episode metrics. These remain
+authorized synthetic fixtures; no registered 72-hour development cell was opened.
+
+The combined controller, MPC, evaluator, paired-statistics, and comparison-CLI surface
+completed **184 focused tests**. Strict type checking passes the evaluator,
+execution-evidence module, controller, and new integration tests. Two existing narrowing
+weaknesses in the evaluator were exposed by checking the whole module and repaired with a
+real-number type guard and explicit post-validation assertions; this changes no runtime
+calculation. The next work is to finish the preregistered hand-solvable MILP and solver
+failure fixtures, then perform the complete format/type/compile/dependency/full-regression
+gate and independent source audit before any registered development matrix is allowed to
+run.

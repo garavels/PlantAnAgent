@@ -135,7 +135,7 @@ def test_paired_controller_evaluation_records_declared_information_and_settings(
     assert result.pairing()["full_manifest_match_by_seed"] is True
     assert result.pairing()["all_arms_present_by_seed"] is True
     assert payload["evidence_scope"] == "development_comparator"
-    assert payload["schema_version"] == 5
+    assert payload["schema_version"] == 6
     assert payload["disclaimer"] == CAUSAL_COMPARATOR_DISCLAIMER
     assert payload["controller_specs"]["spy"]["uses_forecast"] is False
     assert payload["controller_specs"]["spy_forecast"]["uses_forecast"] is True

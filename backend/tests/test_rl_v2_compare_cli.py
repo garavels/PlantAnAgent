@@ -10,7 +10,7 @@ import pytest
 from plant_backend.rl.v2 import compare
 
 
-def test_compare_cli_runs_declared_arms_and_writes_schema_five(
+def test_compare_cli_runs_declared_arms_and_writes_schema_six(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
@@ -32,7 +32,7 @@ def test_compare_cli_runs_declared_arms_and_writes_schema_five(
     ) == 0
 
     payload = json.loads(target.read_text(encoding="utf-8"))
-    assert payload["schema_version"] == 5
+    assert payload["schema_version"] == 6
     assert payload["evidence_scope"] == "development_comparator"
     assert list(payload["labels"]) == [
         "legacy_heuristic",

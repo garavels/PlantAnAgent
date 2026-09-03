@@ -371,7 +371,7 @@ def test_controller_failure_is_retained_and_pair_is_explicitly_unavailable() -> 
     )
     payload = result.to_dict()
 
-    assert payload["schema_version"] == 5
+    assert payload["schema_version"] == 6
     assert len(payload["runs"]) == 4
     assert payload["execution"]["by_controller"]["treatment"] == {
         "planned_runs": 2,
