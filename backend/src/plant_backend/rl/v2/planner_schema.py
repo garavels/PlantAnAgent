@@ -2824,7 +2824,8 @@ class FeasiblePlannerResultV1:
                 strict=True,
             ):
                 if searched_record.source_code == -1 and (
-                    searched_record.request_dict() != a0_record.request_dict()
+                    canonical_json(searched_record.request_dict())
+                    != canonical_json(a0_record.request_dict())
                     or searched_record.source_binding_sha256
                     != a0_record.source_binding_sha256
                 ):

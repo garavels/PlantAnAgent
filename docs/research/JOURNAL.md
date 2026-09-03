@@ -2260,3 +2260,13 @@ The action test accepts the exact factory object and rejects both a copy and a o
 mutation. The focused action suite passed 40 tests and the combined search/schema/action/
 state/upper-bound gate passed 196 tests. No plant step, solver call, or outcome inspection
 was introduced.
+
+The subsequent cross-module acceptance audit found another signed-zero boundary in the
+result schema. A searched trace was allowed to retain `source_code=-1` only when its row
+request equalled the corresponding A0 request, but that comparison used Python dictionary
+equality and therefore collapsed `+0.0` and `-0.0`. The check now compares the canonical
+request JSON bytes, which preserve the binary64 sign of zero. A regression rebuilds every
+dependent request, outcome, replay-binding, comparison, and result identity around the
+adversarial trace, proving that the rejection is semantic rather than caused by a stale
+hash. This closes an evidence-acceptance hole that exact runtime replay by itself could
+not repair.

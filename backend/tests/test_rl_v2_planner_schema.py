@@ -820,6 +820,41 @@ def test_core_selects_searched_finalist_exactly_on_strict_score_improvement(
         )
 
 
+def test_core_rejects_signed_zero_change_hidden_behind_retained_a0_lineage() -> None:
+    core = _successful_core(finalist_score=_score(delivered_kg=1.0))
+    assert core.settings is not None
+    assert core.relaxation_result is not None
+    assert core.relaxation_witness is not None
+    assert core.relaxation_guidance is not None
+    assert core.a0_incumbent is not None
+    signed_zero_finalist = _replay(
+        core.settings,
+        core.relaxation_result,
+        core.relaxation_witness,
+        core.relaxation_guidance,
+        role="searched_finalist",
+        record=_action(battery_share=-0.0),
+        score=_score(delivered_kg=1.0),
+    )
+    comparison = build_incumbent_comparison(
+        selected_role="searched_finalist",
+        a0_score=core.a0_incumbent.final_score,
+        selected_score=signed_zero_finalist.final_score,
+        a0_request_trace=core.a0_incumbent.request_trace,
+        selected_request_trace=signed_zero_finalist.request_trace,
+        upper_bound_kg=10.0,
+        optimality_tolerance_kg=1e-5,
+    )
+
+    with pytest.raises(ValueError, match="retained A0 lineage"):
+        dataclasses.replace(
+            core,
+            searched_finalist=signed_zero_finalist,
+            comparison=comparison,
+            deterministic_result_sha256="",
+        )
+
+
 def test_replay_core_and_runner_records_validate_and_detach() -> None:
     core = _successful_core()
     assert (
