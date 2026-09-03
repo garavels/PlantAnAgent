@@ -25,10 +25,12 @@ legacy exact-simulator trajectory
 ```
 
 The left inequality is enforced by retaining the complete legacy trajectory as an
-incumbent. The right inequality applies to delivered methane only and follows from an
-explicit feasible-set relaxation. Neither inequality says that the middle planner is
-optimal. The upper bound is not a controller and cannot be compared as if it shared the
-online information set.
+incumbent. In real arithmetic, the right inequality applies to delivered methane only and
+follows from an explicit feasible-set relaxation. Neither inequality says that the middle
+planner is optimal. The upper bound is not a controller and cannot be compared as if it
+shared the online information set. The dual certificate is exact for the serialized LP;
+its bridge to the floating-point Python simulator has the numerical qualification stated
+below.
 
 ## Prior-outcome and split boundary
 
@@ -160,19 +162,36 @@ The LP removes or improves only constraints that can reduce exact-simulator prod
   routing.
 
 These choices can make the LP optimistic, never more restrictive than a valid exact
-trajectory inside the declared fault-free scope. Every such exact trajectory embeds by
-assigning its realized solar routes, battery support, inventories, production, and
-deliveries to the LP variables. Production is bounded above by nominal power yield rather
-than forced equal to it; this is necessary to embed startup, standby, part-load loss, and
-refusal intervals that accept energy without the nominal output. The derived coefficient
-must be no larger than the best attainable specific energy under the active profile; that
-proof and the profile digest are serialized. All removed commitment/share constraints only
-enlarge the LP feasible set. The initial-reserve precondition prevents the LP's reserve
-floor from excluding an otherwise legal initial boundary. Therefore the LP optimum is an
-upper bound on cumulative delivered methane under the retained configuration.
+trajectory's ideal real-arithmetic balances inside the declared fault-free scope. Such a
+trajectory embeds by assigning its realized solar routes, battery support, inventories,
+production, and deliveries to the LP variables. Production is bounded above by nominal
+power yield rather than forced equal to it; this is necessary to embed startup, standby,
+part-load loss, and refusal intervals that accept energy without the nominal output. The
+derived coefficient must be no larger than the best attainable specific energy under the
+active profile; that proof and the profile digest are serialized. All removed
+commitment/share constraints only enlarge the LP feasible set. The initial-reserve
+precondition prevents the LP's reserve floor from excluding an otherwise legal initial
+boundary. Therefore the LP optimum is an upper bound on the retained real-arithmetic plant
+equations.
 
-The proof obligation is part of the tests: exact trace quantities must satisfy the relaxed
-balances within tolerance, and sampled exact deliveries must never exceed the bound.
+### Floating-point simulator bridge
+
+The Python simulator rounds after individual arithmetic operations. A replayed trace can
+therefore satisfy the LP recurrences to machine precision without being exactly feasible
+for their rational interpretation. The current work does not contain a derived interval
+error envelope for every simulator operation. Consequently:
+
+- the dual certificate is formal only for the serialized finite-box LP;
+- exact-simulator traces are independently encoded and numerically checked against every
+  row at the frozen embedding tolerance;
+- observed exact delivery must not exceed the relaxation ceiling; but
+- the result is called a **dual-certified relaxation bound with a numerically validated
+  simulator bridge**, not a bit-exact certified upper bound on every possible Python
+  simulator trace.
+
+Closing this qualification would require either outward interval semantics in the twin or
+a rigorously derived per-row rounding envelope included in the relaxed feasible set. No
+fixed empirical epsilon may be presented as that proof.
 
 ### Endowment-preserving diagnostic
 
@@ -210,7 +229,7 @@ and projected returned multipliers. Conversion of `-L` to a binary-float deliver
 bound is directed toward positive infinity and checked against the exact rational value.
 Requested methane is likewise summed exactly and converted upward before it can cap the
 bound. This removes an undocumented floating-point “margin” from the proof path. The
-reported exact-simulator ceiling is the smaller of the upward-rounded requested mass and
+reported relaxation ceiling is the smaller of the upward-rounded requested mass and
 the dual-certified bound; the solver's numerical primal value and primal--dual gap are
 reported separately. Lower/upper-bound marginals are not used because the box minimization
 handles those constraints directly. The magnitude of any inequality-marginal projection
@@ -351,7 +370,8 @@ evidence of site readiness.
    headroom.
 2. Sparse-model dimensional and finite-value validation before solver entry.
 3. Independent recomputation of every LP balance and bound after solver return.
-4. Exact traces embedded in the relaxation and never exceeding its delivery bound,
+4. Exact traces numerically embedded in the relaxation at the frozen tolerance, with
+   observed delivery never exceeding its delivery bound,
    including startup/standby power with zero H2, full-tank refusal, same-minute
    production/methanation/settlement, requested charge/support overlap, sunrise and
    midnight boundaries, and an initial state exactly at reserve.

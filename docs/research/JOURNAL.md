@@ -1723,3 +1723,12 @@ horizon cells are now explicitly development-contaminated and barred from prospe
 held-out, or commercial claims. No other new cell was authorized or opened. The incident
 also tightened delegation instructions: implementation review must distinguish
 unit-sized performance fixtures from any full-horizon outcome-producing solve.
+
+The same review identified a proof-scope distinction that is now part of the protocol.
+The exact-rational box-Lagrangian calculation certifies the serialized LP, but Python's
+stepwise floating-point simulator can leave machine-precision residuals when its trace is
+inserted into those rational equations. Until a per-operation interval error envelope is
+derived and included in the relaxation, the artifact must say “dual-certified relaxation
+bound with a numerically validated simulator bridge,” not “bit-exact simulator upper
+bound.” This correction changes no optimizer equation; it prevents the strength of the
+mathematical claim from exceeding the implementation proof.
