@@ -3253,3 +3253,44 @@ The next increment is the optional SciPy/HiGHS adapter. It must translate only t
 immutable sparse representation, execute the two frozen stages with explicit time limits,
 independently audit the returned vectors, and publish failure rather than substitute a
 controller. Tiny solver fixtures remain authorized; no registered rollout is opened yet.
+
+## 2026-09-03 — Fail-closed two-stage SciPy/HiGHS adapter implemented
+
+`mpc_solver.py` now forms the only optional-runtime boundary in the service-MPC stack.
+Importing the forecast, schema, or sparse model still does not import SciPy. A solve lazily
+loads NumPy, SciPy, the sparse-array implementation, and the bundled HiGHS version; checks
+that the model's interval, boundary, scalar, and binary groups exactly match the frozen
+formulation; translates named sparse rows into one `LinearConstraint`; and supplies the
+preregistered presolve, relative-gap, and two-second time-limit settings to each stage.
+
+Stage one minimizes negative total delivered methane. Its independently audited solution
+defines the positive delivery optimum and the named `10^-6 kg` lock row. Stage two then
+minimizes the negative frozen utility subject to that row. Returned values are finite,
+canonically snapped only within the declared residual tolerance, and rechecked against all
+bounds, integrality conditions, base rows, and (for stage two) the delivery lock. The
+reported objective is also recomputed from the returned vector. A successful stage retains
+status, bounded message, elapsed nanoseconds, objective, dual bound, MIP gap, node count,
+SciPy/HiGHS versions, and a domain-separated solution digest that includes its stage and
+additional rows.
+
+The selected second-stage vector is converted into immutable per-interval plan records and
+then revalidated by `MPCPlanV1`: both electrical buses, non-negative flows, charge/support
+exclusion, ordered delivery totals, minimum fill, terminal inventories, and the primary
+lock all cross-check before publication. `ServiceMPCSolveError` now optionally carries the
+failed stage evidence. Missing optimization dependencies, a non-optimal status, an
+exception, malformed model layout, or an independently invalid status-zero vector cannot
+emit a plan or substitute a heuristic action.
+
+A deliberately small eight-interval/no-settlement instance exercised the real two-stage
+runtime under SciPy 1.18.1 with bundled HiGHS 1.12.0. Separate fixtures proved fail-closed
+behavior for an unavailable optional runtime, an infeasible primary problem, a thrown
+solver exception, mismatched settings, a reordered model layout, and a fake status-zero
+all-zero vector that violates the independent residual audit. The complete MPC forecast,
+schema, model, and solver unit surface passes formatting, isolated strict type checking,
+and **50 tests**. No full 24-hour solve, controller action, plant step, or registered cell
+was opened.
+
+The next increment turns a valid first plan interval into the existing five-field action
+contract, defines the stateful receding-horizon controller and its local evidence ledger,
+and proves first-step exact-simulator behavior on deliberately short fixtures before any
+development matrix can run.

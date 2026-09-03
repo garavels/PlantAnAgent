@@ -581,6 +581,15 @@ class ServiceMPCInputError(ServiceMPCError):
 class ServiceMPCSolveError(ServiceMPCError):
     """One solver stage failed; no fallback action may be emitted as MPC."""
 
+    def __init__(
+        self,
+        message: str,
+        *,
+        stage_evidence: MPCStageSolveV1 | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.stage_evidence = stage_evidence
+
 
 class ServiceMPCPlanError(ServiceMPCError):
     """An apparently successful numerical solution failed plan validation."""
