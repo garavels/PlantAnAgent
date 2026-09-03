@@ -36,12 +36,13 @@ methanator    0x1.dbfadb972f572p-5
 sum           0x1.0000000000001p+0
 ```
 
-Python's exact `Action.sanitised` operation divides the four shares by that total, but every
-quotient rounds back to the identical binary64 input. The complete five-double action is
-therefore already a bit-identical fixed point of the simulator's authoritative sanitizer. The
-planner schema nevertheless rejects it solely because it tests `sum > 1.0`. The target-router
-templates do not have this ambiguity: the frozen proportional closure explicitly moves their
-common scale downward until their ordered sum is no greater than one.
+The `sum` printed above is the planner protocol's explicit left-to-right accumulator. On the
+registered CPython 3.12 runtime, the simulator's built-in `sum(shares)` instead evaluates to
+exactly `0x1.0000000000000p+0`, so `Action.sanitised` does not enter its normalization branch
+and returns the complete five-double action bit-identically. The planner schema rejects it
+solely because its deliberately ordered accumulator produces the one-ULP-higher result. The
+target-router templates do not have this ambiguity: the frozen proportional closure explicitly
+moves their common scale downward until their ordered sum is no greater than one.
 
 This witness does not recreate or inspect a registered episode. It establishes the arithmetic
 mechanism independently of the protected result.
@@ -58,14 +59,15 @@ sum exceeds one, validation may accept the record only when both conditions hold
 
 1. its lineage is exact A0 capture (`source_code=-1`) or the live legacy template
    (`source_code=0`); and
-2. recomputing the simulator's four normalizing divisions in field order leaves every share
-   bit-identical under `struct.pack(">d", value)`.
+2. locally reproducing the complete simulator sanitizer branch—built-in `sum`, followed by
+   division only when that total exceeds one—leaves every share bit-identical under
+   `struct.pack(">d", value)`.
 
 All other oversubscribed records remain invalid. In particular, templates 1--14 remain bound
 to the protocol's strict proportional-closure rule, and a legacy request that normalization
 would actually change remains invalid. The schema implementation remains pure and reproduces
-the five-line binary64 normalization locally rather than importing simulator or controller
-code.
+the binary64 sanitizer locally rather than importing simulator or controller code. The
+registered artifact's captured Python runtime remains part of this evidence boundary.
 
 This is an operational-closedness correction, not an action-library or controller change: the
 accepted request, `Action.sanitised` result, guard input, plant action, trace bytes, source

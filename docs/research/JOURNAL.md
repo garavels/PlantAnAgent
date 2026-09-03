@@ -2897,15 +2897,23 @@ rewriting the disclosure commit.
 An independent telemetry-only reproduction now confirms the mechanism without sampling an
 episode or invoking the relaxation solver. At solar bus
 `3097.9458568525442 == 0x1.833e4475970c0p+11`, the production heuristic emits shares whose
-ordered binary64 sum is `0x1.0000000000001p+0`. `Action.sanitised` divides by that sum, but
-each quotient rounds back to its exact input bits. The action is therefore an operational
-sanitizer fixed point even though the schema's stronger arithmetic sum predicate rejects it.
-Only `legacy_live` bypasses the target router's strict proportional closure, completing the
+ordered binary64 sum is `0x1.0000000000001p+0`. The action is an operational sanitizer fixed
+point even though the schema's stronger arithmetic sum predicate rejects it. Only
+`legacy_live` bypasses the target router's strict proportional closure, completing the
 root-cause chain from the observed schema message to the controller arithmetic.
 
 `FEASIBLE_PLANNER_REPAIR_001.md` freezes the correction before implementation. It preserves
 the exact A0/legacy request and permits a sum-over-one record only for A0 or `legacy_live`
-lineage and only when the simulator's normalization would be binary64 bit-identical. It keeps
+lineage and only when the simulator's complete sanitizer would be binary64 bit-identical. It keeps
 all future-truth templates strictly sum-closed and rejects any materially normalized legacy
 request. No performance-sensitive search, plant, task, score, or solver setting may change in
 this repair.
+
+Before implementation, a second arithmetic check corrected one detail in that repair text.
+The `0x1.0000000000001p+0` value is the protocol's explicit left-to-right accumulator. On
+the registered CPython 3.12 runtime, the built-in `sum` used by `Action.sanitised` returns
+exactly `0x1.0000000000000p+0`; the sanitizer therefore never enters its division branch for
+this witness. The frozen acceptance rule is consequently the complete sanitizer operation:
+compute its built-in sum, divide only if that result exceeds one, and require the final four
+shares to be bit-identical. This correction was also committed before implementation and does
+not broaden the permitted lineage or any search degree of freedom.
