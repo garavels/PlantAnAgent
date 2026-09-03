@@ -3206,3 +3206,50 @@ The settings/schema and forecast suites complete with **23 passed**; both new so
 modules pass strict type checking and formatting. No SciPy solver was called and no plant
 or controller outcome was opened. The next increment constructs a canonical sparse MILP
 independently of the optional solver runtime.
+
+## 2026-09-03 — Solver-independent service-MPC MILP constructed
+
+`mpc_model.py` now constructs the complete preregistered 15-minute mixed-integer model
+without importing or invoking SciPy. The separation is deliberate: every variable bound,
+integrality flag, objective coefficient, sparse constraint row, public delivery inference,
+and initial-condition transformation can be hashed and audited before an optimizer is
+allowed to return a favorable answer.
+
+The 24-hour model contains explicit solar routes and curtailment; mutually exclusive
+battery charging and electrolyser support; startup and productive electrolyser power;
+H2, CO2, and CH4 production; settlement delivery; boundary inventories; cold-start,
+warmup, running, on/off, stop, and battery-direction binaries; minimum commitment fill;
+and terminal feedstock methane-equivalent value. Its constraints close both electrical
+buses, battery energy with directional efficiencies, all three material balances, and
+the simulator's pre-conversion and pre-delivery storage-headroom order. The commitment
+approximation enforces cold-start occupancy, minimum up/down periods, current public
+mode obligations, and prohibits terminal starts whose obligations would fall outside the
+finite horizon. Part-load hydrogen yield uses the worst declared specific-energy
+multiplier, making it conservative with respect to the profile's steady-state efficiency
+curve. The exact minute simulator remains authoritative for execution.
+
+The primary minimization vector is exactly negative delivered methane. The secondary
+vector implements the frozen minimum-fill, terminal methane-equivalent, terminal battery,
+cold-start, curtailment, and battery-throughput terms; a separately named delivery-lock
+row will bind the second solve to the first-stage optimum. The model and every candidate
+solution have independent domain identities and residual audits. Inputs now fail closed
+on stale forecast physics steps, mismatched solar plants, non-nominal component health,
+invalid commitment state, non-finite or non-positive physical constants, misaligned
+delivery deadlines, reserve violations, non-canonical metadata, and malformed sparse
+algebra.
+
+At the already contaminated rate-35/seed-0 reset, the canonical 24-hour instance has
+2,118 variables, including 576 binaries, 3,145 named rows, and 7,915 nonzero
+coefficients. This construction check opened no action, solve, or plant outcome. The new
+audit suite plus the existing forecast and schema suites complete with **42 passed**;
+the source passes formatting and isolated strict type checking. The first formatting
+check correctly requested deterministic reformatting. A subsequent system-level `mypy`
+invocation used a Python environment without the workspace packages and therefore emitted
+missing-`plant_sim` diagnostics plus one genuine local scalar/sequence narrowing issue;
+the latter was repaired with an explicit cast and the source then passed using the
+repository package paths.
+
+The next increment is the optional SciPy/HiGHS adapter. It must translate only this
+immutable sparse representation, execute the two frozen stages with explicit time limits,
+independently audit the returned vectors, and publish failure rather than substitute a
+controller. Tiny solver fixtures remain authorized; no registered rollout is opened yet.
