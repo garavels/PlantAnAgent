@@ -2360,3 +2360,47 @@ Python compilation, and whitespace validation passed. Tests reset only the decla
 two-decision noncanonical fixture and do not step it in this slice. No LP solver, registered
 episode, new full-horizon plant rollout, terminal benchmark outcome, or holdout was opened.
 The six preregistered 35/42 kg/h development cells therefore remain unopened.
+
+## 2026-09-03 — Exact planner admission and episode-evidence binding
+
+### Why this slice was required
+
+Before connecting the plant-independent search algorithm to `PlantEnvV2`, I audited the
+earliest point at which the planner could reject an invalid experiment. The result schema
+already rejected unregistered evidence, but that happened after a rollout existed. For the
+preregistered six-cell experiment this ordering was unacceptable: a wrong rate/seed pair,
+an oversized fixture, or a settings object mutated after construction could expose an
+outcome before the run was declared inadmissible. The runtime also had an attested
+relaxation result and exogenous digest, but did not retain the exact Part-I episode-manifest
+bytes needed to prove that every later reset regenerated the same stochastic episode.
+
+### Implementation and architectural effect
+
+The schema now provides one fail-closed `require_planner_admission` gate shared by both
+pre-rollout runtime construction and final result validation. It reconstructs the complete
+frozen settings record, including exact nested canonical-payload objects, and separates two
+non-overlapping scopes: registered 72-hour development runs must use one of seeds 0–2,
+the exact registered rate-specific episode/checkpoint pair, the canonical plant,
+constraints, reward, cadence, and horizon; noncanonical unit fixtures must explicitly deny
+canonical verification and may contain at most eight decisions. The raw canonical-JSON
+SHA-256 helper makes the pre-existing static-configuration hashing rule explicit and avoids
+confusing it with the planner's domain-separated evidence hashes.
+
+The factory-only relaxation binding now seals the exact canonical episode-manifest JSON and
+its raw SHA-256 alongside the exogenous digest. Construction parses and canonicalizes those
+bytes and checks their embedded exogenous identity; every later attestation rechecks the
+bytes, digest, cross-binding, and binding seal. The frozen relaxation-guidance payload was
+deliberately left unchanged, so this strengthens the process-local runtime handoff without
+silently revising the preregistered public evidence schema.
+
+### Adversarial checks and evidence boundary
+
+Regressions cover detached nested settings, illicit post-construction mutation, boolean
+seed aliases, canonical/noncanonical scope confusion, oversized fixtures, unregistered
+seeds, mismatched rate/checkpoint pairs, noncanonical manifest bytes, and manifests bound to
+the wrong exogenous episode. The schema and action suites pass **98 tests** together; strict
+targeted type checking, formatting, compilation, and whitespace validation are performed
+again at the commit boundary. These checks instantiate only structural two-decision
+fixtures. No environment was stepped, no optimisation solver was called, and no registered
+or full-horizon outcome was inspected. The six preregistered development cells remain
+unopened.

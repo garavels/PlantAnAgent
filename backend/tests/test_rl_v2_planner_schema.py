@@ -559,6 +559,121 @@ def test_protocol_anchors_and_registered_payloads_are_exact() -> None:
     assert len(json.loads(ACTION_LIBRARY.canonical_json)["templates"]) == 15
 
 
+def test_raw_canonical_hash_and_settings_revalidation_are_detached() -> None:
+    assert (
+        schema.raw_canonical_sha256({"b": 2, "a": 1})
+        == hashlib.sha256(b'{"a":1,"b":2}').hexdigest()
+    )
+
+    payload = CanonicalPayloadV1(
+        ACTION_LIBRARY.domain,
+        ACTION_LIBRARY.canonical_json,
+        ACTION_LIBRARY.sha256,
+    )
+    original = dataclasses.replace(
+        _settings(result_sha=SHA_B, witness_sha=SHA_B, guidance_sha=SHA_B),
+        action_library=payload,
+    )
+    checked = schema.revalidate_planner_settings(original)
+    assert checked is not original
+    assert checked.action_library == payload
+    assert checked.action_library is not payload
+
+    object.__setattr__(payload, "sha256", SHA_A)
+    assert checked.action_library.sha256 == ACTION_LIBRARY_SHA256
+    with pytest.raises(ValueError, match="canonical payload SHA-256"):
+        schema.revalidate_planner_settings(original)
+
+
+def test_early_admission_separates_registered_runs_from_small_fixtures() -> None:
+    fixture = _settings(result_sha=SHA_B, witness_sha=SHA_B, guidance_sha=SHA_B)
+    checked_fixture = schema.require_planner_admission(
+        fixture,
+        seed=0,
+        evidence_scope="noncanonical_unit_fixture",
+        canonical_episode_verified=False,
+    )
+    assert checked_fixture == fixture
+    assert checked_fixture is not fixture
+
+    with pytest.raises(TypeError, match="seed must be an integer"):
+        schema.require_planner_admission(
+            fixture,
+            seed=True,
+            evidence_scope="noncanonical_unit_fixture",
+            canonical_episode_verified=False,
+        )
+    with pytest.raises(ValueError, match="cannot claim canonical"):
+        schema.require_planner_admission(
+            fixture,
+            seed=0,
+            evidence_scope="noncanonical_unit_fixture",
+            canonical_episode_verified=True,
+        )
+    oversized = build_planner_settings(
+        expected_decisions=9,
+        expected_physics_steps=135,
+        plant_config_sha256=SHA_A,
+        constraints_sha256=SHA_A,
+        reward_weights_sha256=SHA_A,
+        episode_config_sha256=SHA_A,
+        checkpoint_contract_digest=SHA_A,
+        relaxation_model_sha256=SHA_B,
+        relaxation_result_sha256=SHA_B,
+        relaxation_witness_sha256=SHA_B,
+        relaxation_guidance_sha256=SHA_B,
+    )
+    with pytest.raises(ValueError, match="limited to eight decisions"):
+        schema.require_planner_admission(
+            oversized,
+            seed=0,
+            evidence_scope="noncanonical_unit_fixture",
+            canonical_episode_verified=False,
+        )
+
+    registered = build_planner_settings(
+        expected_decisions=288,
+        expected_physics_steps=4320,
+        plant_config_sha256=schema.PLANT_CONFIG_SHA256,
+        constraints_sha256=schema.CONSTRAINTS_SHA256,
+        reward_weights_sha256=schema.REWARD_WEIGHTS_SHA256,
+        episode_config_sha256=schema.EPISODE_CONFIG_SHA256_BY_RATE[0][1],
+        checkpoint_contract_digest=(schema.CHECKPOINT_CONTRACT_SHA256_BY_RATE[0][1]),
+        relaxation_model_sha256=SHA_B,
+        relaxation_result_sha256=SHA_B,
+        relaxation_witness_sha256=SHA_B,
+        relaxation_guidance_sha256=SHA_B,
+    )
+    assert (
+        schema.require_planner_admission(
+            registered,
+            seed=2,
+            evidence_scope="privileged_offline_development",
+            canonical_episode_verified=True,
+        )
+        == registered
+    )
+    with pytest.raises(ValueError, match="seed is not registered"):
+        schema.require_planner_admission(
+            registered,
+            seed=3,
+            evidence_scope="privileged_offline_development",
+            canonical_episode_verified=True,
+        )
+    mismatched_pair = dataclasses.replace(
+        registered,
+        checkpoint_contract_digest=(schema.CHECKPOINT_CONTRACT_SHA256_BY_RATE[1][1]),
+        settings_sha256="",
+    )
+    with pytest.raises(ValueError, match="pair is unregistered"):
+        schema.require_planner_admission(
+            mismatched_pair,
+            seed=0,
+            evidence_scope="privileged_offline_development",
+            canonical_episode_verified=True,
+        )
+
+
 def test_canonical_payload_uses_exact_domain_preimage_and_is_detached() -> None:
     payload = canonical_payload("planner-state-v1", {"é": [1, 2.0]})
     assert payload.canonical_json == '{"é":[1,2.0]}'

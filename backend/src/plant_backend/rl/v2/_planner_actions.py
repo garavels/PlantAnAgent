@@ -257,6 +257,8 @@ class RelaxationBindingV1:
     result_sha256: str
     witness_sha256: str
     checkpoint_contract_digest: str
+    episode_manifest_json: str
+    episode_manifest_sha256: str
     exogenous_episode_sha256: str
     solar_truth_sha256: str
     physics_steps: int
@@ -379,10 +381,30 @@ def _validate_binding_contents(binding: RelaxationBindingV1) -> None:
         "result_sha256",
         "witness_sha256",
         "checkpoint_contract_digest",
+        "episode_manifest_sha256",
         "exogenous_episode_sha256",
         "solar_truth_sha256",
     ):
         require_sha256(name, getattr(binding, name))
+    if not isinstance(binding.episode_manifest_json, str):
+        raise TypeError("episode_manifest_json must be canonical JSON text")
+    try:
+        episode_manifest = json.loads(binding.episode_manifest_json)
+    except (TypeError, ValueError, json.JSONDecodeError) as exc:
+        raise ValueError("episode_manifest_json is malformed") from exc
+    if canonical_json(episode_manifest) != binding.episode_manifest_json:
+        raise ValueError("episode_manifest_json is not canonical JSON")
+    if (
+        hashlib.sha256(binding.episode_manifest_json.encode("utf-8")).hexdigest()
+        != binding.episode_manifest_sha256
+    ):
+        raise ValueError("episode manifest digest does not match its canonical bytes")
+    if (
+        not isinstance(episode_manifest, dict)
+        or episode_manifest.get("exogenous_episode_sha256")
+        != binding.exogenous_episode_sha256
+    ):
+        raise ValueError("episode manifest is not cross-bound to exogenous identity")
     physics_steps = _integer("physics_steps", binding.physics_steps, minimum=1)
     dt_h = _finite_real("dt_h", binding.dt_h, minimum=0.0)
     if dt_h == 0.0:
@@ -523,6 +545,8 @@ def _binding_seal(binding: RelaxationBindingV1) -> str:
         "result_sha256",
         "witness_sha256",
         "checkpoint_contract_digest",
+        "episode_manifest_json",
+        "episode_manifest_sha256",
         "exogenous_episode_sha256",
         "solar_truth_sha256",
     ):
@@ -702,6 +726,23 @@ def bind_relaxation_guidance(
     )
     if episode_sha256 != result_episode:
         raise ValueError("relaxation episode identities do not match")
+    episode_manifest_json = getattr(model, "episode_manifest_json", None)
+    if not isinstance(episode_manifest_json, str):
+        raise TypeError("model.episode_manifest_json must be canonical JSON text")
+    try:
+        episode_manifest = json.loads(episode_manifest_json)
+    except (TypeError, ValueError, json.JSONDecodeError) as exc:
+        raise ValueError("model episode manifest is malformed") from exc
+    if canonical_json(episode_manifest) != episode_manifest_json:
+        raise ValueError("model episode manifest is not canonical JSON")
+    if (
+        not isinstance(episode_manifest, dict)
+        or episode_manifest.get("exogenous_episode_sha256") != episode_sha256
+    ):
+        raise ValueError("model episode manifest is not cross-bound")
+    episode_manifest_sha256 = hashlib.sha256(
+        episode_manifest_json.encode("utf-8")
+    ).hexdigest()
     physics_steps = _integer("model.physics_steps", model.physics_steps, minimum=1)
     dt_h = _finite_real("model.dt_h", model.dt_h, minimum=0.0)
     if dt_h == 0.0:
@@ -801,6 +842,8 @@ def bind_relaxation_guidance(
         result_sha256=result_payload.sha256,
         witness_sha256=witness_payload.sha256,
         checkpoint_contract_digest=checkpoint_digest,
+        episode_manifest_json=episode_manifest_json,
+        episode_manifest_sha256=episode_manifest_sha256,
         exogenous_episode_sha256=episode_sha256,
         solar_truth_sha256=solar_truth_sha256,
         physics_steps=physics_steps,

@@ -239,6 +239,18 @@ def canonical_json(value: object) -> str:
     )
 
 
+def raw_canonical_sha256(value: object) -> str:
+    """Hash strict canonical JSON without a domain prefix.
+
+    Static V2 configuration and checkpoint contracts predate the planner's
+    domain-separated evidence payloads.  Naming their raw hashing rule prevents
+    callers from accidentally substituting :func:`canonical_payload` and
+    producing a different identity.
+    """
+
+    return hashlib.sha256(canonical_json(value).encode("utf-8")).hexdigest()
+
+
 def canonical_payload_preimage(domain: str, serialized: str) -> bytes:
     """Return the exact bytes hashed by every domain-separated payload."""
     _require_string("domain", domain)
@@ -970,6 +982,91 @@ class PlannerSettingsV1:
             else:
                 result[field.name] = value
         return result
+
+
+def revalidate_planner_settings(settings: PlannerSettingsV1) -> PlannerSettingsV1:
+    """Return a fully reconstructed, detached planner-settings record.
+
+    ``PlannerSettingsV1`` is frozen for ordinary callers, but Python permits
+    low-level mutation through ``object.__setattr__``. Runtime admission therefore
+    reconstructs the complete record, including new nested canonical-payload
+    objects, before trusting any limit or identity.
+    """
+
+    if type(settings) is not PlannerSettingsV1:
+        raise TypeError("settings must be an exact PlannerSettingsV1")
+    values = {item.name: getattr(settings, item.name) for item in fields(settings)}
+    for name in ("action_library", "a0_controller"):
+        payload = values[name]
+        if type(payload) is not CanonicalPayloadV1:
+            raise TypeError(f"settings.{name} must be an exact CanonicalPayloadV1")
+        values[name] = CanonicalPayloadV1(
+            domain=payload.domain,
+            canonical_json=payload.canonical_json,
+            sha256=payload.sha256,
+        )
+    return PlannerSettingsV1(**values)
+
+
+def require_planner_admission(
+    settings: PlannerSettingsV1,
+    *,
+    seed: int,
+    evidence_scope: str,
+    canonical_episode_verified: bool,
+) -> PlannerSettingsV1:
+    """Fail closed before a planner may construct or step an environment.
+
+    Registered 72-hour development runs and bounded noncanonical unit fixtures are
+    intentionally disjoint. This early gate mirrors the result-schema checks so a
+    long or unregistered rollout cannot be observed first and rejected only during
+    result serialization.
+    """
+
+    checked = revalidate_planner_settings(settings)
+    checked_seed = _require_int("seed", seed, minimum=0)
+    scope = _require_string("evidence_scope", evidence_scope)
+    canonical = _require_bool("canonical_episode_verified", canonical_episode_verified)
+    if scope not in EVIDENCE_SCOPES:
+        raise ValueError(f"unsupported evidence_scope: {scope}")
+    if scope == "noncanonical_unit_fixture":
+        if canonical:
+            raise ValueError(
+                "noncanonical unit fixtures cannot claim canonical verification"
+            )
+        if checked.expected_decisions > 8:
+            raise ValueError(
+                "noncanonical unit fixtures are limited to eight decisions"
+            )
+        return checked
+
+    if not canonical:
+        raise ValueError("privileged development requires canonical verification")
+    if checked_seed not in checked.registered_seeds:
+        raise ValueError("privileged development seed is not registered")
+    for name, expected in (
+        ("plant_config_sha256", PLANT_CONFIG_SHA256),
+        ("constraints_sha256", CONSTRAINTS_SHA256),
+        ("reward_weights_sha256", REWARD_WEIGHTS_SHA256),
+    ):
+        if getattr(checked, name) != expected:
+            raise ValueError(f"privileged development {name} is noncanonical")
+    if not any(
+        checked.episode_config_sha256 == episode_pair[1]
+        and checked.checkpoint_contract_digest == checkpoint_pair[1]
+        and _same_binary64(episode_pair[0], checkpoint_pair[0])
+        for episode_pair, checkpoint_pair in zip(
+            checked.episode_config_sha256_by_rate,
+            checked.checkpoint_contract_sha256_by_rate,
+            strict=True,
+        )
+    ):
+        raise ValueError(
+            "privileged development episode/checkpoint pair is unregistered"
+        )
+    if checked.expected_decisions != 288 or checked.expected_physics_steps != 4320:
+        raise ValueError("privileged development requires registered horizon/cadence")
+    return checked
 
 
 def planner_settings_preimage(settings: PlannerSettingsV1) -> dict[str, object]:
@@ -2842,39 +2939,14 @@ class FeasiblePlannerResultV1:
                         "retained A0 lineage does not match the A0 request"
                     )
         if self.evidence_scope == "privileged_offline_development":
-            if not self.canonical_episode_verified:
-                raise ValueError(
-                    "privileged development requires canonical verification"
-                )
-            if self.seed not in self.settings.registered_seeds:
-                raise ValueError("privileged development seed is not registered")
-            for name, expected in (
-                ("plant_config_sha256", PLANT_CONFIG_SHA256),
-                ("constraints_sha256", CONSTRAINTS_SHA256),
-                ("reward_weights_sha256", REWARD_WEIGHTS_SHA256),
-            ):
-                if getattr(self.settings, name) != expected:
-                    raise ValueError(f"privileged development {name} is noncanonical")
-            if not any(
-                self.settings.episode_config_sha256 == episode_pair[1]
-                and self.settings.checkpoint_contract_digest == checkpoint_pair[1]
-                and episode_pair[0] == checkpoint_pair[0]
-                for episode_pair, checkpoint_pair in zip(
-                    self.settings.episode_config_sha256_by_rate,
-                    self.settings.checkpoint_contract_sha256_by_rate,
-                    strict=True,
-                )
-            ):
-                raise ValueError(
-                    "privileged development episode/checkpoint pair is unregistered"
-                )
-            if (
-                self.settings.expected_decisions != 288
-                or self.settings.expected_physics_steps != 4320
-            ):
-                raise ValueError(
-                    "privileged development requires registered horizon/cadence"
-                )
+            if self.seed is None:
+                raise ValueError("privileged development requires a seed")
+            require_planner_admission(
+                self.settings,
+                seed=self.seed,
+                evidence_scope=self.evidence_scope,
+                canonical_episode_verified=self.canonical_episode_verified,
+            )
             if self.success and (
                 self.search.a0_cursor_validations != 72
                 or self.search.a0_injections != 71
@@ -2885,6 +2957,15 @@ class FeasiblePlannerResultV1:
             _validate_registered_terminal_scores(
                 (self.a0_incumbent, self.searched_finalist)
             )
+        else:
+            if self.canonical_episode_verified:
+                raise ValueError(
+                    "noncanonical unit fixtures cannot claim canonical verification"
+                )
+            if self.settings.expected_decisions > 8:
+                raise ValueError(
+                    "noncanonical unit fixtures are limited to eight decisions"
+                )
 
     def to_dict(self) -> dict[str, object]:
         result: dict[str, object] = {}
@@ -3459,6 +3540,9 @@ __all__ = [
     "planner_settings_preimage",
     "planner_artifact_from_dict",
     "planner_result_from_dict",
+    "raw_canonical_sha256",
+    "require_planner_admission",
+    "revalidate_planner_settings",
     "replay_binding_payload",
     "request_trace_payload",
     "require_sha256",

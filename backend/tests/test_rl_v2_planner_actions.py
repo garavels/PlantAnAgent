@@ -612,6 +612,9 @@ def _fake_relaxation_pair(
         canonical_episode_verified=False,
         checkpoint_contract_digest="b" * 64,
         exogenous_episode_sha256="c" * 64,
+        episode_manifest_json=canonical_json(
+            {"exogenous_episode_sha256": "c" * 64, "fixture": True}
+        ),
         physics_steps=physics_steps,
         dt_h=dt_h,
         solar_truth_sha256=_solar_sha256(solar),
@@ -694,6 +697,11 @@ def test_relaxation_binding_builds_exact_detached_payloads() -> None:
     assert binding.solar_available_kw == (12.0, 34.0)
     assert binding.solar_to_electrolyser_kw == (1.0, 2.0)
     assert binding.battery_to_electrolyser_kw == (0.5, 0.25)
+    assert binding.episode_manifest_json == model.episode_manifest_json
+    assert (
+        binding.episode_manifest_sha256
+        == hashlib.sha256(model.episode_manifest_json.encode("utf-8")).hexdigest()
+    )
     result_value = binding.relaxation_result.value()
     assert "elapsed_s" not in result_value
     assert binding.relaxation_witness.value() == result.witness.to_dict()
@@ -717,6 +725,26 @@ def test_relaxation_binding_builds_exact_detached_payloads() -> None:
     assert binding.relaxation_guidance.canonical_json == canonical_json(guidance)
     result.witness.solar_to_electrolyser_kw = (999.0, 999.0)
     assert binding.solar_to_electrolyser_kw == (1.0, 2.0)
+
+
+def test_relaxation_binding_rejects_unbound_episode_manifest() -> None:
+    model, result = _fake_relaxation_pair()
+    model.episode_manifest_json = canonical_json({"exogenous_episode_sha256": "d" * 64})
+    with pytest.raises(ValueError, match="episode manifest is not cross-bound"):
+        actions.bind_relaxation_guidance(
+            model,
+            result,
+            allow_noncanonical_fixture=True,
+        )
+
+    model, result = _fake_relaxation_pair()
+    model.episode_manifest_json = '{"z":1, "a":2}'
+    with pytest.raises(ValueError, match="not canonical JSON"):
+        actions.bind_relaxation_guidance(
+            model,
+            result,
+            allow_noncanonical_fixture=True,
+        )
 
 
 def test_binding_factory_cross_checks_projection_arrays_against_witness_bytes() -> None:
