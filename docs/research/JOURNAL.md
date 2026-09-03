@@ -1963,3 +1963,82 @@ invalidate the next cell's clean starting boundary.
 
 These corrections were made without opening a solver objective or plant outcome. The
 method is still pre-implementation at this boundary.
+
+## 2026-09-02 — Feasible-planner evidence schema implemented
+
+### Research purpose
+
+The first implementation slice turns the frozen feasible-planner protocol into an
+executable evidence contract before any registered search is allowed to run. This is a
+deliberate ordering constraint: a favorable planner outcome must not be able to influence
+which fields are retained, how ties are resolved, which failures disappear, or how the
+relaxed upper bound is connected to the exact-simulator result.
+
+### Implementation
+
+`planner_schema.py` now defines immutable versioned records for canonical payloads,
+action provenance, exact service fractions, terminal task scores, planner settings,
+search and runner failures, deterministic diagnostics, replay evidence, incumbent
+comparisons, core results, and runner artifacts. Every serialized payload has an exact
+field set and a domain-separated SHA-256 preimage. Strict reconstruction functions reject
+missing and additional JSON fields rather than silently accepting schema drift.
+
+The final comparator implements the registered ten-field delivery-first ordering. Service
+fractions use integer cross-products, binary64-sensitive fields are compared and bound by
+their exact packed representation where identity matters, and A0 wins every complete-score
+tie. A successful core can select a searched finalist only when its full score strictly
+exceeds the freshly replayed incumbent. Request, source, action-record, outcome, replay,
+settings, counter, result, source-snapshot, runtime, and artifact identities are connected
+as one validated graph rather than a collection of independent hashes.
+
+Registered development records receive additional fail-closed checks. The frozen default
+plant configuration is re-hashed before its methanation ratios are used to recompute the
+terminal methane-equivalent inventory from exact terminal truth. The embedded Part-I LP
+result, witness, certificate, normalized residuals, solve contract, and guidance vectors
+are structurally and numerically cross-bound to settings and episode identities. A small,
+explicit noncanonical-fixture scope remains available for unit tests because detached
+noncanonical JSON does not contain an arbitrary plant configuration from which the same
+physical equivalence can be reconstructed.
+
+Search diagnostics encode the registered edge, frontier, A0, replay, resource, and
+coordinate schedules. Review found that final finalist presence cannot reveal whether the
+pre-polish beam trace duplicated A0. The schema therefore admits exactly the two legal
+coordinate totals implied by the frozen algorithm: one or two coarse origins followed by
+one fine origin (1,260 or 1,440 trials at 72 hours), while retaining 1,440 as the ceiling.
+It does not infer an execution fact that the persisted schema cannot prove.
+
+Runner records enforce phase-dependent progress: a start-source failure cannot claim a
+child or runtime observation, a child failure requires complete start provenance, an
+end-source failure requires a validated core, and an artifact-serialization failure
+requires the complete graph. Evidence readiness additionally requires a successful
+privileged core, a valid physical bracket, identical clean start/end source snapshots,
+identical dependency-lock hashes, and runtime resource methods matching the registered
+settings. The future runner must still establish the external Git ancestry, working-file,
+and actual lock-file facts; JSON validation alone cannot observe the filesystem that
+produced it.
+
+### Adversarial review and validation
+
+Adversarial review closed cases in which a result could select A0 despite retaining a
+strictly better finalist, invent terminal feedstock value, mark an incomplete/over-budget
+search successful, admit arbitrary registered relaxation payloads, preserve invalid
+controller flags on generated actions, or retain A0 after a failure without binding it to
+the same settings and episode. Absolute POSIX and Windows paths are rejected in source
+snapshots, failure phase/code progress is checked, and registered successful payloads must
+carry the complete canonical identity graph.
+
+The final independent gate found three further cases before commit. An internally
+re-hashed successful LP graph could carry a primal--dual gap above the registered
+tolerance and an arbitrary numerical objective; successful validation now requires the
+gap to be at most `1e-5` kg and the objective to agree with the negative numerical primal
+within the same frozen objective-tolerance construction used by Part I. A one-origin
+polishing run could over-report accepted blocks under the two-origin ceiling; accepted
+blocks are now bounded by the origin count derived from its legal attempted-trial total.
+Source inventory paths now also reject traversal, Windows drive-relative/rooted forms,
+and the dot path. Finally, a successful search must have observed at least one live
+environment. Self-consistently re-hashed adversarial fixtures cover each rejection.
+
+The combined pure schema, action, state, and upper-bound suite passed 164 tests. Formatting,
+Python compilation, static type checking of the schema slice, and whitespace validation
+also passed. These checks did not call the LP solver and did not open any new full-horizon
+plant outcome. The registered six-cell development bracket therefore remains unopened.
