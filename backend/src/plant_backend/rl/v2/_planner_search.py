@@ -55,9 +55,10 @@ PayloadT = TypeVar("PayloadT")
 class PlannerSearchError(RuntimeError):
     """Stable algorithm-layer failure for translation by the public planner."""
 
-    def __init__(self, code: str, message: str) -> None:
+    def __init__(self, code: str, message: str, *, phase: str | None = None) -> None:
         super().__init__(message)
         self.code = code
+        self.phase = phase
 
 
 def _integer(name: str, value: object, *, minimum: int = 0) -> int:
@@ -1004,7 +1005,7 @@ def _validate_trial_lineage(
             )
 
 
-def _coordinate_sweep(
+def _coordinate_sweep_impl(
     port: PlannerSearchPortV1[CandidateT, PayloadT],
     base: SearchTraceV1[PayloadT],
     *,
@@ -1048,6 +1049,48 @@ def _coordinate_sweep(
             current = best_trial
             counters.coordinate_trials_accepted += 1
     return current
+
+
+def _coordinate_sweep(
+    port: PlannerSearchPortV1[CandidateT, PayloadT],
+    base: SearchTraceV1[PayloadT],
+    *,
+    expected_decisions: int,
+    block_decisions: int,
+    source_phase: Literal["coarse_polish", "fine_polish"],
+    counters: PlannerSearchCountersV1,
+) -> SearchTraceV1[PayloadT]:
+    """Attach the exact coordinate stage to otherwise generic sweep failures."""
+
+    try:
+        return _coordinate_sweep_impl(
+            port,
+            base,
+            expected_decisions=expected_decisions,
+            block_decisions=block_decisions,
+            source_phase=source_phase,
+            counters=counters,
+        )
+    except PlannerSearchError as exc:
+        if exc.phase is None:
+            exc.phase = source_phase
+        raise
+    except MemoryError as exc:
+        raise PlannerSearchError(
+            "memory_error",
+            str(exc) or type(exc).__name__,
+            phase=source_phase,
+        ) from exc
+    except Exception as exc:
+        # Plant-runtime errors already carry a more precise phase and code.  A
+        # plain implementation error is a coordinate-stage failure.
+        if getattr(exc, "phase", None) in {"coarse_polish", "fine_polish"}:
+            raise
+        raise PlannerSearchError(
+            "coordinate_error",
+            str(exc) or type(exc).__name__,
+            phase=source_phase,
+        ) from exc
 
 
 def polish_traces(

@@ -1242,6 +1242,43 @@ def test_byte_identical_beam_origin_is_elided_and_equal_trials_retain_a0() -> No
     assert counters.coordinate_trials_accepted == 0
 
 
+def test_coordinate_failure_retains_the_exact_fine_stage() -> None:
+    class FineFailurePort(_FakePort):
+        def coordinate_trial(
+            self,
+            base: SearchTraceV1[bytes],
+            *,
+            start_decision: int,
+            stop_decision: int,
+            template_id: int,
+            source_phase: Literal["coarse_polish", "fine_polish"],
+        ) -> SearchTraceV1[bytes]:
+            if source_phase == "fine_polish":
+                raise ValueError("synthetic fine-stage failure")
+            return super().coordinate_trial(
+                base,
+                start_decision=start_decision,
+                stop_decision=stop_decision,
+                template_id=template_id,
+                source_phase=source_phase,
+            )
+
+    with pytest.raises(
+        PlannerSearchError,
+        match="synthetic fine-stage failure",
+    ) as caught:
+        polish_traces(
+            FineFailurePort(),
+            a0=_trace(_a0_records(4)),
+            beam_winner=None,
+            expected_decisions=4,
+            counters=PlannerSearchCountersV1(),
+        )
+
+    assert caught.value.code == "coordinate_error"
+    assert caught.value.phase == "fine_polish"
+
+
 def test_byte_identical_origins_with_different_scores_fail_closed() -> None:
     a0 = _trace(_a0_records(4), delivered=1.0)
     beam = _trace(

@@ -1486,9 +1486,10 @@ class _ResourceGuardV1:
     def peak_rss_bytes(self) -> int:
         return self._peak_rss_bytes
 
-    def elapsed_ns(self) -> int:
+    def elapsed_ns(self, *, phase: str) -> int:
         self._require_open()
-        return self._elapsed_ns(phase="input_validation")
+        self._validate_phase(phase)
+        return self._elapsed_ns(phase=phase)
 
     def _elapsed_ns(self, *, phase: str) -> int:
         now = _integer("clock reading", self._clock_ns())

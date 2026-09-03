@@ -2553,3 +2553,75 @@ or write evidence externally. The remaining adversarial gate must also cover exa
 settlement, sunrise, charge/discharge-throughput, and final-partial-hold replay cases before
 code freeze. No optimiser invocation, registered rate/seed outcome, 72-hour trajectory, or
 holdout was opened; the six preregistered development cells remain unopened.
+
+## 2026-09-03 — Replay evidence and fail-closed planner core assembled
+
+### Evidence boundary and selection
+
+The seventh feasible-planner slice adds the private `_planner_core.py` orchestration
+boundary. Search states and terminal candidates still cannot become evidence directly.
+`build_replay_evidence` reconstructs and revalidates the admitted plant context, validates
+both exact terminal snapshots against the same plant configuration, requires generation and
+fresh-replay outcome bytes plus complete action-record bytes to agree, and builds the frozen
+settings/guidance/manifest/exogenous/checkpoint replay binding. The resulting
+`ReplayEvidenceV1` contains only detached immutable records and canonical payloads.
+
+`execute_feasible_planner` now performs the complete admitted control flow: exact A0
+generation and independent replay; primary macro beam; the frozen coarse/fine coordinate
+sweeps; one fresh replay only when the post-fine concrete request bytes differ from A0; exact
+ten-field score selection; and construction of the Part-I incumbent comparison. A0 wins every
+complete-score tie. A byte-identical post-fine trace is omitted and reuses the already
+verified A0 replay, while a distinct searched finalist remains recorded even if A0 ultimately
+wins. The bracket reads the non-null dual-certified ceiling and the frozen optimality
+tolerance from the exact embedded relaxation-result payload. It never clamps a bridge
+violation or presents the relaxation witness as a feasible schedule.
+
+The successful result embeds the complete validated relaxation graph, settings, episode and
+checkpoint identities, both applicable replay records, deterministic counters, dynamic
+resource observations, and the immutable comparison. It is canonically serialized, checked
+against the final core resource boundary, reconstructed with the sampled dynamic diagnostics,
+serialized again, and checked once more. Source provenance is intentionally still absent:
+the core truthfully retains `evidence_ready=False` and the declared provenance gap for the
+external runner to close.
+
+### Stable failures and lifecycle findings
+
+Every operational exception is now translated into a frozen phase/code/message/counter
+record instead of escaping as an implementation-specific exception. Runtime resource errors
+retain their exact observed value; search-layer errors retain their stable code; memory
+failures have a dedicated code; and remaining exceptions use a phase-specific fail-closed
+default. A failed result has no selected role, feasible-planner value, searched finalist, or
+comparison. A completely replay-verified A0 may remain diagnostic after a later search
+failure, but partial A0 work is never published. Inputs that fail revalidation publish no
+settings, manifest, relaxation, or A0 identity rather than laundering values that were never
+admitted.
+
+Port and guard cleanup runs on success and failure. The original integrity error remains
+authoritative if cleanup also fails. A clean success is returned only after the search port
+has released every candidate and rolling cursor, the resource guard has observed no remaining
+reservation, and the complete result graph has passed its own constructor plus canonical
+serialization. Timing samples now require an explicit failure phase: A0 replay, finalist
+replay, and result serialization can no longer turn a backwards or broken clock into a
+misleading `input_validation` failure. The generic coordinate layer also carries the exact
+coarse or fine stage through algorithm, memory, and otherwise untyped implementation errors.
+
+### Verification and evidence boundary
+
+New exact-plant regressions exercise successful core assembly, outcome-byte parity, selection
+and bracket construction, finalist replay-counter agreement, search-failure translation with
+retained verified A0, pre-admission input mutation with null identities, partial-A0 failure,
+A0 descriptor mutation, and replay-clock phase attribution. An outcome-free algorithmic test
+proves that a failure beginning in the fine sweep is labeled `fine_polish`, not
+`coarse_polish`. The focused search/runtime suite passes **60 tests**; the adjacent planner
+schema, action, state, search, runtime, and upper-bound gate passes **245 tests**. The full
+repository passes **860 tests with 2 skips** and only the existing Starlette `TestClient`
+deprecation warning. Formatting, strict targeted type checking, Python compilation, and
+whitespace validation pass.
+
+All newly observed plant outcomes remain the explicit two-decision noncanonical fixture and
+its structural no-solver relaxation witness. No LP solver was called, no registered seed/rate
+cell or 72-hour trajectory was opened, and no holdout was inspected. The next slice must put
+this core behind a fresh child process, collect exact clean start/end source and `uv.lock`
+boundaries, record runtime versions, apply the external 5,400-second watchdog, and atomically
+write then reopen a validated artifact outside the repository. The remaining physical
+boundary regressions must pass before the registered six-cell code freeze.

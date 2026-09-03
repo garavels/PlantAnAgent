@@ -12,10 +12,12 @@ from plant_sim import Action, PlantConfig, PlantState, SolarArray
 
 from plant_backend.controllers.base import Constraints
 from plant_backend.rl.v2 import _planner_actions as actions
+from plant_backend.rl.v2 import _planner_core as planner_core
 from plant_backend.rl.v2 import _planner_port as planner_port
 from plant_backend.rl.v2 import _planner_runtime as runtime
 from plant_backend.rl.v2._planner_search import (
     PlannerSearchCountersV1,
+    PlannerSearchError,
     polish_traces,
     run_primary_beam,
 )
@@ -806,10 +808,10 @@ def test_exact_a0_port_beam_polish_and_fresh_replay_integrate_on_tiny_plant() ->
             expected_decisions=admission.settings.expected_decisions,
             counters=counters,
         )
-        replayed = port.replay_finalist(polished)
-        replayed.validate_for_config(config)
-        assert replayed.request_trace == polished.payload.request_trace
-        assert replayed.metrics == polished.payload.metrics
+        fresh_replay = port.replay_finalist(polished)
+        fresh_replay.validate_for_config(config)
+        assert fresh_replay.snapshot.request_trace == polished.payload.request_trace
+        assert fresh_replay.snapshot.metrics == polished.payload.metrics
         assert counters.attempted_edges == 15
         assert counters.completed_edges == counters.generated_candidates == 15
         assert counters.completed_macro_depths == 1
@@ -824,6 +826,144 @@ def test_exact_a0_port_beam_polish_and_fresh_replay_integrate_on_tiny_plant() ->
         port.close()
         guard.close()
     assert guard.live_environments == guard.reserved_slots == 0
+
+
+def test_core_assembles_replay_evidence_selection_and_bracket() -> None:
+    config, episode, constraints, weights, admission = _runtime_fixture()
+    inputs = planner_port.PlannerPlantInputsV1(
+        config=config,
+        episode_config=episode,
+        constraints=constraints,
+        weights=weights,
+        admission=admission,
+    )
+
+    result = planner_core.execute_feasible_planner(
+        inputs,
+        start_ns=100,
+        clock_ns=lambda: 100,
+        peak_rss_raw=lambda: 0,
+        platform_system=lambda: "Darwin",
+    )
+
+    assert result.success is True and result.failure is None
+    assert result.a0_incumbent is not None
+    assert result.a0_incumbent.generation_outcome.canonical_json == (
+        result.a0_incumbent.replay_outcome.canonical_json
+    )
+    assert result.selected_role in {"a0_incumbent", "searched_finalist"}
+    assert result.comparison is not None
+    assert result.comparison.selected_role == result.selected_role
+    assert result.search.termination_reason == "completed"
+    assert result.search.fresh_finalist_replay_decisions == (
+        2 if result.searched_finalist is not None else 0
+    )
+    assert result.deterministic_result_sha256
+
+
+def test_core_translates_search_failure_and_retains_only_verified_a0(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config, episode, constraints, weights, admission = _runtime_fixture()
+    inputs = planner_port.PlannerPlantInputsV1(
+        config=config,
+        episode_config=episode,
+        constraints=constraints,
+        weights=weights,
+        admission=admission,
+    )
+
+    def fail_beam(*args: object, **kwargs: object) -> object:
+        del args, kwargs
+        raise PlannerSearchError("search_incomplete", "injected beam failure")
+
+    monkeypatch.setattr(planner_core, "run_primary_beam", fail_beam)
+    result = planner_core.execute_feasible_planner(
+        inputs,
+        start_ns=100,
+        clock_ns=lambda: 100,
+        peak_rss_raw=lambda: 0,
+        platform_system=lambda: "Darwin",
+    )
+
+    assert result.success is False
+    assert result.failure is not None
+    assert result.failure.phase == "beam_search"
+    assert result.failure.code == "search_incomplete"
+    assert result.failure.message == "injected beam failure"
+    assert result.a0_incumbent is not None
+    assert result.searched_finalist is None
+    assert result.selected_role is None and result.comparison is None
+    assert result.search.a0_generation_decisions == 2
+    assert result.search.a0_evidence_replay_decisions == 2
+
+
+def test_core_input_failure_publishes_no_unvalidated_identity() -> None:
+    config, episode, constraints, weights, admission = _runtime_fixture()
+    inputs = planner_port.PlannerPlantInputsV1(
+        config=config,
+        episode_config=episode,
+        constraints=constraints,
+        weights=weights,
+        admission=admission,
+    )
+    object.__setattr__(inputs, "config", replace(config, dt_s=30.0))
+
+    result = planner_core.execute_feasible_planner(
+        inputs,
+        start_ns=100,
+        clock_ns=lambda: 100,
+        peak_rss_raw=lambda: 0,
+        platform_system=lambda: "Darwin",
+    )
+
+    assert result.success is False
+    assert result.failure is not None
+    assert (result.failure.phase, result.failure.code) == (
+        "input_validation",
+        "invalid_input",
+    )
+    assert result.settings is None
+    assert result.manifest_sha256 is None
+    assert result.a0_incumbent is None
+    assert result.search.max_live_environments_observed == 0
+
+
+def test_core_discards_partial_a0_on_generation_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config, episode, constraints, weights, admission = _runtime_fixture()
+    inputs = planner_port.PlannerPlantInputsV1(
+        config=config,
+        episode_config=episode,
+        constraints=constraints,
+        weights=weights,
+        admission=admission,
+    )
+
+    def fail_a0(*args: object, **kwargs: object) -> object:
+        del args, kwargs
+        raise runtime.PlannerRuntimeError(
+            phase="a0_generation",
+            code="a0_generation_error",
+            message="injected A0 failure",
+        )
+
+    monkeypatch.setattr(planner_core, "capture_a0_evidence", fail_a0)
+    result = planner_core.execute_feasible_planner(
+        inputs,
+        start_ns=100,
+        clock_ns=lambda: 100,
+        peak_rss_raw=lambda: 0,
+        platform_system=lambda: "Darwin",
+    )
+
+    assert result.success is False
+    assert result.failure is not None
+    assert result.failure.phase == "a0_generation"
+    assert result.failure.code == "a0_generation_error"
+    assert result.settings == admission.settings
+    assert result.a0_incumbent is None
 
 
 def test_a0_cursor_injection_and_coordinate_fixed_regions_use_exact_states() -> None:
@@ -1007,13 +1147,67 @@ def test_a0_descriptor_mutation_fails_before_step_and_releases_environment(
             return object()
 
     monkeypatch.setattr(planner_port, "LegacyHeuristicControllerV2", MutatingA0)
-    with pytest.raises(ValueError, match="descriptor disagrees"):
+    with pytest.raises(
+        runtime.PlannerRuntimeError,
+        match="descriptor disagrees",
+    ) as captured:
         planner_port.capture_a0_evidence(
             inputs,
             guard=guard,
             counters=counters,
         )
+    assert captured.value.phase == "a0_generation"
+    assert captured.value.code == "a0_generation_error"
     assert counters.a0_generation_decisions == 0
+    assert guard.live_environments == guard.reserved_slots == 0
+    guard.close()
+
+
+def test_a0_replay_timing_failure_keeps_the_replay_phase(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config, episode, constraints, weights, admission = _runtime_fixture()
+    counters = PlannerSearchCountersV1()
+    guard = runtime._ResourceGuardV1(
+        settings=admission.settings,
+        counters=counters,
+        start_ns=100,
+        clock_ns=lambda: 100,
+        peak_rss_raw=lambda: 0,
+        platform_system=lambda: "Darwin",
+    )
+    inputs = planner_port.PlannerPlantInputsV1(
+        config=config,
+        episode_config=episode,
+        constraints=constraints,
+        weights=weights,
+        admission=admission,
+    )
+
+    def fail_elapsed(
+        self: runtime._ResourceGuardV1,
+        *,
+        phase: str,
+    ) -> int:
+        del self
+        raise runtime.PlannerRuntimeError(
+            phase=phase,
+            code="invalid_input",
+            message="synthetic clock failure",
+        )
+
+    monkeypatch.setattr(runtime._ResourceGuardV1, "elapsed_ns", fail_elapsed)
+    with pytest.raises(runtime.PlannerRuntimeError) as captured:
+        planner_port.capture_a0_evidence(
+            inputs,
+            guard=guard,
+            counters=counters,
+        )
+
+    assert captured.value.phase == "a0_replay"
+    assert captured.value.code == "invalid_input"
+    assert counters.a0_generation_decisions == 2
+    assert counters.a0_evidence_replay_decisions == 0
     assert guard.live_environments == guard.reserved_slots == 0
     guard.close()
 

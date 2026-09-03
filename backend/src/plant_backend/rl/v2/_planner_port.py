@@ -20,6 +20,7 @@ from ._planner_runtime import (
     A0GenerationV1,
     PlannerCandidateRegistryV1,
     PlannerRuntimeAdmissionV1,
+    PlannerRuntimeError,
     PlantPlannerCandidateV1,
     TerminalSnapshotV1,
     _EnvironmentReservationV1,
@@ -77,6 +78,22 @@ def _bool(name: str, value: object) -> bool:
     if not isinstance(value, bool):
         raise TypeError(f"{name} must be a bool")
     return value
+
+
+def _raise_operation_error(
+    *,
+    phase: str,
+    default_code: str,
+    error: Exception,
+) -> None:
+    if isinstance(error, PlannerRuntimeError):
+        raise error
+    code = "memory_error" if isinstance(error, MemoryError) else default_code
+    raise PlannerRuntimeError(
+        phase=phase,
+        code=code,
+        message=str(error) or type(error).__name__,
+    ) from error
 
 
 def _same_binary64(left: float, right: float) -> bool:
@@ -511,6 +528,7 @@ class A0EvidenceV1:
     generation: A0GenerationV1
     evidence_snapshot: TerminalSnapshotV1
     replay_prefix_state_bytes: tuple[bytes, ...]
+    replay_elapsed_ns: int
 
     def __post_init__(self) -> None:
         self._validate()
@@ -557,6 +575,29 @@ class A0EvidenceV1:
                 )
         if prefixes != self.generation.prefix_state_bytes:
             raise ValueError("A0 generation and replay macro states differ")
+        _integer("replay_elapsed_ns", self.replay_elapsed_ns)
+
+
+@dataclass(frozen=True, slots=True)
+class FreshReplayV1:
+    """One replayed terminal snapshot plus non-deterministic wall timing."""
+
+    snapshot: TerminalSnapshotV1
+    elapsed_ns: int
+
+    def __post_init__(self) -> None:
+        if type(self.snapshot) is not TerminalSnapshotV1:
+            raise TypeError("snapshot must be an exact TerminalSnapshotV1")
+        self.snapshot.validate()
+        object.__setattr__(
+            self,
+            "elapsed_ns",
+            _integer("elapsed_ns", self.elapsed_ns),
+        )
+
+    def validate_for_config(self, config: PlantConfig) -> None:
+        self.snapshot.validate_for_config(config)
+        _integer("elapsed_ns", self.elapsed_ns)
 
 
 def capture_a0_evidence(
@@ -567,32 +608,59 @@ def capture_a0_evidence(
 ) -> A0EvidenceV1:
     """Generate exact A0 once and independently replay it as evidence."""
 
-    if type(inputs) is not PlannerPlantInputsV1:
-        raise TypeError("inputs must be an exact PlannerPlantInputsV1")
-    if type(guard) is not _ResourceGuardV1:
-        raise TypeError("guard must be an exact _ResourceGuardV1")
-    if type(counters) is not PlannerSearchCountersV1:
-        raise TypeError("counters must be exact PlannerSearchCountersV1")
-    if guard._counters is not counters:
-        raise ValueError(
-            "A0 counters must be the resource guard's exact counter object"
+    try:
+        if type(inputs) is not PlannerPlantInputsV1:
+            raise TypeError("inputs must be an exact PlannerPlantInputsV1")
+        if type(guard) is not _ResourceGuardV1:
+            raise TypeError("guard must be an exact _ResourceGuardV1")
+        if type(counters) is not PlannerSearchCountersV1:
+            raise TypeError("counters must be exact PlannerSearchCountersV1")
+        if guard._counters is not counters:
+            raise ValueError(
+                "A0 counters must be the resource guard's exact counter object"
+            )
+        if any(_counter_values(counters).values()):
+            raise ValueError("A0 capture requires a fresh zeroed counter record")
+        inputs.validate()
+        require_attested_binding(inputs.admission.binding)
+    except Exception as exc:
+        _raise_operation_error(
+            phase="input_validation",
+            default_code="invalid_input",
+            error=exc,
         )
-    if any(_counter_values(counters).values()):
-        raise ValueError("A0 capture requires a fresh zeroed counter record")
-    inputs.validate()
-    require_attested_binding(inputs.admission.binding)
-    generation = _capture_a0_generation(inputs, guard, counters)
-    replay, prefixes = _replay_records(
-        inputs,
-        guard,
-        counters,
-        records=generation.action_records,
-        phase="a0_replay",
-    )
+        raise AssertionError("unreachable")  # pragma: no cover
+    try:
+        generation = _capture_a0_generation(inputs, guard, counters)
+    except Exception as exc:
+        _raise_operation_error(
+            phase="a0_generation",
+            default_code="a0_generation_error",
+            error=exc,
+        )
+        raise AssertionError("unreachable")  # pragma: no cover
+    replay_started_ns = guard.elapsed_ns(phase="a0_replay")
+    try:
+        replay, prefixes = _replay_records(
+            inputs,
+            guard,
+            counters,
+            records=generation.action_records,
+            phase="a0_replay",
+        )
+    except Exception as exc:
+        _raise_operation_error(
+            phase="a0_replay",
+            default_code="a0_replay_mismatch",
+            error=exc,
+        )
+        raise AssertionError("unreachable")  # pragma: no cover
+    replay_elapsed_ns = guard.elapsed_ns(phase="a0_replay") - replay_started_ns
     evidence = A0EvidenceV1(
         generation=generation,
         evidence_snapshot=replay,
         replay_prefix_state_bytes=prefixes,
+        replay_elapsed_ns=replay_elapsed_ns,
     )
     evidence.validate_for_config(inputs.config)
     return evidence
@@ -957,7 +1025,7 @@ class PlantPlannerSearchPortV1(
     def replay_finalist(
         self,
         trace: SearchTraceV1[TerminalSnapshotV1],
-    ) -> TerminalSnapshotV1:
+    ) -> FreshReplayV1:
         self._require_open()
         if self._pending_coordinate_phase is not None:
             raise ValueError("finalist replay requires the coordinate checkpoint")
@@ -966,6 +1034,7 @@ class PlantPlannerSearchPortV1(
                 "finalist replay requires all search environments released"
             )
         self._validate_trace(trace)
+        replay_started_ns = self._guard.elapsed_ns(phase="finalist_replay")
         replayed, _ = _replay_records(
             self._inputs,
             self._guard,
@@ -973,12 +1042,20 @@ class PlantPlannerSearchPortV1(
             records=trace.action_records,
             phase="finalist_replay",
         )
+        replay_elapsed_ns = (
+            self._guard.elapsed_ns(phase="finalist_replay") - replay_started_ns
+        )
         _validate_replay_match(
             trace.payload,
             replayed,
             config=self._inputs.config,
         )
-        return replayed
+        result = FreshReplayV1(
+            snapshot=replayed,
+            elapsed_ns=replay_elapsed_ns,
+        )
+        result.validate_for_config(self._inputs.config)
+        return result
 
     def release(self, candidate: PlantPlannerCandidateV1) -> None:
         self._require_open()
@@ -1088,6 +1165,7 @@ class PlantPlannerSearchPortV1(
 
 __all__ = [
     "A0EvidenceV1",
+    "FreshReplayV1",
     "PlannerPlantInputsV1",
     "PlantPlannerSearchPortV1",
     "capture_a0_evidence",
