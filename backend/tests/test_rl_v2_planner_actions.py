@@ -79,6 +79,20 @@ def _env(
     )
 
 
+def test_public_binding_attestation_fails_closed_before_action_generation() -> None:
+    binding = _binding()
+
+    assert actions.require_attested_binding(binding) is binding
+
+    copied = copy.copy(binding)
+    with pytest.raises(ValueError, match="validated factory"):
+        actions.require_attested_binding(copied)
+
+    object.__setattr__(binding, "dt_h", math.nextafter(binding.dt_h, math.inf))
+    with pytest.raises(ValueError, match="factory attestation"):
+        actions.require_attested_binding(binding)
+
+
 def test_frozen_action_library_and_a0_payloads_are_exact() -> None:
     assert tuple(item.id for item in actions.ACTION_TEMPLATES) == tuple(range(15))
     assert [item.name for item in actions.ACTION_TEMPLATES] == [

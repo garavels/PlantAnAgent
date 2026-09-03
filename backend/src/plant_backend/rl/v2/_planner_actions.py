@@ -587,6 +587,18 @@ def _require_attested_binding(binding: object) -> RelaxationBindingV1:
     return binding
 
 
+def require_attested_binding(binding: object) -> RelaxationBindingV1:
+    """Revalidate and return one factory-attested relaxation binding.
+
+    The plant-specific planner runtime calls this before generating A0 so a
+    copied, constructed, replaced, or mutated privileged binding fails before
+    any environment outcome is observed.  The public boundary deliberately
+    exposes validation, not the process-local attestation registry.
+    """
+
+    return _require_attested_binding(binding)
+
+
 def _model_block_sizes(model: object) -> dict[str, int]:
     try:
         blocks = tuple(model.blocks)  # type: ignore[attr-defined]
@@ -1380,6 +1392,7 @@ __all__ = [
     "generate_action_record",
     "projection_means",
     "proportional_close",
+    "require_attested_binding",
     "route_targets",
     "target_powers",
     "template_descriptor",

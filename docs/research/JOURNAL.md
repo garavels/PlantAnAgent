@@ -2242,3 +2242,21 @@ whitespace validation also passed. These are synthetic algorithm tests only: no 
 environment was imported or stepped, no solver was called, and no registered or new
 full-horizon outcome was inspected. The six-cell development bracket therefore remains
 unopened.
+
+## 2026-09-02 — Pre-runtime binding-attestation boundary exposed
+
+The runtime API audit found one ordering hazard before plant integration: relaxation
+bindings were fully re-attested only inside action generation. That was sufficient to
+protect each generated action but could not enforce the protocol's stronger requirement
+that a copied, constructed, replaced, or mutated binding fail before A0 generation begins.
+The action layer now exposes a validation-only `require_attested_binding` function. It is
+a direct delegate to the existing private identity, process-local registry, canonical
+payload-identity, and full-seal checks; it exposes neither the registry nor its factory
+token and performs no environment or solver operation.
+
+An independent review approved the boundary and required the runtime tests to prove call
+ordering with a forged binding and A0 spies, not merely validation behavior in isolation.
+The action test accepts the exact factory object and rejects both a copy and a one-ULP
+mutation. The focused action suite passed 40 tests and the combined search/schema/action/
+state/upper-bound gate passed 196 tests. No plant step, solver call, or outcome inspection
+was introduced.
