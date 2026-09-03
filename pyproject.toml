@@ -18,6 +18,9 @@ train = ["stable-baselines3>=2.4,<3"]
 # Everything in the HEPA package that does not touch a tensor (telemetry schema,
 # event definitions, labels, dataset format, collection, metrics) is torch-free.
 hepa = ["torch>=2.6,<3"]
+# Sparse HiGHS-backed LP/MILP research comparators. Kept opt-in so the plant,
+# API and ordinary test suite do not acquire an optimisation runtime dependency.
+optimisation = ["scipy>=1.14,<2"]
 
 [tool.uv]
 package = false
