@@ -2404,3 +2404,66 @@ again at the commit boundary. These checks instantiate only structural two-decis
 fixtures. No environment was stepped, no optimisation solver was called, and no registered
 or full-horizon outcome was inspected. The six preregistered development cells remain
 unopened.
+
+## 2026-09-03 — Exact reset, stepping, ranking, and terminal runtime completed
+
+### Trusted pre-rollout identity
+
+The plant runtime now has a single detached `PlannerRuntimeAdmissionV1` constructed before
+any `PlantEnvV2` reset. Admission requires exact static input types and identities, the
+attested Part-I relaxation binding, the registered/noncanonical scope gate, an independently
+regenerated episode from configuration plus seed, the authoritative rebuilt checkpoint
+contract, and the exact physics-step solar truth used by the relaxation. It stores canonical
+episode, checkpoint, and immutable environment-manifest bytes and their hashes. Revalidation
+reconstructs these contracts rather than trusting frozen Python objects, so a low-level
+mutation or a digest recomputed over changed but semantically inadmissible bytes fails.
+
+Every fresh reset is checked against that admission before it can be stepped. The check
+covers the exact sampled episode and seed; static configuration hashes; rebuilt and cached
+checkpoint bytes; commitment-profile identity; horizon, cadence, simulator, metric, and
+environment counters; weather-tape identity and coverage; every solar-truth coordinate;
+the fault-free registry; initial control boundary and previous-interval state; initial
+metric values; frozen delivery schedule and zero accounting; and the complete immutable
+environment manifest. This creates the concrete bridge from Part-I upper-bound evidence to
+each exact-simulator branch without learning episode identity from the branch being checked.
+
+### Exact plant operations
+
+`step_action_record` reconstructs each exact action record, enforces its zero-based decision
+index, applies the five requested values and stored controller-invalid flag through the real
+`PlantEnvV2.step_action` safety/dynamics path, checks the exact decision and physics-step
+transition including final partial holds, rejects truncation or post-terminal use, and updates
+the shared left-to-right battery-throughput accumulator only after a successful step.
+
+Intermediate rank extraction now implements the frozen next-deadline readiness formula from
+authoritative simulator truth, delivery ledger, active constraint cap, exact commitment
+snapshot, episode metrics, and planner throughput. Source counters and physical values are
+validated before arithmetic, including bool/int alias rejection, finiteness, non-negativity,
+positive conversion constants and remaining time, and exact horizon agreement.
+
+At true termination, `capture_terminal_snapshot` detaches the complete request/source/action
+trace, metrics, simulator truth, telemetry, ordered delivery audit, task score, throughput,
+counts, termination flags, and outcome fingerprint. The existing terminal validator binds
+every score component back to its authoritative source and the exact plant conversion ratios.
+The runtime now additionally rejects subclasses of protocol records and payloads, preventing
+an object with valid-looking fields from overriding `to_dict()` or `value()` during evidence
+construction or later revalidation.
+
+### Ownership cleanup and adversarial review
+
+`PlannerCandidateRegistryV1` retains the authoritative candidate, reservation token, and
+original environment outside mutable candidate metadata. Normal validation still detects a
+swapped environment, altered trace, throughput, depth, flags, or counters; cleanup deliberately
+does not re-endorse those fields and releases the original guard lease even after candidate
+corruption. Counter checks also reject non-integral aliases and any state beyond the declared
+horizon. This closes the remaining lifecycle obligation identified in the prior runtime-core
+review and gives the forthcoming concrete search port one cleanup authority.
+
+The focused runtime suite passes **21 tests**, and the adjacent runtime/schema/action gate
+passes **119 tests**. The full repository passes **849 tests with 2 skips**; the sole warning is
+the already-known Starlette `TestClient` deprecation. Formatting, strict targeted type checking,
+Python compilation, and whitespace validation pass. The tests reset and step only an explicit
+two-decision noncanonical exact-simulator fixture built around a structural relaxation witness;
+they call no optimisation solver. No registered seed/rate cell, 72-hour trajectory, new
+full-horizon terminal result, or holdout outcome was opened. The six preregistered development
+cells remain unopened.

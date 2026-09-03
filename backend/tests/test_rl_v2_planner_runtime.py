@@ -2,28 +2,37 @@ from __future__ import annotations
 
 from dataclasses import replace
 import hashlib
+import json
 import math
+import struct
+from types import SimpleNamespace
 
 import pytest
-from plant_sim import Action, PlantConfig, PlantState
+from plant_sim import Action, PlantConfig, PlantState, SolarArray
 
+from plant_backend.controllers.base import Constraints
+from plant_backend.rl.v2 import _planner_actions as actions
 from plant_backend.rl.v2 import _planner_runtime as runtime
 from plant_backend.rl.v2._planner_search import PlannerSearchCountersV1
-from plant_backend.rl.v2.config import EpisodeConfigV2
+from plant_backend.rl.v2.config import EpisodeConfigV2, sample_episode
+from plant_backend.rl.v2.contract import describe_checkpoint_contract
 from plant_backend.rl.v2.env import PlantEnvV2
 from plant_backend.rl.v2.metrics import EpisodeMetricsV2
 from plant_backend.rl.v2.planner_schema import (
     A0_CONTROLLER_SHA256,
     ActionRecordV1,
+    CanonicalPayloadV1,
     FinalScoreV1,
     action_record_trace_payload,
     build_planner_settings,
     canonical_json,
     canonical_payload,
     outcome_payload,
+    raw_canonical_sha256,
     request_trace_payload,
     source_trace_payload,
 )
+from plant_backend.rl.v2.reward import RewardWeightsV2
 
 
 SHA_A = "1" * 64
@@ -54,7 +63,188 @@ def _settings():
     )
 
 
-def _record(*, battery_share: float = 0.0) -> ActionRecordV1:
+class _FixtureWitness:
+    pass
+
+
+def _runtime_fixture(*, seed: int = 7) -> tuple[
+    PlantConfig,
+    EpisodeConfigV2,
+    Constraints,
+    RewardWeightsV2,
+    runtime.PlannerRuntimeAdmissionV1,
+]:
+    config = PlantConfig()
+    episode_config = NONCANONICAL_TWO_DECISIONS
+    constraints = Constraints()
+    weights = RewardWeightsV2()
+    sampled = sample_episode(episode_config, config, seed=seed)
+    solar = SolarArray(config.solar)
+    start_s = sampled.scenario.start_hour * 3_600.0
+    solar_available = tuple(
+        solar.clear_sky_kw(start_s + step * config.dt_s)
+        * sampled.weather.tape.for_interval(step)
+        for step in range(sampled.physics_steps)
+    )
+    block_sizes = {
+        "solar_to_battery_kw": sampled.physics_steps,
+        "solar_to_electrolyser_kw": sampled.physics_steps,
+        "solar_to_dac_kw": sampled.physics_steps,
+        "solar_to_methanator_kw": sampled.physics_steps,
+        "battery_to_electrolyser_kw": sampled.physics_steps,
+        "curtailed_solar_kw": sampled.physics_steps,
+        "h2_produced_kg": sampled.physics_steps,
+        "co2_captured_kg": sampled.physics_steps,
+        "ch4_produced_kg": sampled.physics_steps,
+        "battery_energy_kwh": sampled.physics_steps + 1,
+        "h2_inventory_kg": sampled.physics_steps + 1,
+        "co2_inventory_kg": sampled.physics_steps + 1,
+        "ch4_inventory_kg": sampled.physics_steps + 1,
+        "delivered_ch4_kg": 1,
+    }
+    blocks = []
+    start = 0
+    for name, size in block_sizes.items():
+        blocks.append(SimpleNamespace(name=name, start=start, size=size))
+        start += size
+    witness = _FixtureWitness()
+    for name, size in block_sizes.items():
+        if name != "delivered_ch4_kg":
+            setattr(witness, name, (0.0,) * size)
+    witness.normalized_variables = (0.0,) * start
+    witness.deliveries = ()
+
+    def witness_to_dict() -> dict[str, object]:
+        return {
+            "normalized_variables": list(witness.normalized_variables),
+            **{
+                name: list(getattr(witness, name))
+                for name in block_sizes
+                if name != "delivered_ch4_kg"
+            },
+            "deliveries": [],
+            "delivered_kg": 0.0,
+            "residuals": {"fixture": 0.0},
+        }
+
+    witness.to_dict = witness_to_dict
+    solar_sha256 = hashlib.sha256()
+    solar_sha256.update(b"plantanagent-v2-solar-kw-ieee754-v1\0")
+    solar_sha256.update(len(solar_available).to_bytes(8, "big"))
+    for value in solar_available:
+        solar_sha256.update(struct.pack(">d", value))
+    model = SimpleNamespace(
+        schema_version=1,
+        model_kind="v2-perfect-truth-physics-step-delivery-relaxation",
+        model_sha256=SHA_A,
+        preserve_initial_endowment=False,
+        is_task_upper_bound=True,
+        canonical_episode_verified=False,
+        checkpoint_contract_digest=describe_checkpoint_contract(
+            plant=config,
+            episode=episode_config,
+            constraints=constraints,
+            weights=weights,
+        )["checkpoint_contract_digest"],
+        episode_manifest_json=canonical_json(sampled.audit_manifest()),
+        exogenous_episode_sha256=sampled.exogenous_episode_sha256,
+        physics_steps=sampled.physics_steps,
+        dt_h=config.dt_h,
+        solar_truth_sha256=solar_sha256.hexdigest(),
+        solar_available_kw=solar_available,
+        blocks=tuple(blocks),
+        program=SimpleNamespace(variable_count=start),
+        commitments=(),
+    )
+    certificate = SimpleNamespace(dual_certified_delivery_upper_bound_kg=0.0)
+    solve_settings = SimpleNamespace(
+        to_dict=lambda: {
+            "feasibility_tolerance": 1e-7,
+            "physical_tolerance": 1e-6,
+            "optimality_tolerance_kg": 1e-5,
+            "marginal_sign_tolerance": 1e-9,
+            "solver_options": {},
+            "highs_runtime_version": None,
+            "provenance_gaps": [
+                "git source revision and dependency-lock digest must be attached by the evaluation runner",
+                "linked HiGHS runtime version is not exposed by this SciPy build",
+            ],
+        }
+    )
+    result = SimpleNamespace(
+        schema_version=1,
+        success=True,
+        status=0,
+        failure_code=None,
+        model_sha256=model.model_sha256,
+        preserve_initial_endowment=False,
+        is_task_upper_bound=True,
+        canonical_episode_verified=False,
+        checkpoint_contract_digest=model.checkpoint_contract_digest,
+        exogenous_episode_sha256=model.exogenous_episode_sha256,
+        witness=witness,
+        certificate=certificate,
+        dual_certified_delivery_upper_bound_kg=0.0,
+        solver="scipy.optimize.linprog(method='highs')",
+        solver_version="1.14.0-fixture",
+        solve_settings=solve_settings,
+    )
+
+    def result_to_dict() -> dict[str, object]:
+        return {
+            "schema_version": result.schema_version,
+            "success": result.success,
+            "status": result.status,
+            "failure_code": result.failure_code,
+            "model_sha256": result.model_sha256,
+            "checkpoint_contract_digest": result.checkpoint_contract_digest,
+            "exogenous_episode_sha256": result.exogenous_episode_sha256,
+            "canonical_episode_verified": result.canonical_episode_verified,
+            "preserve_initial_endowment": result.preserve_initial_endowment,
+            "is_task_upper_bound": result.is_task_upper_bound,
+            "dual_certified_delivery_upper_bound_kg": 0.0,
+            "solver": result.solver,
+            "solver_version": result.solver_version,
+            "solve_settings": result.solve_settings.to_dict(),
+            "certificate": {"dual_certified_delivery_upper_bound_kg": 0.0},
+            "witness": result.witness.to_dict(),
+            "elapsed_s": 0.0,
+        }
+
+    result.to_dict = result_to_dict
+    binding = actions.bind_relaxation_guidance(
+        model,
+        result,
+        allow_noncanonical_fixture=True,
+    )
+    settings = build_planner_settings(
+        expected_decisions=episode_config.decision_steps(config),
+        expected_physics_steps=episode_config.physics_steps(config),
+        plant_config_sha256=raw_canonical_sha256(config.to_dict()),
+        constraints_sha256=raw_canonical_sha256(constraints.to_dict()),
+        reward_weights_sha256=raw_canonical_sha256(weights.to_dict()),
+        episode_config_sha256=raw_canonical_sha256(episode_config.to_dict()),
+        checkpoint_contract_digest=model.checkpoint_contract_digest,
+        relaxation_model_sha256=binding.model_sha256,
+        relaxation_result_sha256=binding.result_sha256,
+        relaxation_witness_sha256=binding.witness_sha256,
+        relaxation_guidance_sha256=binding.guidance_sha256,
+    )
+    admission = runtime.admit_planner_runtime(
+        config=config,
+        episode_config=episode_config,
+        constraints=constraints,
+        weights=weights,
+        settings=settings,
+        binding=binding,
+        seed=seed,
+        evidence_scope="noncanonical_unit_fixture",
+        canonical_episode_verified=False,
+    )
+    return config, episode_config, constraints, weights, admission
+
+
+def _record(*, battery_share: float = 0.0, decision_index: int = 0) -> ActionRecordV1:
     return ActionRecordV1.from_action(
         Action(
             battery_share=battery_share,
@@ -63,7 +253,7 @@ def _record(*, battery_share: float = 0.0) -> ActionRecordV1:
             methanator_share=0.0,
             battery_support_kw=0.0,
         ),
-        decision_index=0,
+        decision_index=decision_index,
         source_phase="a0_capture",
         source_code=-1,
         source_binding_sha256=A0_CONTROLLER_SHA256,
@@ -245,6 +435,161 @@ def test_terminal_snapshot_binds_conversion_ratios_to_exact_plant_config() -> No
         snapshot.validate_for_config(changed_config)
 
 
+def test_runtime_admission_regenerates_identity_before_any_plant_step() -> None:
+    config, episode, constraints, weights, admission = _runtime_fixture()
+    env = PlantEnvV2(
+        config=config,
+        episode=episode,
+        constraints=constraints,
+        weights=weights,
+    )
+    env.reset(seed=admission.seed)
+    runtime._validate_reset_environment(env, admission=admission)
+    assert env.decisions_taken == env.physics_steps_taken == 0
+    assert env.audit_manifest()["manifest_sha256"] == admission.manifest_sha256
+    assert runtime._binary64_equal(True, 1.0) is False
+    assert runtime._binary64_equal(1.0, 1.0) is True
+
+    wrong_seed = PlantEnvV2(
+        config=config,
+        episode=episode,
+        constraints=constraints,
+        weights=weights,
+    )
+    wrong_seed.reset(seed=admission.seed + 1)
+    with pytest.raises(ValueError, match="seed does not match"):
+        runtime._validate_reset_environment(wrong_seed, admission=admission)
+
+    stale_checkpoint = PlantEnvV2(
+        config=config,
+        episode=episode,
+        constraints=constraints,
+        weights=weights,
+    )
+    stale_checkpoint.reset(seed=admission.seed)
+    stale_checkpoint._checkpoint_contract["objective"]["version"] = 999
+    with pytest.raises(ValueError, match="checkpoint identity"):
+        runtime._validate_reset_environment(stale_checkpoint, admission=admission)
+
+
+def test_runtime_admission_rejects_rehashed_manifest_and_live_reset_mutation() -> None:
+    config, episode, constraints, weights, admission = _runtime_fixture()
+    changed_manifest = json.loads(admission.manifest_json)
+    changed_manifest["objective_version"] = 999
+    changed_json = canonical_json(changed_manifest)
+    object.__setattr__(admission, "manifest_json", changed_json)
+    object.__setattr__(
+        admission,
+        "manifest_sha256",
+        hashlib.sha256(changed_json.encode("utf-8")).hexdigest(),
+    )
+    with pytest.raises(ValueError, match="not cross-bound"):
+        admission.validate()
+
+    _, _, _, _, clean_admission = _runtime_fixture()
+    env = PlantEnvV2(
+        config=config,
+        episode=episode,
+        constraints=constraints,
+        weights=weights,
+    )
+    env.reset(seed=clean_admission.seed)
+    env.metrics.initial_h2_kg = math.nextafter(
+        env.metrics.initial_h2_kg,
+        math.inf,
+    )
+    with pytest.raises(ValueError, match="metrics are not at their initial values"):
+        runtime._validate_reset_environment(env, admission=clean_admission)
+
+
+def test_exact_record_step_terminal_snapshot_and_rank_use_live_truth() -> None:
+    config, episode, constraints, weights, admission = _runtime_fixture()
+    env = PlantEnvV2(
+        config=config,
+        episode=episode,
+        constraints=constraints,
+        weights=weights,
+    )
+    env.reset(seed=admission.seed)
+    runtime._validate_reset_environment(env, admission=admission)
+
+    candidate = runtime.PlantPlannerCandidateV1(
+        env=env,
+        action_records=(),
+        battery_throughput_kwh=0.0,
+        macro_depth=0,
+        terminated=False,
+        truncated=False,
+    )
+    rank = runtime.extract_intermediate_rank(candidate)
+    state = env.simulator.state
+    pending = env.simulator.delivery_ledger.next_pending
+    assert pending is not None
+    feedstock = min(
+        state.h2_level_kg / config.methanator.h2_kg_per_kg_ch4,
+        state.co2_level_kg / config.methanator.co2_kg_per_kg_ch4,
+    )
+    conversion = (
+        constraints.methanator_limit_kw(config)
+        * (pending.due_step - env.simulator.step_index)
+        * config.dt_h
+        / config.methanator.specific_energy_kwh_per_kg
+    )
+    readiness = min(
+        pending.requested_kg,
+        state.ch4_level_kg + min(feedstock, conversion),
+    )
+    assert rank.delivered_plus_deadline_readiness_kg == readiness
+    assert rank.feedstock_potential_kg == feedstock
+    assert rank.commitment_mode == env.simulator.electrolyser_commitment.mode.value
+
+    records = (_record(), _record(decision_index=1))
+    throughput, terminated, truncated = runtime.step_action_record(
+        env,
+        records[0],
+        battery_throughput_kwh=0.0,
+    )
+    assert throughput == 0.0
+    assert terminated is truncated is False
+    with pytest.raises(ValueError, match="decision index"):
+        runtime.step_action_record(
+            env,
+            records[0],
+            battery_throughput_kwh=throughput,
+        )
+    throughput, terminated, truncated = runtime.step_action_record(
+        env,
+        records[1],
+        battery_throughput_kwh=throughput,
+    )
+    assert terminated is True and truncated is False
+    snapshot = runtime.capture_terminal_snapshot(
+        env,
+        admission=admission,
+        action_records=records,
+        battery_throughput_kwh=throughput,
+        terminated=terminated,
+        truncated=truncated,
+    )
+    snapshot.validate_for_config(config)
+    assert snapshot.action_records == records
+    assert snapshot.decision_count == 2
+    assert snapshot.physics_steps == 30
+    assert snapshot.manifest_sha256 == admission.manifest_sha256
+    with pytest.raises(ValueError, match="after planner termination"):
+        runtime.step_action_record(
+            env,
+            ActionRecordV1.from_action(
+                Action.idle(),
+                decision_index=2,
+                source_phase="a0_capture",
+                source_code=-1,
+                source_binding_sha256=A0_CONTROLLER_SHA256,
+            ),
+            battery_throughput_kwh=throughput,
+        )
+
+
 def test_terminal_snapshot_rejects_wrong_mutated_score_and_trace_projection() -> None:
     snapshot = _terminal_snapshot()
     with pytest.raises(ValueError, match="delivered_kg"):
@@ -257,6 +602,28 @@ def test_terminal_snapshot_rejects_wrong_mutated_score_and_trace_projection() ->
     clean = _terminal_snapshot()
     with pytest.raises(ValueError, match="trace payloads"):
         replace(clean, action_records=(_record(battery_share=-0.0),))
+
+
+def test_runtime_records_and_payloads_require_exact_evidence_types() -> None:
+    class ActionRecordAlias(ActionRecordV1):
+        pass
+
+    class PayloadAlias(CanonicalPayloadV1):
+        def value(self) -> object:
+            return {"forged": True}
+
+    snapshot = _terminal_snapshot()
+    alias_record = ActionRecordAlias(**snapshot.action_records[0].to_dict())  # type: ignore[arg-type]
+    with pytest.raises(TypeError, match="exact ActionRecordV1"):
+        replace(snapshot, action_records=(alias_record,))
+
+    alias_payload = PayloadAlias(
+        snapshot.metrics.domain,
+        snapshot.metrics.canonical_json,
+        snapshot.metrics.sha256,
+    )
+    with pytest.raises(TypeError, match="exact CanonicalPayloadV1"):
+        replace(snapshot, metrics=alias_payload)
 
 
 def test_a0_generation_rejects_wrong_controller_binding_even_when_self_consistent() -> (
@@ -335,6 +702,38 @@ def test_candidate_cleanup_detaches_attested_env_after_validation_failure() -> N
     assert candidate.env is None and candidate._attestation is None
     with pytest.raises(ValueError, match="already released"):
         candidate._dispose_for_cleanup()
+
+
+def test_external_candidate_registry_cleans_original_lease_after_corruption() -> None:
+    env = PlantEnvV2(episode=NONCANONICAL_TWO_DECISIONS)
+    env.reset(seed=7)
+    guard, _, _, _ = _guard()
+    registry = runtime.PlannerCandidateRegistryV1(guard)
+    token = guard.reserve_environment(phase="beam_search")
+    guard.bind_environment(token, env)
+    candidate = runtime.PlantPlannerCandidateV1(
+        env=env,
+        action_records=(),
+        battery_throughput_kwh=0.0,
+        macro_depth=0,
+        terminated=False,
+        truncated=False,
+    )
+    registry.register(token, candidate)
+    assert registry.validate_candidate(candidate) is env
+
+    swapped = PlantEnvV2(episode=NONCANONICAL_TWO_DECISIONS)
+    candidate.env = swapped
+    candidate.battery_throughput_kwh = -0.0
+    candidate._attestation = None
+    with pytest.raises(ValueError):
+        registry.validate_candidate(candidate)
+    registry.release(candidate)
+
+    assert candidate.env is None and candidate._attestation is None
+    assert registry.live_candidates == 0
+    assert guard.live_environments == guard.reserved_slots == 0
+    guard.close()
 
 
 def test_candidate_rejects_unreset_and_counter_incoherent_environments() -> None:
