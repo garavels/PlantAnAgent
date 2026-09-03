@@ -2270,3 +2270,21 @@ dependent request, outcome, replay-binding, comparison, and result identity arou
 adversarial trace, proving that the rejection is semantic rather than caused by a stale
 hash. This closes an evidence-acceptance hole that exact runtime replay by itself could
 not repair.
+
+The wider binary64 and canonical-identity audit then examined every remaining equality
+operation in the planner schema, action generator, state boundary, and search. It found
+four related schema risks. Replay-binding dictionaries could accept Python scalar aliases
+such as `True == 1`; score-source integers could accept booleans or integral floats;
+recomputed gain, residual-gap, fraction-closed, and A0 self-comparison fields could hide a
+signed-zero substitution; and embedded relaxation witness/guidance objects used mapping
+equality instead of their registered canonical bytes. The final result also compared its
+recomputed bracket as a dataclass, inheriting the same float-equality problem.
+
+All of those boundaries now validate canonical JSON or explicit binary64 identity. The
+five integer metric sources require actual non-boolean integers, and the optional residual
+gap is normalized back to a float consistently with the other comparison fields. The
+tests rebuild dependent hashes and bindings around bool/int and signed-zero substitutions,
+exercise every integer score source, and mutate both the embedded witness and guidance.
+An independent review approved the resulting contract; the combined adjacent planner
+gate passed 204 tests before the two final review hardenings. No solver, plant step, or
+outcome was opened by this audit.

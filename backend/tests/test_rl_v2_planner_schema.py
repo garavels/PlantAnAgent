@@ -797,6 +797,56 @@ def test_comparison_formulas_and_bridge_suppression() -> None:
     assert bridge.residual_gap_kg is None and bridge.fraction_closed is None
 
 
+def test_comparison_formula_fields_preserve_signed_zero() -> None:
+    trace = request_trace_payload((_action(),))
+    comparison = build_incumbent_comparison(
+        selected_role="a0_incumbent",
+        a0_score=_score(),
+        selected_score=_score(),
+        a0_request_trace=trace,
+        selected_request_trace=trace,
+        upper_bound_kg=10.0,
+        optimality_tolerance_kg=1e-5,
+    )
+    with pytest.raises(ValueError, match="gain_kg"):
+        dataclasses.replace(comparison, gain_kg=-0.0)
+    with pytest.raises(ValueError, match="fraction_closed"):
+        dataclasses.replace(comparison, fraction_closed=-0.0)
+
+    zero_gap = build_incumbent_comparison(
+        selected_role="a0_incumbent",
+        a0_score=_score(),
+        selected_score=_score(),
+        a0_request_trace=trace,
+        selected_request_trace=trace,
+        upper_bound_kg=0.0,
+        optimality_tolerance_kg=1e-5,
+    )
+    with pytest.raises(ValueError, match="residual_gap_kg"):
+        dataclasses.replace(zero_gap, residual_gap_kg=-0.0)
+    assert isinstance(
+        dataclasses.replace(zero_gap, residual_gap_kg=0).residual_gap_kg,
+        float,
+    )
+
+
+def test_core_comparison_cross_binding_preserves_signed_zero() -> None:
+    core = _successful_core()
+    assert core.comparison is not None
+    internally_consistent_signed_zero = dataclasses.replace(
+        core.comparison,
+        a0_delivered_kg=-0.0,
+        selected_delivered_kg=-0.0,
+    )
+
+    with pytest.raises(ValueError, match="exact finalist bracket"):
+        dataclasses.replace(
+            core,
+            comparison=internally_consistent_signed_zero,
+            deterministic_result_sha256="",
+        )
+
+
 @pytest.mark.parametrize(
     ("finalist_score", "expected_role"),
     [
@@ -1013,6 +1063,81 @@ def test_replay_and_core_reject_identity_action_binding_and_audit_tampering() ->
         )
 
 
+def test_replay_binding_requires_exact_canonical_scalar_types() -> None:
+    core = _successful_core()
+    replay = core.a0_incumbent
+    assert replay is not None
+    binding_value = replay.replay_binding.value()
+    assert isinstance(binding_value, dict)
+    binding_value["schema_version"] = True
+    rebound = canonical_payload("planner-replay-binding-v1", binding_value)
+
+    with pytest.raises(ValueError, match="canonical bytes"):
+        dataclasses.replace(replay, replay_binding=rebound)
+
+
+@pytest.mark.parametrize(
+    "metric_name",
+    [
+        "commitments_met",
+        "commitments_settled",
+        "electrolyser_forced_stops",
+        "electrolyser_aborted_starts",
+        "electrolyser_cold_starts",
+    ],
+)
+@pytest.mark.parametrize("aliased_zero", [False, 0.0])
+def test_replay_score_integer_sources_reject_python_equality_aliases(
+    metric_name: str,
+    aliased_zero: object,
+) -> None:
+    core = _successful_core()
+    replay = core.a0_incumbent
+    assert replay is not None
+    assert core.settings is not None
+    assert core.relaxation_guidance is not None
+    metrics_value = replay.metrics.value()
+    assert isinstance(metrics_value, dict)
+    metrics_value[metric_name] = aliased_zero
+    metrics = canonical_payload("planner-metrics-v1", metrics_value)
+    outcome = outcome_payload(
+        manifest_sha256=replay.manifest_sha256,
+        exogenous_episode_sha256=replay.exogenous_episode_sha256,
+        checkpoint_contract_digest=replay.checkpoint_contract_digest,
+        request_trace=replay.request_trace,
+        metrics=metrics,
+        terminal_truth=replay.terminal_truth,
+        terminal_telemetry=replay.terminal_telemetry,
+        delivery_audit=replay.delivery_audit,
+        battery_throughput_kwh=replay.battery_throughput_kwh,
+        decision_count=replay.decision_count,
+        physics_steps=replay.physics_steps,
+        terminated=replay.terminated,
+        truncated=replay.truncated,
+    )
+    binding = replay_binding_payload(
+        role=replay.role,
+        settings_sha256=core.settings.settings_sha256,
+        relaxation_guidance_sha256=core.relaxation_guidance.sha256,
+        manifest_sha256=replay.manifest_sha256,
+        exogenous_episode_sha256=replay.exogenous_episode_sha256,
+        checkpoint_contract_digest=replay.checkpoint_contract_digest,
+        request_trace=replay.request_trace,
+        source_trace=replay.source_trace,
+        action_record_trace=replay.action_record_trace,
+        outcome=outcome,
+    )
+
+    with pytest.raises(TypeError, match=rf"metrics\.{metric_name}"):
+        dataclasses.replace(
+            replay,
+            metrics=metrics,
+            generation_outcome=outcome,
+            replay_outcome=outcome,
+            replay_binding=binding,
+        )
+
+
 def test_registered_terminal_equivalent_recomputes_default_ratios_bit_exactly() -> None:
     core = _successful_core()
     replay = core.a0_incumbent
@@ -1076,6 +1201,62 @@ def test_registered_relaxation_requires_frozen_solver_and_certificate_structure(
             witness=witness,
             guidance=guidance,
             settings=settings,
+            exogenous_episode_sha256=SHA_D,
+            canonical_episode_verified=True,
+        )
+
+
+def test_registered_relaxation_requires_byte_exact_embedded_witness() -> None:
+    _, _, witness, guidance, result_value = _registered_relaxation_graph()
+    changed_result_value = json.loads(canonical_json(result_value))
+    embedded_witness = changed_result_value["witness"]
+    embedded_witness["normalized_variables"][0] = -0.0
+    changed_result = canonical_payload(
+        "planner-relaxation-result-v1", changed_result_value
+    )
+    guidance_value = guidance.value()
+    assert isinstance(guidance_value, dict)
+    guidance_value["result_sha256"] = changed_result.sha256
+    changed_guidance = canonical_payload(
+        "planner-relaxation-guidance-v1", guidance_value
+    )
+    changed_settings = _settings(
+        result_sha=changed_result.sha256,
+        witness_sha=witness.sha256,
+        guidance_sha=changed_guidance.sha256,
+    )
+
+    with pytest.raises(ValueError, match="witness is not byte-exactly"):
+        schema._validate_relaxation_graph(
+            result=changed_result,
+            witness=witness,
+            guidance=changed_guidance,
+            settings=changed_settings,
+            exogenous_episode_sha256=SHA_D,
+            canonical_episode_verified=True,
+        )
+
+
+def test_registered_relaxation_requires_exact_guidance_canonical_bytes() -> None:
+    _, result, witness, guidance, _ = _registered_relaxation_graph()
+    guidance_value = guidance.value()
+    assert isinstance(guidance_value, dict)
+    guidance_value["schema_version"] = True
+    changed_guidance = canonical_payload(
+        "planner-relaxation-guidance-v1", guidance_value
+    )
+    changed_settings = _settings(
+        result_sha=result.sha256,
+        witness_sha=witness.sha256,
+        guidance_sha=changed_guidance.sha256,
+    )
+
+    with pytest.raises(ValueError, match="guidance canonical bytes"):
+        schema._validate_relaxation_graph(
+            result=result,
+            witness=witness,
+            guidance=changed_guidance,
+            settings=changed_settings,
             exogenous_episode_sha256=SHA_D,
             canonical_episode_verified=True,
         )

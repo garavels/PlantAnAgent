@@ -1425,9 +1425,18 @@ class ReplayEvidenceV1:
         }
         if set(value) != required:
             raise ValueError("replay_binding has an incorrect field set")
+        settings_sha256 = require_sha256(
+            "replay_binding.settings_sha256", value["settings_sha256"]
+        )
+        relaxation_guidance_sha256 = require_sha256(
+            "replay_binding.relaxation_guidance_sha256",
+            value["relaxation_guidance_sha256"],
+        )
         expected = {
             "schema_version": 1,
             "role": self.role,
+            "settings_sha256": settings_sha256,
+            "relaxation_guidance_sha256": relaxation_guidance_sha256,
             "manifest_sha256": self.manifest_sha256,
             "exogenous_episode_sha256": self.exogenous_episode_sha256,
             "checkpoint_contract_digest": self.checkpoint_contract_digest,
@@ -1436,14 +1445,8 @@ class ReplayEvidenceV1:
             "action_record_trace_sha256": self.action_record_trace.sha256,
             "outcome_sha256": self.replay_outcome.sha256,
         }
-        for name, expected_value in expected.items():
-            if value[name] != expected_value:
-                raise ValueError(f"replay_binding.{name} does not match evidence")
-        require_sha256("replay_binding.settings_sha256", value["settings_sha256"])
-        require_sha256(
-            "replay_binding.relaxation_guidance_sha256",
-            value["relaxation_guidance_sha256"],
-        )
+        if self.replay_binding.canonical_json != canonical_json(expected):
+            raise ValueError("replay_binding canonical bytes do not match evidence")
 
     def _validate_score_sources(self) -> None:
         metrics = self.metrics.value()
@@ -1508,7 +1511,10 @@ class ReplayEvidenceV1:
             "cold_starts": "electrolyser_cold_starts",
         }
         for score_name, metric_name in integer_score_fields.items():
-            if metrics.get(metric_name) != getattr(self.final_score, score_name):
+            metric_value = _require_int(
+                f"metrics.{metric_name}", metrics.get(metric_name), minimum=0
+            )
+            if metric_value != getattr(self.final_score, score_name):
                 raise ValueError(f"final_score.{score_name} does not match metrics")
         if not _same_binary64(
             self.final_score.battery_throughput_kwh,
@@ -1682,7 +1688,8 @@ class IncumbentComparisonV1:
                 self, name, _require_float(name, getattr(self, name), minimum=0.0)
             )
         object.__setattr__(self, "gain_kg", _require_float("gain_kg", self.gain_kg))
-        if self.gain_kg != self.selected_delivered_kg - self.a0_delivered_kg:
+        expected_gain = self.selected_delivered_kg - self.a0_delivered_kg
+        if not _same_binary64(self.gain_kg, expected_gain):
             raise ValueError("gain_kg does not match delivered values")
         if self.bracket_status not in {"valid", "bound_bridge_violation"}:
             raise ValueError("unsupported bracket_status")
@@ -1704,7 +1711,8 @@ class IncumbentComparisonV1:
             if self.residual_gap_kg is None:
                 raise ValueError("a valid bracket requires residual_gap_kg")
             gap = _require_float("residual_gap_kg", self.residual_gap_kg, minimum=0.0)
-            if gap != expected_gap:
+            object.__setattr__(self, "residual_gap_kg", gap)
+            if not _same_binary64(gap, expected_gap):
                 raise ValueError("residual_gap_kg does not match the bracket")
             if self.fraction_closed is not None:
                 object.__setattr__(
@@ -1713,15 +1721,14 @@ class IncumbentComparisonV1:
                     _require_float("fraction_closed", self.fraction_closed),
                 )
                 denominator = self.upper_bound_kg - self.a0_delivered_kg
-                if (
-                    denominator <= 0.0
-                    or self.fraction_closed != self.gain_kg / denominator
+                if denominator <= 0.0 or not _same_binary64(
+                    self.fraction_closed, self.gain_kg / denominator
                 ):
                     raise ValueError("fraction_closed does not match the valid bracket")
         if self.selected_role == "a0_incumbent" and not (
             self.scores_equal
             and self.actions_equal_to_a0
-            and self.a0_delivered_kg == self.selected_delivered_kg
+            and _same_binary64(self.a0_delivered_kg, self.selected_delivered_kg)
         ):
             raise ValueError("selection of A0 must compare A0 with itself")
 
@@ -2210,8 +2217,8 @@ def _validate_relaxation_graph(
         _require_bool(f"relaxation result {name}", result_value[name])
     if result_value["certificate"] is None or result_value["witness"] is None:
         raise ValueError("relaxation result requires certificate and witness")
-    if result_value["witness"] != witness_value:
-        raise ValueError("relaxation result witness does not match witness payload")
+    if canonical_json(result_value["witness"]) != witness.canonical_json:
+        raise ValueError("relaxation result witness is not byte-exactly cross-bound")
     result_upper = _require_float(
         "dual_certified_delivery_upper_bound_kg",
         result_value["dual_certified_delivery_upper_bound_kg"],
@@ -2333,15 +2340,15 @@ def _validate_relaxation_graph(
         "solve_settings": solve_settings,
         "checkpoint_contract_digest": settings.checkpoint_contract_digest,
         "exogenous_episode_sha256": exogenous_episode_sha256,
+        "solar_truth_sha256": require_sha256(
+            "relaxation guidance solar_truth_sha256",
+            guidance_value["solar_truth_sha256"],
+        ),
     }
-    for name, expected in expected_guidance.items():
-        if guidance_value[name] != expected:
-            raise ValueError(
-                f"relaxation guidance {name} does not match result/settings"
-            )
-    require_sha256(
-        "relaxation guidance solar_truth_sha256", guidance_value["solar_truth_sha256"]
-    )
+    if guidance.canonical_json != canonical_json(expected_guidance):
+        raise ValueError(
+            "relaxation guidance canonical bytes do not match result/settings"
+        )
 
 
 def _validate_search_diagnostics(
@@ -2687,7 +2694,9 @@ class FeasiblePlannerResultV1:
                 upper_bound_kg=upper,
                 optimality_tolerance_kg=tolerance,
             )
-            if self.comparison != expected:
+            if canonical_json(self.comparison.to_dict()) != canonical_json(
+                expected.to_dict()
+            ):
                 raise ValueError("comparison does not match the exact finalist bracket")
         else:
             if self.failure is None:
