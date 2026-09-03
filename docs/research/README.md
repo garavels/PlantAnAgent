@@ -39,6 +39,10 @@ fallback behavior.
 - [`CAUSAL_CONTROLLER_EXPERIMENT.md`](CAUSAL_CONTROLLER_EXPERIMENT.md) preregisters
   the transparent A0–A3 development comparison, its causal information boundary,
   paired estimands, failure handling, tuning boundary, and future prospective gates.
+- [`CAUSAL_CONTROLLER_RESULTS.md`](CAUSAL_CONTROLLER_RESULTS.md) reports every
+  preregistered development rollout, paired effect, treatment-expression check,
+  inventory balance, negative controller finding, and the resulting trajectory-planning
+  benchmark decision.
 
 Small canonical benchmark outputs may be committed under [`results/`](results/) when
 they make a reported conclusion directly auditable. Large generated datasets, model

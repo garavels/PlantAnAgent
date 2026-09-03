@@ -1603,3 +1603,69 @@ a complete installed-package snapshot.
 The protocol and journal will be committed next so the worktree is clean before execution.
 **No frozen 72-hour final-arm outcome or holdout was opened during implementation,
 validation, or review.**
+
+## 2026-09-02 — First causal controller development outcomes
+
+### Execution and integrity
+
+After commit `f6cb663` froze the protocol on a clean worktree, the two predeclared
+development cells were executed separately: 35 and 42 kg CH4/h, seeds 0--2, 72 hours,
+and the ordered A0--A3 controller ladder. Both strict-JSON artifacts completed with all
+12 planned rollouts, valid start/end source audits, exact per-seed full and exogenous
+pairing, all three adjacent contrasts, and expressed controller treatments. The 35 kg/h
+artifact is 1,411,840 bytes with SHA-256
+`2e1200c397c2aa5b23762a551d949e3787fd1bec5a73e7ee183fcd2d7b99fd55`; the 42 kg/h
+artifact is 1,426,064 bytes with SHA-256
+`e7b27f0269b2097b92bace6f435821b1088d8dc7548713546a65625cf7114de1`.
+
+The result is negative and important. At 35 kg/h the legacy A0 mean fill was 97.72% with
+57.3 kg unmet, while the climatology A1 achieved 84.55% with 389.2 kg unmet. At 42 kg/h
+A0 achieved 84.97% with 454.5 kg unmet, while A1 achieved 81.43% with 561.5 kg unmet.
+A1 was worse on fill in all six rate-seed pairs. It changed all 1,728 paired requests, so
+the comparison is not a dormant-controller failure.
+
+Issued mean information changed 694/864 decisions at 35 kg/h and 768/864 at 42 kg/h, but
+A2 improved mean fill over A1 by only 0.20 and 0.19 percentage points and did not improve
+service. Seed-level unmet-mass effects changed sign. The p10 mixture changed 711/864 and
+769/864 decisions. A3 improved mean fill by 2.18 points at 35 kg/h but worsened mean
+worst-commitment fill by 6.83 points; at 42 kg/h it was effectively neutral on fill and
+increased forced stops. Neither incremental forecast hypothesis is supported.
+
+### Failure mechanism
+
+The controller family converts current mass deficits into instantaneous target power but
+does not optimize a commitment/inventory trajectory. A0 cold-started once and never
+forced-stopped. A1--A3 averaged 9.0--11.7 cold starts and 4.7--6.3 forced stops, ended
+near the 15% battery reserve rather than A0's 91%, and curtailed 17.5--30.1 MWh rather
+than A0's 3.3--6.4 MWh. At 35 kg/h they also ended with hydrogen stranded while CO2 was
+nearly empty. The apparent 2.3--3.0 kWh/kg intensity improvement is not a benefit: it
+coincides with worse service and liquidation of battery and feedstock endowments.
+
+Exact action replay then localized the failure. In the 35 kg/h cell all delivery-aware
+arms miss commitments 4, 8, and 12--the 06:00 pre-sunrise settlement on each complete
+day--for every seed. They request no electrolyser, DAC, or battery support during the
+first local 06:00--12:00 solar window. Across the first 12 elapsed hours, A1 curtails
+22.367 of 28.620 MWh mean available solar while A0 curtails only 0.174 MWh. The shared
+planner can target at most 426.3 kg: one 210 kg delivery, its 3% buffer, and one inferred
+210 kg carry. It ignores that the productive solar window must provision three later
+settlements before the next sunrise despite 3,000 kg of methane storage, and it never
+uses the declared 12--24-hour forecast band. This is a structural horizon defect rather
+than evidence against forecast value.
+
+A read-only post-outcome replay instrumented every one-minute dispatch to test one
+alternative explanation: solar curtailment coincident with battery discharge. The
+per-rollout overlap lower bound was only 0.7--38.0 kWh, orders of magnitude below total
+planner discharge and curtailment. The dominant defect is the short planning horizon,
+compounded by commitment cycling and battery/feedstock coordination, not same-step bus
+netting.
+
+### Research decision
+
+The current delivery-aware rule is rejected as a production baseline, and parameter
+tuning is not an adequate next step. The next work package will construct a trajectory-
+level model-based benchmark: first a separately labelled future-information best-known
+feasible planner to establish that better sequences exist, then a causal deterministic
+MPC under the public forecast and finally a risk-aware extension. RL will be evaluated
+only after it has equal information and these comparators exist. The complete per-run
+tables, paired effects, balances, artifact identity, limitations, and revised direction
+are preserved in `CAUSAL_CONTROLLER_RESULTS.md`.
