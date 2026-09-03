@@ -2096,3 +2096,75 @@ An independent read-only delta review approved the layer with no remaining proto
 Its 39 focused tests passed; the combined schema/action/state/upper-bound gate passed 164
 tests. Formatting, compilation, and whitespace checks passed. No solver call, environment
 step, or new full-horizon outcome was opened by this slice.
+
+## 2026-09-02 — Exact planner state and structural-sharing clone implemented
+
+### Scope and state identity
+
+The third implementation slice creates the privileged boundary through which the future
+planner may observe, compare, and copy exact simulator state. `_planner_state.py` is the
+only planner module allowed to name private `PlantEnvV2` state. It provides the complete
+same-depth signature, optimized environment cloning, clone-graph auditing, battery
+throughput accumulation, and authoritative final-score extraction; it contains no search
+policy.
+
+The signature binds the manifest, exogenous episode, checkpoint, settings, action library,
+macro depth, environment/simulator/metric counters, all simulator totals and truth,
+component and commitment snapshots, the complete fault/event/delivery state, control
+boundary state, every metrics dataclass field and history, observation-encoder memory, and
+planner-owned throughput. The environment recomputes its audit manifest at capture time,
+must retain the exact sampled weather tape used by the simulator, and must agree on every
+redundant step counter. Values use the frozen serializer: native scalars, enum strings,
+sorted string-key maps, ordered records, and hexadecimal finite binary64 values. No state
+binning or approximate equality is introduced.
+
+Terminal score extraction is intentionally redundant. It requires a complete horizon,
+checks environment/simulator/metric counts, checks terminal H2, CO2, CH4, battery SOC, and
+battery energy against truth with exact binary64 identity, and checks delivered methane
+against the ledger. Only then does it construct the delivery-first score and terminal
+methane-equivalent feedstock value from the active plant ratios. Throughput accumulates
+bus-side battery charge and support energy separately in fixed left-to-right order.
+
+### Clone implementation and isolation proof
+
+The optimized clone recreates the outer episode and its stream-key dictionary, recursively
+rebuilds every checkpoint dictionary, list, and tuple container, and uses `deepcopy` memo
+sharing only for the exact frozen path list registered in the protocol. A direct audit of
+the test fixture found 97 checkpoint containers (81 dictionaries, seven lists, and nine
+tuples) and zero shared container identities. Alias topology and exact scalar types/values
+are preserved, while cycles, unsupported values, non-finite floats, altered shapes, and
+allowlist/checkpoint overlap fail closed.
+
+Adversarial review discovered that path validation alone was insufficient: a mutable
+metrics dictionary assigned to the allowlisted ledger-current path could poison the memo
+and become shared by parent and child. Every non-null allowlist value now must have its
+path-specific exact repository class and pass a transitive closure attestation containing
+only finite scalars, enums, tuples, and frozen dataclasses. Strong process-local references
+make cached attestations identity-safe against object-ID reuse. Standalone dictionaries,
+operational aliases, and exact outer records containing list or frozenset drift are
+rejected. Null paths add no memo entry, preserving the protocol's compatibility behavior.
+The executable path list is re-hashed on every use and must retain the frozen allowlist
+digest.
+
+The same review found that Python `deepcopy` legitimately reuses a tuple when all of its
+children are immutable, contrary to the protocol's stronger checkpoint-container identity
+rule. Checkpoint tuples are therefore rebuilt explicitly and audited recursively instead
+of relying on generic deepcopy behavior. Fault-free eligibility was also tightened from a
+value-equivalent integral zero to the raw built-in integer `0`; booleans, floats, NumPy
+integers, nonzero sequences, and nonempty registries are rejected rather than normalized.
+
+### Validation and performance boundary
+
+The 23 focused tests independently perturb every registered inventory, commitment timer,
+previous-power field, ledger field, interval summary, metric/history field, event/log field,
+encoder value, and throughput value. They mutate every known nested operational collection,
+exercise checkpoint tuple aliases and allowlist poisoning, and advance optimized siblings
+plus an ordinary deepcopy through the complete two-decision noncanonical fixture while
+proving the parent and untouched sibling remain byte-identical.
+
+The final independent gate approved the layer. A clone-only timing check on a reset default
+72-hour environment (no step and no outcome inspection) measured approximately 35 ms for
+the first transitive attestation and 26 ms after caching, with 48 immutable roots retained.
+The focused suite passed 23 tests; formatting, compilation, strict bounded type checking,
+and whitespace validation passed. All step-based tests remain explicitly noncanonical and
+limited to two decisions, and the registered six-cell bracket remains unopened.
