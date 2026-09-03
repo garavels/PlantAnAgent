@@ -43,6 +43,9 @@ fallback behavior.
   preregistered development rollout, paired effect, treatment-expression check,
   inventory balance, negative controller finding, and the resulting trajectory-planning
   benchmark decision.
+- [`PLANNING_BENCHMARK_PROTOCOL.md`](PLANNING_BENCHMARK_PROTOCOL.md) preregisters the
+  privileged continuous-relaxation bound, exact-simulator best-known feasible planner,
+  causal-MPC gate, proof obligations, information boundary, and failure rules.
 
 Small canonical benchmark outputs may be committed under [`results/`](results/) when
 they make a reported conclusion directly auditable. Large generated datasets, model

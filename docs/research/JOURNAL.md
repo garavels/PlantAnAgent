@@ -1669,3 +1669,38 @@ MPC under the public forecast and finally a risk-aware extension. RL will be eva
 only after it has equal information and these comparators exist. The complete per-run
 tables, paired effects, balances, artifact identity, limitations, and revised direction
 are preserved in `CAUSAL_CONTROLLER_RESULTS.md`.
+
+## 2026-09-02 — Two-sided controllability benchmark selected
+
+No new simulator outcome was opened in this design step. The negative causal-controller
+result leaves two quantities unidentified: a certified physical delivery ceiling and a
+best known delivery that the exact five-field action interface can actually realize. A
+single “oracle” label would conflate them, so the next benchmark is deliberately
+two-sided.
+
+The upper side will be a minute-resolution linear relaxation with perfect solar truth,
+the exact delivery schedule, bus balance, battery efficiency/reserve, storage,
+stoichiometry, component caps, and deadline ordering. It relaxes commitment, minimum
+load, ramps, part-load penalty, and share-routing restrictions. An optimal solution is
+therefore a delivery upper bound; an endowment-restoring variant is reported separately
+and is not mislabeled as a bound on the current objective. The implementation is scoped
+to fault-free episodes with initial energy above reserve. A bound is publishable only
+after an optimal HiGHS status, independently validated residuals, exact solar-vector
+replay, and an exact-rational box-Lagrangian certificate reconstructed from projected
+solver marginals; the numerical primal objective is never itself called a certificate.
+
+The lower side will be a privileged exact-simulator search whose selected schedule is
+freshly replayed. The complete legacy trajectory is the mandatory incumbent, so the
+reported best-known feasible trajectory cannot regress under the frozen lexicographic
+score. It is not claimed optimal. Its action library, beam/search budget, ranking,
+tie-breaking, and replay schema must be frozen in a protocol amendment before full
+development outcomes are viewed.
+
+Only if this bracket shows actionable exact-simulator headroom will a causal service MPC
+be built. That controller will receive the same `ControllerObservationV2` boundary as
+other online policies and only the current public forecast. The p10 aggregates are not
+coherent scenario paths, so stochastic-MPC language is deferred. SciPy/HiGHS is selected
+as a locked research dependency for sparse LP now and a possible MILP comparator later;
+solver failures will remain explicit rather than falling back under an optimizer label.
+The full pre-outcome design and proof obligations are recorded in
+`PLANNING_BENCHMARK_PROTOCOL.md`.
