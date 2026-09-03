@@ -3156,3 +3156,30 @@ causality, MILP, commitment, solver-failure, exact-environment, evaluator, prove
 format/type/compile/lock, full-regression, and independent-source-audit gate from a clean
 revision. The next code increment is the deterministic public-forecast projection and its
 standalone evidence schema; it does not open an episode outcome.
+
+## 2026-09-03 — Deterministic public-forecast projection implemented
+
+`mpc_forecast.py` now converts one `PublicForecastIssueV2` into the protocol's immutable
+96-interval, 24-hour trajectory without accepting an environment, episode, seed, weather
+tape, or future issuance. It analytically integrates the configured half-sine clear-sky
+geometry over each 15-minute interval, derives one resource scale per canonical forecast
+band, and rejects an issuance whose energy materially exceeds public clear-sky support.
+The reconstructed band means match the issued mean values within `1e-12`; partial MPC
+horizons receive an unchanged prefix rather than a renormalized partial band.
+
+The trajectory schema cross-validates interval powers, peak fractions, band ranges,
+resource scales, reconstructed means, and errors before exposing a domain-separated
+SHA-256 identity. Tests cover all four bands, darkness, sunset and next-day sunrise,
+midnight additivity, prefix behavior, impossible public energy, malformed resolution,
+repeatability, and schema mutation. The first fixture incorrectly expected the
+19:15--19:30 interval ending at sunset to be dark; the integral correctly found positive
+energy, and the test was corrected to place darkness after the sunset boundary.
+
+The focused forecast/weather/controller surface completed with **102 passed** and the new
+module passed strict type checking and formatting. The complete repository regression then
+completed with **892 passed, 2 skipped**, plus the unchanged third-party Starlette/httpx
+deprecation warning. A read-only compatibility diagnostic
+projected all 288 already-contaminated seed-0/rate-35 issued forecasts without a failure;
+maximum band reconstruction error was `1.11e-16` and maximum inferred resource scale was
+`0.97065`. This opened no controller action or plant outcome. The next increment is the
+immutable MPC settings/model/result schema and sparse MILP construction.
