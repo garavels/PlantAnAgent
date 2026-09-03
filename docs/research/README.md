@@ -60,6 +60,10 @@ fallback behavior.
   repaired six-cell development matrix, exact controllability bracket, separate
   endowment-restoring diagnostic, operating mechanism, limitations, and decision to
   build a causal service MPC.
+- [`CAUSAL_SERVICE_MPC_PROTOCOL.md`](CAUSAL_SERVICE_MPC_PROTOCOL.md) preregisters the
+  first deployable-information service MPC: its forecast projection, mixed-integer
+  model, solver/failure contract, development thresholds, evidence payload, and
+  pre-outcome implementation gate.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

@@ -3121,3 +3121,38 @@ faults and maintenance, sensor imperfections, and multi-unit bottlenecks. HEPA r
 calibrated predictive-risk layer; language remains an operator/supervisory interface for
 versioned goals, explanations, and escalation. Neither layer directly bypasses the controller
 or independent safety guard.
+
+## 2026-09-03 — Causal service-MPC protocol frozen before implementation
+
+The completed feasible-planner bracket authorizes causal optimization but does not specify
+enough detail to prevent a favorable implementation from choosing its information set,
+horizon, objective, fallback, or success threshold after seeing controller outcomes.
+`CAUSAL_SERVICE_MPC_PROTOCOL.md` now freezes those choices before any full MPC rollout is
+opened.
+
+The first controller uses only the typed public boundary, current issued mean forecast,
+static plant/safety/commitment data, immutable settings, and local causal history. It
+reconstructs a 24-hour 15-minute solar path by scaling the analytic clear-sky shape within
+each public band while preserving issued energy. It infers only the publicly declared
+fixed recurring delivery cadence and may not access the private schedule, seed, weather
+tape, future vintage, or offline planner result.
+
+The declared model is a two-stage HiGHS-backed MILP over solar routing, battery direction
+and energy, feedstock/product inventories, settlements, and a conservative cold-start/
+running unit-commitment approximation. Stage one maximizes delivered methane; stage two
+locks delivery within `10^-6 kg` and applies bounded service/endowment/operational
+tie-breakers. Both statuses and latencies are evidence. Any failure raises and invalidates
+the rollout; a hidden heuristic fallback is prohibited.
+
+The development utility gate requires complete evidence, at least two of three rate-42
+improvements, at least 20% mean capture of the frozen `F - A0` gap at that rate, no service
+regression, narrow nominal-rate protection, zero hard-safety/invalid/forced-stop events,
+at least 25% terminal SOC, no more than four cold starts, and bounded solve latency. These
+are engineering thresholds on contaminated cells, not estimates of deployment performance.
+
+Only unit and deliberately tiny fixtures are now authorized. Before the registered
+rate-major six-cell matrix, the implementation must pass the protocol's forecast,
+causality, MILP, commitment, solver-failure, exact-environment, evaluator, provenance,
+format/type/compile/lock, full-regression, and independent-source-audit gate from a clean
+revision. The next code increment is the deterministic public-forecast projection and its
+standalone evidence schema; it does not open an episode outcome.
