@@ -2168,3 +2168,77 @@ the first transitive attestation and 26 ms after caching, with 48 immutable root
 The focused suite passed 23 tests; formatting, compilation, strict bounded type checking,
 and whitespace validation passed. All step-based tests remain explicitly noncanonical and
 limited to two decisions, and the registered six-cell bracket remains unopened.
+
+## 2026-09-02 — Deterministic feasible-planner search implemented
+
+### Scope and separation from the plant runtime
+
+The fourth implementation slice encodes the frozen search and polishing algorithm without
+importing `PlantEnvV2`, the simulator, the Part-I solver, or the action generator. The
+module instead depends on a typed runtime port whose candidate objects remain opaque. This
+keeps the registered algorithm independently testable and makes the future plant-specific
+runtime solely responsible for reset, cloning, exact stepping, fresh replay, resource
+measurement, and release of live environments.
+
+The primary pass expands the 15 semantic templates in their registered order over
+four-decision macros. It preserves a separately generated A0 prefix at every nonterminal
+cut, performs exact same-depth state deduplication only after a complete macro, and streams
+candidates into a bounded reservoir rather than materialising all children. A cut is
+assembled in the frozen order: unchanged A0, the best candidate for each of the six
+commitment modes, then the globally ranked fill up to beam width 24. Terminal candidates
+never pass through the intermediate rank: they are compared by the full delivery-first
+score and deterministic action lineage, then their environment is released immediately.
+
+The post-search pass performs exactly one left-to-right coarse sweep in 24-decision blocks
+for A0 and, when request-distinct, the beam winner. It then performs one left-to-right
+four-decision sweep from the better coarse result. Every block evaluates all 15 templates
+against the same immutable block-start trace, accepts only a strict full-score improvement,
+and retains the incumbent on equality. A complete request trace with A0 lineage receives
+the registered equal-score priority only in final selection; it is not a general heuristic
+bonus inside search.
+
+### Exact identity, accounting, and ownership
+
+All boundary comparisons of action records use canonical binary64-exact bytes rather than
+Python dataclass equality. This distinction is operationally important because Python
+considers positive and negative zero equal, while the frozen protocol treats their request
+and provenance payloads as different evidence. The byte comparison protects A0 injection,
+parent prefixes, terminal lineage, and coordinate fixed prefixes and suffixes. Same-state
+dedup additionally requires identical state-derived rank fields and otherwise fails closed;
+it cannot silently choose between inconsistent renderings of one claimed state.
+
+Counter semantics now match the preregistration at the precise failure boundary. An edge is
+attempted before expansion, but becomes completed and generated only after returning a
+valid complete state signature. The resource checkpoint follows immediately while the
+child is live and precedes rank or terminal extraction. A coordinate trial becomes
+completed only after returning a structurally valid full trace; its resource checkpoint
+then precedes fixed-region and lineage validation. Consequently a later validation failure
+does not retroactively erase executed simulator work from the evidence counters.
+
+Candidate ownership is explicit across every frontier transfer. Losing duplicates,
+evicted reservoir entries, terminal candidates, abandoned next frontiers, and exceptional
+paths are released exactly once. Insertion is protected even against a synthetic
+`MemoryError` after a candidate has entered the exact-state table: the candidate is
+released and its live table reference is cleared. A 500-candidate stress proxy confirmed
+the conservative reservoir bound while keeping current parents separate, consistent with
+the registered maximum of 57 live environments once the runtime's rolling A0 cursor and
+one transient child are included.
+
+### Adversarial review and validation
+
+The first review found four material gaps: signed-zero aliases at lineage boundaries,
+completion counters that were delayed until after rank evaluation, a potential ownership
+leak during exceptional frontier insertion, and insufficient independent coverage of the
+terminal comparator and two-macro search. Each was corrected before commit. Tests now
+force terminal final-score selection to disagree with intermediate rank, verify the exact
+A0/mode/global cut order and fill, inject failures on both sides of each accounting
+boundary, and compare the algorithm with an independent exhaustive enumeration of all
+reachable choices in a two-macro synthetic problem.
+
+The final independent review approved the search layer with no remaining blocker. Its 28
+focused tests passed, and the combined search, schema, action, state, and upper-bound gate
+passed 195 tests. Formatting, Python compilation, strict bounded type checking, and
+whitespace validation also passed. These are synthetic algorithm tests only: no real
+environment was imported or stepped, no solver was called, and no registered or new
+full-horizon outcome was inspected. The six-cell development bracket therefore remains
+unopened.
