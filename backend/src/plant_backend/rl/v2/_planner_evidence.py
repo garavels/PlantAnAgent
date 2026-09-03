@@ -426,6 +426,23 @@ def _outside_repository(destination: Path, repository_root: Path) -> None:
         raise ValueError("planner artifacts must be written outside the repository")
 
 
+def validate_artifact_destination(
+    destination: Path,
+    *,
+    repository_root: Path,
+) -> Path:
+    """Validate publication location before a protected cell may execute."""
+
+    target = Path(destination)
+    repository = Path(repository_root)
+    if not repository.is_absolute():
+        raise ValueError("repository_root must be absolute")
+    _outside_repository(target, repository)
+    if not target.parent.is_dir():
+        raise ValueError("planner artifact parent directory must already exist")
+    return target.resolve(strict=False)
+
+
 def write_planner_artifact(
     artifact: FeasiblePlannerArtifactV1,
     destination: Path,
@@ -434,15 +451,13 @@ def write_planner_artifact(
 ) -> Path:
     """Atomically write externally, reopen, and fully revalidate one artifact."""
 
-    target = Path(destination)
     repository = Path(repository_root)
-    if not repository.is_absolute():
-        raise ValueError("repository_root must be absolute")
-    _outside_repository(target, repository)
+    target = validate_artifact_destination(
+        destination,
+        repository_root=repository,
+    )
     payload = artifact_bytes(artifact)
     parent = target.parent
-    if not parent.is_dir():
-        raise ValueError("planner artifact parent directory must already exist")
     temporary_path: Path | None = None
     try:
         descriptor, temporary_name = tempfile.mkstemp(
@@ -490,5 +505,6 @@ __all__ = [
     "build_runner_failure_artifact",
     "capture_runtime_versions",
     "capture_source_boundary",
+    "validate_artifact_destination",
     "write_planner_artifact",
 ]

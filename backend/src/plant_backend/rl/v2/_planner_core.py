@@ -413,6 +413,43 @@ def _observations(guard: _ResourceGuardV1) -> tuple[int, int]:
     )
 
 
+def build_unadmitted_failure_result(
+    *,
+    evidence_scope: Literal[
+        "privileged_offline_development", "noncanonical_unit_fixture"
+    ],
+    phase: Literal["input_validation", "relaxation_binding"],
+    code: str,
+    message: object,
+    elapsed_ns: int,
+    peak_rss_bytes: int,
+    observed_resource_value: int | None = None,
+) -> FeasiblePlannerResultV1:
+    """Represent a failure before a complete runtime admission existed."""
+
+    if phase not in {"input_validation", "relaxation_binding"}:
+        raise ValueError("unadmitted failures require an input/binding phase")
+    if code not in FAILURE_CODES:
+        raise ValueError("unadmitted failure code is unsupported")
+    failure = _FailureDetailsV1(
+        phase=phase,
+        code=code,
+        message=str(message) or type(message).__name__,
+        observed_resource_value=observed_resource_value,
+    )
+    result = _failure_result(
+        evidence_scope=evidence_scope,
+        context=None,
+        counters=PlannerSearchCountersV1(),
+        a0=None,
+        failure=failure,
+        elapsed_ns=_integer("elapsed_ns", elapsed_ns),
+        peak_rss_bytes=_integer("peak_rss_bytes", peak_rss_bytes),
+    )
+    canonical_json(result.to_dict())
+    return result
+
+
 def execute_feasible_planner(
     inputs: PlannerPlantInputsV1,
     *,
@@ -612,4 +649,8 @@ def execute_feasible_planner(
     return failed
 
 
-__all__ = ["build_replay_evidence", "execute_feasible_planner"]
+__all__ = [
+    "build_replay_evidence",
+    "build_unadmitted_failure_result",
+    "execute_feasible_planner",
+]

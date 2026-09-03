@@ -2691,3 +2691,74 @@ add the minimal registered-cell child entry point and a parent process that samp
 provenance before spawning, enforces the external 5,400-second watchdog, validates canonical
 child output, captures the end boundary after core serialization, and hands the resulting
 wrapper to this writer.
+
+## 2026-09-03 — Registered planner isolated behind a bounded evidence runner
+
+### Fresh worker and exact preparation path
+
+The ninth feasible-planner slice adds the private `_planner_worker.py` entry point and the
+public `plant_backend.rl.v2.planner` parent runner. The worker records
+`time.perf_counter_ns()` as the first statement of its entry point, admits only the frozen
+35/42 kg/h and seed 0--2 matrix, constructs the canonical 72-hour commitment-alpha task,
+samples the episode once, constructs the unconstrained Part-I relaxation once, and invokes
+`solve_delivery_relaxation` exactly once with the frozen tolerances and empty solver-options
+mapping. A non-successful solve is rejected explicitly before guidance can be bound.
+
+Preparation failures before complete runtime admission now use
+`build_unadmitted_failure_result`. They produce a schema-valid privileged core failure with
+zero deterministic counters, no invented episode/settings identities, and a stable
+`input_validation` or `relaxation_binding` phase. Once the model result, witness and guidance
+are cross-bound, the worker constructs the frozen settings and runtime admission and hands the
+same initial clock sample into `execute_feasible_planner`. The worker emits exactly one
+canonical JSON core object on stdout and strictly reconstructs it before emission; an
+unexpected failure outside the ordinary core state machine exits through a dedicated protocol
+failure rather than emitting a partial object.
+
+### Parent watchdog, provenance order and publication
+
+`run_registered_planner_cell` validates the requested registered cell and resolved external
+destination before protected execution. It then captures a clean complete start-source and raw
+lock boundary plus the parent runtime identity before spawning the worker with the current
+Python executable. The end boundary is sampled only after a child has exited successfully,
+stdout has been parsed as one exact canonical JSON object, the complete core graph has rebuilt,
+and the requested seed/rate/scope bindings have been checked. A normal core failure is retained
+inside an otherwise completed runner wrapper; killed, nonzero, malformed or unavailable
+children have no invented core; an end-source failure retains the already validated child
+core. Completed artifacts and runner failures use the same atomic external validating writer.
+
+The external watchdog starts immediately before process creation and subtracts process-startup
+time from the 5,400-second communication allowance. Review exposed three cases that the first
+draft did not independently close: non-finite limits, a backwards injected monotonic clock,
+and a child abstraction that ignored its timeout and returned after the deadline. The final
+runner rejects all three, samples completion time after communication, and converts abnormal
+spawn/communication exceptions into `child_protocol_error`. Timeout and clock-error cleanup
+kill and reap the child best-effort without allowing a secondary cleanup exception to replace
+the primary evidence failure. The production path remains the frozen `subprocess.Popen` plus
+`time.perf_counter_ns` implementation.
+
+The Makefile exposes one deliberately narrow, dependency-frozen operational target:
+`make v2-planner DELIVERY_RATE=<35|42> SEED=<0|1|2> OUTPUT=<absolute external JSON>`.
+The external output remains mandatory so one result cannot dirty the next cell's start-source
+boundary. It uses `uv run --frozen`, and the CLI returns success only for an evidence-ready
+artifact; a valid core whose source boundaries changed remains published but exits nonzero and
+is labelled `completed-not-evidence-ready`. A dry command expansion was inspected for rate 42,
+seed 2; it did not start a worker.
+
+### Verification and protected-outcome boundary
+
+The evidence/runtime focus passes **47 tests**. The complete schema, action, state, search,
+runtime, evidence and upper-bound gate passes **263 tests**. The full repository passes
+**876 tests with 2 skips** and only the existing Starlette `TestClient` deprecation warning.
+Formatting, strict type checking of all four runner/core source modules and their evidence
+test, Python compilation, dependency-lock validation, Makefile dry expansion, and whitespace
+validation pass. The first lock check could not initialize the sandboxed host `uv` cache; the
+approved host-cache rerun resolved the existing 92-package lock without changing its bytes.
+
+Every new worker test either rejects an unregistered rate before episode sampling or replaces
+sampling, relaxation construction, the solver, binding, admission, and the exact planner with
+test doubles. Parent tests supply synthetic canonical failed cores and fake processes. No test
+invoked the real relaxation solver, sampled a registered episode for execution, advanced a
+registered plant, or observed a new full-horizon outcome. The six declared 72-hour development
+cells remain unopened. The remaining pre-freeze work is the exact-plant boundary matrix for
+startup, settlement, sunrise, charge/discharge throughput, and a final partial macro, followed
+by a clean committed-source audit before any registered worker is allowed to run.
