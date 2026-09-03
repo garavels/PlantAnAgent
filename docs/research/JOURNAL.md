@@ -3183,3 +3183,26 @@ projected all 288 already-contaminated seed-0/rate-35 issued forecasts without a
 maximum band reconstruction error was `1.11e-16` and maximum inferred resource scale was
 `0.97065`. This opened no controller action or plant outcome. The next increment is the
 immutable MPC settings/model/result schema and sparse MILP construction.
+
+## 2026-09-03 — Service-MPC settings and evidence schema implemented
+
+`mpc_schema.py` now makes the preregistered numerical surface executable before solver
+algebra is added. `ServiceMPCSettingsV1` validates and hashes the 72-hour task identity,
+24-hour/15-minute grid, 25% terminal battery target, delivery-lock tolerance, solver
+options, and every secondary-objective coefficient. Any setting change produces a new
+domain-separated identity; the descriptor explicitly records issued-mean input and no
+controller fallback.
+
+Typed immutable records distinguish the one announced settlement from causally inferred
+recurrences, require an optimal status and solution digest before a solver stage can be
+called successful, and retain every selected interval's energy routes, production,
+inventory, commitment, and battery-direction state. `MPCPlanV1` admits a plan only when
+both stages succeed in order, steps and delivery ordinals are contiguous, solar and
+electrolyser buses close, charging and support do not coincide, selected delivery matches
+the interval records and primary delivery lock, and minimum fill matches the declared
+settlements. Failure records cannot publish a solution digest.
+
+The settings/schema and forecast suites complete with **23 passed**; both new source
+modules pass strict type checking and formatting. No SciPy solver was called and no plant
+or controller outcome was opened. The next increment constructs a canonical sparse MILP
+independently of the optional solver runtime.
