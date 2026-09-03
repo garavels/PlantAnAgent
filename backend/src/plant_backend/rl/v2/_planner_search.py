@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from functools import cmp_to_key
 import math
 from numbers import Integral, Real
-from typing import Generic, Literal, Protocol, TypeVar, cast
+from typing import Generic, Literal, Protocol, TypeVar
 
 from .planner_schema import (
     MODE_PROTECTION_ORDER,
@@ -301,7 +301,7 @@ def compare_intermediate_ranks(
 def concrete_request_bytes(records: tuple[ActionRecordV1, ...]) -> bytes:
     """Return the protocol's canonical concrete-request trace bytes."""
 
-    serialized = cast(str, request_trace_payload(records).canonical_json)
+    serialized = request_trace_payload(records).canonical_json
     return serialized.encode("utf-8")
 
 
@@ -339,11 +339,8 @@ def canonical_action_record_bytes(
                 methanator_share=record.methanator_share,
                 battery_support_kw=record.battery_support_kw,
             )
-    serialized = cast(
-        str,
-        canonical_json(
-            {"schema_version": 1, "records": [record.to_dict() for record in items]}
-        ),
+    serialized = canonical_json(
+        {"schema_version": 1, "records": [record.to_dict() for record in items]}
     )
     return serialized.encode("utf-8")
 

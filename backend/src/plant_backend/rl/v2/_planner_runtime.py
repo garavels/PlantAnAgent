@@ -783,7 +783,9 @@ class TerminalSnapshotV1:
             _payload(name, getattr(self, name), domain=domain)
         if type(self.final_score) is not FinalScoreV1:
             raise TypeError("final_score must be an exact FinalScoreV1")
-        checked_score = FinalScoreV1(**self.final_score.to_dict())
+        checked_score = FinalScoreV1(
+            **self.final_score.to_dict()  # type: ignore[arg-type]
+        )
         if canonical_json(self.final_score.to_dict()) != canonical_json(
             checked_score.to_dict()
         ):
@@ -1009,7 +1011,7 @@ class A0GenerationV1:
 def _revalidated_action_record(record: ActionRecordV1) -> ActionRecordV1:
     if type(record) is not ActionRecordV1:
         raise TypeError("planner action record must be an exact ActionRecordV1")
-    checked = ActionRecordV1(**record.to_dict())
+    checked = ActionRecordV1(**record.to_dict())  # type: ignore[arg-type]
     if canonical_json(checked.to_dict()) != canonical_json(record.to_dict()):
         raise ValueError("planner action record is not canonically normalized")
     return checked

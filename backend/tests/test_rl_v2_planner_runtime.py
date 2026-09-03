@@ -828,6 +828,255 @@ def test_exact_a0_port_beam_polish_and_fresh_replay_integrate_on_tiny_plant() ->
     assert guard.live_environments == guard.reserved_slots == 0
 
 
+def test_exact_replay_crosses_startup_settlement_sunrise_and_partial_macro() -> None:
+    seven_decisions = EpisodeConfigV2(
+        horizon_h=1.75,
+        start_hour=5.75,
+        delivery_period_h=1.75,
+    )
+    config, episode, constraints, weights, admission = _runtime_fixture(
+        episode_config=seven_decisions
+    )
+    counters = PlannerSearchCountersV1()
+    guard = runtime._ResourceGuardV1(
+        settings=admission.settings,
+        counters=counters,
+        start_ns=100,
+        clock_ns=lambda: 100,
+        peak_rss_raw=lambda: 0,
+        platform_system=lambda: "Darwin",
+    )
+    inputs = planner_port.PlannerPlantInputsV1(
+        config=config,
+        episode_config=episode,
+        constraints=constraints,
+        weights=weights,
+        admission=admission,
+    )
+    a0 = planner_port.capture_a0_evidence(
+        inputs,
+        guard=guard,
+        counters=counters,
+    )
+    port = planner_port.PlantPlannerSearchPortV1(
+        inputs=inputs,
+        a0=a0,
+        guard=guard,
+        counters=counters,
+    )
+    root: runtime.PlantPlannerCandidateV1 | None = None
+    first: runtime.PlantPlannerCandidateV1 | None = None
+    terminal: runtime.PlantPlannerCandidateV1 | None = None
+    try:
+        root = port.initial_candidate()
+        first = port.expand_macro(
+            root,
+            template_id=7,
+            macro_depth=1,
+            start_decision=0,
+            stop_decision=4,
+        )
+        port.resource_checkpoint("completed_edge")
+        port.release(root)
+        root = None
+        assert first.terminated is False
+
+        terminal = port.expand_macro(
+            first,
+            template_id=3,
+            macro_depth=2,
+            start_decision=4,
+            stop_decision=7,
+        )
+        port.resource_checkpoint("completed_edge")
+        port.release(first)
+        first = None
+        assert terminal.terminated is True
+        trace = port.terminal_trace(terminal)
+        port.release(terminal)
+        terminal = None
+
+        metrics = trace.payload.metrics.value()
+        audit = trace.payload.delivery_audit.value()
+        assert isinstance(metrics, dict)
+        assert isinstance(audit, dict)
+        assert trace.payload.decision_count == 7
+        assert trace.payload.physics_steps == 105
+        assert metrics["electrolyser_cold_starts"] == 1
+        assert metrics["electrolyser_startup_energy_kwh"] > 0.0
+        assert metrics["commitments_settled"] == 1
+        assert len(audit["settlements"]) == 1
+        assert audit["settlements"][0]["due_step"] == 105
+        assert audit["current"]["step"] == 105
+        assert [record.source_code for record in trace.action_records] == [
+            7,
+            7,
+            7,
+            7,
+            3,
+            3,
+            3,
+        ]
+        assert admission.binding.solar_available_kw[0] == 0.0
+        assert any(value > 0.0 for value in admission.binding.solar_available_kw[16:])
+
+        replay = port.replay_finalist(trace)
+        assert replay.snapshot.outcome == trace.payload.outcome
+        assert replay.snapshot.action_record_trace == trace.payload.action_record_trace
+        assert replay.snapshot.delivery_audit == trace.payload.delivery_audit
+        assert counters.fresh_finalist_replay_decisions == 7
+    finally:
+        for candidate in (terminal, first, root):
+            if candidate is not None:
+                port.release(candidate)
+        port.close()
+        guard.close()
+    assert guard.live_environments == guard.reserved_slots == 0
+
+
+def test_exact_replay_throughput_includes_charge_then_discharge() -> None:
+    two_decisions = EpisodeConfigV2(
+        horizon_h=0.5,
+        start_hour=18.75,
+        delivery_period_h=0.5,
+    )
+    config, episode, constraints, weights, admission = _runtime_fixture(
+        episode_config=two_decisions
+    )
+    inputs = planner_port.PlannerPlantInputsV1(
+        config=config,
+        episode_config=episode,
+        constraints=constraints,
+        weights=weights,
+        admission=admission,
+    )
+    env = PlantEnvV2(
+        config=config,
+        episode=episode,
+        constraints=constraints,
+        weights=weights,
+    )
+    env.reset(seed=admission.seed)
+    runtime._validate_reset_environment(env, admission=admission)
+    initial_energy = env.simulator.state.battery_energy_kwh
+    records: list[ActionRecordV1] = []
+    throughput = 0.0
+
+    charge = actions.generate_action_record(
+        template_id=3,
+        env=env,
+        decision_index=0,
+        source_phase="beam",
+        binding=admission.binding,
+    )
+    throughput, terminated, truncated = runtime.step_action_record(
+        env,
+        charge,
+        battery_throughput_kwh=throughput,
+    )
+    records.append(charge)
+    charged_energy = env.simulator.state.battery_energy_kwh
+    assert charged_energy > initial_energy
+    assert terminated is truncated is False
+
+    discharge = actions.generate_action_record(
+        template_id=7,
+        env=env,
+        decision_index=1,
+        source_phase="beam",
+        binding=admission.binding,
+    )
+    throughput, terminated, truncated = runtime.step_action_record(
+        env,
+        discharge,
+        battery_throughput_kwh=throughput,
+    )
+    records.append(discharge)
+    assert env.simulator.state.battery_energy_kwh < charged_energy
+    assert env.metrics.battery_discharged_kwh > 0.0
+    assert throughput > env.metrics.battery_discharged_kwh
+    assert terminated is True and truncated is False
+
+    generation = runtime.capture_terminal_snapshot(
+        env,
+        admission=admission,
+        action_records=tuple(records),
+        battery_throughput_kwh=throughput,
+        terminated=terminated,
+        truncated=truncated,
+    )
+    counters = PlannerSearchCountersV1()
+    guard = runtime._ResourceGuardV1(
+        settings=admission.settings,
+        counters=counters,
+        start_ns=100,
+        clock_ns=lambda: 100,
+        peak_rss_raw=lambda: 0,
+        platform_system=lambda: "Darwin",
+    )
+    try:
+        replay, prefixes = planner_port._replay_records(
+            inputs,
+            guard,
+            counters,
+            records=tuple(records),
+            phase="finalist_replay",
+        )
+        planner_port._validate_replay_match(generation, replay, config=config)
+        assert prefixes
+        assert replay.battery_throughput_kwh.hex() == throughput.hex()
+        assert counters.fresh_finalist_replay_decisions == 2
+
+        with pytest.raises(ValueError, match="cover the admitted horizon"):
+            planner_port._replay_records(
+                inputs,
+                guard,
+                counters,
+                records=tuple(records[:-1]),
+                phase="finalist_replay",
+            )
+        appended = ActionRecordV1.from_action(
+            Action.idle(),
+            decision_index=2,
+            source_phase="beam",
+            source_code=2,
+            source_binding_sha256=admission.settings.action_library.sha256,
+        )
+        with pytest.raises(ValueError, match="cover the admitted horizon"):
+            planner_port._replay_records(
+                inputs,
+                guard,
+                counters,
+                records=(*records, appended),
+                phase="finalist_replay",
+            )
+        with pytest.raises(ValueError, match="indices"):
+            planner_port._replay_records(
+                inputs,
+                guard,
+                counters,
+                records=tuple(reversed(records)),
+                phase="finalist_replay",
+            )
+
+        changed_records = (
+            replace(records[0], battery_share=0.0),
+            records[1],
+        )
+        changed, _ = planner_port._replay_records(
+            inputs,
+            guard,
+            counters,
+            records=changed_records,
+            phase="finalist_replay",
+        )
+        with pytest.raises(ValueError, match="differs"):
+            planner_port._validate_replay_match(generation, changed, config=config)
+    finally:
+        guard.close()
+    assert guard.live_environments == guard.reserved_slots == 0
+
+
 def test_core_assembles_replay_evidence_selection_and_bracket() -> None:
     config, episode, constraints, weights, admission = _runtime_fixture()
     inputs = planner_port.PlannerPlantInputsV1(

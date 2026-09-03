@@ -25,6 +25,8 @@ from plant_backend.rl.v2._planner_evidence import (
 from plant_backend.rl.v2 import _planner_worker as planner_worker
 from plant_backend.rl.v2 import planner
 from plant_backend.rl.v2.config import EpisodeConfigV2
+from plant_backend.rl.v2.env import PlantEnvV2
+from plant_backend.rl.v2.evaluation import run_controller
 from plant_backend.rl.v2.planner_schema import (
     FeasiblePlannerResultV1,
     PlannerFailureV1,
@@ -541,6 +543,22 @@ def test_cli_succeeds_only_for_evidence_ready_artifact(
             == exit_code
         )
         assert f"planner cell {label}" in capsys.readouterr().out
+
+
+def test_privileged_planner_artifact_is_rejected_by_causal_controller_runner() -> None:
+    artifact = build_runner_failure_artifact(
+        phase="start_source",
+        code="source_unavailable",
+        message="fixture",
+        elapsed_ns=0,
+    )
+    env = PlantEnvV2(episode=SHORT)
+
+    with pytest.raises(ValueError, match="controller id"):
+        run_controller(env, artifact, seed=0)
+
+    assert env._episode is None
+    assert env.decisions_taken == env.physics_steps_taken == 0
 
 
 def test_worker_rejects_unregistered_cell_without_sampling(

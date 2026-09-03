@@ -286,7 +286,7 @@ def _success_result(
         provenance_gaps=PROVENANCE_GAPS,
         success=True,
         failure=None,
-        **_result_identity(context),
+        **_result_identity(context),  # type: ignore[arg-type]
         search=_diagnostics(
             counters,
             termination_reason="completed",
@@ -355,7 +355,7 @@ def _failure_result(
         provenance_gaps=PROVENANCE_GAPS,
         success=False,
         failure=record,
-        **identities,
+        **identities,  # type: ignore[arg-type]
         search=search,
         a0_incumbent=a0,
         searched_finalist=None,

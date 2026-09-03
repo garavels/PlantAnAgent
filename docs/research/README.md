@@ -50,6 +50,9 @@ fallback behavior.
   future-information planner's action templates, deterministic search and polishing
   budgets, clone/deduplication contracts, task score, fresh-replay proof, and fail-closed
   evidence schema before any full-horizon planner result is opened.
+- [`FEASIBLE_PLANNER_PREFREEZE_AUDIT.md`](FEASIBLE_PLANNER_PREFREEZE_AUDIT.md) maps
+  every frozen pre-outcome obligation to executable evidence and records the final
+  physical replay boundary fixtures required before the six development cells may run.
 
 Small canonical benchmark outputs may be committed under [`results/`](results/) when
 they make a reported conclusion directly auditable. Large generated datasets, model

@@ -229,7 +229,7 @@ def _validated_records(
     for index, record in enumerate(records):
         if type(record) is not ActionRecordV1:
             raise TypeError(f"action_records[{index}] must be an exact ActionRecordV1")
-        rebuilt = ActionRecordV1(**record.to_dict())
+        rebuilt = ActionRecordV1(**record.to_dict())  # type: ignore[arg-type]
         if canonical_json(rebuilt.to_dict()) != canonical_json(record.to_dict()):
             raise ValueError(f"action_records[{index}] is not canonically normalized")
         if rebuilt.source_code in (-1, 0):

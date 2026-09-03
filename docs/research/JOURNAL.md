@@ -2762,3 +2762,61 @@ registered plant, or observed a new full-horizon outcome. The six declared 72-ho
 cells remain unopened. The remaining pre-freeze work is the exact-plant boundary matrix for
 startup, settlement, sunrise, charge/discharge throughput, and a final partial macro, followed
 by a clean committed-source audit before any registered worker is allowed to run.
+
+## 2026-09-03 — Feasible-planner pre-freeze physical boundary closed
+
+### Exact multi-boundary replay
+
+The final pre-outcome plant slice adds a seven-decision noncanonical integration beginning at
+local 05:45. Its first four-decision macro selects the frozen full-stack template, crosses the
+06:00 solar boundary, and accumulates a real cold-start transition and startup energy. Its
+second macro contains only the three remaining decisions and selects the charge template. The
+single delivery settles at the exact terminal physics step 105. The terminal candidate is
+released before a fresh reset replays all seven actions; request and action-record traces,
+metrics, simulator truth, telemetry, ordered settlement audit, score, throughput, and complete
+outcome fingerprints match through the existing replay validator. This combines startup,
+sunrise, settlement, and final-partial-macro behavior in the same exact simulator trajectory.
+
+A separate two-decision noncanonical sunset fixture exercises physical charge followed by
+discharge. The first charge-template decision increases stored battery energy. The second
+full-stack decision reduces it, records positive bus-side discharge, and leaves the planner's
+throughput larger than discharge alone because the preceding charge is included. A fresh reset
+replays the same binary64 throughput. The fixture also verifies that omitted, appended,
+reordered, and behaviorally changed action traces fail before they can be equated to the
+original terminal snapshot.
+
+All temporary exact environments are released through the authoritative guard even if an
+assertion or replay fails. These are seven- and two-decision fixtures, below the frozen
+eight-decision limit; neither uses a registered horizon or evidence scope.
+
+### Final isolation and audit map
+
+An explicit regression now passes a privileged planner artifact to the causal controller
+runner. It is rejected for lacking the typed `ControllerV2` contract before environment reset,
+episode sampling, or a plant decision. This turns architectural separation into executable
+evidence and closes item 17 of the frozen checklist.
+
+`FEASIBLE_PLANNER_PREFREEZE_AUDIT.md` maps all 17 pre-outcome obligations to maintained test
+names and records the two physical fixture designs, development-only matrix, freeze commands,
+and post-freeze execution discipline. A combined strict type check across all ten planner
+source modules exposed two redundant casts and several deliberately dynamic reconstruction
+calls that had been hidden when modules were checked separately. The redundant casts were
+removed; object-valued source payloads now receive an explicit mapping guard; and the exact
+schema reconstruction sites carry narrow argument-expansion suppressions. The complete planner
+source set now passes one strict check. The dynamic runtime fixture module remains execution-
+and compilation-tested rather than being presented as strictly typed production source.
+
+### Candidate-freeze verification and unchanged outcome boundary
+
+The complete planner schema/action/state/search/runtime/evidence/upper-bound gate passes
+**266 tests**. The full repository passes **879 tests with 2 skips** and only the existing
+Starlette `TestClient` deprecation warning. Formatting, combined strict planner-source type
+checking, Python compilation, dependency-lock validation, and whitespace validation pass on
+the candidate content.
+
+No registered child was spawned, no valid registered worker request was made, and no new
+35/42 kg/h 72-hour plant or relaxation result was observed. Tiny upper-bound tests continue to
+solve only their declared hand-solvable noncanonical LP fixtures. The six protected development
+cells remain unopened. The next action is to commit this audit slice, reproduce every required
+gate from the resulting clean revision, and only then execute the six cells without modifying
+source between them.

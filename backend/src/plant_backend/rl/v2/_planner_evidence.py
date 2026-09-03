@@ -115,7 +115,10 @@ class SourceBoundaryV1:
     def __post_init__(self) -> None:
         if type(self.source) is not CanonicalPayloadV1:
             raise TypeError("source must be an exact CanonicalPayloadV1")
-        rebuilt_source = source_snapshot_payload(self.source.value())
+        source_value = self.source.value()
+        if not isinstance(source_value, Mapping):
+            raise TypeError("source snapshot payload must contain an object")
+        rebuilt_source = source_snapshot_payload(source_value)
         if rebuilt_source != self.source:
             raise ValueError("source snapshot does not match its canonical payload")
         if (
