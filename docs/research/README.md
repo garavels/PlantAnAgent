@@ -46,6 +46,10 @@ fallback behavior.
 - [`PLANNING_BENCHMARK_PROTOCOL.md`](PLANNING_BENCHMARK_PROTOCOL.md) preregisters the
   privileged continuous-relaxation bound, exact-simulator best-known feasible planner,
   causal-MPC gate, proof obligations, information boundary, and failure rules.
+- [`FEASIBLE_PLANNER_PROTOCOL.md`](FEASIBLE_PLANNER_PROTOCOL.md) freezes the exact
+  future-information planner's action templates, deterministic search and polishing
+  budgets, clone/deduplication contracts, task score, fresh-replay proof, and fail-closed
+  evidence schema before any full-horizon planner result is opened.
 
 Small canonical benchmark outputs may be committed under [`results/`](results/) when
 they make a reported conclusion directly auditable. Large generated datasets, model

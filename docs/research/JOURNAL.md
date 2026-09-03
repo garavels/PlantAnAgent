@@ -1821,3 +1821,145 @@ Python simulator operation, support scheduled faults, attach a start/end source 
 construct a realizable five-field action schedule. It therefore answers only the relaxed
 physical side of the bracket. The next work package must freeze and implement the exact-
 simulator feasible-planner search before any additional full-horizon outcome is opened.
+
+## 2026-09-02 — Exact-simulator feasible search frozen before implementation
+
+### Method selection
+
+No new rollout, solver objective, terminal metric, or full-horizon planner outcome was
+opened in this design step. Three independent read-only reviews compared template beam
+search, rollout search, coordinate descent, discretized dynamic programming, MILP
+projection, MCTS, and evolutionary search. The selected version-1 method is a
+deterministic budgeted template beam followed by fixed block-coordinate polishing. Every
+candidate crosses the real five-field `PlantEnvV2.step_action` boundary; the relaxed LP
+is used only for one proposal template. The complete legacy schedule remains an external
+incumbent and exact ties return legacy.
+
+The primary beam is frozen at width 24 and advances four 15-minute decisions per edge.
+This makes the one-hour cold-start precursor expressible while reducing the 72-hour tree
+from 288 cuts to 72. Its 15 ordered semantic templates include legacy-live, the relaxed
+witness projection, idle, charge, explicit standby/start offers, isolated H2/DAC/CH4
+operations, feedstock recovery, and three nominal mixed-process loads. Each semantic
+action is regenerated at the native decision boundary, routed against the maximum private
+solar truth within that hold, and then subjected to the unchanged minute-level guard and
+exact simulator.
+
+The beam retains the A0 prefix plus one best state in every active electrolyser
+commitment mode before global filling. Version 1 deliberately uses no coarse state bins:
+only byte-identical complete same-depth state-signature payloads deduplicate. Intermediate
+ranking includes next-deadline readiness so a startup/feedstock precursor is not judged
+only by immediate production. Final selection is delivery-first, then service, and
+lexicographic: delivered methane, exact commitment service, worst fill, terminal
+feedstock potential, battery endowment, forced/aborted/cold starts, curtailment, then
+charge-plus-discharge throughput. Shaped RL reward is excluded.
+
+One coarse six-hour substitution sweep is run independently from A0 and the best beam
+trace, followed by one one-hour sweep from their winner. All templates and blocks are
+visited in frozen order, only strict final-score improvements are accepted, and unchanged
+suffixes remain concrete actions. This gives at most 1,440 coordinate trials in a
+72-hour cell. The final trace must reproduce exact canonical outcome bytes on a brand-new
+reset; search state itself is never evidence.
+
+### Clone-performance finding and safety response
+
+A clone-only timing probe used the already contaminated default seed-0 configuration and
+never stepped an episode or exposed an outcome. One hundred ordinary full-environment
+deep copies took 4.490410 seconds (44.9 ms each). One hundred simulator copies took
+0.550676 seconds (5.5 ms each). A prototype memo-sharing environment copy took 0.953945
+seconds (9.5 ms each), while a simulator copy sharing only frozen configuration and its
+immutable solar tape took 0.101059 seconds (1.0 ms each). Generic copying would make even
+the reduced beam unnecessarily expensive.
+
+The protocol therefore permits a structural-sharing clone only behind a strict proof
+obligation: every operational object and mutable nested container must detach; only
+validated immutable episode/configuration data may share. Equal-action behavior must
+match ordinary deep copy byte for byte, sibling/parent mutation tests are mandatory, and
+the optimization is rejected if a complete deterministic checkpoint cannot be
+constructed. `EpisodeV2` is not treated as transitively immutable because its frozen
+record contains a mutable stream-key dictionary.
+
+### Integrity and claim boundary
+
+The complete specification is now recorded in `FEASIBLE_PLANNER_PROTOCOL.md`: exact
+template equations and order, 25,575 beam-edge ceiling, rankings, tie rules, mode lanes,
+clone and state-signature contracts, polishing schedule, final score, throughput
+definition, replay hashes, immutable result schema, 5,400-second/4-GiB emergency failure
+limits, and pre-outcome adversarial tests. Core results remain explicitly not evidence-
+ready until a later runner attaches clean start/end source and dependency-lock audits.
+
+This planner is privileged and non-deployable. A feasible improvement would demonstrate
+that the current interface admits operational value which a causal controller could try
+to capture; it would not validate RL. Failure to improve would diagnose only this frozen
+library/search budget, not global unreachability. The protocol remains restricted to the
+already declared fault-free commitment-alpha development scope. No new full-horizon cell
+was opened.
+
+### Pre-commit adversarial protocol review
+
+Two independent reviewers attacked the draft before it became the registered method.
+They found three changes capable of altering or invalidating outcomes. First, the initial
+share-closure rule could loop forever when rounded process shares summed one ULP above one
+and the battery residual was already zero. Closure is now a proportional downward scale
+with an eight-iteration ceiling and exact hex reference vectors. Second, eliminating
+templates that shared only their first action was invalid because semantic templates can
+diverge later in a four-decision macro. Every template edge is now completed before exact
+state/trace deduplication. Third, terminal candidates could have been pruned by an
+intermediate readiness rank after its purpose had ended. The terminal cut now streams all
+generated children through the full final comparator.
+
+The review also removed implementation discretion: coordinate trials use best improvement
+against one immutable block-start trace; the A0 cursor and source-lineage grammar are
+explicit; no-pending-deadline readiness is zero; result, settings, failure, comparison,
+runner, hash-domain, counter, resource, clone-allowlist, and exact state-signature schemas
+are enumerated; and an exact replayed `F>U` remains a valid feasible finding while
+invalidating the upper bracket rather than being clamped or discarded. The relaxed guide
+must come from exactly one preregistered Part-I solve and is bound by model, result, and
+witness hashes. It cannot be selected among repeated degenerate witnesses.
+
+Registered execution is now restricted to seeds 0--2 and rates 35/42 with default plant,
+constraints, weights, weather/inventory configuration, and commitment profile. Their
+configuration and checkpoint digests are frozen in the protocol. Clone review identified
+the exact memo-sharing allowlist and confirmed that the outer `EpisodeV2`, checkpoint
+mapping, health dictionaries, metrics, encoder, spaces, RNGs, components, ledgers,
+registries, and event state must detach. A graph audit and ordinary-deepcopy equivalence
+are mandatory. Exact-simulator tests may use at most eight explicitly noncanonical
+decisions; longer sequence mechanics use outcome-free test doubles.
+
+A final delta audit found four more specification-level defects. State deduplication had
+conflicting keys in two sections; version 1 now uses the complete state payload alone
+after every full macro, with source/action bytes only as survivor tie-breaks. The
+no-improvement result had required every discarded search trace to equal A0 before it
+could omit a duplicate finalist; omission now depends only on the final post-polish trace.
+Early input/binding failures could not populate mandatory model identities, so those
+fields are explicitly phase-dependent and nullable on failure. Finally, an external
+watchdog could kill the child before a core result existed, but the wrapper had no
+failure form; it now has an exact runner-failure envelope and permits a null core only in
+that failed state.
+
+The streaming-frontier memory proof was also reviewed. Rather than depend on a subtle
+online-selection induction in version 1, the registered ceiling was conservatively raised
+from 50 to 57 live environments. That directly accommodates 24 current parents, a union
+of global top-24 plus six distinct mode winners and A0, the rolling A0 cursor, and one
+transient child. Score extraction now names one authoritative source for every field and
+requires exact agreement at duplicated simulator/metrics/ledger boundaries. The action
+library and legacy-controller canonical payloads and hashes were frozen explicitly.
+
+The last reproducibility audit then showed that naming canonical domains was insufficient:
+two implementations could choose different root wrappers for the same trace. The
+request/source/action, outcome, replay-binding, deterministic-counter, source-snapshot,
+runtime, result, and runner-artifact preimages are now field-exact, including explicit
+nested paths for every timing/resource exclusion. The core embeds the complete canonical
+Part-I result, not only its digest, so a writer can independently prove that the reported
+upper-bound scalar came from the bound result it hashes.
+
+The protocol freeze itself is machine-bound to this documentation-only commit: settings
+carry its future anchor commit and protocol-file SHA-256, require the anchor's frozen
+parent and exact four documentation paths, and compare current bytes with the anchor.
+Final score fields now map to exact metric/state attribute names, every state-signature
+nested object has a frozen private-field projection, failure strings have one bounded
+sanitizer, and the registered clock begins before episode/relaxation work. Registered
+artifacts must be written outside Git until all cells finish, so one output cannot
+invalidate the next cell's clean starting boundary.
+
+These corrections were made without opening a solver objective or plant outcome. The
+method is still pre-implementation at this boundary.

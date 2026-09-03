@@ -257,10 +257,12 @@ field. No numeric ceiling is published from a failed solve.
 
 ### Scope and naming
 
-This is a deterministic offline search over deep copies of `PlantEnvV2`. It is allowed to
-select a schedule after inspecting the complete episode. It is therefore privileged and
-non-deployable. It will be called **best-known feasible future-information planner**, not
-oracle optimum, MPC, controller upper bound, or proof of optimality.
+This is a deterministic offline search over behaviorally exact isolated clones of
+`PlantEnvV2`, optionally accelerated only through the amendment's audited immutable-
+sharing contract. It is allowed to select a schedule after inspecting the complete
+episode. It is therefore privileged and non-deployable. It will be called **best-known
+feasible future-information planner**, not oracle optimum, MPC, controller upper bound,
+or proof of optimality.
 
 It must remain a separate type from `ControllerV2`; in particular it may receive an
 environment/episode, whereas online controllers may not.
@@ -277,23 +279,33 @@ planner returns the candidate with the greatest frozen final score, so it cannot
 schedule worse than A0 under that score. Exact metric equality between search state and
 fresh replay is required.
 
-### Search freeze before outcomes
+### Frozen search amendment
 
-Before any full development result is opened, an amendment must freeze:
+The complete version-1 action library, routing equations, one-hour macro beam, exact
+deduplication rule, mode protection, block-coordinate polish, rankings, resource limits,
+failure behavior, and serialized replay contract are frozen in
+[`FEASIBLE_PLANNER_PROTOCOL.md`](FEASIBLE_PLANNER_PROTOCOL.md). That amendment is to be
+committed before implementation and before any new full-horizon result is opened. In
+particular, version 1 uses exact same-depth state equality and **no approximate
+deduplication bins**.
+
+The amendment freezes:
 
 - action-library names, formulas, ordering, and digest;
-- search block size, beam width, deduplication bins, and expansion budget;
+- search block size, beam width, exact state-signature/deduplication rule, and expansion
+  budget;
 - deterministic tie-breaking and random-seed policy;
 - intermediate ranking and final lexicographic score;
 - the incumbent comparison rule;
 - runtime/memory limits and failure behavior; and
 - the exact serialized search/replay schema.
 
-The fixed action library will cover at least idle, charge, explicit warm retention,
-commit/start support, several stack loads with stoichiometric DAC/methanator routing,
-feedstock recovery, methane conversion, and the live legacy action. Candidate generators
-may use private truth only in this privileged planner and must serialize the actual
-five-field action chosen at each decision.
+The fixed action library covers idle, charge, explicit warm retention, commit/start
+support, several stack loads with independently cap-clipped nominal-stoichiometric
+DAC/methanator routing, feedstock recovery, methane conversion, the relaxed-witness
+projection, and the live legacy action.
+Candidate generators may use private truth only in this privileged planner and serialize
+the actual five-field action chosen at each decision.
 
 The final score will prioritize, in order:
 
@@ -305,8 +317,8 @@ The final score will prioritize, in order:
    time and energy still needed for conversion and is only a tie-breaker, not “deliverable
    methane”;
 5. terminal battery energy;
-6. fewer forced/aborted/cold starts;
-7. lower curtailment and battery throughput, where throughput is the exact-replay sum of
+6. fewer forced stops, then aborted starts, then cold starts;
+7. lower curtailment, then lower battery throughput, where throughput is the exact-replay sum of
    absolute bus-side battery power times the physics timestep (charge plus discharge kWh).
 
 No shaped scalar reward can outrank delivery. All comparisons use the same sampled
@@ -350,9 +362,11 @@ For every cell the report must retain:
 - solver/model or search/action-library identity;
 - success/failure state and bounded diagnostic;
 - A0, feasible-planner, unconstrained relaxed, and endowment-preserving values;
-- exact planning gain `F - A0`, residual relaxed gap `U - F`, and fraction closed
-  `(F - A0) / (U - A0)` only when `U - A0` exceeds the frozen numerical tolerance;
-  the endowment-preserving diagnostic remains outside this bracket;
+- exact planning gain `F - A0` for every replay-valid feasible result; residual relaxed
+  gap `U - F` only when bracket status is valid; and fraction closed
+  `(F - A0) / (U - A0)` only when bracket status is valid and `U - A0` exceeds the
+  frozen numerical tolerance; the endowment-preserving diagnostic remains outside this
+  bracket;
 - complete initial and terminal balance vectors;
 - deadline-level deliveries;
 - starts/stops, process energy, curtailment, battery throughput, and execution latency;
