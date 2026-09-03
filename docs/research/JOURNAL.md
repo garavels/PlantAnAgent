@@ -2886,3 +2886,26 @@ protected execution resumes, a noncanonical regression must reproduce the exact 
 boundary, the implementation and frozen text must be reconciled without outcome-driven search
 changes, the complete gate must pass, and a new clean execution revision must be declared. The
 repaired six-cell matrix will be reported separately from this first failed invocation.
+
+### Localization correction and repair frozen before code
+
+The preceding phrase "during its fourth macro-depth region" was imprecise. The artifact
+reports **four completed macro depths**; the uncompleted edge belongs to the following region.
+The numerical counters remain correct and unchanged. This correction is additive rather than
+rewriting the disclosure commit.
+
+An independent telemetry-only reproduction now confirms the mechanism without sampling an
+episode or invoking the relaxation solver. At solar bus
+`3097.9458568525442 == 0x1.833e4475970c0p+11`, the production heuristic emits shares whose
+ordered binary64 sum is `0x1.0000000000001p+0`. `Action.sanitised` divides by that sum, but
+each quotient rounds back to its exact input bits. The action is therefore an operational
+sanitizer fixed point even though the schema's stronger arithmetic sum predicate rejects it.
+Only `legacy_live` bypasses the target router's strict proportional closure, completing the
+root-cause chain from the observed schema message to the controller arithmetic.
+
+`FEASIBLE_PLANNER_REPAIR_001.md` freezes the correction before implementation. It preserves
+the exact A0/legacy request and permits a sum-over-one record only for A0 or `legacy_live`
+lineage and only when the simulator's normalization would be binary64 bit-identical. It keeps
+all future-truth templates strictly sum-closed and rejects any materially normalized legacy
+request. No performance-sensitive search, plant, task, score, or solver setting may change in
+this repair.

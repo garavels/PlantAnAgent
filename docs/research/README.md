@@ -53,6 +53,9 @@ fallback behavior.
 - [`FEASIBLE_PLANNER_PREFREEZE_AUDIT.md`](FEASIBLE_PLANNER_PREFREEZE_AUDIT.md) maps
   every frozen pre-outcome obligation to executable evidence and records the final
   physical replay boundary fixtures required before the six development cells may run.
+- [`FEASIBLE_PLANNER_REPAIR_001.md`](FEASIBLE_PLANNER_REPAIR_001.md) preserves the
+  first registered-cell failure and freezes the narrow binary64 legacy-action repair
+  before its implementation or any further protected execution.
 
 Small canonical benchmark outputs may be committed under [`results/`](results/) when
 they make a reported conclusion directly auditable. Large generated datasets, model
