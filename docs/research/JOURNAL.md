@@ -2288,3 +2288,75 @@ exercise every integer score source, and mutate both the embedded witness and gu
 An independent review approved the resulting contract; the combined adjacent planner
 gate passed 204 tests before the two final review hardenings. No solver, plant step, or
 outcome was opened by this audit.
+
+## 2026-09-03 — Planner runtime ownership core implemented
+
+### Scope and architectural boundary
+
+The fifth feasible-planner implementation slice establishes the plant-specific ownership
+primitives needed by the previously committed plant-independent search. The new
+`_planner_runtime.py` layer does not yet execute A0, expand a macro, replay a schedule, or
+write evidence. It owns detached terminal/A0 records, live `PlantEnvV2` candidate handles,
+logical environment reservations, exact wall/RSS sampling, and fail-closed lifecycle
+errors. Keeping those responsibilities separate lets the next port translate the frozen
+search protocol into real plant operations without placing environment internals in the
+generic search algorithm or allowing the privileged planner to implement `ControllerV2`.
+
+`TerminalSnapshotV1` cross-validates the complete action records against request, source,
+and full-record canonical payloads; reconstitutes and canonically compares the final score;
+binds every score component to the complete metrics, terminal truth, delivery audit, and
+battery-throughput sources; recomputes methane-equivalent inventory; and reconstructs the
+complete outcome payload. `A0GenerationV1` accepts only exact A0 source phase, code, and
+controller binding, revalidates its nested terminal snapshot on every construction, and
+requires one non-empty complete-state prefix per four-decision macro.
+
+Each `PlantPlannerCandidateV1` owns exactly one reset environment and seals its environment
+identity, canonical action-record trace, binary64 throughput, macro depth, and termination
+flags. Validation checks all environment/simulator/metrics counters and rejects truncation,
+stale depth, signed-zero substitution, metadata mutation, or reuse after release. Ordinary
+release validates first. A separate cleanup-only disposal path returns the originally
+attested environment and clears both strong references without endorsing corrupted metadata;
+the future port must pair it with the independently retained guard token and preserve the
+primary integrity exception.
+
+The resource guard reserves capacity before construction, separately tracks unbound tokens
+and exact environment identities, freezes its limits against subsequent settings mutation,
+and enforces the registered 57-environment beam ceiling and two-environment non-beam ceiling.
+The wall comparison is strict `>` against an injected monotonic start, Darwin RSS is treated
+as bytes and other supported platforms as KiB, and unavailable/nonintegral measurements fail
+closed. Binding is exception-safe, foreign/double tokens are rejected, and a normal close
+reports any leaked reservation rather than silently clearing a success path.
+
+### Adversarial corrections and retained port obligations
+
+The first independent review rejected the initial core and demonstrated seven classes of
+failure: an unbound terminal score, a self-consistent wrong A0 binding, limits mutable after
+guard construction, admission of unreset or later-mutated candidates, incomplete trace
+projection, reusable/suppressible guard cleanup, and clock failures assigned to the wrong
+phase. All were corrected with targeted regressions. A second review found that A0 could
+accept a nested snapshot mutated after construction; `A0GenerationV1` now reruns the complete
+snapshot validator.
+
+Two integration risks were then closed before this commit. Terminal snapshots now carry the
+raw canonical `PlantConfig` SHA-256 and expose `validate_for_config`, which first revalidates
+the full snapshot, requires the exact plant-config type, recomputes its canonical identity,
+and binary64-compares both H2/CH4 and CO2/CH4 ratios. This prevents a caller from inventing
+conversion factors that change terminal feedstock value. Candidate cleanup can now detach
+the originally attested environment after the candidate validator itself fails, preventing
+that failure from making its guard reservation unreachable.
+
+The next real-plant port remains obligated to call binding attestation before A0, call
+`validate_for_config(candidate.env.config)` before admitting any terminal snapshot to A0,
+ranking, or replay, and retain each candidate's guard token outside mutable candidate
+metadata. Cleanup must release that token/environment pair even on validation failure while
+leaving the original failure authoritative.
+
+### Verification and evidence boundary
+
+The final independent read-only review approved the slice with no remaining core blocker.
+The focused runtime suite passed **16 tests**. The combined runtime, schema, action, state,
+search, and upper-bound gate passed **228 tests**. Formatting, strict targeted type checking,
+Python compilation, and whitespace validation passed. Tests reset only the declared
+two-decision noncanonical fixture and do not step it in this slice. No LP solver, registered
+episode, new full-horizon plant rollout, terminal benchmark outcome, or holdout was opened.
+The six preregistered 35/42 kg/h development cells therefore remain unopened.
