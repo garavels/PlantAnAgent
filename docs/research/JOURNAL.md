@@ -2904,10 +2904,10 @@ root-cause chain from the observed schema message to the controller arithmetic.
 
 `FEASIBLE_PLANNER_REPAIR_001.md` freezes the correction before implementation. It preserves
 the exact A0/legacy request and permits a sum-over-one record only for A0 or `legacy_live`
-lineage and only when the simulator's complete sanitizer would be binary64 bit-identical. It keeps
-all future-truth templates strictly sum-closed and rejects any materially normalized legacy
-request. No performance-sensitive search, plant, task, score, or solver setting may change in
-this repair.
+lineage and only when the simulator's complete sanitizer would be binary64 bit-identical. It
+keeps all future-truth templates strictly sum-closed and rejects any materially normalized
+legacy request. No performance-sensitive search, plant, task, score, or solver setting may
+change in this repair.
 
 Before implementation, a second arithmetic check corrected one detail in that repair text.
 The `0x1.0000000000001p+0` value is the protocol's explicit left-to-right accumulator. On
@@ -2917,3 +2917,49 @@ this witness. The frozen acceptance rule is consequently the complete sanitizer 
 compute its built-in sum, divide only if that result exceeds one, and require the final four
 shares to be bit-identical. This correction was also committed before implementation and does
 not broaden the permitted lineage or any search degree of freedom.
+
+## 2026-09-03 — Legacy closure repair implemented and candidate re-freeze verified
+
+### Exact correction
+
+The repair is implemented only in the pure `ActionRecordV1` validation boundary. Every action
+share remains finite and individually within `[0, 1]`, and the protocol's explicit
+left-to-right sum must still be no greater than one for ordinary records. The sole exception
+requires `source_code` -1 or 0, the frozen A0 controller binding, and a locally reproduced
+`Action.sanitised` operation whose output is bit-identical to all four input shares. A legacy
+oversubscription that the sanitizer would materially normalize still fails; the same one-ULP
+fixed point under any of template IDs 1--14 still fails.
+
+The controller output is not rounded, rescaled, or replaced. Consequently the controller,
+action-library descriptor and digest, source trace, request bytes, guard input, plant action,
+search ordering, score, and solver are unchanged. The fix removes a contradiction between two
+validation accumulators at the evidence-record boundary; it creates no new optimization degree
+of freedom.
+
+### Executable repair evidence
+
+Three complementary regressions now preserve the defect and fix:
+
+- the shipped heuristic on synthetic telemetry emits the four exact hex floats, has a
+  protocol-ordered sum of `0x1.0000000000001p+0`, has a CPython 3.12 built-in sum of exactly
+  one, and is unchanged by `Action.sanitised`;
+- both A0-capture and live-legacy records accept and reconstruct those five action doubles
+  byte-for-byte;
+- a wrong A0 binding, every nonlegacy template lineage, and a materially normalized 0.6/0.6
+  legacy request are rejected.
+
+The new three-test defect focus passes. The controller/schema/action suites pass **132 tests**,
+and the complete planner schema/action/state/search/runtime/evidence/upper-bound gate passes
+**268 tests**. The full repository passes **882 tests with 2 skips** and the same sole
+Starlette `TestClient` deprecation warning. All ten planner implementation modules pass the
+combined strict type check against the repository Python environment; all ten pass formatting
+and compilation checks. `uv lock --check` resolves the existing 92-package lock without a
+change, whitespace validation passes, and the worktree is clean after the implementation
+commit.
+
+No registered episode was sampled or advanced during diagnosis or verification, and no
+relaxation solver or full-horizon planner was invoked. The only plant input added by the repair
+is a telemetry-only default-plant observation, not an episode. The next commit records this
+candidate audit. Every gate must then be reproduced from that clean commit before executing a
+new six-cell repaired matrix in rate-major, seed-minor order. Outputs will use a new external
+directory; the failed revision-`0059626` artifact remains immutable and separately reported.
