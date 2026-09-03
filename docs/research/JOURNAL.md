@@ -2963,3 +2963,161 @@ is a telemetry-only default-plant observation, not an episode. The next commit r
 candidate audit. Every gate must then be reproduced from that clean commit before executing a
 new six-cell repaired matrix in rate-major, seed-minor order. Outputs will use a new external
 directory; the failed revision-`0059626` artifact remains immutable and separately reported.
+
+## 2026-09-03 — Repaired feasible-planner matrix completed
+
+### Frozen source and execution discipline
+
+The candidate audit was committed as
+`564002cd9a49761b7eb78a84424d5325e5b240c6`. From that clean revision the dependency
+lock, 268-test planner gate, 882-test full repository suite with 2 skips, formatter, combined
+strict planner-source type check, compilation, and whitespace checks were reproduced before
+the first repaired cell. No repository file changed while the six registered cells ran.
+
+The cells were opened exactly once in the frozen rate-major, seed-minor order under
+`make v2-planner`, with outputs in the new external directory
+`/private/tmp/plantanagent-planner-564002c`. The first four calls used the ordinary locked uv
+environment. Before rate 42/seed 1, the elevated-command approval service returned a 404 before
+process creation; a restricted invocation then failed before process creation because the
+default uv cache was outside its writable boundary. Neither attempt sampled an episode or
+created an output. Setting `UV_CACHE_DIR=/private/tmp/plantanagent-uv-cache` allowed the same
+frozen Make target and existing `.venv` to run inside the restricted sandbox for the final two
+cells. The worker command, Python executable, dependency lock, runtime payload, and source
+identity remained unchanged.
+
+All six parent runners completed normally. Every retained wrapper has `success=true`,
+`evidence_ready=true`, and `runner_failure=null`; every core search has
+`termination_reason="completed"`. Their start and end source payloads are byte-identical,
+clean, and bound to revision `564002c`; their common source-payload SHA-256 is
+`7d54ea4fb59310a19b72279318bf9af200dfc85117720eb2321e9e42b300cade` and common
+worktree identity is
+`bd64e058d00659e7675519ad83142110bd04ff774ca9ae37a962e4dc74bc1ec1`.
+Every boundary observes raw `uv.lock` SHA-256
+`080d96275581ebbec1b2c27b354ea54e3e66419bfaadb034896da1fd22b228dd`.
+The shared runtime is CPython 3.12.7, NumPy 2.5.2, SciPy 1.18.1, linked HiGHS 1.12.0,
+Gymnasium 1.3.0, and Darwin arm64.
+
+Each cell completes all 72 macro depths, 25,410 attempted/completed/generated beam edges,
+1,440 coordinate trials, exact A0 generation and replay, and a fresh 288-decision finalist
+replay through all 4,320 one-minute physics steps. Search elapsed time ranges from
+3,559,008,295,584 to 3,780,264,533,625 ns and peak reported RSS from 309,641,216 to
+351,633,408 bytes. The roughly one-hour runtime per cell confirms this is an offline research
+reference rather than a deployable controller.
+
+### Exact controllability bracket
+
+The complete observed bracket is:
+
+| rate | seed | A0 kg | F kg | U kg | gain kg | residual kg | fraction closed | A0 service | F service |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 35 | 0 | 2520.000 | 2520.000 | 2520.000 | 0.000 | 0.000 | n/a | 12/12 | 12/12 |
+| 35 | 1 | 2347.973 | 2520.000 | 2520.000 | 172.027 | 0.000 | 100.00% | 11/12 | 12/12 |
+| 35 | 2 | 2520.000 | 2520.000 | 2520.000 | 0.000 | 0.000 | n/a | 12/12 | 12/12 |
+| 42 | 0 | 2552.208 | 3024.000 | 3024.000 | 471.792 | 0.000 | 100.00% | 9/12 | 12/12 |
+| 42 | 1 | 2382.421 | 2969.062 | 3024.000 | 586.641 | 54.938 | 91.44% | 7/12 | 11/12 |
+| 42 | 2 | 2773.894 | 3024.000 | 3024.000 | 250.106 | 0.000 | 100.00% | 10/12 | 12/12 |
+
+The 35 kg/h task is delivery-saturated for A0 on two seeds; the planner closes the one
+172.027 kg shortage and serves all 36 commitments. It is a nominal case, not a sufficient
+standalone learning benchmark. At 42 kg/h, exact actionable headroom exists on every seed.
+Mean A0 and feasible delivery are 2,569.508 and 3,005.687 kg, a descriptive 436.180 kg gain;
+service rises from 26/36 to 35/36. The planner reaches the relaxed ceiling in two cells and
+closes 91.44% of the gap in the third. The sole selected-plan shortfall is 54.938 kg at the
+final rate-42/seed-1 settlement.
+
+This answers the two frozen questions. The relaxation shows physical/resource headroom above
+A0 in four cells, and a fresh-replay-valid exact action sequence realizes a strict improvement
+in the same four cells. The earlier controller failure is therefore not evidence that the
+task or five-field action contract is intrinsically unsolvable. It is a temporal planning
+failure, especially at the stress rate.
+
+### Operating mechanism and sustainability diagnostic
+
+Selected schedules curtail only binary64-scale numerical residue, versus 3.25--6.44 MWh for
+A0. They accept 81.7--91.4 MWh of process energy and discharge 7.10--8.79 MWh, versus
+72.5--82.5 MWh and about 2.0--2.1 MWh for A0. They also finish with just 1.20--1.33 MWh in
+the 8 MWh battery, near the 15% reserve, while A0 finishes at 7.28--7.33 MWh. Every selected
+schedule makes four cold starts and one forced stop; A0 makes one cold start and no forced
+stop. The task's lexicographic score legitimately prioritizes delivery over these secondary
+costs, but this is not yet a commercially sustainable objective.
+
+The planning protocol separately calls for an endowment-preserving relaxation. A one-shot
+driver was frozen outside the repository while source remained clean. Its first version,
+SHA-256 `41ee77760fef6fdb40628fcdb09084b87d8638ca771a0a224d04819e9c2c6159`,
+completed the rate-35/seed-0 solve but failed before artifact publication because it attempted
+to construct an unregistered custom `CanonicalPayloadV1` domain. No numeric value or artifact
+was printed, and the remaining five solves did not start. This is retained as an
+instrumentation failure rather than erased.
+
+The wrapper alone was corrected to apply the public domain-preimage hash directly. The new
+driver SHA-256 is
+`c98068b8deb380d04fe2e8817c79aa7313494062341068bb7e60886bd09eb3ea`.
+Without selecting on the unseen first value, all six diagnostics were run in the same declared
+order and wrote source-audited external artifacts. Each has a successful canonical solve,
+`preserve_initial_endowment=true`, and `is_task_upper_bound=false`. The results are:
+
+| rate | seed | endowment-preserving relaxed kg | requested fill |
+| ---: | ---: | ---: | ---: |
+| 35 | 0 | 2520.000 | 100.00% |
+| 35 | 1 | 2423.429 | 96.17% |
+| 35 | 2 | 2520.000 | 100.00% |
+| 42 | 0 | 2577.509 | 85.24% |
+| 42 | 1 | 2423.429 | 80.14% |
+| 42 | 2 | 2700.873 | 89.31% |
+
+Mean restricted fill is 98.72% at 35 kg/h and 84.90% at 42 kg/h. Because this diagnostic
+uses a restricted feasible set, it is not part of `A0 <= F <= U` and may fall below an A0
+trajectory that itself spends initial resources. Its value is diagnostic: most of the
+rate-42 full-service result cannot be treated as indefinitely repeatable production. The next
+commercial task contract needs cyclic terminal constraints or calibrated inventory shadow
+values rather than a weak tie-breaker.
+
+The exact planner also accumulates 38.8--45.5 MWh of request-to-application gap. This does not
+invalidate feasibility—the selected actions are replayed through the actual guard and
+plant—but it means a causal optimizer must model accepted power, not only requested shares.
+An explicit mode plus absolute-setpoint interface remains a contingent next change if the
+share/router composition prevents causal capture.
+
+### Retained report and custody
+
+The compact retained report is
+`docs/research/results/v2_feasible_planner_matrix_564002c.json`. It contains all selected
+action records, replay and trace digests, complete metrics and terminal states, delivery
+audits, relaxation certificates, search diagnostics, per-artifact start/end identities, and
+raw file hashes. Its domain-separated report digest is
+`33f7873b0fba1623d816109900f8a5f6a41929924f6dcf99bff5dedd856b1d64`; its exact
+1,158,332-byte raw SHA-256 is
+`05bd4b66bf71c01847aad369fe3abbea99fe2efe38a5c15be49b131cb551065e`.
+The report builder is retained with SHA-256
+`6696e09fdf9e05f1507d9356a47693a7c9fbe8b42cdaaac23c75eab5946c3bd9`.
+
+The original failed artifact remains intact at its separately named revision-`0059626`
+location and identity. The 12 repaired planner/endowment source artifacts currently remain in
+`/private/tmp/plantanagent-planner-564002c`; the compact report records every embedded digest,
+raw byte digest, and size. This temporary path is not durable archival storage and must be
+copied to permanent research storage before cleanup.
+
+### Research and product decision
+
+The development controllability Gate B is passed. A deterministic causal service MPC is now
+authorized and is the next implementation—not PPO training and not another stateless
+heuristic tune. Its contract must use only `ControllerObservationV2`, the current issued
+forecast, static public configuration, and controller-local history; solve a declared
+multi-period model; expose solver failure and latency; span the next renewable window and
+intervening deliveries; and model inventories, commitment/ramp state, battery reserve,
+delivery slack, guard-compatible applied power, and terminal value. Private future truth,
+episode seeds, planner schedules, and future forecast vintages remain forbidden.
+
+The same contaminated cells may be used for MPC development and debugging. Before opening any
+new cell, a prospective amendment must freeze demand/weather regimes, sites/seeds, endpoints,
+minimum useful gap capture, failure handling, and tuning boundaries. RL is evaluated only
+after the equal-information MPC exists and only earns a product role if it improves a measured
+residual, tail risk, robustness, or decision latency.
+
+Environment work then proceeds in attributed slices: sustainable terminal accounting,
+empirical multi-site renewable/forecast tapes, coherent uncertainty scenarios, calibrated
+prices and offtake penalties, wear/degradation, grid/water/compression/quality constraints,
+faults and maintenance, sensor imperfections, and multi-unit bottlenecks. HEPA remains a
+calibrated predictive-risk layer; language remains an operator/supervisory interface for
+versioned goals, explanations, and escalation. Neither layer directly bypasses the controller
+or independent safety guard.

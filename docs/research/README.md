@@ -56,6 +56,13 @@ fallback behavior.
 - [`FEASIBLE_PLANNER_REPAIR_001.md`](FEASIBLE_PLANNER_REPAIR_001.md) preserves the
   first registered-cell failure and freezes the narrow binary64 legacy-action repair
   before its implementation or any further protected execution.
+- [`FEASIBLE_PLANNER_RESULTS.md`](FEASIBLE_PLANNER_RESULTS.md) reports the complete
+  repaired six-cell development matrix, exact controllability bracket, separate
+  endowment-restoring diagnostic, operating mechanism, limitations, and decision to
+  build a causal service MPC.
+- [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
+  endowment diagnostic and construct its compact Git report from the protected external
+  artifacts.
 
 Small canonical benchmark outputs may be committed under [`results/`](results/) when
 they make a reported conclusion directly auditable. Large generated datasets, model

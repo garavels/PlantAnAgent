@@ -18,7 +18,7 @@ The near-term research goal is to show that this separation creates attributable
 on a benchmark whose optimal action depends on uncertain future conditions and delayed
 equipment consequences.
 
-## Progress snapshot — 2026-09-02
+## Progress snapshot — 2026-09-03
 
 - Gate A is **partially complete**: the V1 tank-filling ceiling and heuristic
   saturation are reproduced, but the colleague's trained-policy artifact has not yet
@@ -26,22 +26,23 @@ equipment consequences.
 - B1, B2, and B3 now have alpha implementations: private stochastic solar truth,
   causal forecast vintages, recurring delivery commitments, multi-rate accounting,
   and an opt-in pressurised-alkaline commitment state machine.
-- The clean weather-alpha diagnostic is replay-audited over 20 paired seeds. It breaks
-  universal heuristic saturation (98.58% mean fill; eight shortage episodes) but still
-  contains no forecast-consuming or optimizer arm.
-- B2 is integrated into the default V2 contract: the 57-field observation exposes
-  commitment mode, prior accepted power, ramp headroom, and timers while exact
-  per-decision exposure deltas flow into metrics and two provisional proxy penalties.
-  Explicit `None` retains the weather-alpha physical trajectory and exact 42-field
-  prefix while the 57-field contract's suffix identifies the legacy ablation.
-- Post-review commitment-alpha hardening has 127 focused passing tests, followed by a
-  complete 545-test repository regression. It adds a reachable continuous-policy stop
-  command, exact profile identity, strict finite-state checks, and non-cancelling physical
-  refusal metrics. The formal off/on experiment remains pending, so this remains
-  correctness/compatibility evidence, not performance evidence.
-- Gate B is **not passed**: no forecast-aware heuristic, MPC, or perfect-information
-  oracle has yet bounded the commitment-alpha task, and no multi-seed off/on calibration
-  has yet shown that the new dynamics create a useful controllable gap.
+- The clean 24-rollout A0--A3 causal development matrix shows that the first stateless
+  deadline controller family does not exploit the issued forecast and can underperform
+  the persistent legacy heuristic. That negative result rejects parameter tuning as the
+  next step and localizes the missing capability to trajectory-level planning.
+- A replay-verified best-known feasible future-information planner and a dual-certified
+  continuous relaxation now bound the exact 35/42 kg/h development cells. The planner
+  improves delivery in four of six cells, including all three 42 kg/h seeds, and closes
+  91.44--100% of every positive relaxed gap. At 42 kg/h it raises descriptive mean
+  delivery by 436.180 kg and service from 26/36 to 35/36 commitments.
+- The separate endowment-preserving relaxation exposes an objective limitation: its mean
+  fill is 98.72% at 35 kg/h but only 84.90% at 42 kg/h, while selected exact schedules
+  finish near the battery reserve. Much of the stress-rate gain spends starting resources
+  and must not be presented as indefinitely sustainable output.
+- Gate B is **passed as a development controllability gate**: the alpha environment has
+  a material, exactly realizable scheduling gap and now justifies causal service MPC.
+  It is not a prospective, field, economic, or site-generalization result, and the
+  sustainable terminal objective must be strengthened before commercial benchmarking.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.
 
@@ -105,9 +106,11 @@ kernel is switchable, fingerprinted in the policy/audit contracts, and isolated 
 The present five-field share action expresses on/standby intent implicitly. A fingerprinted
 1% stack-nameplate deadband applied to resolved offered kW makes an orderly stop reachable
 to continuous policies without depending on PV/bus sizing, while exact guard-to-plant
-refusal is accumulated separately from safety projection. The first paired
-experiment must still measure whether this leaves enough controller authority before an
-explicit mode/setpoint action is designed.
+refusal is accumulated separately from safety projection. The feasible-planner matrix
+proves that this interface can express materially better exact schedules, but selected
+requests still accumulate 38.8--45.5 MWh of request-to-application gap. The causal MPC
+must model accepted power explicitly; an absolute-setpoint/mode interface is warranted if
+that mapping prevents causal capture.
 
 ### B3. Product commitments
 
@@ -120,6 +123,11 @@ These three additions are the minimum initial bundle because they create a decis
 cannot be solved purely from the current timestep: commit equipment using an imperfect
 forecast while preserving enough inventory to meet a later obligation.
 
+The alpha terminal-inventory tie-breaker does not prevent a controller from spending
+starting endowment to maximize delivery. A sustainable-service beta must add cyclic
+terminal constraints or calibrated terminal shadow values without retrospectively changing
+the frozen alpha result.
+
 ## Stage C — Controller evidence
 
 - upgrade the heuristic into a credible forecast-aware baseline;
@@ -130,11 +138,15 @@ forecast while preserving enough inventory to meet a later obligation.
 - investigate recurrent policies if partial observability demonstrably requires memory;
 - require a Pareto or risk-adjusted improvement, not merely a larger shaped reward.
 
-The immediate entry gate to Stage C is a paired factorial calibration on identical
-exogenous episodes: commitment off/on × forecast blind/issued/perfect, first with a
-delivery-aware heuristic, MPC, and a feasible future-information planner. PPO training
-begins only if those arms establish feasibility, a meaningful naive-to-credible gap,
-and nonzero value of future information without excessive guard or equipment refusal.
+Stage C is now entered through the causal service-MPC work package. The same current public
+forecast and `ControllerObservationV2` must feed every deployable comparator; the frozen
+future-information planner remains only an offline reference. The MPC must span the next
+renewable window and intervening commitments, expose solver status and latency, model
+commitment/inventory/guard-compatible power, and report how much of each cell's `F - A0`
+gap it captures. PPO training begins only after that equal-information comparator and a
+sustainable terminal objective exist. RL earns a role only by closing a measured residual
+gap, improving tail risk or latency, or handling nonlinear/scenario complexity that the MPC
+does not capture.
 
 ## Stage D — Progressive operational realism
 

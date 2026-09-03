@@ -258,3 +258,19 @@ The project claim remains controller-neutral: Plant An Agent is developing an au
 safety-bounded supervisory optimization and virtual-commissioning layer for renewable
 fuel plants. If MPC is the best controller, that is the product. RL earns a role only if
 it closes a measured residual gap under equal information and survives held-out stress.
+
+## 2026-09-03 follow-up — exact planning headroom confirmed
+
+The next benchmark stage above is now complete. The frozen best-known feasible
+future-information planner improves exact delivery in four of six development cells,
+including every 42 kg/h seed, and closes 91.44--100% of each positive dual-certified
+relaxation gap. At 42 kg/h it improves descriptive mean delivery by 436.180 kg and
+service from 26/36 to 35/36 commitments. This confirms that the negative A1--A3 result
+was a controller-horizon failure rather than an absence of realizable action-space
+headroom.
+
+The same study also shows that selected schedules spend substantial starting battery and
+feedstock endowment. It therefore authorizes the causal service-MPC stage while requiring
+a sustainable terminal-accounting amendment before commercial claims. Full evidence and
+the revised decision are in
+[`FEASIBLE_PLANNER_RESULTS.md`](FEASIBLE_PLANNER_RESULTS.md).
