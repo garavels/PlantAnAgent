@@ -309,8 +309,6 @@ class MPCStageSolveV1:
                 raise ValueError("successful MPC solve requires a node count")
             require_sha256("solution_sha256", self.solution_sha256)
         else:
-            if self.status == 0:
-                raise ValueError("failed MPC solve cannot carry optimal status zero")
             if self.solution_sha256 is not None:
                 raise ValueError("failed MPC solve cannot publish a solution digest")
             for name in ("objective_value", "mip_dual_bound", "mip_gap"):
@@ -588,6 +586,18 @@ class ServiceMPCError(RuntimeError):
     """Base class for explicit service-MPC controller failures."""
 
 
+def _validate_attempted_stages(stages: tuple[MPCStageSolveV1, ...]) -> None:
+    if not isinstance(stages, tuple) or any(
+        not isinstance(stage, MPCStageSolveV1) for stage in stages
+    ):
+        raise TypeError("attempted solver stages must be an immutable typed tuple")
+    expected = ("primary_delivery", "secondary_tiebreak")[: len(stages)]
+    if len(stages) > 2 or tuple(stage.stage for stage in stages) != expected:
+        raise ValueError("attempted solver stages must be an ordered prefix")
+    if any(not stage.success for stage in stages[:-1]):
+        raise ValueError("only the final attempted solver stage may fail")
+
+
 class ServiceMPCInputError(ServiceMPCError):
     """The current public boundary is invalid or outside the frozen model scope."""
 
@@ -600,13 +610,34 @@ class ServiceMPCSolveError(ServiceMPCError):
         message: str,
         *,
         stage_evidence: MPCStageSolveV1 | None = None,
+        stages: tuple[MPCStageSolveV1, ...] = (),
     ) -> None:
         super().__init__(message)
-        self.stage_evidence = stage_evidence
+        if stage_evidence is not None and stages:
+            raise ValueError("provide stage_evidence or stages, not both")
+        chosen = (stage_evidence,) if stage_evidence is not None else stages
+        _validate_attempted_stages(chosen)
+        if chosen and chosen[-1].success:
+            raise ValueError("solve error must end with an unsuccessful stage")
+        self.stages = chosen
+        self.stage_evidence = next(
+            (stage for stage in reversed(chosen) if not stage.success),
+            None,
+        )
 
 
 class ServiceMPCPlanError(ServiceMPCError):
     """An apparently successful numerical solution failed plan validation."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        stages: tuple[MPCStageSolveV1, ...] = (),
+    ) -> None:
+        super().__init__(message)
+        _validate_attempted_stages(stages)
+        self.stages = stages
 
 
 __all__ = [

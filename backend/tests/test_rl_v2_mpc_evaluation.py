@@ -17,7 +17,7 @@ from plant_backend.rl.v2.evaluation import (
 )
 from plant_backend.rl.v2.mpc_controller import ServiceMPCControllerV1
 from plant_backend.rl.v2.mpc_execution import (
-    MPCDecisionFailureV1,
+    MPCDecisionFailureV2,
     build_mpc_run_evidence,
 )
 from plant_backend.rl.v2.mpc_schema import (
@@ -89,7 +89,7 @@ def test_runner_binds_every_mpc_decision_to_public_and_exact_execution() -> None
     assert len(run.requested_actions) == 4
     evidence = run.controller_evidence
     assert evidence is not None
-    assert evidence["format"] == "service-mpc-controller-run-evidence-v1"
+    assert evidence["format"] == "service-mpc-controller-run-evidence-v2"
     assert evidence["controller_id"] == SERVICE_MPC_CONTROLLER_ID
     assert evidence["status"] == "complete"
     assert evidence["completed_decisions"] == 4
@@ -176,9 +176,10 @@ def test_runner_retains_solver_failure_and_never_manufactures_fallback(
     assert evidence["application_count"] == 0
     assert evidence["fallback_action_count"] == 0
     event = controller.decision_events[0]
-    assert isinstance(event, MPCDecisionFailureV1)
+    assert isinstance(event, MPCDecisionFailureV2)
+    assert event.stages == (_failed_stage(),)
     assert event.stage_evidence == _failed_stage()
-    assert evidence["events"][0]["stage_evidence"] == _failed_stage().to_dict()
+    assert evidence["events"][0]["stages"] == [_failed_stage().to_dict()]
     json.dumps(run.to_dict(), allow_nan=False, sort_keys=True)
 
 

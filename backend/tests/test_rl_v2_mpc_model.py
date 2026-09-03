@@ -330,6 +330,16 @@ def test_terminal_battery_floor_uses_target_or_current_when_below_target(
         ),
         (
             {
+                "mode": ElectrolyserMode.HOT_STARTING,
+                "min_up_remaining_s": 1_800.0,
+            },
+            True,
+            (0,),
+            (0, 1),
+            (),
+        ),
+        (
+            {
                 "mode": ElectrolyserMode.COOLDOWN,
                 "cooldown_remaining_s": 900.0,
                 "min_down_remaining_s": 1_800.0,
@@ -430,6 +440,32 @@ def test_model_rejects_inputs_outside_its_declared_validity_domain(
     )
     with pytest.raises(ServiceMPCInputError, match="different solar plant"):
         _build(public_inputs, config=foreign_config)
+
+    assert observation.forecast is not None
+    changed_issue = replace(
+        observation.forecast,
+        windows=(
+            replace(
+                observation.forecast.windows[0],
+                p10_peak_power_fraction=(
+                    observation.forecast.windows[0].p10_peak_power_fraction * 0.9
+                ),
+            ),
+            *observation.forecast.windows[1:],
+        ),
+    )
+    foreign_projection = project_issued_mean_solar(
+        changed_issue,
+        boundary_time_s=observation.state.boundary.time_s,
+        config=env.config,
+        interval_s=SETTINGS.interval_s,
+    )
+    assert foreign_projection.available_kw == forecast.available_kw
+    with pytest.raises(ServiceMPCInputError, match="current public issue"):
+        _build(public_inputs, forecast=foreign_projection)
+
+    with pytest.raises(ServiceMPCInputError, match="current public forecast"):
+        _build(public_inputs, observation=replace(observation, forecast=None))
 
     zero_efficiency = replace(
         env.config,

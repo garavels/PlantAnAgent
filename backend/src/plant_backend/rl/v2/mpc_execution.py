@@ -11,6 +11,7 @@ from typing import Any, ClassVar, Mapping
 from plant_sim import Action
 
 from .control import ControllerObservationV2, close_unit_simplex
+from .mpc_forecast import public_forecast_issue_sha256 as forecast_issue_sha256
 from .mpc_schema import (
     MODEL_BALANCE_TOLERANCE,
     MPCDeliveryTargetV1,
@@ -30,11 +31,12 @@ SERVICE_MPC_GUARDED_ACTION_DOMAIN = "service-mpc-guarded-action-v1"
 SERVICE_MPC_INTERVAL_POWER_DOMAIN = "service-mpc-interval-power-v1"
 SERVICE_MPC_REQUEST_DOMAIN = "service-mpc-environment-request-v1"
 SERVICE_MPC_DECISION_DOMAIN = "service-mpc-decision-evidence-v1"
-SERVICE_MPC_FAILURE_DOMAIN = "service-mpc-decision-failure-v1"
-SERVICE_MPC_FORECAST_ISSUE_DOMAIN = "service-mpc-public-forecast-issue-v1"
+SERVICE_MPC_FAILURE_SCHEMA = "service-mpc-decision-failure-v2"
+SERVICE_MPC_FAILURE_DOMAIN = SERVICE_MPC_FAILURE_SCHEMA
 SERVICE_MPC_OBSERVATION_DOMAIN = "service-mpc-public-observation-v1"
 SERVICE_MPC_RESIDUAL_DOMAIN = "service-mpc-first-interval-residual-v1"
-SERVICE_MPC_RUN_EVIDENCE_DOMAIN = "service-mpc-controller-run-evidence-v1"
+SERVICE_MPC_RUN_EVIDENCE_FORMAT = "service-mpc-controller-run-evidence-v2"
+SERVICE_MPC_RUN_EVIDENCE_DOMAIN = SERVICE_MPC_RUN_EVIDENCE_FORMAT
 
 
 def _finite(
@@ -73,10 +75,7 @@ def public_forecast_issue_sha256(observation: ControllerObservationV2) -> str:
         raise TypeError("observation must be ControllerObservationV2")
     if observation.forecast is None:
         raise ValueError("service MPC requires a public forecast issue")
-    return domain_sha256(
-        SERVICE_MPC_FORECAST_ISSUE_DOMAIN,
-        observation.forecast.to_dict(),
-    )
+    return forecast_issue_sha256(observation.forecast)
 
 
 @dataclass(frozen=True, slots=True)
@@ -649,7 +648,7 @@ class MPCDecisionEvidenceV1:
 
 
 @dataclass(frozen=True, slots=True)
-class MPCDecisionFailureV1:
+class MPCDecisionFailureV2:
     """One failed decision attempt retained without manufacturing an action."""
 
     decision_index: int
@@ -662,7 +661,7 @@ class MPCDecisionFailureV1:
     projection_sha256: str | None = None
     model_sha256: str | None = None
     plan_sha256: str | None = None
-    stage_evidence: MPCStageSolveV1 | None = None
+    stages: tuple[MPCStageSolveV1, ...] = ()
 
     def __post_init__(self) -> None:
         _index("failure decision_index", self.decision_index)
@@ -698,15 +697,47 @@ class MPCDecisionFailureV1:
             value = getattr(self, name)
             if value is not None:
                 require_sha256(name, value)
-        if self.stage_evidence is not None and (
-            not isinstance(self.stage_evidence, MPCStageSolveV1)
-            or self.stage_evidence.success
+        if not isinstance(self.stages, tuple) or any(
+            not isinstance(stage, MPCStageSolveV1) for stage in self.stages
         ):
-            raise ValueError("failure stage evidence must be an unsuccessful stage")
+            raise TypeError("failure solver stages must be an immutable typed tuple")
+        expected_stages = ("primary_delivery", "secondary_tiebreak")[: len(self.stages)]
+        if (
+            len(self.stages) > 2
+            or tuple(stage.stage for stage in self.stages) != expected_stages
+        ):
+            raise ValueError("failure solver stages must be an ordered prefix")
+        if any(not stage.success for stage in self.stages[:-1]):
+            raise ValueError("only the final attempted solver stage may fail")
+        if self.stages and self.phase not in {
+            "solver",
+            "action_realization",
+            "evidence_construction",
+        }:
+            raise ValueError("failure phase cannot contain solver-stage evidence")
+        if (
+            self.exception_type == "ServiceMPCSolveError"
+            and self.stages
+            and self.stages[-1].success
+        ):
+            raise ValueError("solve failure must end with an unsuccessful stage")
+        if self.phase in {"action_realization", "evidence_construction"} and any(
+            not stage.success for stage in self.stages
+        ):
+            raise ValueError("post-solve failure cannot contain a failed solver stage")
+
+    @property
+    def stage_evidence(self) -> MPCStageSolveV1 | None:
+        """Compatibility view of the final rejected solver stage, if any."""
+
+        return next(
+            (stage for stage in reversed(self.stages) if not stage.success),
+            None,
+        )
 
     def body(self) -> dict[str, Any]:
         return {
-            "schema": "service-mpc-decision-failure-v1",
+            "schema": SERVICE_MPC_FAILURE_SCHEMA,
             "controller_id": SERVICE_MPC_CONTROLLER_ID,
             "decision_index": int(self.decision_index),
             "phase": self.phase,
@@ -718,9 +749,7 @@ class MPCDecisionFailureV1:
             "projection_sha256": self.projection_sha256,
             "model_sha256": self.model_sha256,
             "plan_sha256": self.plan_sha256,
-            "stage_evidence": (
-                None if self.stage_evidence is None else self.stage_evidence.to_dict()
-            ),
+            "stages": [stage.to_dict() for stage in self.stages],
         }
 
     @property
@@ -1021,7 +1050,7 @@ def capture_mpc_application(
     )
 
 
-MPCDecisionEventV1 = MPCDecisionEvidenceV1 | MPCDecisionFailureV1
+MPCDecisionEventV2 = MPCDecisionEvidenceV1 | MPCDecisionFailureV2
 
 
 def _latency_summary(values: tuple[int, ...]) -> dict[str, int | float | str]:
@@ -1047,7 +1076,7 @@ def _latency_summary(values: tuple[int, ...]) -> dict[str, int | float | str]:
 
 
 def build_mpc_run_evidence(
-    events: tuple[MPCDecisionEventV1, ...],
+    events: tuple[MPCDecisionEventV2, ...],
     applications: tuple[MPCDecisionApplicationV1, ...],
     *,
     completed_decisions: int,
@@ -1058,7 +1087,7 @@ def build_mpc_run_evidence(
     """Validate and summarize complete or explicitly incomplete MPC run evidence."""
 
     if not isinstance(events, tuple) or any(
-        not isinstance(event, (MPCDecisionEvidenceV1, MPCDecisionFailureV1))
+        not isinstance(event, (MPCDecisionEvidenceV1, MPCDecisionFailureV2))
         for event in events
     ):
         raise TypeError("service-MPC run events must be an immutable typed tuple")
@@ -1080,7 +1109,7 @@ def build_mpc_run_evidence(
         event for event in events if isinstance(event, MPCDecisionEvidenceV1)
     )
     failures = tuple(
-        event for event in events if isinstance(event, MPCDecisionFailureV1)
+        event for event in events if isinstance(event, MPCDecisionFailureV2)
     )
     if tuple(event.decision_index for event in successes) != tuple(
         range(len(successes))
@@ -1134,13 +1163,9 @@ def build_mpc_run_evidence(
     decision_latencies = tuple(event.decision_elapsed_ns for event in successes)
     stage_latencies = tuple(
         stage.elapsed_ns for event in successes for stage in event.stages
-    ) + tuple(
-        failure.stage_evidence.elapsed_ns
-        for failure in failures
-        if failure.stage_evidence is not None
-    )
+    ) + tuple(stage.elapsed_ns for failure in failures for stage in failure.stages)
     payload: dict[str, Any] = {
-        "format": "service-mpc-controller-run-evidence-v1",
+        "format": SERVICE_MPC_RUN_EVIDENCE_FORMAT,
         "controller_id": SERVICE_MPC_CONTROLLER_ID,
         "status": "complete" if run_succeeded else "failed",
         "completed_decisions": completed,
@@ -1189,10 +1214,12 @@ def build_mpc_run_evidence(
 __all__ = [
     "MPCActionRealizationV1",
     "MPCDecisionApplicationV1",
-    "MPCDecisionEventV1",
+    "MPCDecisionEventV2",
     "MPCDecisionEvidenceV1",
-    "MPCDecisionFailureV1",
+    "MPCDecisionFailureV2",
     "MPCFirstIntervalResidualV1",
+    "SERVICE_MPC_FAILURE_SCHEMA",
+    "SERVICE_MPC_RUN_EVIDENCE_FORMAT",
     "build_mpc_run_evidence",
     "capture_mpc_application",
     "public_forecast_issue_sha256",

@@ -14,9 +14,11 @@ from plant_sim import ElectrolyserCommitmentProfile, PlantConfig
 from ...controllers.base import Constraints, ControlDecision
 from .control import ControllerObservationV2
 from .mpc_execution import (
-    MPCDecisionEventV1,
+    MPCDecisionEventV2,
     MPCDecisionEvidenceV1,
-    MPCDecisionFailureV1,
+    MPCDecisionFailureV2,
+    SERVICE_MPC_FAILURE_SCHEMA,
+    SERVICE_MPC_RUN_EVIDENCE_FORMAT,
     public_forecast_issue_sha256,
     public_observation_sha256,
     realize_first_mpc_action,
@@ -69,7 +71,7 @@ class ServiceMPCControllerV1:
         if not isinstance(chosen, ServiceMPCSettingsV1):
             raise TypeError("settings must be ServiceMPCSettingsV1")
         self.settings = chosen
-        self._events: list[MPCDecisionEventV1] = []
+        self._events: list[MPCDecisionEventV2] = []
         self._pending: _PendingDecision | None = None
         self._decision_count = 0
         self._origin_step: int | None = None
@@ -98,13 +100,15 @@ class ServiceMPCControllerV1:
             ),
             "failure_policy": "raise typed error; no controller-internal fallback",
             "decision_evidence_schema": "service-mpc-decision-evidence-v1",
+            "decision_failure_schema": SERVICE_MPC_FAILURE_SCHEMA,
+            "run_evidence_format": SERVICE_MPC_RUN_EVIDENCE_FORMAT,
         }
 
     def descriptor(self) -> dict[str, object]:
         return self.to_dict()
 
     @property
-    def decision_events(self) -> tuple[MPCDecisionEventV1, ...]:
+    def decision_events(self) -> tuple[MPCDecisionEventV2, ...]:
         return tuple(self._events)
 
     @property
@@ -294,16 +298,18 @@ class ServiceMPCControllerV1:
         plan: MPCPlanV1 | None,
     ) -> None:
         message = " ".join(str(exception).split()) or "(no exception message)"
-        stage_evidence = (
-            exception.stage_evidence
-            if isinstance(exception, ServiceMPCSolveError)
-            else None
-        )
-        if stage_evidence is not None and not isinstance(
-            stage_evidence, MPCStageSolveV1
+        stages: tuple[MPCStageSolveV1, ...]
+        if plan is not None:
+            stages = plan.stages
+        elif isinstance(exception, (ServiceMPCSolveError, ServiceMPCPlanError)):
+            stages = exception.stages
+        else:
+            stages = ()
+        if not isinstance(stages, tuple) or any(
+            not isinstance(stage, MPCStageSolveV1) for stage in stages
         ):
-            stage_evidence = None
-        failure = MPCDecisionFailureV1(
+            stages = ()
+        failure = MPCDecisionFailureV2(
             decision_index=self._decision_count,
             phase=phase,
             exception_type=type(exception).__name__,
@@ -314,7 +320,7 @@ class ServiceMPCControllerV1:
             projection_sha256=None if projection is None else projection.sha256,
             model_sha256=None if model is None else model.sha256,
             plan_sha256=None if plan is None else plan.sha256,
-            stage_evidence=stage_evidence,
+            stages=stages,
         )
         self._events.append(failure)
 

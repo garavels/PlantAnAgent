@@ -4,22 +4,26 @@ from __future__ import annotations
 
 import json
 from dataclasses import replace
+from typing import NoReturn
 
 import pytest
 from plant_sim import Action
 
+from plant_backend.controllers.base import ControlDecision
 from plant_backend.rl.v2.config import EpisodeConfigV2
 from plant_backend.rl.v2.control import ControllerV2
 from plant_backend.rl.v2.env import PlantEnvV2
 from plant_backend.rl.v2.mpc_controller import ServiceMPCControllerV1
 from plant_backend.rl.v2.mpc_execution import (
     MPCDecisionEvidenceV1,
-    MPCDecisionFailureV1,
+    MPCDecisionFailureV2,
 )
 from plant_backend.rl.v2.mpc_schema import (
     MPCStageSolveV1,
+    ServiceMPCPlanError,
     ServiceMPCSettingsV1,
     ServiceMPCSolveError,
+    canonical_json,
 )
 import plant_backend.rl.v2.mpc_controller as mpc_controller_module
 
@@ -38,18 +42,19 @@ SHORT_SETTINGS = ServiceMPCSettingsV1(
 def _reset_pair(
     *,
     start_hour: float = 6.0,
+    seed: int = 0,
 ) -> tuple[PlantEnvV2, ServiceMPCControllerV1]:
     pytest.importorskip("scipy")
     episode = replace(SHORT_EPISODE, start_hour=start_hour)
     env = PlantEnvV2(episode=episode)
-    env.reset(seed=0)
+    env.reset(seed=seed)
     return env, ServiceMPCControllerV1(SHORT_SETTINGS)
 
 
 def _compute(
     env: PlantEnvV2,
     controller: ServiceMPCControllerV1,
-):
+) -> ControlDecision:
     return controller.compute_action(
         env.controller_observation,
         constraints=env.constraints,
@@ -66,8 +71,14 @@ def test_controller_descriptor_is_immutable_and_declares_no_fallback() -> None:
     assert descriptor["id"] == "service-mpc-issued-mean-v1"
     assert descriptor["uses_forecast"] is True
     assert descriptor["settings"] == SHORT_SETTINGS.to_dict()
-    assert "no controller-internal fallback" in descriptor["failure_policy"]
-    assert "private weather truth" in descriptor["information_set"]
+    failure_policy = descriptor["failure_policy"]
+    information_set = descriptor["information_set"]
+    assert isinstance(failure_policy, str)
+    assert isinstance(information_set, str)
+    assert "no controller-internal fallback" in failure_policy
+    assert "private weather truth" in information_set
+    assert descriptor["decision_failure_schema"] == "service-mpc-decision-failure-v2"
+    assert descriptor["run_evidence_format"] == "service-mpc-controller-run-evidence-v2"
     json.dumps(descriptor, allow_nan=False, sort_keys=True)
 
 
@@ -130,6 +141,55 @@ def test_identical_public_inputs_produce_identical_plan_action_and_evidence_iden
     assert second_event.decision_elapsed_ns > 0
 
 
+def test_private_truth_seed_and_future_vintages_cannot_change_same_public_request() -> (
+    None
+):
+    left_env, left = _reset_pair(seed=0)
+    right_env, right = _reset_pair(seed=97)
+    left_private = left_env._episode
+    right_private = right_env._episode
+    assert left_private is not None
+    assert right_private is not None
+    assert (
+        left_private.exogenous_episode_sha256 != right_private.exogenous_episode_sha256
+    )
+    assert left_private.weather.truth_sha256 != right_private.weather.truth_sha256
+    assert (
+        left_private.weather.forecasts_sha256 != right_private.weather.forecasts_sha256
+    )
+    assert (
+        left_private.weather.issues[1]._issue_stream_sha256
+        != right_private.weather.issues[1]._issue_stream_sha256
+    )
+
+    shared_public_input = left_env.controller_observation
+    left_decision = left.compute_action(
+        shared_public_input,
+        constraints=left_env.constraints,
+        config=left_env.config,
+        commitment_profile=left_env.episode_config.electrolyser_commitment,
+    )
+    right_decision = right.compute_action(
+        shared_public_input,
+        constraints=right_env.constraints,
+        config=right_env.config,
+        commitment_profile=right_env.episode_config.electrolyser_commitment,
+    )
+    left_event = left.decision_events[0]
+    right_event = right.decision_events[0]
+    assert isinstance(left_event, MPCDecisionEvidenceV1)
+    assert isinstance(right_event, MPCDecisionEvidenceV1)
+
+    assert canonical_json(left_decision.action.to_dict()) == canonical_json(
+        right_decision.action.to_dict()
+    )
+    assert left_event.projection_sha256 == right_event.projection_sha256
+    assert left_event.model_sha256 == right_event.model_sha256
+    assert left_event.plan_sha256 == right_event.plan_sha256
+    assert left_event.action.sha256 == right_event.action.sha256
+    assert left_event.sha256 == right_event.sha256
+
+
 def test_complete_short_episode_reconciles_every_plan_with_public_plant_truth() -> None:
     env, controller = _reset_pair()
     descriptor = controller.to_dict()
@@ -145,14 +205,19 @@ def test_complete_short_episode_reconciles_every_plan_with_public_plant_truth() 
     assert controller.to_dict() == descriptor
     assert not controller.has_pending_transition
     assert len(controller.decision_events) == 4
-    assert [event.horizon_intervals for event in controller.decision_events] == [
+    events = tuple(
+        event
+        for event in controller.decision_events
+        if isinstance(event, MPCDecisionEvidenceV1)
+    )
+    assert len(events) == 4
+    assert [event.horizon_intervals for event in events] == [
         4,
         3,
         2,
         1,
     ]
-    for event, info in zip(controller.decision_events, infos, strict=True):
-        assert isinstance(event, MPCDecisionEvidenceV1)
+    for event, info in zip(events, infos, strict=True):
         residual = event.residual
         assert residual is not None
         interval_power = info["interval_power"]
@@ -168,6 +233,33 @@ def test_complete_short_episode_reconciles_every_plan_with_public_plant_truth() 
         assert len(residual.sha256) == 64
     assert env.controller_observation.progress == 1.0
     json.dumps(controller.evidence(), allow_nan=False, sort_keys=True)
+
+
+def test_one_interval_execution_closes_the_first_plan_against_public_truth() -> None:
+    env, controller = _reset_pair()
+    decision = _compute(env, controller)
+    event_before = controller.decision_events[0]
+    assert isinstance(event_before, MPCDecisionEvidenceV1)
+    assert event_before.residual is None
+
+    _, _, _, _, info = env.step_action(decision.action)
+    controller.observe_transition(env.controller_observation)
+
+    event_after = controller.decision_events[0]
+    assert isinstance(event_after, MPCDecisionEvidenceV1)
+    residual = event_after.residual
+    assert residual is not None
+    interval_power = info["interval_power"]
+    assert isinstance(interval_power, dict)
+    applied = interval_power["applied_mean_kw"]
+    assert isinstance(applied, dict)
+    assert residual.observed_battery_net_kw == pytest.approx(
+        applied["battery"] - applied["battery_support"]
+    )
+    assert residual.observed_electrolyser_kw == pytest.approx(applied["electrolyser"])
+    assert residual.observed_dac_kw == pytest.approx(applied["dac"])
+    assert residual.observed_methanator_kw == pytest.approx(applied["methanator"])
+    assert not controller.has_pending_transition
 
 
 def test_next_compute_auto_reconciles_an_unobserved_pending_transition() -> None:
@@ -213,7 +305,7 @@ def test_missing_forecast_records_failure_and_emits_no_action() -> None:
     assert not controller.has_pending_transition
     assert len(controller.decision_events) == 1
     failure = controller.decision_events[0]
-    assert isinstance(failure, MPCDecisionFailureV1)
+    assert isinstance(failure, MPCDecisionFailureV2)
     assert failure.phase == "input_validation"
     assert failure.observation_sha256 is None
     assert failure.model_sha256 is None
@@ -232,7 +324,7 @@ def test_wrong_task_progress_fails_before_projection_or_solver() -> None:
             commitment_profile=env.episode_config.electrolyser_commitment,
         )
     failure = controller.decision_events[0]
-    assert isinstance(failure, MPCDecisionFailureV1)
+    assert isinstance(failure, MPCDecisionFailureV2)
     assert failure.phase == "input_validation"
     assert failure.projection_sha256 is None
 
@@ -256,7 +348,7 @@ def test_solver_failure_event_retains_public_model_and_stage_evidence(
         highs_version="test-highs",
     )
 
-    def fail_solver(*_: object, **__: object):
+    def fail_solver(*_: object, **__: object) -> NoReturn:
         raise ServiceMPCSolveError(
             "deliberate timeout fixture",
             stage_evidence=failed_stage,
@@ -270,14 +362,44 @@ def test_solver_failure_event_retains_public_model_and_stage_evidence(
     with pytest.raises(ServiceMPCSolveError, match="deliberate timeout"):
         _compute(env, controller)
     failure = controller.decision_events[0]
-    assert isinstance(failure, MPCDecisionFailureV1)
+    assert isinstance(failure, MPCDecisionFailureV2)
     assert failure.phase == "solver"
     assert failure.observation_sha256 is not None
     assert failure.public_forecast_sha256 is not None
     assert failure.projection_sha256 is not None
     assert failure.model_sha256 is not None
     assert failure.plan_sha256 is None
+    assert failure.stages == (failed_stage,)
     assert failure.stage_evidence == failed_stage
+
+
+def test_first_action_requiring_sanitizer_repair_fails_closed_with_plan_evidence(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    env, controller = _reset_pair()
+
+    def corrupt_sanitizer(cls: type[Action], action: Action) -> Action:
+        del cls, action
+        return Action(
+            battery_share=0.0,
+            electrolyser_share=0.0,
+            dac_share=0.0,
+            methanator_share=0.0,
+            battery_support_kw=123_456.0,
+        )
+
+    monkeypatch.setattr(Action, "sanitised", classmethod(corrupt_sanitizer))
+    with pytest.raises(ServiceMPCPlanError, match="sanitizer correction"):
+        _compute(env, controller)
+
+    assert not controller.has_pending_transition
+    assert len(controller.decision_events) == 1
+    failure = controller.decision_events[0]
+    assert isinstance(failure, MPCDecisionFailureV2)
+    assert failure.phase == "action_realization"
+    assert failure.plan_sha256 is not None
+    assert len(failure.stages) == 2
+    assert all(stage.success for stage in failure.stages)
 
 
 def test_repeated_compute_without_advancing_fails_transition_reconciliation() -> None:
@@ -289,5 +411,5 @@ def test_repeated_compute_without_advancing_fails_transition_reconciliation() ->
     assert len(controller.decision_events) == 2
     assert isinstance(controller.decision_events[0], MPCDecisionEvidenceV1)
     failure = controller.decision_events[1]
-    assert isinstance(failure, MPCDecisionFailureV1)
+    assert isinstance(failure, MPCDecisionFailureV2)
     assert failure.phase == "transition_reconciliation"

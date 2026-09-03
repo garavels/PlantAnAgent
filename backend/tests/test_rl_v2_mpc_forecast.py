@@ -11,6 +11,7 @@ from plant_backend.rl.v2.mpc_forecast import (
     clear_sky_equivalent_hours,
     mean_peak_fraction,
     project_issued_mean_solar,
+    public_forecast_issue_sha256,
 )
 from plant_backend.rl.v2.weather import (
     FORECAST_WINDOWS_H,
@@ -68,6 +69,7 @@ def test_projection_preserves_every_band_and_public_clear_sky_shape() -> None:
     )
 
     assert trajectory.projection_version == FORECAST_PROJECTION_VERSION
+    assert trajectory.source_issue_sha256 == public_forecast_issue_sha256(issue)
     assert trajectory.interval_count == 96
     assert (
         trajectory.sha256
@@ -211,6 +213,26 @@ def test_projection_identity_depends_only_on_declared_public_inputs() -> None:
         interval_s=900.0,
     )
     assert first.to_dict() == second.to_dict()
+
+    changed_p10 = replace(
+        issue,
+        windows=(
+            replace(
+                issue.windows[0],
+                p10_peak_power_fraction=issue.windows[0].p10_peak_power_fraction * 0.9,
+            ),
+            *issue.windows[1:],
+        ),
+    )
+    same_mean_path = project_issued_mean_solar(
+        changed_p10,
+        boundary_time_s=8.0 * 3_600.0,
+        config=config,
+        interval_s=900.0,
+    )
+    assert same_mean_path.available_kw == first.available_kw
+    assert same_mean_path.source_issue_sha256 != first.source_issue_sha256
+    assert same_mean_path.sha256 != first.sha256
 
 
 def test_trajectory_schema_rejects_a_band_not_bound_to_its_intervals() -> None:

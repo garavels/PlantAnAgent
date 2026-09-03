@@ -14,6 +14,7 @@ from plant_backend.rl.v2.mpc_schema import (
     SERVICE_MPC_MODEL_VERSION,
     SERVICE_MPC_OBJECTIVE_VERSION,
     ServiceMPCSettingsV1,
+    ServiceMPCSolveError,
     canonical_json,
 )
 
@@ -167,6 +168,16 @@ def test_solver_status_never_turns_a_failed_stage_into_evidence() -> None:
             mip_gap=None,
             mip_node_count=None,
         )
+    independently_rejected = replace(
+        success,
+        success=False,
+        solution_sha256=None,
+    )
+    assert independently_rejected.status == 0
+    assert independently_rejected.success is False
+    assert independently_rejected.solution_sha256 is None
+    with pytest.raises(ValueError, match="unsuccessful stage"):
+        ServiceMPCSolveError("invalid evidence", stages=(success,))
 
 
 def test_plan_step_validates_buses_and_battery_direction() -> None:

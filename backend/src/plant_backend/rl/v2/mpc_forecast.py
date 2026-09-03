@@ -22,8 +22,9 @@ from .weather import FORECAST_WINDOWS_H, PublicForecastIssueV2
 
 SECONDS_PER_HOUR = 3_600.0
 HOURS_PER_DAY = 24.0
-FORECAST_PROJECTION_VERSION = "issued-mean-clear-sky-scaled-v1"
+FORECAST_PROJECTION_VERSION = "issued-mean-clear-sky-scaled-v2"
 FORECAST_TRAJECTORY_DOMAIN = "service-mpc-forecast-trajectory-v1"
+PUBLIC_FORECAST_ISSUE_DOMAIN = "service-mpc-public-forecast-issue-v1"
 DEFAULT_ENERGY_TOLERANCE = 1e-12
 
 
@@ -40,6 +41,14 @@ def _canonical_json(value: object) -> str:
 def _domain_sha256(domain: str, value: object) -> str:
     preimage = f"{domain}\0{_canonical_json(value)}".encode("utf-8")
     return hashlib.sha256(preimage).hexdigest()
+
+
+def public_forecast_issue_sha256(forecast: PublicForecastIssueV2) -> str:
+    """Bind a projection to the complete detached public issuance."""
+
+    if not isinstance(forecast, PublicForecastIssueV2):
+        raise TypeError("forecast must be PublicForecastIssueV2")
+    return _domain_sha256(PUBLIC_FORECAST_ISSUE_DOMAIN, forecast.to_dict())
 
 
 def _finite_real(name: str, value: object, *, minimum: float | None = None) -> float:
@@ -173,6 +182,7 @@ class MPCForecastTrajectoryV1:
     """Immutable 24-hour public-forecast projection at controller resolution."""
 
     projection_version: str
+    source_issue_sha256: str
     issued_at_physics_boundary_step: int
     issued_at_offset_s: float
     boundary_time_s: float
@@ -187,6 +197,15 @@ class MPCForecastTrajectoryV1:
     def __post_init__(self) -> None:
         if self.projection_version != FORECAST_PROJECTION_VERSION:
             raise ValueError("forecast projection version is unsupported")
+        if (
+            not isinstance(self.source_issue_sha256, str)
+            or len(self.source_issue_sha256) != 64
+        ):
+            raise ValueError("forecast source issue must be a SHA-256 digest")
+        try:
+            int(self.source_issue_sha256, 16)
+        except ValueError as exc:
+            raise ValueError("forecast source issue must be a SHA-256 digest") from exc
         step = self.issued_at_physics_boundary_step
         if isinstance(step, bool) or not isinstance(step, Integral) or step < 0:
             raise ValueError("forecast issue boundary step must be non-negative")
@@ -342,6 +361,7 @@ class MPCForecastTrajectoryV1:
     def body(self) -> dict[str, Any]:
         return {
             "projection_version": self.projection_version,
+            "source_issue_sha256": self.source_issue_sha256,
             "issued_at_physics_boundary_step": int(
                 self.issued_at_physics_boundary_step
             ),
@@ -508,6 +528,7 @@ def project_issued_mean_solar(
     power = tuple(value * peak_kw for value in available)
     return MPCForecastTrajectoryV1(
         projection_version=FORECAST_PROJECTION_VERSION,
+        source_issue_sha256=public_forecast_issue_sha256(forecast),
         issued_at_physics_boundary_step=int(forecast.issued_at_physics_boundary_step),
         issued_at_offset_s=float(forecast.issued_at_offset_s),
         boundary_time_s=boundary_s,
@@ -558,10 +579,12 @@ __all__ = [
     "DEFAULT_ENERGY_TOLERANCE",
     "FORECAST_PROJECTION_VERSION",
     "FORECAST_TRAJECTORY_DOMAIN",
+    "PUBLIC_FORECAST_ISSUE_DOMAIN",
     "MPCForecastBandV1",
     "MPCForecastTrajectoryV1",
     "clear_sky_equivalent_hours",
     "mean_peak_fraction",
     "project_issued_mean_solar",
+    "public_forecast_issue_sha256",
     "trajectory_sha256_from_public_inputs",
 ]

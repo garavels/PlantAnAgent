@@ -14,7 +14,7 @@ import math
 import time
 from dataclasses import dataclass
 from numbers import Integral, Real
-from typing import Any, Sequence
+from typing import Any, NoReturn, Sequence
 
 from .mpc_model import MPCSparseRowV1, ServiceMPCModelV1, delivery_lock_row
 from .mpc_schema import (
@@ -315,6 +315,36 @@ def _failed_evidence(
     )
 
 
+def _raise_stage_validation_failure(
+    runtime: _SciPyRuntime,
+    *,
+    stage: str,
+    status: int,
+    solver_message: str,
+    elapsed_ns: int,
+    result: object | None,
+    exception: Exception,
+    prior_stages: tuple[MPCStageSolveV1, ...],
+) -> NoReturn:
+    validation_message = _bounded_message(
+        f"{solver_message}; independent adapter validation rejected the result: "
+        f"{type(exception).__name__}: {exception}",
+        fallback="independent adapter validation rejected the solver result",
+    )
+    evidence = _failed_evidence(
+        runtime,
+        stage=stage,
+        status=status,
+        message=validation_message,
+        elapsed_ns=elapsed_ns,
+        result=result,
+    )
+    raise ServiceMPCSolveError(
+        f"service-MPC {stage} stage validation failed: {validation_message}",
+        stages=(*prior_stages, evidence),
+    ) from exception
+
+
 def _solve_stage(
     runtime: _SciPyRuntime,
     model: ServiceMPCModelV1,
@@ -323,6 +353,7 @@ def _solve_stage(
     stage: str,
     objective: Sequence[float],
     extra_rows: Sequence[MPCSparseRowV1] = (),
+    prior_stages: tuple[MPCStageSolveV1, ...] = (),
 ) -> _SolvedStage:
     started_ns = time.perf_counter_ns()
     result: object | None = None
@@ -359,18 +390,28 @@ def _solve_stage(
         )
         raise ServiceMPCSolveError(
             f"service-MPC {stage} stage raised: {message}",
-            stage_evidence=evidence,
+            stages=(*prior_stages, evidence),
         ) from exc
 
     elapsed_ns = time.perf_counter_ns() - started_ns
-    raw_status = getattr(result, "status", None)
-    if isinstance(raw_status, bool) or not isinstance(raw_status, Integral):
-        raise ServiceMPCPlanError(f"service-MPC {stage} status is not an integer")
-    status = int(raw_status)
     message = _bounded_message(
         getattr(result, "message", ""),
         fallback="SciPy milp returned no status message",
     )
+    raw_status = getattr(result, "status", None)
+    if isinstance(raw_status, bool) or not isinstance(raw_status, Integral):
+        exception = ServiceMPCPlanError(f"service-MPC {stage} status is not an integer")
+        _raise_stage_validation_failure(
+            runtime,
+            stage=stage,
+            status=-2,
+            solver_message=message,
+            elapsed_ns=elapsed_ns,
+            result=result,
+            exception=exception,
+            prior_stages=prior_stages,
+        )
+    status = int(raw_status)
     if status != 0:
         evidence = _failed_evidence(
             runtime,
@@ -382,85 +423,99 @@ def _solve_stage(
         )
         raise ServiceMPCSolveError(
             f"service-MPC {stage} stage failed with status {status}: {message}",
-            stage_evidence=evidence,
+            stages=(*prior_stages, evidence),
         )
-    if getattr(result, "success", None) is not True:
-        raise ServiceMPCPlanError(
-            f"service-MPC {stage} returned status zero without success"
-        )
-    raw_solution = getattr(result, "x", None)
-    if raw_solution is None:
-        raise ServiceMPCPlanError(
-            f"service-MPC {stage} returned status zero without a solution"
-        )
-    solution = _canonical_solution(model, raw_solution)
-    audit = model.audit_solution(solution, extra_rows=extra_rows)
-    if not audit.valid:
-        raise ServiceMPCPlanError(
-            f"service-MPC {stage} solution failed independent residual audit: "
-            f"bounds={audit.max_bound_violation:.6g}, "
-            f"rows={audit.max_row_violation:.6g}, "
-            f"integrality={audit.max_integrality_violation:.6g}, "
-            f"worst_row={audit.worst_row!r}"
-        )
+    try:
+        if getattr(result, "success", None) is not True:
+            raise ServiceMPCPlanError(
+                f"service-MPC {stage} returned status zero without success"
+            )
+        raw_solution = getattr(result, "x", None)
+        if raw_solution is None:
+            raise ServiceMPCPlanError(
+                f"service-MPC {stage} returned status zero without a solution"
+            )
+        solution = _canonical_solution(model, raw_solution)
+        audit = model.audit_solution(solution, extra_rows=extra_rows)
+        if not audit.valid:
+            raise ServiceMPCPlanError(
+                f"service-MPC {stage} solution failed independent residual audit: "
+                f"bounds={audit.max_bound_violation:.6g}, "
+                f"rows={audit.max_row_violation:.6g}, "
+                f"integrality={audit.max_integrality_violation:.6g}, "
+                f"worst_row={audit.worst_row!r}"
+            )
 
-    if len(objective) != model.variable_count:
-        raise ServiceMPCPlanError("solver objective length does not match the model")
-    objective_value = math.fsum(
-        float(coefficient) * value
-        for coefficient, value in zip(objective, solution, strict=True)
-    )
-    reported_objective = _finite(
-        f"service-MPC {stage} reported objective",
-        getattr(result, "fun", None),
-    )
-    objective_tolerance = max(
-        MODEL_BALANCE_TOLERANCE,
-        1e-9 * max(1.0, abs(objective_value)),
-    )
-    if not math.isclose(
-        reported_objective,
-        objective_value,
-        rel_tol=0.0,
-        abs_tol=objective_tolerance,
-    ):
-        raise ServiceMPCPlanError(
-            f"service-MPC {stage} objective disagrees with its solution"
+        if len(objective) != model.variable_count:
+            raise ServiceMPCPlanError(
+                "solver objective length does not match the model"
+            )
+        objective_value = math.fsum(
+            float(coefficient) * value
+            for coefficient, value in zip(objective, solution, strict=True)
         )
-    dual_bound = _finite(
-        f"service-MPC {stage} MIP dual bound",
-        getattr(result, "mip_dual_bound", None),
-    )
-    mip_gap = _finite(
-        f"service-MPC {stage} MIP gap",
-        getattr(result, "mip_gap", None),
-    )
-    if mip_gap < 0.0:
-        raise ServiceMPCPlanError(f"service-MPC {stage} MIP gap is negative")
-    node_count = _optional_count(getattr(result, "mip_node_count", None))
-    if node_count is None:
-        raise ServiceMPCPlanError(f"service-MPC {stage} node count is invalid")
+        reported_objective = _finite(
+            f"service-MPC {stage} reported objective",
+            getattr(result, "fun", None),
+        )
+        objective_tolerance = max(
+            MODEL_BALANCE_TOLERANCE,
+            1e-9 * max(1.0, abs(objective_value)),
+        )
+        if not math.isclose(
+            reported_objective,
+            objective_value,
+            rel_tol=0.0,
+            abs_tol=objective_tolerance,
+        ):
+            raise ServiceMPCPlanError(
+                f"service-MPC {stage} objective disagrees with its solution"
+            )
+        dual_bound = _finite(
+            f"service-MPC {stage} MIP dual bound",
+            getattr(result, "mip_dual_bound", None),
+        )
+        mip_gap = _finite(
+            f"service-MPC {stage} MIP gap",
+            getattr(result, "mip_gap", None),
+        )
+        if mip_gap < 0.0:
+            raise ServiceMPCPlanError(f"service-MPC {stage} MIP gap is negative")
+        node_count = _optional_count(getattr(result, "mip_node_count", None))
+        if node_count is None:
+            raise ServiceMPCPlanError(f"service-MPC {stage} node count is invalid")
 
-    evidence = MPCStageSolveV1(
-        stage=stage,
-        success=True,
-        status=status,
-        message=message,
-        elapsed_ns=elapsed_ns,
-        objective_value=objective_value,
-        mip_dual_bound=dual_bound,
-        mip_gap=mip_gap,
-        mip_node_count=node_count,
-        solution_sha256=_solution_sha256(
-            model,
+        evidence = MPCStageSolveV1(
             stage=stage,
-            solution=solution,
-            extra_rows=extra_rows,
-        ),
-        scipy_version=runtime.scipy_version,
-        highs_version=runtime.highs_version,
-    )
-    return _SolvedStage(solution=solution, evidence=evidence)
+            success=True,
+            status=status,
+            message=message,
+            elapsed_ns=elapsed_ns,
+            objective_value=objective_value,
+            mip_dual_bound=dual_bound,
+            mip_gap=mip_gap,
+            mip_node_count=node_count,
+            solution_sha256=_solution_sha256(
+                model,
+                stage=stage,
+                solution=solution,
+                extra_rows=extra_rows,
+            ),
+            scipy_version=runtime.scipy_version,
+            highs_version=runtime.highs_version,
+        )
+        return _SolvedStage(solution=solution, evidence=evidence)
+    except (ServiceMPCPlanError, TypeError, ValueError) as exc:
+        _raise_stage_validation_failure(
+            runtime,
+            stage=stage,
+            status=status,
+            solver_message=message,
+            elapsed_ns=elapsed_ns,
+            result=result,
+            exception=exc,
+            prior_stages=prior_stages,
+        )
 
 
 def _boolean_solution(name: str, value: float) -> bool:
@@ -638,11 +693,17 @@ def solve_service_mpc_model(
     primary_delivered = math.fsum(
         primary.solution[index] for index in model.group("delivered_kg")
     )
-    lock = delivery_lock_row(
-        model,
-        primary_delivered_kg=primary_delivered,
-        tolerance_kg=settings.delivery_lock_tolerance_kg,
-    )
+    try:
+        lock = delivery_lock_row(
+            model,
+            primary_delivered_kg=primary_delivered,
+            tolerance_kg=settings.delivery_lock_tolerance_kg,
+        )
+    except (TypeError, ValueError, ServiceMPCPlanError) as exc:
+        raise ServiceMPCPlanError(
+            f"service-MPC delivery lock construction failed: {exc}",
+            stages=(primary.evidence,),
+        ) from exc
     secondary = _solve_stage(
         runtime,
         model,
@@ -650,6 +711,7 @@ def solve_service_mpc_model(
         stage="secondary_tiebreak",
         objective=model.secondary_objective,
         extra_rows=(lock,),
+        prior_stages=(primary.evidence,),
     )
     try:
         return _extract_plan(
@@ -658,11 +720,10 @@ def solve_service_mpc_model(
             primary=primary,
             secondary=secondary,
         )
-    except ServiceMPCPlanError:
-        raise
-    except (KeyError, TypeError, ValueError) as exc:
+    except (ServiceMPCPlanError, KeyError, TypeError, ValueError) as exc:
         raise ServiceMPCPlanError(
-            f"service-MPC selected plan failed schema extraction: {exc}"
+            f"service-MPC selected plan failed schema extraction: {exc}",
+            stages=(primary.evidence, secondary.evidence),
         ) from exc
 
 

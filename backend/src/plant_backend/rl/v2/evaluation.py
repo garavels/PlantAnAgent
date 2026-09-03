@@ -35,7 +35,8 @@ from .metrics import EpisodeMetricsV2
 from .mpc_execution import (
     MPCDecisionApplicationV1,
     MPCDecisionEvidenceV1,
-    MPCDecisionFailureV1,
+    MPCDecisionFailureV2,
+    SERVICE_MPC_RUN_EVIDENCE_FORMAT,
     build_mpc_run_evidence,
     capture_mpc_application,
 )
@@ -501,7 +502,7 @@ class BaselineRun:
                 raise ValueError("controller_evidence must be strict JSON") from exc
             if self.controller == SERVICE_MPC_CONTROLLER_ID and (
                 self.controller_evidence.get("format")
-                != "service-mpc-controller-run-evidence-v1"
+                != SERVICE_MPC_RUN_EVIDENCE_FORMAT
             ):
                 raise ValueError("service-MPC run evidence format is invalid")
 
@@ -576,9 +577,7 @@ class ControllerEvaluationV2:
         manifest_hashes: dict[int, set[str]] = {seed: set() for seed in self.seeds}
         exogenous_hashes: dict[int, set[str]] = {seed: set() for seed in self.seeds}
         arms_by_seed: dict[int, set[str]] = {seed: set() for seed in self.seeds}
-        successful_by_seed: dict[int, set[str]] = {
-            seed: set() for seed in self.seeds
-        }
+        successful_by_seed: dict[int, set[str]] = {seed: set() for seed in self.seeds}
         run_counts: dict[tuple[int, str], int] = {}
         for run in self.runs:
             manifest_hashes.setdefault(run.seed, set()).add(run.manifest_sha256)
@@ -629,8 +628,7 @@ class ControllerEvaluationV2:
             "exactly_one_run_per_arm_by_seed": exactly_one,
             "only_declared_seed_controller_runs": only_declared_runs,
             "all_arms_successful_by_seed": all(
-                successful_by_seed.get(seed, set()) == expected
-                for seed in self.seeds
+                successful_by_seed.get(seed, set()) == expected for seed in self.seeds
             ),
             "exogenous_episode_sha256_by_seed": {
                 str(seed): sorted(exogenous_hashes.get(seed, set()))
@@ -676,11 +674,7 @@ class ControllerEvaluationV2:
                 and pairing["only_declared_seed_controller_runs"]
                 and pairing["all_arms_successful_by_seed"]
             ),
-            "failed_runs": [
-                run.to_dict()
-                for run in self.runs
-                if not run.successful
-            ],
+            "failed_runs": [run.to_dict() for run in self.runs if not run.successful],
         }
 
     def contrast_results(self) -> list[dict[str, Any]]:
@@ -689,7 +683,7 @@ class ControllerEvaluationV2:
 
     def to_dict(self) -> dict[str, Any]:
         execution = self.execution_summary()
-        payload = {
+        payload: dict[str, Any] = {
             "schema_version": self.result_schema_version,
             "study": self.study,
             "evidence_scope": self.evidence_scope,
@@ -754,8 +748,7 @@ class ControllerEvaluationV2:
             ("reward", "reward_total", "{:.2f}"),
         ]
         if any(
-            run.metrics is not None
-            and run.metrics.electrolyser_commitment_enabled
+            run.metrics is not None and run.metrics.electrolyser_commitment_enabled
             for run in self.runs
         ):
             columns.extend(
@@ -1032,9 +1025,7 @@ def _delta_summary(
         payload.update(
             {
                 "worst": worst,
-                "worst_seeds": [
-                    seed for seed, value in ordered if value == worst
-                ],
+                "worst_seeds": [seed for seed, value in ordered if value == worst],
                 "best": ordered[-1][1],
                 "lower_tail_fraction": 0.20,
                 "lower_tail_count": tail_count,
@@ -1217,9 +1208,7 @@ def _requested_action_contrast(
             invalid_disagreement_total if complete else None
         ),
         "control_invalid_decisions": control_invalid_total if complete else None,
-        "treatment_invalid_decisions": (
-            treatment_invalid_total if complete else None
-        ),
+        "treatment_invalid_decisions": (treatment_invalid_total if complete else None),
         "share_l1_sum": sum(all_share_l1) if complete else None,
         "share_l1_max": max(all_share_l1, default=0.0) if complete else None,
         "battery_support_abs_delta_kw_sum": (
@@ -1407,7 +1396,9 @@ def _paired_contrast(
         ),
         "seed_alignment": "exact seed equality; unavailable pairs are never imputed",
         "effect_summary_status": (
-            "valid" if execution_complete else "invalid_incomplete_or_mismatched_execution"
+            "valid"
+            if execution_complete
+            else "invalid_incomplete_or_mismatched_execution"
         ),
         "local_pair_execution_complete": local_execution_complete,
         "whole_study_execution_complete": study_execution_complete,
@@ -1429,8 +1420,7 @@ def _validated_seeds(seeds: Sequence[int]) -> list[int]:
     if not raw_seeds:
         raise ValueError("at least one seed is required")
     if any(
-        isinstance(seed, bool) or not isinstance(seed, Integral)
-        for seed in raw_seeds
+        isinstance(seed, bool) or not isinstance(seed, Integral) for seed in raw_seeds
     ):
         raise ValueError("seeds must be non-negative integers")
     chosen = [int(seed) for seed in raw_seeds]
@@ -1565,8 +1555,7 @@ def collect_provenance(
             and tracked_diff_bytes is not None
             and untracked_files is not None
             and all(
-                entry.get("content_sha256") is not None
-                for entry in untracked_files
+                entry.get("content_sha256") is not None for entry in untracked_files
             )
         )
         if source_identity_complete:
@@ -1812,7 +1801,7 @@ def _controller_run_evidence(
     events = getattr(controller, "decision_events", None)
     pending = getattr(controller, "has_pending_transition", None)
     if not isinstance(events, tuple) or any(
-        not isinstance(event, (MPCDecisionEvidenceV1, MPCDecisionFailureV1))
+        not isinstance(event, (MPCDecisionEvidenceV1, MPCDecisionFailureV2))
         for event in events
     ):
         raise TypeError("service-MPC controller did not expose typed decision events")

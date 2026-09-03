@@ -22,7 +22,10 @@ from plant_sim import (
 
 from ...controllers.base import Constraints
 from .control import ControllerObservationV2
-from .mpc_forecast import MPCForecastTrajectoryV1
+from .mpc_forecast import (
+    MPCForecastTrajectoryV1,
+    public_forecast_issue_sha256,
+)
 from .mpc_schema import (
     MODEL_BALANCE_TOLERANCE,
     MPCDeliveryTargetV1,
@@ -789,6 +792,14 @@ def build_service_mpc_model(
     if forecast.issued_at_physics_boundary_step != observation.state.boundary.step:
         raise ServiceMPCInputError(
             "forecast projection is for a different physics step"
+        )
+    if observation.forecast is None:
+        raise ServiceMPCInputError("service MPC requires the current public forecast")
+    if forecast.source_issue_sha256 != public_forecast_issue_sha256(
+        observation.forecast
+    ):
+        raise ServiceMPCInputError(
+            "forecast projection is not bound to the current public issue"
         )
     if not math.isclose(
         forecast.peak_kw,
