@@ -207,6 +207,22 @@ def test_plan_binds_stages_steps_and_delivery_totals() -> None:
 
     assert plan.to_dict()["sha256"] == plan.sha256
     assert len(plan.sha256) == 64
+    slower = replace(
+        plan,
+        stages=tuple(
+            replace(stage, elapsed_ns=stage.elapsed_ns + 1) for stage in plan.stages
+        ),
+    )
+    assert slower.body() != plan.body()
+    assert slower.sha256 == plan.sha256
+    different_solution = replace(
+        plan,
+        stages=(
+            plan.stages[0],
+            replace(plan.stages[1], solution_sha256="b" * 64),
+        ),
+    )
+    assert different_solution.sha256 != plan.sha256
     with pytest.raises(ValueError, match="does not match its steps"):
         replace(plan, selected_delivered_kg=1.0)
     with pytest.raises(ValueError, match="primary delivery lock"):

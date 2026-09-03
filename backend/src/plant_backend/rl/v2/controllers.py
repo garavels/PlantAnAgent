@@ -33,7 +33,7 @@ from plant_sim import (
 )
 
 from ...controllers.base import Constraints, ControlDecision
-from .control import ControllerObservationV2
+from .control import ControllerObservationV2, close_unit_simplex
 from .weather import FORECAST_WINDOWS_H, PublicForecastIssueV2
 
 SECONDS_PER_HOUR = 3_600.0
@@ -766,7 +766,7 @@ class _SharedDeliveryControllerV2:
             plan.dac_kw / bus_kw,
             plan.methane_kw / bus_kw,
         )
-        shares = _close_unit_simplex(raw_shares)
+        shares = close_unit_simplex(raw_shares)
         action = Action(
             battery_share=shares[0],
             electrolyser_share=shares[1],
@@ -1084,28 +1084,6 @@ def _finite_limit(value: object) -> float:
         return 0.0
     number = float(value)
     return max(0.0, number) if math.isfinite(number) else 0.0
-
-
-def _close_unit_simplex(
-    values: tuple[float, float, float, float],
-) -> tuple[float, float, float, float]:
-    """Close harmless floating-point residue without delegating to sanitisation."""
-    clamped = tuple(max(0.0, min(1.0, value)) for value in values)
-    battery, electrolyser, dac, methanator = clamped
-    shares = (battery, electrolyser, dac, methanator)
-    total = sum(shares)
-    if total <= 1.0:
-        return shares
-    # The allocator constructs a feasible bus in kW.  A total above one can
-    # therefore only be division/addition residue.  Use a downward-rounded
-    # common factor so Action.sanitised sees an already valid action exactly.
-    scale = math.nextafter(1.0 / total, 0.0)
-    closed = tuple(value * scale for value in shares)
-    while sum(closed) > 1.0:
-        scale = math.nextafter(scale, 0.0)
-        closed = tuple(value * scale for value in shares)
-    battery, electrolyser, dac, methanator = closed
-    return battery, electrolyser, dac, methanator
 
 
 def _offline(boundary: object, component: str) -> bool:

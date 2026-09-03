@@ -3294,3 +3294,58 @@ The next increment turns a valid first plan interval into the existing five-fiel
 contract, defines the stateful receding-horizon controller and its local evidence ledger,
 and proves first-step exact-simulator behavior on deliberately short fixtures before any
 development matrix can run.
+
+## 2026-09-03 — Causal service-MPC controller and transition evidence implemented
+
+The semantic plan digest was corrected before controller use. `MPCPlanV1` had included
+solver wall-clock elapsed nanoseconds in its hash preimage, so two identical mathematical
+solutions could not have the deterministic plan identity required by the protocol. Full
+serialized evidence still retains both stage latencies, statuses, versions, bounds, gaps,
+and node counts; the plan identity now binds the model, selected trajectory and objective
+summaries, plus both stage solution-vector digests, while excluding measurement timing.
+Tests prove that changing latency leaves the plan digest unchanged and changing a solution
+digest changes it.
+
+The existing transparent-controller binary64 simplex closure was moved to the shared
+typed control boundary without changing its algorithm. Both the stateless comparators and
+new MPC action realization now use that one implementation. `realize_first_mpc_action`
+divides only the four first-interval planned solar routes by reconstructed first-interval
+PV, closes any addition residue downward, carries planned battery support as the fifth
+field, treats exact darkness as four zero shares, and rejects any request that
+`Action.sanitised` would alter.
+
+`ServiceMPCControllerV1` implements the frozen `service-mpc-issued-mean-v1` identity. It
+accepts only the current detached observation, current public mean issuance, static plant
+and safety data, the public commitment profile/snapshot, immutable settings, and its own
+prior public reconciliation. A local task clock binds decision count, physics step,
+boundary time, issuance offset, progress, configured 72-hour (or explicit fixture) task
+horizon, and the shrinking final planning horizon. It never accepts an environment,
+simulator, episode, seed, private tape, delivery schedule, future vintage, or privileged
+planner result. Every compute rebuilds the 24-hour projection, takes the remaining-horizon
+prefix, constructs and solves a new model, and emits only interval zero. Any failure is
+re-raised; there is no action fallback.
+
+Each successful decision now retains immutable, strict-JSON evidence for the public
+observation and forecast digests, projection, settings, model dimensions/digest, inferred
+settlements, both solver stages, semantic plan, first planned interval, requested action,
+deterministic notes, and total decision latency. The next public boundary closes that event
+with forecast, battery-net, process-power, curtailment, production, settlement, and four
+terminal-inventory residuals. A separate typed failure event preserves the phase and all
+identities reached, including failed-stage evidence where available, without manufacturing
+a plan or action.
+
+Two independent controller instances produced identical model, plan, action, and semantic
+decision digests from the same public input despite different measured runtimes. Missing
+forecast, wrong task progress, duplicate-boundary compute, and an injected solver timeout
+all failed at their declared phase and retained no fabricated request. An exact one-hour,
+four-decision, seed-0 synthetic fixture exercised the real guard and one-minute plant after
+each solve; horizons shrank 4, 3, 2, 1 intervals and every decision was reconciled at the
+next public boundary, including the terminal transition. A separate 20:00-start fixture
+proved exact-darkness action encoding. These are authorized short unit fixtures, not
+registered 72-hour development outcomes.
+
+The new and adjacent control/MPC surface passes formatting, isolated strict type checking,
+and **131 focused tests**. The next increment extends the paired evaluator so successful
+and failed MPC decision events, exact guard changes, applied-power/refusal evidence, source
+identity, and latency aggregates are retained and validated independently of the
+controller. Until that exists, no full development rollout is authorized.

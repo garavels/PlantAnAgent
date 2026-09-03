@@ -28,6 +28,36 @@ def _non_negative_finite(name: str, value: object) -> float:
     return number
 
 
+def close_unit_simplex(
+    values: tuple[float, float, float, float],
+) -> tuple[float, float, float, float]:
+    """Close binary64 residue downward without relying on action sanitization."""
+
+    if not isinstance(values, tuple) or len(values) != 4:
+        raise TypeError("simplex values must be an immutable four-tuple")
+    checked: list[float] = []
+    for index, value in enumerate(values):
+        if isinstance(value, bool) or not isinstance(value, Real):
+            raise TypeError(f"simplex value {index} must be a real number")
+        number = float(value)
+        if not math.isfinite(number):
+            raise ValueError(f"simplex value {index} must be finite")
+        checked.append(number)
+    clamped = tuple(max(0.0, min(1.0, value)) for value in checked)
+    battery, electrolyser, dac, methanator = clamped
+    shares = (battery, electrolyser, dac, methanator)
+    total = sum(shares)
+    if total <= 1.0:
+        return shares
+    scale = math.nextafter(1.0 / total, 0.0)
+    closed = tuple(value * scale for value in shares)
+    while sum(closed) > 1.0:
+        scale = math.nextafter(scale, 0.0)
+        closed = tuple(value * scale for value in shares)
+    battery, electrolyser, dac, methanator = closed
+    return battery, electrolyser, dac, methanator
+
+
 @dataclass(frozen=True)
 class DeliveryObservation:
     """Narrow current-deadline projection of the private delivery ledger."""
@@ -181,4 +211,5 @@ __all__ = [
     "ControllerV2",
     "DeliveryObservation",
     "action_from_controller",
+    "close_unit_simplex",
 ]

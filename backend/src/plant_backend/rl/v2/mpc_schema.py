@@ -562,9 +562,23 @@ class MPCPlanV1:
             "secondary_utility": float(self.secondary_utility),
         }
 
+    def identity_body(self) -> dict[str, Any]:
+        """Return the semantic plan preimage without wall-clock solver evidence."""
+
+        body = self.body()
+        body["stage_solutions"] = [
+            {
+                "stage": stage.stage,
+                "solution_sha256": stage.solution_sha256,
+            }
+            for stage in self.stages
+        ]
+        del body["stages"]
+        return body
+
     @property
     def sha256(self) -> str:
-        return domain_sha256(SERVICE_MPC_PLAN_DOMAIN, self.body())
+        return domain_sha256(SERVICE_MPC_PLAN_DOMAIN, self.identity_body())
 
     def to_dict(self) -> dict[str, Any]:
         return {**self.body(), "sha256": self.sha256}
