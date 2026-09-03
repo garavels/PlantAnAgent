@@ -959,6 +959,18 @@ class A0GenerationV1:
     prefix_state_bytes: tuple[bytes, ...]
 
     def __post_init__(self) -> None:
+        records, prefixes = self._validated_contents()
+        object.__setattr__(self, "action_records", records)
+        object.__setattr__(self, "prefix_state_bytes", prefixes)
+
+    def validate(self) -> None:
+        """Re-run the detached generation contract after low-level mutation."""
+
+        self._validated_contents()
+
+    def _validated_contents(
+        self,
+    ) -> tuple[tuple[ActionRecordV1, ...], tuple[bytes, ...]]:
         records = tuple(
             _revalidated_action_record(item) for item in self.action_records
         )
@@ -991,8 +1003,7 @@ class A0GenerationV1:
         for index, prefix in enumerate(prefixes):
             if not isinstance(prefix, bytes) or not prefix:
                 raise TypeError(f"prefix_state_bytes[{index}] must be non-empty bytes")
-        object.__setattr__(self, "action_records", records)
-        object.__setattr__(self, "prefix_state_bytes", prefixes)
+        return records, prefixes
 
 
 def _revalidated_action_record(record: ActionRecordV1) -> ActionRecordV1:
@@ -1717,8 +1728,15 @@ class PlannerCandidateRegistryV1:
                 message="candidate environment does not match its reservation",
             )
         lease = _CandidateLeaseV1(candidate=candidate, token=token, env=env)
-        self._leases[id(candidate)] = lease
-        self._environment_ids[id(env)] = env
+        try:
+            self._leases[id(candidate)] = lease
+            self._environment_ids[id(env)] = env
+        except BaseException:
+            if self._leases.get(id(candidate)) is lease:
+                del self._leases[id(candidate)]
+            if self._environment_ids.get(id(env)) is env:
+                del self._environment_ids[id(env)]
+            raise
 
     def validate_candidate(self, candidate: PlantPlannerCandidateV1) -> PlantEnvV2:
         lease = self._lookup(candidate)

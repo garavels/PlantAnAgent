@@ -12,13 +12,19 @@ from plant_sim import Action, PlantConfig, PlantState, SolarArray
 
 from plant_backend.controllers.base import Constraints
 from plant_backend.rl.v2 import _planner_actions as actions
+from plant_backend.rl.v2 import _planner_port as planner_port
 from plant_backend.rl.v2 import _planner_runtime as runtime
-from plant_backend.rl.v2._planner_search import PlannerSearchCountersV1
+from plant_backend.rl.v2._planner_search import (
+    PlannerSearchCountersV1,
+    polish_traces,
+    run_primary_beam,
+)
 from plant_backend.rl.v2.config import EpisodeConfigV2, sample_episode
 from plant_backend.rl.v2.contract import describe_checkpoint_contract
 from plant_backend.rl.v2.env import PlantEnvV2
 from plant_backend.rl.v2.metrics import EpisodeMetricsV2
 from plant_backend.rl.v2.planner_schema import (
+    A0_CONTROLLER,
     A0_CONTROLLER_SHA256,
     ActionRecordV1,
     CanonicalPayloadV1,
@@ -67,7 +73,11 @@ class _FixtureWitness:
     pass
 
 
-def _runtime_fixture(*, seed: int = 7) -> tuple[
+def _runtime_fixture(
+    *,
+    seed: int = 7,
+    episode_config: EpisodeConfigV2 = NONCANONICAL_TWO_DECISIONS,
+) -> tuple[
     PlantConfig,
     EpisodeConfigV2,
     Constraints,
@@ -75,7 +85,6 @@ def _runtime_fixture(*, seed: int = 7) -> tuple[
     runtime.PlannerRuntimeAdmissionV1,
 ]:
     config = PlantConfig()
-    episode_config = NONCANONICAL_TWO_DECISIONS
     constraints = Constraints()
     weights = RewardWeightsV2()
     sampled = sample_episode(episode_config, config, seed=seed)
@@ -626,6 +635,19 @@ def test_runtime_records_and_payloads_require_exact_evidence_types() -> None:
         replace(snapshot, metrics=alias_payload)
 
 
+def test_port_rejects_semantically_wrong_source_binding_before_replay() -> None:
+    _, _, _, _, admission = _runtime_fixture()
+    wrong = ActionRecordV1.from_action(
+        Action.idle(),
+        decision_index=0,
+        source_phase="beam",
+        source_code=2,
+        source_binding_sha256=admission.binding.guidance_sha256,
+    )
+    with pytest.raises(ValueError, match="wrong semantic source binding"):
+        planner_port._validated_records((wrong,), admission=admission)
+
+
 def test_a0_generation_rejects_wrong_controller_binding_even_when_self_consistent() -> (
     None
 ):
@@ -732,6 +754,266 @@ def test_external_candidate_registry_cleans_original_lease_after_corruption() ->
 
     assert candidate.env is None and candidate._attestation is None
     assert registry.live_candidates == 0
+    assert guard.live_environments == guard.reserved_slots == 0
+    guard.close()
+
+
+def test_exact_a0_port_beam_polish_and_fresh_replay_integrate_on_tiny_plant() -> None:
+    config, episode, constraints, weights, admission = _runtime_fixture()
+    counters = PlannerSearchCountersV1()
+    guard = runtime._ResourceGuardV1(
+        settings=admission.settings,
+        counters=counters,
+        start_ns=100,
+        clock_ns=lambda: 100,
+        peak_rss_raw=lambda: 0,
+        platform_system=lambda: "Darwin",
+    )
+    inputs = planner_port.PlannerPlantInputsV1(
+        config=config,
+        episode_config=episode,
+        constraints=constraints,
+        weights=weights,
+        admission=admission,
+    )
+    a0 = planner_port.capture_a0_evidence(
+        inputs,
+        guard=guard,
+        counters=counters,
+    )
+    a0.validate_for_config(config)
+    assert counters.a0_generation_decisions == 2
+    assert counters.a0_evidence_replay_decisions == 2
+    assert a0.generation.prefix_state_bytes == a0.replay_prefix_state_bytes
+
+    port = planner_port.PlantPlannerSearchPortV1(
+        inputs=inputs,
+        a0=a0,
+        guard=guard,
+        counters=counters,
+    )
+    try:
+        beam = run_primary_beam(
+            port,
+            a0_records=a0.generation.action_records,
+            expected_decisions=admission.settings.expected_decisions,
+            counters=counters,
+        )
+        polished = polish_traces(
+            port,
+            a0=a0.search_trace(),
+            beam_winner=beam,
+            expected_decisions=admission.settings.expected_decisions,
+            counters=counters,
+        )
+        replayed = port.replay_finalist(polished)
+        replayed.validate_for_config(config)
+        assert replayed.request_trace == polished.payload.request_trace
+        assert replayed.metrics == polished.payload.metrics
+        assert counters.attempted_edges == 15
+        assert counters.completed_edges == counters.generated_candidates == 15
+        assert counters.completed_macro_depths == 1
+        assert counters.a0_cursor_validations == 1
+        assert counters.a0_injections == 0
+        assert counters.coordinate_trials_attempted in (30, 45)
+        assert (
+            counters.coordinate_trials_completed == counters.coordinate_trials_attempted
+        )
+        assert counters.fresh_finalist_replay_decisions == 2
+    finally:
+        port.close()
+        guard.close()
+    assert guard.live_environments == guard.reserved_slots == 0
+
+
+def test_a0_cursor_injection_and_coordinate_fixed_regions_use_exact_states() -> None:
+    five_decisions = EpisodeConfigV2(horizon_h=1.25, delivery_period_h=1.25)
+    config, episode, constraints, weights, admission = _runtime_fixture(
+        episode_config=five_decisions
+    )
+    counters = PlannerSearchCountersV1()
+    guard = runtime._ResourceGuardV1(
+        settings=admission.settings,
+        counters=counters,
+        start_ns=100,
+        clock_ns=lambda: 100,
+        peak_rss_raw=lambda: 0,
+        platform_system=lambda: "Darwin",
+    )
+    inputs = planner_port.PlannerPlantInputsV1(
+        config=config,
+        episode_config=episode,
+        constraints=constraints,
+        weights=weights,
+        admission=admission,
+    )
+    a0 = planner_port.capture_a0_evidence(
+        inputs,
+        guard=guard,
+        counters=counters,
+    )
+    port = planner_port.PlantPlannerSearchPortV1(
+        inputs=inputs,
+        a0=a0,
+        guard=guard,
+        counters=counters,
+    )
+    try:
+        root = port.initial_candidate()
+        injected = port.advance_a0_cursor(
+            macro_depth=1,
+            start_decision=0,
+            stop_decision=4,
+            terminal=False,
+        )
+        assert injected is not None
+        assert port.state_bytes(injected) == a0.replay_prefix_state_bytes[0]
+        assert port.action_records(injected) == a0.generation.action_records[:4]
+        port.release(injected)
+        port.release(root)
+        assert (
+            port.advance_a0_cursor(
+                macro_depth=2,
+                start_decision=4,
+                stop_decision=5,
+                terminal=True,
+            )
+            is None
+        )
+
+        suffix_fixed = port.coordinate_trial(
+            a0.search_trace(),
+            start_decision=0,
+            stop_decision=4,
+            template_id=2,
+            source_phase="fine_polish",
+        )
+        port.resource_checkpoint("completed_coordinate_trial")
+        assert suffix_fixed.action_records[4:] == a0.generation.action_records[4:]
+        assert all(
+            record.source_phase == "fine_polish" and record.source_code == 2
+            for record in suffix_fixed.action_records[:4]
+        )
+        prefix_fixed = port.coordinate_trial(
+            a0.search_trace(),
+            start_decision=4,
+            stop_decision=5,
+            template_id=2,
+            source_phase="fine_polish",
+        )
+        port.resource_checkpoint("completed_coordinate_trial")
+        assert prefix_fixed.action_records[:4] == a0.generation.action_records[:4]
+        assert all(
+            record.source_phase == "fine_polish" and record.source_code == 2
+            for record in prefix_fixed.action_records[4:]
+        )
+    finally:
+        port.close()
+        guard.close()
+    assert counters.max_live_environments_observed <= 3
+
+
+def test_real_nonterminal_beam_retains_a0_and_releases_every_candidate() -> None:
+    five_decisions = EpisodeConfigV2(horizon_h=1.25, delivery_period_h=1.25)
+    config, episode, constraints, weights, admission = _runtime_fixture(
+        episode_config=five_decisions
+    )
+    counters = PlannerSearchCountersV1()
+    guard = runtime._ResourceGuardV1(
+        settings=admission.settings,
+        counters=counters,
+        start_ns=100,
+        clock_ns=lambda: 100,
+        peak_rss_raw=lambda: 0,
+        platform_system=lambda: "Darwin",
+    )
+    inputs = planner_port.PlannerPlantInputsV1(
+        config=config,
+        episode_config=episode,
+        constraints=constraints,
+        weights=weights,
+        admission=admission,
+    )
+    a0 = planner_port.capture_a0_evidence(
+        inputs,
+        guard=guard,
+        counters=counters,
+    )
+    port = planner_port.PlantPlannerSearchPortV1(
+        inputs=inputs,
+        a0=a0,
+        guard=guard,
+        counters=counters,
+    )
+    try:
+        winner = run_primary_beam(
+            port,
+            a0_records=a0.generation.action_records,
+            expected_decisions=admission.settings.expected_decisions,
+            counters=counters,
+        )
+        winner.payload.validate_for_config(config)
+        assert len(winner.action_records) == 5
+        assert counters.completed_macro_depths == 2
+        assert counters.a0_cursor_validations == 2
+        assert counters.a0_injections == 1
+        assert counters.attempted_edges > 15
+        assert counters.completed_edges == counters.generated_candidates
+        assert counters.max_live_environments_observed <= 57
+    finally:
+        port.close()
+        guard.close()
+    assert guard.live_environments == guard.reserved_slots == 0
+
+
+def test_a0_descriptor_mutation_fails_before_step_and_releases_environment(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config, episode, constraints, weights, admission = _runtime_fixture()
+    counters = PlannerSearchCountersV1()
+    guard = runtime._ResourceGuardV1(
+        settings=admission.settings,
+        counters=counters,
+        start_ns=100,
+        clock_ns=lambda: 100,
+        peak_rss_raw=lambda: 0,
+        platform_system=lambda: "Darwin",
+    )
+    inputs = planner_port.PlannerPlantInputsV1(
+        config=config,
+        episode_config=episode,
+        constraints=constraints,
+        weights=weights,
+        admission=admission,
+    )
+
+    class MutatingA0:
+        def __init__(self) -> None:
+            self.changed = False
+
+        def reset(self) -> None:
+            return None
+
+        def to_dict(self) -> dict[str, object]:
+            if self.changed:
+                return {"id": "mutated-after-compute"}
+            value = json.loads(A0_CONTROLLER.canonical_json)
+            assert isinstance(value, dict)
+            return value
+
+        def compute_action(self, *args: object, **kwargs: object) -> object:
+            del args, kwargs
+            self.changed = True
+            return object()
+
+    monkeypatch.setattr(planner_port, "LegacyHeuristicControllerV2", MutatingA0)
+    with pytest.raises(ValueError, match="descriptor disagrees"):
+        planner_port.capture_a0_evidence(
+            inputs,
+            guard=guard,
+            counters=counters,
+        )
+    assert counters.a0_generation_decisions == 0
     assert guard.live_environments == guard.reserved_slots == 0
     guard.close()
 
