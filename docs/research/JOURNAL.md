@@ -3502,3 +3502,55 @@ outcome was opened. The next action is to commit this implementation/audit candi
 repeat formatting, type, compilation, dependency-lock, focused, and full-repository checks
 from that clean revision. Only a fully passing clean-source gate may authorize the frozen
 six-cell development matrix.
+
+## 2026-09-03 — Registered service-MPC cell boundary isolated before outcomes
+
+Commit `047858c` passed the complete clean-revision implementation gate: formatting on all
+14 relevant Python files, strict type checking on the seven production modules and two
+integration-test bodies, Python compilation, the frozen 92-package dependency lock, 237
+focused Environment V2/controller/MPC tests, and the full repository suite of **961 passed,
+2 skipped**. The only warning is the previously known Starlette/httpx deprecation warning.
+The worktree remained clean throughout the gate. This closes implementation authorization;
+it does not itself reveal any registered controller-performance result.
+
+The generic causal-comparison command intentionally remains flexible for ordinary research,
+so it was not a sufficiently narrow execution boundary for the preregistered service-MPC
+matrix. A dedicated one-cell runner now admits only rates 35 or 42 kg/h, seeds 0, 1, or 2,
+the 72-hour episode, exactly 288 controller decisions, the declared A0/A2/M controller order,
+and the two declared A2-minus-A0 and M-minus-A2 contrasts. It constructs the existing default
+plant, safety constraints, and reward weights internally and requires clean-source evaluation.
+No CLI flag can change the horizon, plant, controller set, controller order, weights, or
+contrast definitions.
+
+Before publication, the runner independently validates the episode, schema, descriptors,
+run order, retained action traces, common-random-number pairing identities, dependency-lock
+hash, repository identity, and clean/unchanged start-to-end source audit. A successful MPC
+arm additionally requires all 288 decisions, events, reconciliations, and exact application
+records; zero failed decisions; and the structurally fixed zero fallback count. A controller
+failure remains a first-class experimental outcome and is published rather than silently
+discarded.
+
+Each cell must target a new absolute `.json` path whose existing parent lies outside the Git
+repository. The runner serializes to a temporary sibling, checks exact expected bytes and a
+canonical-JSON round trip, fsyncs the file, creates the destination with a non-overwriting
+hard link, fsyncs its directory, reopens the published bytes, and records their SHA-256.
+It recollects provenance both before and after this publication operation so a source or
+lock change between evaluation and durable output fails closed. A Make target exposes only
+the rate, seed, and mandatory external output path.
+
+All runner tests were kept outcome-free. Synthetic failed and synthetic complete records
+prove admission of the two legitimate result shapes, while mutations prove rejection of a
+wrong arm order, hidden fallback, dirty source, invalid rate/seed, internal or relative
+destination, wrong suffix, and overwrite attempt. An injected evaluator confirms the exact
+arguments without instantiating a real episode. The first atomic-publication assertion tried
+to compare a deserialized JSON mapping directly with its Python source mapping; JSON changes
+tuples to arrays, so this incorrectly rejected a semantically and byte-correct artifact.
+The final test instead checks the exact serializer bytes and canonical-JSON equivalence.
+That was a test-representation defect, not an experimental outcome.
+
+The new runner suite passes **9 tests**; the adjacent runner/controller/evaluator suite passes
+**53 tests**. Both source and test bodies pass their strict type checks, formatting and Git
+whitespace checks pass, and a dry Make invocation expands to the frozen one-cell command.
+No registered episode, MPC solve, or performance outcome has yet been opened. The last
+pre-outcome task is to freeze and test the six-cell admission, aggregation, and gate report;
+only then may the cells run in the declared rate-major, seed-minor order.

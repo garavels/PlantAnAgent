@@ -64,6 +64,9 @@ fallback behavior.
   first deployable-information service MPC: its forecast projection, mixed-integer
   model, solver/failure contract, development thresholds, evidence payload, and
   pre-outcome implementation gate.
+- [`CAUSAL_SERVICE_MPC_PREFREEZE_AUDIT.md`](CAUSAL_SERVICE_MPC_PREFREEZE_AUDIT.md)
+  maps every implementation-gate obligation to executable evidence, reviews the
+  source authority boundaries, and preserves the tiny-fixture/full-rollout boundary.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

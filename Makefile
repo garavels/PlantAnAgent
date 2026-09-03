@@ -1,4 +1,4 @@
-.PHONY: help setup dev backend frontend sim test eval foresight-eval rl-eval rl-ceiling v2-eval v2-weather-eval v2-controller-eval v2-planner train-dry train \
+.PHONY: help setup dev backend frontend sim test eval foresight-eval rl-eval rl-ceiling v2-eval v2-weather-eval v2-controller-eval v2-planner v2-mpc train-dry train \
 	hepa-collect hepa-pretrain-dry hepa-pretrain hepa-finetune-dry hepa-finetune \
 	hepa-eval build clean
 
@@ -51,6 +51,12 @@ v2-controller-eval: ## compare causal delivery-aware controllers on the developm
 v2-planner:       ## run one registered future-information planner cell (external OUTPUT required)
 	$(if $(OUTPUT),,$(error OUTPUT=/absolute/path/outside/repository.json is required))
 	uv run --frozen python -m plant_backend.rl.v2.planner \
+		--delivery-rate $(or $(DELIVERY_RATE),35) --seed $(or $(SEED),0) \
+		--output $(OUTPUT)
+
+v2-mpc:           ## run one registered causal service-MPC cell (external OUTPUT required)
+	$(if $(OUTPUT),,$(error OUTPUT=/absolute/path/outside/repository.json is required))
+	uv run --frozen python -m plant_backend.rl.v2.mpc_experiment \
 		--delivery-rate $(or $(DELIVERY_RATE),35) --seed $(or $(SEED),0) \
 		--output $(OUTPUT)
 
