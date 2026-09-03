@@ -2820,3 +2820,69 @@ solve only their declared hand-solvable noncanonical LP fixtures. The six protec
 cells remain unopened. The next action is to commit this audit slice, reproduce every required
 gate from the resulting clean revision, and only then execute the six cells without modifying
 source between them.
+
+## 2026-09-03 — First registered planner cell failed closed
+
+### Frozen execution and retained artifact
+
+The candidate audit slice was committed as
+`0059626313866d7a2bda2a44f64926a757a9f5d6`. From that clean revision the complete
+pre-freeze gate was reproduced: the dependency lock remained unchanged; the focused planner
+gate passed 266 tests; the complete repository passed 879 tests with 2 skips and the one known
+Starlette `TestClient` deprecation warning; formatting, the combined strict type check,
+compilation, and whitespace validation all passed. The first registered development cell was
+then invoked exactly once:
+
+```text
+make v2-planner DELIVERY_RATE=35 SEED=0 \
+  OUTPUT=/private/tmp/plantanagent-planner-0059626/rate35-seed0.json
+```
+
+The parent runner completed normally and atomically published a schema-valid failed artifact.
+Its start and end source snapshots are clean and byte-identical at the frozen revision. Both
+snapshots report raw `uv.lock` SHA-256
+`080d96275581ebbec1b2c27b354ea54e3e66419bfaadb034896da1fd22b228dd`.
+The artifact's embedded `artifact_sha256` is
+`9323d4c97205706d7c8a8c03f14734bc502f1056386d2ca7378b601a9b456ed1`; the exact
+2,182,072-byte file has raw SHA-256
+`e1f621689c176ccd50b5433a2df14d41c963f11618f70be5eb3af4821a5f95d7`.
+These are intentionally different identities: the former is the schema's domain-separated
+payload digest and the latter hashes the serialized file bytes. `runner_failure` is null, so
+the failure belongs to the admitted planner core rather than process, watchdog, provenance, or
+publication infrastructure.
+
+### Observed failure
+
+Exact A0 generation and fresh replay both completed all 288 decisions and 4,320 one-minute
+physics steps. The primary beam search then stopped during its fourth macro-depth region after
+961 attempted edges and 960 completed/generated edges. It retained 85 frontier states, had
+discarded 133 exact duplicates, and reported a peak frontier of 24 and peak live-environment
+count of 51. The admitted failure is:
+
+```text
+phase: beam_search
+code: search_incomplete
+message: action shares must have a binary64 sum no greater than one
+```
+
+The core elapsed time was 65,627,813,708 ns and peak reported RSS was 292,945,920 bytes. No
+searched finalist, feasible-planner value, bracket, or evidence-ready claim exists. The
+verified A0 evidence remains diagnostic context inside the failed core and is not relabelled as
+a successful planner result.
+
+### Research decision and contamination boundary
+
+The remaining five registered cells were not executed. Running around a deterministic source
+defect would create a selectively observed matrix and could not answer the preregistered
+question. The rate-35/seed-0 cell is now development-contaminated and this failed artifact will
+remain part of the record after repair; it must never be overwritten, omitted, or presented as
+if it came from the repaired revision.
+
+A read-only localization after the failure places the exception at `ActionRecordV1` share-sum
+validation while expanding the `legacy_live` template on an evolved search branch. The exact
+A0 trajectory did not visit that branch state, which explains why A0 capture/replay and the
+pre-freeze fixtures could pass. This is a localization, not yet a root-cause claim. Before any
+protected execution resumes, a noncanonical regression must reproduce the exact arithmetic
+boundary, the implementation and frozen text must be reconciled without outcome-driven search
+changes, the complete gate must pass, and a new clean execution revision must be declared. The
+repaired six-cell matrix will be reported separately from this first failed invocation.
