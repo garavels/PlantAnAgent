@@ -4,6 +4,7 @@ import dataclasses
 import hashlib
 import json
 import math
+import struct
 from types import SimpleNamespace
 
 import pytest
@@ -727,6 +728,62 @@ def test_action_records_are_closed_immutable_and_have_separate_trace_domains() -
         dataclasses.replace(record, controller_invalid=True)
     with pytest.raises(ValueError, match="contiguous"):
         request_trace_payload((dataclasses.replace(record, decision_index=1),))
+
+
+def test_only_exact_legacy_sanitiser_fixed_points_may_exceed_ordered_sum() -> None:
+    shares = (
+        float.fromhex("0x0.0p+0"),
+        float.fromhex("0x1.1bed21723950fp-1"),
+        float.fromhex("0x1.8ca661a8a7735p-2"),
+        float.fromhex("0x1.dbfadb972f572p-5"),
+    )
+    assert (((shares[0] + shares[1]) + shares[2]) + shares[3]) > 1.0
+    assert sum(shares) == 1.0
+    expected_bytes = struct.pack(">4d", *shares)
+
+    capture = ActionRecordV1(
+        decision_index=0,
+        source_phase="a0_capture",
+        source_code=-1,
+        source_binding_sha256=A0_CONTROLLER_SHA256,
+        controller_invalid=False,
+        battery_share=shares[0],
+        electrolyser_share=shares[1],
+        dac_share=shares[2],
+        methanator_share=shares[3],
+        battery_support_kw=0.0,
+    )
+    live = dataclasses.replace(capture, source_phase="beam", source_code=0)
+    for record in (capture, live):
+        rebuilt = ActionRecordV1(**record.to_dict())  # type: ignore[arg-type]
+        assert (
+            struct.pack(
+                ">4d",
+                rebuilt.battery_share,
+                rebuilt.electrolyser_share,
+                rebuilt.dac_share,
+                rebuilt.methanator_share,
+            )
+            == expected_bytes
+        )
+
+    with pytest.raises(ValueError, match="binary64 sum"):
+        dataclasses.replace(live, source_binding_sha256=SHA_A)
+    for source_code in range(1, 15):
+        with pytest.raises(ValueError, match="binary64 sum"):
+            dataclasses.replace(
+                live,
+                source_code=source_code,
+                source_binding_sha256=ACTION_LIBRARY_SHA256,
+            )
+    with pytest.raises(ValueError, match="binary64 sum"):
+        dataclasses.replace(
+            capture,
+            battery_share=0.6,
+            electrolyser_share=0.6,
+            dac_share=0.0,
+            methanator_share=0.0,
+        )
 
 
 def test_final_score_comparator_uses_binary64_exact_service_and_all_directions() -> (

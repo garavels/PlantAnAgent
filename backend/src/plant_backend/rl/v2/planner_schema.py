@@ -467,6 +467,19 @@ def _same_binary64(left: object, right: object) -> bool:
     return struct.pack(">d", left_value) == struct.pack(">d", right_value)
 
 
+def _shares_are_sanitiser_fixed_point(shares: Sequence[float]) -> bool:
+    """Reproduce ``Action.sanitised`` without coupling the pure schema to the plant."""
+
+    sanitised = tuple(shares)
+    total = sum(sanitised)
+    if total > 1.0:
+        sanitised = tuple(share / total for share in sanitised)
+    return all(
+        _same_binary64(original, checked)
+        for original, checked in zip(shares, sanitised, strict=True)
+    )
+
+
 @dataclass(frozen=True, slots=True)
 class ActionRecordV1:
     decision_index: int
@@ -509,7 +522,13 @@ class ActionRecordV1:
             value = _require_float(name, getattr(self, name), minimum=0.0, maximum=1.0)
             object.__setattr__(self, name, value)
             shares.append(value)
-        if ((shares[0] + shares[1]) + shares[2]) + shares[3] > 1.0:
+        ordered_total = ((shares[0] + shares[1]) + shares[2]) + shares[3]
+        legacy_fixed_point = (
+            code in (-1, 0)
+            and self.source_binding_sha256 == A0_CONTROLLER_SHA256
+            and _shares_are_sanitiser_fixed_point(shares)
+        )
+        if ordered_total > 1.0 and not legacy_fixed_point:
             raise ValueError(
                 "action shares must have a binary64 sum no greater than one"
             )

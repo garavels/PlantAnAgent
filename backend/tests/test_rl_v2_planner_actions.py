@@ -421,6 +421,69 @@ def test_all_templates_generate_records_with_frozen_source_bindings(
     assert observation.blind_calls == 2
 
 
+def test_legacy_live_preserves_exact_sanitiser_fixed_point_bytes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    binding = _binding()
+    env = _env(binding=binding)
+
+    class BlindObservation:
+        forecast = object()
+
+        def without_forecast(self) -> SimpleNamespace:
+            return SimpleNamespace(forecast=None)
+
+    env.controller_observation = BlindObservation()
+    raw = Action(
+        battery_share=float.fromhex("0x0.0p+0"),
+        electrolyser_share=float.fromhex("0x1.1bed21723950fp-1"),
+        dac_share=float.fromhex("0x1.8ca661a8a7735p-2"),
+        methanator_share=float.fromhex("0x1.dbfadb972f572p-5"),
+        battery_support_kw=17.0,
+    )
+
+    class FixedPointLegacy:
+        def to_dict(self) -> dict[str, object]:
+            value = json.loads(actions.A0_CONTROLLER_CANONICAL_JSON)
+            assert isinstance(value, dict)
+            return value
+
+        def reset(self) -> None:
+            pass
+
+        def compute_action(self, seen: object, **kwargs: object) -> ControlDecision:
+            assert getattr(seen, "forecast") is None
+            assert kwargs == {
+                "constraints": env.constraints,
+                "config": env.config,
+                "commitment_profile": env.episode_config.electrolyser_commitment,
+            }
+            return ControlDecision(raw)
+
+    monkeypatch.setattr(actions, "LegacyHeuristicControllerV2", FixedPointLegacy)
+    live = actions.generate_action_record(
+        template_id=0,
+        env=env,
+        decision_index=0,
+        source_phase="beam",
+        binding=binding,
+    )
+    capture = actions.ActionRecordV1.from_action(
+        raw,
+        decision_index=0,
+        source_phase="a0_capture",
+        source_code=-1,
+        source_binding_sha256=actions.A0_CONTROLLER_SHA256,
+    )
+    expected = actions.action_binary64(raw)
+    for record in (capture, live):
+        rebuilt = actions.ActionRecordV1(**record.to_dict())  # type: ignore[arg-type]
+        assert (
+            actions.action_binary64(actions.action_record_to_action(rebuilt))
+            == expected
+        )
+
+
 def test_legacy_live_is_fresh_and_fails_if_descriptor_changes_after_reset(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

@@ -59,6 +59,43 @@ def test_heuristic_actions_are_always_valid(sim: PlantSimulator) -> None:
         simulator.step(action)
 
 
+def test_heuristic_action_can_be_a_sanitiser_fixed_point_above_ordered_sum() -> None:
+    """Preserve the exact one-ULP witness behind planner repair 001."""
+
+    simulator = PlantSimulator()
+    observation = replace(
+        simulator.get_telemetry(),
+        solar_available_kw=float.fromhex("0x1.833e4475970c0p+11"),
+    )
+    action = (
+        HeuristicController()
+        .compute_action(
+            observation,
+            constraints=Constraints(),
+            config=simulator.config,
+        )
+        .action
+    )
+    shares = (
+        action.battery_share,
+        action.electrolyser_share,
+        action.dac_share,
+        action.methanator_share,
+    )
+
+    assert tuple(value.hex() for value in shares) == (
+        "0x0.0p+0",
+        "0x1.1bed21723950fp-1",
+        "0x1.8ca661a8a7735p-2",
+        "0x1.dbfadb972f572p-5",
+    )
+    assert (((shares[0] + shares[1]) + shares[2]) + shares[3]).hex() == (
+        "0x1.0000000000001p+0"
+    )
+    assert sum(shares).hex() == "0x1.0000000000000p+0"
+    assert Action.sanitised(action) == action
+
+
 def test_heuristic_runs_the_whole_chain_unattended() -> None:
     """A day under the heuristic alone produces hydrogen, CO2 and methane."""
     runtime = PlantRuntime()
