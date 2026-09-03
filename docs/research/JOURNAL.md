@@ -3401,3 +3401,104 @@ calculation. The next work is to finish the preregistered hand-solvable MILP and
 failure fixtures, then perform the complete format/type/compile/dependency/full-regression
 gate and independent source audit before any registered development matrix is allowed to
 run.
+
+## 2026-09-03 — Service-MPC implementation gate closed at fixture level
+
+The pre-rollout audit found that the original solver adapter lost important evidence on
+two failure paths. A nonzero HiGHS status retained the failed stage, but a status-zero
+result rejected by the independent vector, residual, objective, bound, gap, or node-count
+checks raised a plan error without a stage record. A secondary-stage failure also discarded
+the already successful primary stage. `ServiceMPCSolveError` and `ServiceMPCPlanError` now
+carry an ordered attempted-stage prefix. Status-zero independent rejection is explicitly a
+failed stage with no solution digest, while preserving the solver's status, bounded message,
+finite objective/bound/gap diagnostics, node count, runtime versions, and elapsed time.
+Secondary failure retains the successful primary record; delivery-lock or plan-extraction
+failure retains every successful stage reached. Schema validation permits only the declared
+primary/secondary prefix, permits failure only at its end, and forbids a typed solve error
+whose retained final stage is marked successful.
+
+Because a failure record changed shape from one optional stage to the complete ordered
+prefix, its serialized contract advances to `service-mpc-decision-failure-v2`; run evidence
+advances to `service-mpc-controller-run-evidence-v2`. Central constants now bind those
+identities across controller descriptors, evidence construction, and evaluator validation.
+The Python record and mixed event-union names likewise advance to
+`MPCDecisionFailureV2` and `MPCDecisionEventV2`; no registered artifact used their v1
+predecessors.
+Failure-run latency includes every attempted stage rather than only the rejected tail.
+Controller action-realization and evidence-construction failures retain both valid solves,
+while no failure can manufacture a request, application, plan digest it did not reach, or
+fallback action.
+
+A separate causal audit found that trajectory identity had bound the issue time and all
+used mean values but not the unused public p10 fields. The numerical mean trajectory could
+therefore be transplanted between two different same-time public issuances. Projection
+version `issued-mean-clear-sky-scaled-v2` now stores and hashes a domain-separated digest of
+the complete detached `PublicForecastIssueV2`. Model construction recomputes that digest
+from the current observation and rejects a projection from any other issuance, even when
+its mean path is identical. Changing only p10 leaves the numerical issued-mean path
+unchanged, as intended, but changes both source and trajectory identities.
+
+The counterfactual causal fixture now creates seed-0 and seed-97 episodes and first proves
+that their exogenous episode, private weather truth, complete forecast stream, and next
+future-vintage private identities differ. Both controller instances then receive the exact
+same detached public observation. Their canonical requested-action bytes, projection,
+model, plan, action, and semantic-decision digests are identical. This is direct executable
+evidence that episode seed, private future truth, and future forecast vintages cannot alter
+the current service-MPC request outside the declared public boundary.
+
+New hand-solvable real-MILP fixtures cover:
+
+- zero solar, reserve-only battery, and empty inventories, yielding exact zero production
+  and service;
+- a 5 kg H2 / 27.5 kg CO2 endowment producing and settling exactly 10 kg CH4 with no
+  same-interval feedstock production;
+- a full 5 kg methane tank settling exactly 5 kg and producing zero additional methane,
+  proving production-before-settlement headroom;
+- otherwise identical low/high battery endowments, where only the higher endowment improves
+  service and it finishes exactly at the 25% terminal floor;
+- zero solar with an already-running one-interval minimum-up obligation, where the 1.2 MW
+  minimum stable load is supplied only by battery, produces H2 at the exact conservative
+  58.24 kWh/kg rate, and closes the 96% discharge-efficiency balance; and
+- immediate and 30-minute-delayed cold starts, each with four powered warmup intervals,
+  four required running intervals, exact one-hour startup energy, and no H2 credited during
+  warmup.
+
+The first storage-fixture draft used the default episode's initial delivery coverage with
+tiny synthetic tanks and was correctly rejected before solving; the fixture episode now
+declares zero initial coverage and its public test settlement is injected explicitly. The
+first battery-only draft allowed an unconstrained running unit to stop, so zero discharge
+was the rational optimum rather than a defect. Adding the intended one-interval public
+minimum-up obligation exposed a second invalid draft: 1.2 MW for 15 minutes produces
+5.1511 kg under the conservative rate, exceeding the proposed 5 kg H2 tank. The final 6 kg
+tank makes the physical case feasible without changing its isolation. These rejected
+fixtures were not controller-performance outcomes.
+
+The structural commitment matrix now names all six simulator modes—OFF, COLD_STARTING,
+RUNNING, HOT_STANDBY, HOT_STARTING, and COOLDOWN—and their relevant remaining timers. A
+new exact one-interval plant test complements the full four-decision fixture by binding
+planned battery net and three process powers to the next public boundary. An injected
+sanitizer mutation proves that any first action requiring repair fails in the declared
+`action_realization` phase, emits no pending transition, and retains both successful solve
+stages and the plan identity.
+
+`CAUSAL_SERVICE_MPC_PREFREEZE_AUDIT.md` maps all ten protocol gate items to these and the
+existing evaluator/provenance tests, and separately reviews every source-module authority
+boundary. The seven MPC test modules pass **79 tests**. All 14 touched Python files pass
+formatting and Git whitespace checks. The seven production modules pass strict type
+checking with transitive legacy modules treated as external; both touched integration-test
+modules pass the same strict body check with only the external untyped pytest-parameterize
+decorator diagnostic disabled. A deliberately broader strict run also surfaced existing
+annotation debt in simulator/RL dependencies; no such diagnostic remains on the new
+surface.
+
+The wider Environment V2, transparent-controller, paired-provenance/statistics, and MPC
+surface passes **237 tests**. Python compilation succeeds. `uv lock --check` first failed
+before lock inspection because the sandbox could not initialize the host-wide uv cache;
+the same command with an isolated `/private/tmp` cache resolved the existing 92-package
+lock in 5 ms without changing `uv.lock`.
+
+No registered 72-hour cell, full 24-hour controller solve, holdout, or new performance
+outcome was opened. The next action is to commit this implementation/audit candidate and
+repeat formatting, type, compilation, dependency-lock, focused, and full-repository checks
+from that clean revision. Only a fully passing clean-source gate may authorize the frozen
+six-cell development matrix.
