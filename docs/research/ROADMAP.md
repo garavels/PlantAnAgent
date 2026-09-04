@@ -206,9 +206,18 @@ The one-shot mechanism runner is now implemented without a tuning surface: it bi
 seed 0, the exact exogenous episode, protocol and lock digests, clean source identity,
 non-overwriting external publication, and S1--S8. The implementation audit maps all twelve
 outcome-free gates to tests. All gates now pass at clean implementation revision `a968a343`,
-which is authorized for one registered mechanism execution. The outcome remains unopened;
-the next action is to prerecord its exact external destination and run that one cell without
-same-revision retry or concurrent tuning work.
+which was used for the one registered mechanism execution without retry. All S1--S8 gates
+passed: the new path delivered the complete 2,520 kg contract with no aborted/forced start,
+safety violation, target overshoot, or accounting defect. A0 and the certified ceiling also
+deliver 2,520 kg on this cell, however, while A0 uses 3.856 MWh less battery throughput and
+1.043 kWh/kg less accepted process energy. The actuation architecture is accepted, but the
+task remains saturated and establishes no controller superiority.
+
+Before Stage D changes the environment, Stage C must give the transparent heuristic and RL
+the same absolute-setpoint authority and complete one separately frozen multi-seed mechanism
+replication. The first Stage D pressure should then make the observed operating tradeoff
+commercially legible: time-varying energy value and explicit cycling/equipment wear are the
+leading candidate because service is tied while battery throughput differs by 58%.
 
 ## Stage D — Progressive operational realism
 

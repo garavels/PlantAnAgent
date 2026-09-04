@@ -4516,3 +4516,58 @@ silently alter the evaluated revision. The external destination must be preregis
 execution. S1 failure will suppress S2--S8; any complete result will be retained without a
 same-revision retry. No performance conclusion, multi-seed extension, RL training, HEPA
 work, realism change, controller tuning, or commercial claim is authorized yet.
+
+## 2026-09-04 — First absolute-setpoint mechanism cell passes; service objective saturates
+
+The exact external destination was committed before execution in
+`CAUSAL_SERVICE_MPC_SETPOINT_EXECUTION_REGISTRATION.md`. A second worktree could not be
+created because the app's automatic permission review timed out twice. The already-clean
+main worktree was therefore switched temporarily to detached implementation revision
+`a968a343f50e5724ea74b75cc3debd1509fc1d80`, verified clean and source-resolved, used for the
+single registered invocation, and restored to `codex/environment-v2-research` immediately
+after publication. No source file changed, no concurrent experiment ran, and there was no
+retry.
+
+The runner completed in **166.057 seconds** with status `complete_all_gates_passed`. S1
+closed all 288 decisions, 576 solver stages, and 4,320 physical minute applications with no
+failure or fallback. S2 found maximum requested overshoot `4.55e-13 kW`, zero overshoot
+minutes, and zero simultaneous charge/support. S3 found zero reachable-tracking violation,
+zero unattributed deficit, and maximum decomposition error `4.55e-13 kW`. S4 recorded
+102,600 productive seconds and no aborted or forced starts. S5 recorded no reserve penalty,
+shutdown, or invalid decision; minimum SOC was 57.76% and terminal SOC 99.53%. S6 found no
+digest, chain, accounting, decomposition, or authority violation. S7 delivered the full
+2,520 kg, 1,872.286 kg above the failed share-MPC result. S8 measured controller p99/max at
+0.988/1.401 seconds and dispatcher p99/max at 0.135/0.352 milliseconds.
+
+The external 82,419,626-byte artifact was reopened with the production verifier. Its raw
+SHA-256 is `6b90ea6eb907c338fdf1aaa695ace173ad4cbe0b23b6eb7fef18bb3c513b4cf0`;
+report SHA-256 `dfb3bac1b19afd78306f40110502fadfacd585ca26d54855a952a28e0b1cb5cc`;
+run-evidence SHA-256 `1060a46c275277025add905d2c6aa5345b5c8dfe3b7c2bc1ee7b720a0772a592`;
+and deterministic graph SHA-256
+`dc0dbf78c4670a41473e9a2ccb8f406e73f009cfbde5f40ea5d81de8056407e9`.
+The recorded source revision, manifest, exogenous episode, gates, counts, and identities all
+revalidated exactly.
+
+The mechanism result is positive and the controller result is deliberately inconclusive.
+The setpoint MPC reaches the same 2,520 kg delivery ceiling as the exact-cell A0 heuristic
+and future-information upper bound, so delivery gain is zero. It raises reward by 0.0707 and
+reduces curtailment by 3.418 MWh, but accepts 2.628 MWh more process energy, increases energy
+intensity by 1.043 kWh/kg (3.49%), and cycles the battery 3.856 MWh more (58.36%). The current
+objective does not price the lifecycle or electricity consequence of that trade.
+
+The dispatcher offered every reachable target within numerical precision, while the plant
+accepted 1,210.584 kWh less electrolyser energy over 76 ramp/storage refusal or rerouting
+minutes. That entire deficit is attributed to the plant, not weather resource or the guard.
+The MILP planned only 28.500 kWh battery support, whereas real-time target realization
+requested 3,602.453 kWh and physically applied 3,546.863 kWh. Safe target realization is
+therefore solved, but sub-interval battery use and component acceptance remain material
+model/objective residuals.
+
+The architecture decision is to retain absolute setpoints, deterministic minute dispatch,
+independent safety, and typed residual closure. There is no basis to claim MPC superiority:
+the environment saturates and A0 still uses a different action abstraction. The next bounded
+work must first put a transparent heuristic and future RL policy through the same setpoint
+door, then replicate mechanism robustness across seeds. The leading realism increment is
+time-varying electricity value plus explicit cycling/equipment wear, because it turns the
+observed tied-service/58%-throughput difference into a commercially meaningful decision.
+No new matrix, environment change, or training was opened while documenting this result.
