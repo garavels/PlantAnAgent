@@ -4284,3 +4284,77 @@ outcome changed or ran. The next slice is the separately versioned MPC controlle
 constructs these commands and closes them with plan/controller evidence, followed by the
 complete outcome-free authorization audit. A 72-hour mechanism rollout remains forbidden
 until that gate passes.
+
+## 2026-09-04 — Setpoint-producing service MPC implemented; identity gate conflict exposed
+
+`ServiceMPCSetpointControllerV1` now implements the slow supervisory layer under controller
+identity `service-mpc-setpoint-dispatch-v1`. It accepts only
+`ServiceMPCSetpointSettingsV1`, reconstructs the same issued-mean forecast, builds and solves
+the unchanged two-stage MILP, and maps only the selected first interval through
+`realize_first_mpc_setpoints`. Its public output is `MPCSetpointDecisionV1`, not
+`ControlDecision` and not a five-field share action. A separate runtime-checkable
+`SetpointControllerV2` protocol prevents this new authority model from being mistaken for
+the historical Gym/share controller contract.
+
+The information boundary remains the detached `ControllerObservationV2`, its current public
+forecast issue, static plant/configuration constraints, the public commitment profile and
+snapshot, immutable settings, and controller-local prior public residuals. The controller
+has no environment or simulator handle and receives no seed, private weather tape, future
+forecast vintage, private delivery schedule, privileged planner result, or minute outcome.
+The descriptor states that MILP support is expected-plan evidence only; contemporaneous
+shortfall remains the deterministic dispatcher's responsibility and the existing guard is
+still final. Failures raise, are typed, retain the deepest valid observation/projection/
+model/plan/setpoint and solver-stage identities, and never create a fallback command.
+
+Successful planning is recorded as `service-mpc-setpoint-decision-evidence-v1`. It binds the
+public observation and issue, projection, versioned settings, model dimensions and digest,
+ordered delivery targets, both successful solver stages with feasibility-selection
+evidence, selected plan and first interval, absolute command, operator notes, and controller
+latency. Wall-clock and solver-stage latency are excluded from the deterministic identity;
+the selected solution and selection audit remain included. Evidence construction rejects a
+command whose decision, observation, issue, projection, settings, model, plan, or first-step
+power differs from the planning record.
+
+Transition closure is intentionally explicit. The controller refuses another solve while a
+setpoint is pending. `observe_transition` requires the typed
+`MPCSetpointIntervalExecutionV1`, proves that its first public boundary and commitment state
+match the original controller observation, proves that its terminal boundary and commitment
+match the next public observation, and then attaches both the complete physical ledger and
+the existing plan-versus-public residual. Execution and residual must be present or absent
+together. This prevents the optimizer from being credited for a plan without evidence that
+the declared command actually reached the guard and plant.
+
+Twelve focused tests cover the distinct descriptor/protocol, rejection of historical
+settings, first-decision digest closure, deterministic identical-public-input behavior,
+private-episode isolation, a complete four-decision short episode, foreign-execution
+rejection, decision/stage/closure substitutions, missing-forecast and solver failures,
+stable failure identity, and mandatory pending-transition reconciliation. Across the short
+episode, every plan closes with 15 physical records per command and zero requested target
+overshoot. The combined historical/new MPC controller, setpoint, dispatcher, and execution
+surface passes **56 tests** before the added identity fixture. The complete repository with
+that fixture passes **1,069 tests with 2 skips** in 34.96 seconds; the sole warning remains
+the unchanged test-client deprecation. Black, compilation, Git whitespace, and isolated
+strict types for both new production modules pass. No full trajectory, registered outcome,
+holdout, simulator change, objective change, or parameter tuning occurred.
+
+The pre-run comparison exposed one inconsistency in implementation gate 9 of the frozen
+protocol. At the identical initial rate-35/seed-0 public observation, digest
+`d1d2b3de1cf6314d5cfe857c3f49f7fe48744929853439fa77ebd07b0531ec1c`, the new controller's
+first complete planned interval is numerically identical to the historical controller's.
+The historical model/plan are
+`a0e5b312ffa5ddd055d502ce5205c520dc642cd801e4286ed82924108c5d54d9` and
+`782220137621a4578abac42ebd36800b028d22f6aea25f86e2c8dbe93b6d08de`; the new model/plan are
+`9fc997f369fc7d83d50b5ade834e4ef63bbb1f720a4aab47923a1d997821d120` and
+`a26f020ef6e55b4a225f796d940d7329f235db16731e07ce5310362d83b8dbcc`, with setpoint digest
+`6066dc1d012b7466eb34eb32baba8b58cdd1b909f6743d5f753c7fd0d1531cdf`.
+
+The difference is mandatory provenance, not a mathematical drift: the model identity binds
+the settings digest, and the plan binds both model and settings. The new feasibility-
+preserving settings digest is intentionally distinct from the historical strict-projection
+digest. It is therefore impossible to require both a separately versioned settings/hash
+domain and byte-identical old model/plan digests. The code will not falsify provenance to
+make the gate pass. Before authorization, a narrow protocol clarification must replace
+byte-identical model/plan identities with an executable structural-equivalence obligation
+while retaining exact public-observation identity and freezing the new digests. This finding
+blocks the rollout gate only; it does not prevent implementation of the outcome-free run
+evidence validator and admission audit next.

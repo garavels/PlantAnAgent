@@ -29,6 +29,15 @@ from .evaluation import (
 )
 from .metrics import EpisodeMetricsV2
 from .mpc_controller import ServiceMPCControllerV1
+from .mpc_setpoint_controller import (
+    ServiceMPCSetpointControllerV1,
+    SetpointControllerV2,
+)
+from .mpc_setpoint_decision import (
+    MPCSetpointDecisionEvidenceV1,
+    MPCSetpointDecisionFailureV1,
+    MPCSetpointDecisionV1,
+)
 from .mpc_schema import ServiceMPCSetpointSettingsV1, ServiceMPCSettingsV1
 from .mpc_setpoint_execution import (
     MPCMinuteApplicationV1,
@@ -77,6 +86,9 @@ __all__ = [
     "MPCMinuteDispatchV1",
     "MPCMinuteApplicationV1",
     "MPCProcessSetpointsV1",
+    "MPCSetpointDecisionEvidenceV1",
+    "MPCSetpointDecisionFailureV1",
+    "MPCSetpointDecisionV1",
     "MPCSetpointIntervalExecutionV1",
     "OBSERVATION_NAMES",
     "OBSERVATION_SIZE",
@@ -85,8 +97,10 @@ __all__ = [
     "RiskAdjustedIssuedForecastControllerV2",
     "SPEC_VERSION",
     "ServiceMPCControllerV1",
+    "ServiceMPCSetpointControllerV1",
     "ServiceMPCSetpointSettingsV1",
     "ServiceMPCSettingsV1",
+    "SetpointControllerV2",
     "WeatherConfigV2",
     "describe",
     "dispatch_mpc_setpoints",

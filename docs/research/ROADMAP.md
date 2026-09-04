@@ -66,8 +66,10 @@ equipment consequences.
   that choice plus both residual summaries into stage evidence. The frozen CO2, gated-flow,
   material-infeasibility, and lexicographic-lock counterexamples pass. The immutable
   absolute command, pure minute dispatcher, and opt-in Environment V2 execution/evidence
-  path are also implemented and outcome-free. The command-producing controller and complete
-  authorization audit remain pending.
+  path are also implemented and outcome-free. A separately versioned causal MPC now produces
+  those commands and closes them against the physical minute ledger and next public boundary.
+  The complete authorization audit remains pending, including explicit resolution of the
+  frozen gate's incompatible old/new digest-identity requirement.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.
 
@@ -189,8 +191,10 @@ preserved. The solver repair, typed setpoint, pure dispatcher, and opt-in enviro
 realization are complete under separately hashed contracts. The environment now records
 every minute's boundary, dispatch, guard, physical application, commitment transition, and
 energy attribution without changing the historical action doors. The separately versioned
-MPC controller and complete authorization audit remain outcome-free prerequisites to any
-full rollout.
+MPC controller is now complete and cannot issue a second solve until the first command's
+typed physical execution has been reconciled. The complete authorization audit remains an
+outcome-free prerequisite to any full rollout; it must explicitly resolve the fact that a
+new settings/hash domain cannot also retain the old model and plan digests byte-for-byte.
 
 ## Stage D — Progressive operational realism
 

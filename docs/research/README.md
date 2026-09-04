@@ -101,8 +101,10 @@ fallback behavior.
   behind a new opt-in API; the historical controller identity and strict behavior remain
   intact. The opt-in Environment V2 execution door now applies a fresh dispatch and the
   unchanged guard on every physical minute, returning a hash-chained requested/guarded/
-  applied ledger. The separately versioned command-producing controller, complete admission
-  audit, and any full rollout remain pending.
+  applied ledger. The separately versioned command-producing controller now emits only this
+  absolute intent and requires that physical ledger before its next solve. The complete
+  admission audit, resolution of one protocol identity contradiction, and any full rollout
+  remain pending.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.
