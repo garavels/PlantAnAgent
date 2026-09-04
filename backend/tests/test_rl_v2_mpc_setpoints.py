@@ -31,6 +31,11 @@ from plant_backend.rl.v2.mpc_setpoints import (
     resolve_setpoint_envelope,
 )
 from plant_backend.rl.v2.mpc_solver import solve_service_mpc_model
+from plant_backend.rl.v2.setpoint_command import (
+    ProcessSetpointCommandV1,
+    ProcessSetpointMinuteDispatchV1,
+    dispatch_process_setpoint_command,
+)
 from plant_backend.rl.v2.setpoint_control import (
     ProcessSetpointAllocationV1,
     ProcessSetpointTargetsV1,
@@ -426,7 +431,9 @@ def test_mpc_dispatch_delegates_to_the_controller_neutral_kernel(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     command = _command()
-    calls: list[ProcessSetpointAllocationV1] = []
+    allocation_audits: list[ProcessSetpointAllocationV1] = []
+    common_dispatches: list[ProcessSetpointMinuteDispatchV1] = []
+    common_commands: list[ProcessSetpointCommandV1] = []
 
     def record_common_allocation(
         targets: ProcessSetpointTargetsV1,
@@ -439,13 +446,37 @@ def test_mpc_dispatch_delegates_to_the_controller_neutral_kernel(
             solar_available_kw=solar_available_kw,
             support_availability=support_availability,
         )
-        calls.append(allocation)
+        allocation_audits.append(allocation)
         return allocation
+
+    def record_common_dispatch(
+        common_command: ProcessSetpointCommandV1,
+        common_boundary: PlantState,
+        *,
+        solar_available_kw: float,
+        constraints: Constraints,
+        config: PlantConfig,
+    ) -> ProcessSetpointMinuteDispatchV1:
+        dispatched = dispatch_process_setpoint_command(
+            common_command,
+            common_boundary,
+            solar_available_kw=solar_available_kw,
+            constraints=constraints,
+            config=config,
+        )
+        common_commands.append(common_command)
+        common_dispatches.append(dispatched)
+        return dispatched
 
     monkeypatch.setattr(
         mpc_setpoints_module,
         "allocate_process_setpoint_targets",
         record_common_allocation,
+    )
+    monkeypatch.setattr(
+        mpc_setpoints_module,
+        "dispatch_process_setpoint_command",
+        record_common_dispatch,
     )
     dispatched = dispatch_mpc_setpoints(
         command,
@@ -455,9 +486,12 @@ def test_mpc_dispatch_delegates_to_the_controller_neutral_kernel(
         config=PlantConfig(),
     )
 
-    assert len(calls) == 2
-    assert calls[0] == calls[1]
-    common = calls[0]
+    assert len(common_dispatches) == 1
+    assert len(allocation_audits) == 1
+    common = common_dispatches[0].allocation
+    assert common == allocation_audits[0]
+    assert common_commands[0].source_schema == command.schema
+    assert common_commands[0].source_sha256 == command.sha256
     assert common.targets == ProcessSetpointTargetsV1(
         electrolyser_target_kw=command.electrolyser_target_kw,
         dac_target_kw=command.dac_target_kw,

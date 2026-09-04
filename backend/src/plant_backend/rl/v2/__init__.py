@@ -56,6 +56,15 @@ from .setpoint_control import (
     ProcessSetpointTargetsV1,
     allocate_process_setpoint_targets,
 )
+from .setpoint_command import (
+    ProcessSetpointCommandV1,
+    ProcessSetpointEnvelopeV1,
+    ProcessSetpointMinuteDispatchV1,
+    adapt_mpc_process_setpoints,
+    dispatch_process_setpoint_command,
+    issue_process_setpoint_command,
+    resolve_process_setpoint_envelope,
+)
 from .weather import ForecastIssueV2, PublicForecastIssueV2, WeatherConfigV2
 from .spaces import (
     ACTION_NAMES,
@@ -103,6 +112,9 @@ __all__ = [
     "PlantEnvV2",
     "ProcessSetpointActionAdapterV1",
     "ProcessSetpointAllocationV1",
+    "ProcessSetpointCommandV1",
+    "ProcessSetpointEnvelopeV1",
+    "ProcessSetpointMinuteDispatchV1",
     "ProcessSetpointTargetsV1",
     "RewardWeightsV2",
     "RiskAdjustedIssuedForecastControllerV2",
@@ -113,10 +125,14 @@ __all__ = [
     "ServiceMPCSettingsV1",
     "SetpointControllerV2",
     "WeatherConfigV2",
+    "adapt_mpc_process_setpoints",
     "allocate_process_setpoint_targets",
     "describe",
     "dispatch_mpc_setpoints",
+    "dispatch_process_setpoint_command",
     "evaluate",
     "evaluate_controllers",
+    "issue_process_setpoint_command",
+    "resolve_process_setpoint_envelope",
     "sample_episode",
 ]

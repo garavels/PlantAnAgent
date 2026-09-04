@@ -132,6 +132,11 @@ fallback behavior.
   support or inherit MPC provenance. The phase is now implemented outcome-free: MPC delegates
   to the shared kernel, historical Gym/checkpoint semantics remain unchanged, and the complete
   1,106-test repository gate passes.
+- [`COMMON_SETPOINT_COMMAND_PROTOCOL.md`](COMMON_SETPOINT_COMMAND_PROTOCOL.md)
+  freezes the separately versioned observation-bound command, common minute dispatcher,
+  opt-in four-target Gym door, A0 authority adapter, MPC provenance adapter, and outcome-free
+  equivalence gate. The command/dispatcher seam is implemented; the Gym and heuristic door
+  remain pending.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

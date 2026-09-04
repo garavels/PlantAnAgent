@@ -4624,3 +4624,39 @@ this phase. The next admissible slice is the separately versioned common command
 execution door: an opt-in four-target Gym contract, a transparent heuristic using that same
 door, and an explicit adapter retaining the MPC's original provenance. Economic or wear
 pressure remains behind that parity gate.
+
+## 2026-09-04 — Observation-bound common command seam implemented
+
+The next controller-parity phase was frozen in
+`COMMON_SETPOINT_COMMAND_PROTOCOL.md` before implementation. The architecture audit rejected
+adding electricity economics directly to the identity-bound `EpisodeConfigV2` while the
+controllers still had unequal execution doors: that ordering would change the task before
+isolating action authority. Economic calibration remains pending behind this parity phase.
+
+`ProcessSetpointEnvelopeV1` now resolves the process ratings, battery charge rating,
+operator-limited battery support, and reserve SOC. `ProcessSetpointCommandV1` binds one
+non-negative decision index, exact public-observation identity, positive hold duration,
+issuer ID, source schema and digest, four absolute targets, and that complete authority
+envelope. Construction rejects malformed identities and any process or charge target above
+the active envelope. Identical values produce identical typed commands and digests.
+
+`dispatch_process_setpoint_command` rejects stale authority, derives contemporaneous support
+from the existing reserve-aware safety primitive, and delegates resource allocation to the
+single common target kernel. Its typed minute result retains the complete command, physical
+boundary identity, support envelope, allocation, ordinary plant action, and deterministic
+digest. It has no forecast, optimizer, private episode, reward, or future-state access.
+
+The MPC projection adapter retains the exact original `MPCProcessSetpointsV1` schema and
+SHA-256 as source evidence while mapping its values into the common command. The existing
+MPC dispatcher now calls the generic dispatcher and wraps that allocation in the unchanged
+MPC minute-evidence schema. Its independent constructor audit still recomputes the allocation
+kernel. A two-layer spy verifies one common dispatch followed by one MPC evidence audit.
+
+Seventeen new command tests cover operator/reserve resolution, malformed timing and identity,
+all four envelope overruns, deterministic source binding, surplus and deficit behavior,
+physical-boundary binding, stale constraints, and invalid boundary/solar input. The focused
+command/MPC/frozen-identity selection passes **41 tests in 3.99 seconds**; strict targeted
+MyPy and Black pass. The complete repository passes **1,123 tests with 2 skips in 42.04
+seconds** with only the pre-existing Starlette/httpx deprecation warning. No Gym contract,
+physical outcome, training run, economics change, or controller comparison was opened. The
+next commit must add the separately identified four-target Gym door and common-door heuristic.

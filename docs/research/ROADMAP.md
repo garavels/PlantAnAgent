@@ -79,6 +79,10 @@ equipment consequences.
   heuristic, MPC, and future RL policy must share. The existing MPC dispatcher delegates to
   that kernel with byte-stable frozen boundaries. The normalized adapter is not installed in
   a Gym environment yet, so historical policies cannot be silently reinterpreted.
+- The observation-bound common command and generic minute dispatcher are now implemented.
+  MPC retains its complete original provenance while crossing that dispatcher, and frozen
+  MPC outputs remain unchanged. The opt-in Gym contract and transparent A0-setpoint arm are
+  the remaining authority-parity implementation boundary before economic realism.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.
 

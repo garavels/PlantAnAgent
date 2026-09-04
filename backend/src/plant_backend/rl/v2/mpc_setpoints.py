@@ -16,10 +16,7 @@ from typing import Any, ClassVar
 from plant_sim import Action, PlantConfig, PlantState
 
 from ...controllers.base import Constraints
-from ...safety.validation import (
-    BatterySupportAvailability,
-    battery_support_availability,
-)
+from ...safety.validation import BatterySupportAvailability
 from .mpc_forecast import MPCForecastTrajectoryV1
 from .mpc_schema import (
     MODEL_BALANCE_TOLERANCE,
@@ -32,6 +29,10 @@ from .mpc_schema import (
 from .setpoint_control import (
     ProcessSetpointTargetsV1,
     allocate_process_setpoint_targets,
+)
+from .setpoint_command import (
+    adapt_mpc_process_setpoints,
+    dispatch_process_setpoint_command,
 )
 
 SERVICE_MPC_PROCESS_SETPOINT_SCHEMA = "service-mpc-process-setpoints-v1"
@@ -622,23 +623,14 @@ def dispatch_mpc_setpoints(
     )
     if active_envelope.sha256 != setpoints.envelope.sha256:
         raise ValueError("active setpoint envelope changed during the held command")
-    support = battery_support_availability(
+    common_dispatch = dispatch_process_setpoint_command(
+        adapt_mpc_process_setpoints(setpoints),
         boundary,
+        solar_available_kw=solar_kw,
         constraints=constraints,
         config=config,
-        electrolyser_headroom_kw=active_envelope.electrolyser_limit_kw,
     )
-
-    allocation = allocate_process_setpoint_targets(
-        ProcessSetpointTargetsV1(
-            electrolyser_target_kw=setpoints.electrolyser_target_kw,
-            dac_target_kw=setpoints.dac_target_kw,
-            methanator_target_kw=setpoints.methanator_target_kw,
-            battery_charge_ceiling_kw=setpoints.battery_charge_ceiling_kw,
-        ),
-        solar_available_kw=solar_kw,
-        support_availability=support,
-    )
+    allocation = common_dispatch.allocation
     routes = allocation.routes_kw
     return MPCMinuteDispatchV1(
         setpoint_sha256=setpoints.sha256,
@@ -650,7 +642,7 @@ def dispatch_mpc_setpoints(
         dac_target_kw=setpoints.dac_target_kw,
         methanator_target_kw=setpoints.methanator_target_kw,
         battery_charge_ceiling_kw=setpoints.battery_charge_ceiling_kw,
-        support_availability=support,
+        support_availability=allocation.support_availability,
         solar_to_battery_kw=routes[0],
         solar_to_electrolyser_kw=routes[1],
         solar_to_dac_kw=routes[2],
