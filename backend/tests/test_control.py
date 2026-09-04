@@ -5,11 +5,18 @@ from __future__ import annotations
 from dataclasses import replace
 
 import pytest
-from plant_sim import Action, PlantSimulator, PlantState, Scenario, SolarFactorTape
+from plant_sim import (
+    Action,
+    ComponentHealth,
+    PlantSimulator,
+    PlantState,
+    Scenario,
+    SolarFactorTape,
+)
 
 from plant_backend.controllers import Constraints, HeuristicController
 from plant_backend.orchestration import PlantRuntime
-from plant_backend.safety import validate
+from plant_backend.safety import battery_support_availability, validate
 
 #: Midday, so there is power to allocate.
 NOON_H = 12.0
@@ -108,26 +115,36 @@ def test_heuristic_runs_the_whole_chain_unattended() -> None:
 
 def test_heuristic_respects_power_constraints(sim: PlantSimulator) -> None:
     controller = HeuristicController()
-    constraints = Constraints(electrolyser_max_kw=400.0, dac_max_kw=100.0, methanator_max_kw=50.0)
+    constraints = Constraints(
+        electrolyser_max_kw=400.0, dac_max_kw=100.0, methanator_max_kw=50.0
+    )
     observation = sim.get_telemetry()
-    decision = controller.compute_action(observation, constraints=constraints, config=sim.config)
+    decision = controller.compute_action(
+        observation, constraints=constraints, config=sim.config
+    )
     demand = kw_of(decision.action, observation.solar_available_kw)
     assert demand["electrolyser"] <= 400.0 + 1e-6
     assert demand["dac"] <= 100.0 + 1e-6
     assert demand["methanator"] <= 50.0 + 1e-6
 
 
-def test_heuristic_will_not_discharge_into_the_battery_reserve(sim: PlantSimulator) -> None:
+def test_heuristic_will_not_discharge_into_the_battery_reserve(
+    sim: PlantSimulator,
+) -> None:
     """At the reserve the stack goes without support rather than draining the pack."""
     controller = HeuristicController()
     constraints = Constraints(battery_min_soc=0.4)
     # dusk: the only way to run the stack would be to borrow from the battery
     observation = observe(sim, solar_available_kw=50.0, battery_soc=0.4)
-    decision = controller.compute_action(observation, constraints=constraints, config=sim.config)
+    decision = controller.compute_action(
+        observation, constraints=constraints, config=sim.config
+    )
     assert decision.action.battery_support_kw == 0.0
 
 
-def test_heuristic_lends_from_the_battery_above_the_reserve(sim: PlantSimulator) -> None:
+def test_heuristic_lends_from_the_battery_above_the_reserve(
+    sim: PlantSimulator,
+) -> None:
     observation = observe(sim, solar_available_kw=50.0, battery_soc=0.8)
     decision = HeuristicController().compute_action(
         observation, constraints=Constraints(battery_min_soc=0.2), config=sim.config
@@ -135,7 +152,9 @@ def test_heuristic_lends_from_the_battery_above_the_reserve(sim: PlantSimulator)
     assert decision.action.battery_support_kw > 0.0
 
 
-def test_heuristic_counts_discharge_losses_near_the_reserve(sim: PlantSimulator) -> None:
+def test_heuristic_counts_discharge_losses_near_the_reserve(
+    sim: PlantSimulator,
+) -> None:
     """A top-up that would cross the reserve after losses is not dispatched."""
     reserve_soc = 0.4
     usable_kwh = 2.0
@@ -143,7 +162,9 @@ def test_heuristic_counts_discharge_losses_near_the_reserve(sim: PlantSimulator)
     naive_support_kw = usable_kwh / sim.config.dt_h
     deliverable_support_kw = naive_support_kw * sim.config.battery.discharge_efficiency
     required_support_kw = (naive_support_kw + deliverable_support_kw) / 2.0
-    min_load_kw = sim.config.electrolyser.min_load_frac * sim.config.electrolyser.rated_kw
+    min_load_kw = (
+        sim.config.electrolyser.min_load_frac * sim.config.electrolyser.rated_kw
+    )
     observation = observe(
         sim,
         # The near-reserve recharge rule leaves half of this power for the stack.
@@ -200,8 +221,13 @@ def test_heuristic_idles_at_night(sim: PlantSimulator) -> None:
 def test_constraints_only_ever_tighten(sim: PlantSimulator) -> None:
     """Asking for more than the equipment is rated for changes nothing."""
     generous = Constraints(electrolyser_max_kw=99_000.0)
-    assert generous.electrolyser_limit_kw(sim.config) == sim.config.electrolyser.rated_kw
-    assert Constraints(battery_min_soc=0.0).reserve_soc(sim.config) == sim.config.battery.min_soc
+    assert (
+        generous.electrolyser_limit_kw(sim.config) == sim.config.electrolyser.rated_kw
+    )
+    assert (
+        Constraints(battery_min_soc=0.0).reserve_soc(sim.config)
+        == sim.config.battery.min_soc
+    )
 
 
 def test_constraints_merge_rejects_nonsense() -> None:
@@ -226,7 +252,10 @@ def test_validation_clamps_power_beyond_a_constraint(sim: PlantSimulator) -> Non
         config=sim.config,
     )
     assert validated.clamped
-    assert validated.action.electrolyser_share * observation.solar_available_kw <= 300.0 + 1e-6
+    assert (
+        validated.action.electrolyser_share * observation.solar_available_kw
+        <= 300.0 + 1e-6
+    )
 
 
 @pytest.mark.parametrize(
@@ -373,7 +402,9 @@ def test_validation_protects_the_battery_reserve(sim: PlantSimulator) -> None:
     assert validated.action.battery_support_kw == 400.0
 
 
-def test_validation_counts_discharge_losses_at_reserve_boundary(sim: PlantSimulator) -> None:
+def test_validation_counts_discharge_losses_at_reserve_boundary(
+    sim: PlantSimulator,
+) -> None:
     reserve_soc = 0.4
     usable_kwh = 2.0
     capacity_kwh = sim.get_telemetry().battery_capacity_kwh
@@ -392,9 +423,97 @@ def test_validation_counts_discharge_losses_at_reserve_boundary(sim: PlantSimula
     assert support_kw == pytest.approx(
         usable_kwh * sim.config.battery.discharge_efficiency / sim.config.dt_h
     )
-    energy_draw_kwh = support_kw * sim.config.dt_h / sim.config.battery.discharge_efficiency
-    ending_soc = observation.battery_soc - energy_draw_kwh / observation.battery_capacity_kwh
+    energy_draw_kwh = (
+        support_kw * sim.config.dt_h / sim.config.battery.discharge_efficiency
+    )
+    ending_soc = (
+        observation.battery_soc - energy_draw_kwh / observation.battery_capacity_kwh
+    )
     assert ending_soc == pytest.approx(reserve_soc)
+
+
+def test_support_availability_is_the_guards_exact_shared_envelope(
+    sim: PlantSimulator,
+) -> None:
+    reserve_soc = 0.4
+    usable_kwh = 2.0
+    observation = observe(
+        sim,
+        battery_soc=(
+            reserve_soc + usable_kwh / sim.get_telemetry().battery_capacity_kwh
+        ),
+    )
+    constraints = Constraints(
+        battery_min_soc=reserve_soc,
+        battery_support_max_kw=400.0,
+    )
+    availability = battery_support_availability(
+        observation,
+        constraints=constraints,
+        config=sim.config,
+        electrolyser_headroom_kw=300.0,
+    )
+    guarded = validate(
+        Action(battery_support_kw=5_000.0),
+        observation,
+        constraints=constraints,
+        config=sim.config,
+        dispatch_solar_available_kw=0.0,
+    )
+
+    energy_limit = (
+        usable_kwh * sim.config.battery.discharge_efficiency / sim.config.dt_h
+    )
+    assert availability.available_kw == pytest.approx(min(400.0, energy_limit, 300.0))
+    assert availability.usable_energy_kwh == pytest.approx(usable_kwh)
+    assert availability.energy_limited_kw == pytest.approx(energy_limit)
+    assert availability.battery_available is True
+    assert availability.electrolyser_available is True
+    assert guarded.action.battery_support_kw == availability.available_kw
+
+
+def test_support_availability_and_guard_fail_closed_for_an_offline_battery(
+    sim: PlantSimulator,
+) -> None:
+    observation = observe(
+        sim,
+        battery_soc=0.9,
+        health={
+            **sim.get_telemetry().health,
+            "battery": ComponentHealth(status="offline", offline=True),
+        },
+    )
+    availability = battery_support_availability(
+        observation,
+        constraints=Constraints(),
+        config=sim.config,
+        electrolyser_headroom_kw=1_000.0,
+    )
+    guarded = validate(
+        Action(battery_support_kw=500.0),
+        observation,
+        constraints=Constraints(),
+        config=sim.config,
+    )
+
+    assert availability.available_kw == 0.0
+    assert availability.battery_available is False
+    assert guarded.action.battery_support_kw == 0.0
+    assert any("Battery is offline" in item for item in guarded.adjustments)
+
+
+@pytest.mark.parametrize("headroom", [True, "1", -1.0, float("nan"), float("inf")])
+def test_support_availability_rejects_an_invalid_headroom(
+    sim: PlantSimulator,
+    headroom: object,
+) -> None:
+    with pytest.raises((TypeError, ValueError), match="electrolyser_headroom_kw"):
+        battery_support_availability(
+            sim.get_telemetry(),
+            constraints=Constraints(),
+            config=sim.config,
+            electrolyser_headroom_kw=headroom,  # type: ignore[arg-type]
+        )
 
 
 def test_validation_rejects_junk_without_raising(sim: PlantSimulator) -> None:
@@ -408,7 +527,10 @@ def test_validation_rejects_junk_without_raising(sim: PlantSimulator) -> None:
     assert action.battery_share >= 0.0
     assert action.battery_support_kw == 0.0
     assert (
-        action.battery_share + action.electrolyser_share + action.dac_share + action.methanator_share
+        action.battery_share
+        + action.electrolyser_share
+        + action.dac_share
+        + action.methanator_share
         <= 1.0 + 1e-9
     )
 
@@ -418,7 +540,9 @@ def test_runtime_reports_telemetry_not_hidden_truth() -> None:
     """A sensor fault must show up in what the frontend sees, and only there."""
     runtime = PlantRuntime()
     runtime.advance(200)
-    runtime.session.inject_fault({"type": "sensor_drift", "severity": 0.8, "channel": "h2_level_kg"})
+    runtime.session.inject_fault(
+        {"type": "sensor_drift", "severity": 0.8, "channel": "h2_level_kg"}
+    )
     runtime.advance(1)
     reported = runtime.payload()["state"]["h2_level_kg"]
     assert reported != pytest.approx(runtime.session.simulator.state.h2_level_kg)

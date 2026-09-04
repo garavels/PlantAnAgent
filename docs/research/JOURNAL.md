@@ -4144,3 +4144,23 @@ registered cell, holdout, PPO training, environment-realism change, or performan
 was opened. The next implementation slice is the immutable process-setpoint command and pure
 one-minute dispatcher, beginning with shared reserve-aware support availability so the
 dispatcher and independent guard cannot diverge.
+
+## 2026-09-04 — Reserve-aware support authority extracted as one safety primitive
+
+Before implementing the dispatcher, the guard's battery arithmetic was extracted into the
+pure `battery_support_availability` boundary. Its typed result separately retains the active
+support cap, reserve SOC, usable energy, efficiency-adjusted one-step energy limit,
+electrolyser headroom, equipment availability, and final available kW. The existing guard now
+uses that exact result instead of independently recomputing the same minimum. This is the
+shared authority calculation required by the frozen protocol; the future dispatcher can
+reason about support without copying safety logic.
+
+Normal reserve, loss, rating, headroom, and operator-cap behavior is unchanged. The helper
+also closes an uncovered fail-safe edge: an explicitly offline battery with inconsistent
+positive synthetic SOC now has zero support authority and the guard records that reason.
+Focused safety and MPC-controller regressions pass **54 tests**. The complete repository
+passes **1,027 tests with 2 skips** in 31.65 seconds, with only the unchanged test-client
+deprecation warning. Formatting, compilation, Git whitespace validation, and isolated
+strict typing of the safety modules pass. No
+environment contract, controller decision, optimizer, simulator physics, or experiment was
+changed. The next slice will consume this primitive in the pure absolute-setpoint dispatcher.
