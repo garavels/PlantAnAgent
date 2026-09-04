@@ -65,8 +65,9 @@ equipment consequences.
   solver vectors, retain the raw vector only when projection breaks feasibility, and bind
   that choice plus both residual summaries into stage evidence. The frozen CO2, gated-flow,
   material-infeasibility, and lexicographic-lock counterexamples pass. The immutable
-  absolute command and pure minute dispatcher are also implemented and outcome-free; the
-  opt-in environment execution/evidence path remains pending.
+  absolute command, pure minute dispatcher, and opt-in Environment V2 execution/evidence
+  path are also implemented and outcome-free. The command-producing controller and complete
+  authorization audit remain pending.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.
 
@@ -184,9 +185,12 @@ planned over its valid prefix. The next contract must make target tracking and u
 energy explicit acceptance criteria. That contract is now frozen: it preserves the Gym
 action and simulator, adds a versioned absolute setpoint seam, realizes it through a pure
 reserve-aware one-minute dispatcher, and repairs solver projection only when feasibility is
-preserved. The solver repair, typed setpoint, and pure dispatcher are complete under
-separately hashed contracts; environment integration remains outcome-free until the complete
-authorization gate passes.
+preserved. The solver repair, typed setpoint, pure dispatcher, and opt-in environment
+realization are complete under separately hashed contracts. The environment now records
+every minute's boundary, dispatch, guard, physical application, commitment transition, and
+energy attribution without changing the historical action doors. The separately versioned
+MPC controller and complete authorization audit remain outcome-free prerequisites to any
+full rollout.
 
 ## Stage D — Progressive operational realism
 

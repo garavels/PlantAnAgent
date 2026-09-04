@@ -99,7 +99,10 @@ fallback behavior.
   solver-selection prerequisite is now implemented and adversarially tested under a new
   settings identity. Its typed absolute command and pure minute dispatcher are implemented
   behind a new opt-in API; the historical controller identity and strict behavior remain
-  intact, and environment integration is not yet enabled.
+  intact. The opt-in Environment V2 execution door now applies a fresh dispatch and the
+  unchanged guard on every physical minute, returning a hash-chained requested/guarded/
+  applied ledger. The separately versioned command-producing controller, complete admission
+  audit, and any full rollout remain pending.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

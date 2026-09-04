@@ -30,6 +30,10 @@ from .evaluation import (
 from .metrics import EpisodeMetricsV2
 from .mpc_controller import ServiceMPCControllerV1
 from .mpc_schema import ServiceMPCSetpointSettingsV1, ServiceMPCSettingsV1
+from .mpc_setpoint_execution import (
+    MPCMinuteApplicationV1,
+    MPCSetpointIntervalExecutionV1,
+)
 from .mpc_setpoints import (
     MPCMinuteDispatchV1,
     MPCProcessSetpointsV1,
@@ -71,7 +75,9 @@ __all__ = [
     "IntervalSummaryV2",
     "IssuedForecastControllerV2",
     "MPCMinuteDispatchV1",
+    "MPCMinuteApplicationV1",
     "MPCProcessSetpointsV1",
+    "MPCSetpointIntervalExecutionV1",
     "OBSERVATION_NAMES",
     "OBSERVATION_SIZE",
     "PlantEnvV2",

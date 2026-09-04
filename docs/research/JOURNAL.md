@@ -4217,3 +4217,70 @@ action, controller, simulator, episode,
 registered cell, or outcome has changed. The next slice is the opt-in `step_setpoints`
 environment door and ordered minute ledger, followed by the separately versioned MPC
 controller evidence that issues these commands.
+
+## 2026-09-04 — Opt-in setpoint execution and physical evidence integrated
+
+The absolute command can now reach the unchanged physical plant through a separately named
+`PlantEnvV2.step_setpoints` door. Admission occurs before any state mutation: the environment
+requires the exact current decision index, complete public-observation digest, current public
+forecast-issue digest, 15-minute hold cadence, and active resolved authority-envelope digest.
+A stale or foreign command therefore cannot partially advance time, settlement, inventory,
+metrics, or commitment state. The existing Gym vector and `step_action(Action)` doors still
+call the historical held-action branch and neither emits a setpoint field nor invokes the
+new dispatcher.
+
+For an admitted command, the environment now performs the frozen sequence independently on
+each of its 15 one-minute physics steps: obtain the exact contemporaneous actuator solar bus,
+dispatch the held absolute targets with `reserve-aware-proportional-unsupported-loads-v1`,
+rerun the unchanged safety guard against the same bus and current telemetry, advance the
+unchanged simulator once, and record the result through the ordinary reward, settlement,
+metrics, telemetry, and power-accounting paths. Only the setpoint branch changes its request
+at the minute cadence. The command remains fixed and contains no newly observed weather or
+outcome. Measured dispatcher latency is returned as a separate ordered nanosecond list and
+is deliberately excluded from deterministic evidence identity.
+
+The new `service-mpc-minute-application-v1` record binds the full canonical before and after
+public plant boundaries, typed minute-dispatch evidence, requested and guarded actions,
+guard explanations, full before/after commitment snapshots, storage headroom, all applied
+solar routes, support and process power, curtailment, and the next-boundary digest. It rejects
+noncanonical boundaries, broken step order, a boundary that does not reproduce the dispatch
+digest, non-sanitized guard output, guard authority increases, solar/electrolyser bus
+imbalance, support beyond the guarded shortfall, or physical power above the guarded or
+absolute target. Explicit per-channel guard offers and signed guard-to-plant gaps keep
+safety intervention distinct from commitment, ramp, feedstock, storage, and charging
+refusal or rerouting.
+
+`service-mpc-setpoint-interval-execution-v1` requires exactly the number of physical records
+implied by the command hold and timestep. Ordinals, command identities, full boundary
+records/digests, and full commitment snapshots must form one contiguous chain. Its digest
+retains the complete ordered ledger plus planned, target, requested, guarded, and applied
+energy by channel; requested, guarded, and applied electrolyser over/undershoot integrals;
+maximum instantaneous errors; attribution counts; and terminal boundary/commitment
+identity. The latest typed immutable record is available from
+`PlantEnvV2.last_setpoint_execution`, while the Gym information payload contains its JSON
+representation.
+
+Ten new outcome-free tests exercise the opt-in seam. Two identical seeded environments
+produce byte-identical command and execution evidence; the 15 records are contiguous and
+the nondeterministic timing values remain outside that digest. Stale decision, observation,
+forecast, duration, and envelope substitutions fail before mutation. A real DAC outage is
+reported as guard intervention, whereas a 1.5 MW command during cold start passes the guard
+and is separately reported as component refusal with applied undershoot and zero overshoot.
+Changing only private solar truth after the next physical boundary leaves the held command
+and first-minute dispatch identical while appropriately changing later dispatches. Direct
+boundary, command, physical-flow, guard-authority, and commitment-chain substitutions are
+rejected. Existing dispatcher tests continue to cover day/night, surplus/scarcity, reserve,
+offline equipment, proportional allocation, the 600 kW fluctuating cold-start target, and
+the SOC/solar/target invariant grid.
+
+The focused command/execution suites pass **30 tests**, and the Environment V2, boundary,
+weather-observation, and safety regression surface passes **118 tests**. The complete
+repository passes **1,057 tests with 2 skips** in 32.33 seconds; the sole warning is the
+unchanged Starlette/httpx test-client deprecation. Black formatting, Python compilation,
+Git whitespace validation, and isolated strict type checking of the new production evidence
+module pass. No simulator, physics, commitment, reward, episode, Gym action, MILP, forecast,
+objective, tolerance, controller trajectory, registered cell, holdout, or performance
+outcome changed or ran. The next slice is the separately versioned MPC controller that
+constructs these commands and closes them with plan/controller evidence, followed by the
+complete outcome-free authorization audit. A 72-hour mechanism rollout remains forbidden
+until that gate passes.

@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
+import time
 from copy import deepcopy
 from dataclasses import replace
 from numbers import Integral
@@ -40,6 +42,18 @@ from .config import EpisodeConfigV2, EpisodeV2, sample_episode
 from .control import ControllerObservationV2, DeliveryObservation
 from .contract import describe_checkpoint_contract
 from .metrics import EpisodeMetricsV2
+from .mpc_execution import public_observation_sha256
+from .mpc_forecast import public_forecast_issue_sha256
+from .mpc_setpoint_execution import (
+    MPCMinuteApplicationV1,
+    MPCSetpointIntervalExecutionV1,
+    record_minute_application,
+)
+from .mpc_setpoints import (
+    MPCProcessSetpointsV1,
+    dispatch_mpc_setpoints,
+    resolve_setpoint_envelope,
+)
 from .observation import ObservationEncoderV2
 from .reward import OBJECTIVE_VERSION, IntervalOutcome, RewardWeightsV2, compute
 from .weather import PublicForecastIssueV2
@@ -99,6 +113,7 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
         self.decisions_taken = 0
         self.episode_physics_steps = self.episode_config.physics_steps(self.config)
         self.episode_decisions = self.episode_config.decision_steps(self.config)
+        self._last_setpoint_execution: MPCSetpointIntervalExecutionV1 | None = None
 
     def reset(
         self,
@@ -148,6 +163,7 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
         )
         self.physics_steps_taken = 0
         self.decisions_taken = 0
+        self._last_setpoint_execution = None
         self.control_state = ControlStateV2(
             boundary=self.telemetry,
             electrolyser_commitment=self.simulator.electrolyser_commitment,
@@ -190,16 +206,79 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
         )
         return self._apply(decoded)
 
+    def step_setpoints(
+        self,
+        setpoints: MPCProcessSetpointsV1,
+    ) -> tuple[np.ndarray, float, bool, bool, dict[str, Any]]:
+        """Apply one observation-bound absolute command on the physics grid.
+
+        This is an opt-in research door. The command is checked against the
+        current public observation, forecast issue, decision index, cadence,
+        and active authority envelope before any physical state is advanced.
+        A deterministic dispatcher then converts the held absolute targets to
+        a fresh guarded action for every one-minute plant step.
+        """
+
+        if not isinstance(setpoints, MPCProcessSetpointsV1):
+            raise TypeError("setpoints must be MPCProcessSetpointsV1")
+        if self._episode is None:
+            raise RuntimeError("reset() must be called before step_setpoints()")
+        if setpoints.decision_index != self.decisions_taken:
+            raise ValueError("setpoint decision index is stale or from another run")
+
+        observation = self.controller_observation
+        if setpoints.observation_sha256 != public_observation_sha256(observation):
+            raise ValueError(
+                "setpoint does not belong to the current public observation"
+            )
+        if observation.forecast is None:
+            raise RuntimeError("setpoint execution requires a public forecast issue")
+        if setpoints.public_forecast_sha256 != public_forecast_issue_sha256(
+            observation.forecast
+        ):
+            raise ValueError("setpoint does not belong to the current forecast issue")
+
+        expected_hold_s = self._episode.decision_stride * self.config.dt_s
+        if not math.isclose(
+            setpoints.hold_duration_s,
+            expected_hold_s,
+            rel_tol=0.0,
+            abs_tol=1e-9,
+        ):
+            raise ValueError(
+                "setpoint hold duration differs from the environment cadence"
+            )
+        active_envelope = resolve_setpoint_envelope(
+            constraints=self.constraints,
+            config=self.config,
+        )
+        if setpoints.envelope.sha256 != active_envelope.sha256:
+            raise ValueError("setpoint authority envelope is stale")
+        return self._apply_setpoints(setpoints)
+
+    def _apply_setpoints(
+        self,
+        setpoints: MPCProcessSetpointsV1,
+    ) -> tuple[np.ndarray, float, bool, bool, dict[str, Any]]:
+        """Internal typed door kept separate from the historical action path."""
+
+        return self._apply(None, setpoints=setpoints)
+
     def _apply(
         self,
-        decoded: DecodedAction,
+        decoded: DecodedAction | None,
+        *,
+        setpoints: MPCProcessSetpointsV1 | None = None,
     ) -> tuple[np.ndarray, float, bool, bool, dict[str, Any]]:
+        if (decoded is None) == (setpoints is None):
+            raise ValueError("exactly one action or setpoint request is required")
         if self._episode is None:
             raise RuntimeError("reset() must be called before step()")
         remaining = self.episode_physics_steps - self.physics_steps_taken
         inner_steps = min(self._episode.decision_stride, remaining)
         if inner_steps <= 0:
             raise RuntimeError("episode is already terminated; call reset()")
+        self._last_setpoint_execution = None
 
         before = self.simulator.state
         commitment_before = self.simulator.electrolyser_commitment
@@ -213,28 +292,73 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
         last_applied = Action.idle()
         power = IntervalPowerAccounting()
         interval_telemetry = IntervalTelemetryAccumulator()
+        setpoint_applications: list[MPCMinuteApplicationV1] = []
+        dispatcher_elapsed_ns: list[int] = []
 
-        for _ in range(inner_steps):
+        for ordinal in range(inner_steps):
             step_before = self.telemetry
-            validated = validate(
-                decoded.action,
-                step_before,
-                constraints=self.constraints,
-                config=self.config,
-                dispatch_solar_available_kw=(self.simulator.next_dispatch_solar_kw()),
-            )
+            if setpoints is None:
+                assert decoded is not None
+                requested_action = decoded.action
+                validated = validate(
+                    decoded.action,
+                    step_before,
+                    constraints=self.constraints,
+                    config=self.config,
+                    dispatch_solar_available_kw=(
+                        self.simulator.next_dispatch_solar_kw()
+                    ),
+                )
+                minute_dispatch = None
+                minute_commitment_before = None
+            else:
+                dispatch_solar_kw = self.simulator.next_dispatch_solar_kw()
+                dispatch_started_ns = time.perf_counter_ns()
+                minute_dispatch = dispatch_mpc_setpoints(
+                    setpoints,
+                    step_before,
+                    solar_available_kw=dispatch_solar_kw,
+                    constraints=self.constraints,
+                    config=self.config,
+                )
+                dispatcher_elapsed_ns.append(
+                    time.perf_counter_ns() - dispatch_started_ns
+                )
+                requested_action = minute_dispatch.action
+                validated = validate(
+                    requested_action,
+                    step_before,
+                    constraints=self.constraints,
+                    config=self.config,
+                    dispatch_solar_available_kw=dispatch_solar_kw,
+                )
+                minute_commitment_before = self.simulator.electrolyser_commitment
             last_applied = validated.action
             if validated.adjustments:
                 corrected_steps += 1
                 adjustments.extend(validated.adjustments)
             after_step = self.simulator.step(validated.action)
-            interval_telemetry.record(self.telemetry, dt_h=self.config.dt_h)
+            next_boundary = self.telemetry
+            interval_telemetry.record(next_boundary, dt_h=self.config.dt_h)
             power.record(
-                decoded.action,
+                requested_action,
                 validated.action,
                 after=after_step,
                 dt_h=self.config.dt_h,
             )
+            if minute_dispatch is not None:
+                setpoint_applications.append(
+                    record_minute_application(
+                        ordinal=ordinal,
+                        before=step_before,
+                        dispatch=minute_dispatch,
+                        validated=validated,
+                        after=after_step,
+                        next_boundary=next_boundary,
+                        commitment_before=minute_commitment_before,
+                        commitment_after=self.simulator.electrolyser_commitment,
+                    )
+                )
             delivery = self.simulator.delivery_step
             settlements.extend(delivery.settlements)
             requested_kg += delivery.requested_kg
@@ -281,7 +405,7 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
             guard_intervention_kwh=power.guard_intervention_l1_kwh,
             dispatch_gap_kwh=power.dispatch_gap_integral_l1_kwh,
             request_application_gap_kwh=(power.request_application_integral_l1_kwh),
-            out_of_range=decoded.clipped,
+            out_of_range=False if decoded is None else decoded.clipped,
             terminal_ch4_kg=after.ch4_level_kg,
             reference_delivery_kg=self.episode_config.delivery_amount_kg,
             reference_period_h=self.episode_config.delivery_period_h,
@@ -306,11 +430,19 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
             methanator_applied_energy_kwh=power.applied_kwh["methanator"],
             terminal_state=after,
         )
-        requested = decoded.to_dict()
-        requested["requested_kw_basis"] = (
-            "latest completed one-minute solar sample at the decision boundary; "
-            "authoritative interval energy is reported in interval_power"
-        )
+        if setpoints is None:
+            assert decoded is not None
+            requested = decoded.to_dict()
+            requested["requested_kw_basis"] = (
+                "latest completed one-minute solar sample at the decision boundary; "
+                "authoritative interval energy is reported in interval_power"
+            )
+        else:
+            requested = setpoints.to_dict()
+            requested["requested_kw_basis"] = (
+                "absolute process targets held at the decision boundary; each "
+                "one-minute action is independently dispatched and guarded"
+            )
         info = {
             **self._public_info(),
             "requested": requested,
@@ -318,7 +450,7 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
             "guard": {
                 "interventions": len(adjustments),
                 "corrected_physics_steps": corrected_steps,
-                "out_of_range": decoded.clipped,
+                "out_of_range": False if decoded is None else decoded.clipped,
                 "intervention_l1_kwh": power.guard_intervention_l1_kwh,
             },
             "interval_power": power.to_dict(),
@@ -343,6 +475,15 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
             "metrics": self.metrics.to_dict(),
             "plant_status": after.plant_status,
         }
+        if setpoints is not None:
+            execution = MPCSetpointIntervalExecutionV1(
+                setpoints=setpoints,
+                physics_step_s=self.config.dt_s,
+                applications=tuple(setpoint_applications),
+            )
+            self._last_setpoint_execution = execution
+            info["setpoint_execution"] = execution.to_dict()
+            info["dispatcher_elapsed_ns"] = dispatcher_elapsed_ns
         # The contract horizon is part of the finite-horizon MDP and pays a
         # one-time inventory salvage value. It is therefore a true termination,
         # not an external time-limit truncation that an RL library may bootstrap.
@@ -488,6 +629,12 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
     def checkpoint_contract(self) -> dict[str, Any]:
         """Detached full identity that every future V2 checkpoint must declare."""
         return deepcopy(self._checkpoint_contract)
+
+    @property
+    def last_setpoint_execution(self) -> MPCSetpointIntervalExecutionV1 | None:
+        """Latest immutable opt-in execution record, absent on action paths."""
+
+        return self._last_setpoint_execution
 
 
 __all__ = ["PlantEnvV2"]
