@@ -147,7 +147,15 @@ fallback behavior.
 - [`ECONOMIC_MECHANISM_SMOKE_PROTOCOL.md`](ECONOMIC_MECHANISM_SMOKE_PROTOCOL.md)
   preregisters one six-hour rate-35/seed-0 heuristic/MPC task-expression cell, its exact
   information asymmetry, execution order, accounting checks, no-retry rule, and E1--E6
-  interpretation boundary before either controller trajectory is opened.
+  interpretation boundary before either controller trajectory is opened. Its one-shot runner
+  now validates both reset identities before the first action, retains typed generic/rich
+  execution evidence and failures, applies E1--E6, and publishes only to a new external file;
+  the registered trajectory remains unopened.
+- [`CONTROLLER_NEUTRAL_RL_INTEGRATION.md`](CONTROLLER_NEUTRAL_RL_INTEGRATION.md)
+  defines the remaining RL wiring gate: strict four-target training configuration, exact
+  full-task checkpoint compatibility, artifact hashing, checkpoint-bound inference evidence,
+  and paired heuristic/policy execution through the common command door. It authorizes only a
+  disposable trainer wiring smoke, not a performance-bearing training run or controller claim.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

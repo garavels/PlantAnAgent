@@ -23,9 +23,11 @@ declares itself `fixed` and is labelled as a mock everywhere it surfaces.
 
 from __future__ import annotations
 
+import hashlib
 import json
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
+from numbers import Integral
 from pathlib import Path
 from typing import Any, Sequence
 
@@ -62,6 +64,86 @@ class IncompatibleCheckpointError(CheckpointError):
 
 
 @dataclass(frozen=True)
+class PolicyEnvironmentContract:
+    """Exact policy-facing interface and optional full task identity.
+
+    V1 callers may omit this value and retain the historical global contract.
+    Newer environments pass it explicitly so checkpoint validation is not tied
+    to whichever environment happens to be imported by default.
+    """
+
+    spec_version: int
+    observation_fields: tuple[str, ...]
+    action_fields: tuple[str, ...]
+    environment_id: str
+    environment_contract_digest: str
+    checkpoint_contract_digest: str = ""
+
+    def __post_init__(self) -> None:
+        if (
+            isinstance(self.spec_version, bool)
+            or not isinstance(self.spec_version, Integral)
+            or self.spec_version <= 0
+        ):
+            raise ValueError("policy contract spec_version must be positive")
+        for label, values in (
+            ("observation", self.observation_fields),
+            ("action", self.action_fields),
+        ):
+            if not values or any(
+                not isinstance(name, str) or not name for name in values
+            ):
+                raise ValueError(
+                    f"policy contract {label} fields must be non-empty names"
+                )
+            if len(set(values)) != len(values):
+                raise ValueError(f"policy contract {label} fields must be unique")
+        if not isinstance(self.environment_id, str) or not self.environment_id:
+            raise ValueError("policy contract environment_id must be non-empty")
+        _require_digest(
+            "policy contract environment_contract_digest",
+            self.environment_contract_digest,
+        )
+        if self.checkpoint_contract_digest:
+            _require_digest(
+                "policy contract checkpoint_contract_digest",
+                self.checkpoint_contract_digest,
+            )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "spec_version": int(self.spec_version),
+            "observation_fields": list(self.observation_fields),
+            "action_fields": list(self.action_fields),
+            "environment_id": self.environment_id,
+            "environment_contract_digest": self.environment_contract_digest,
+            "checkpoint_contract_digest": self.checkpoint_contract_digest,
+        }
+
+
+def _require_digest(name: str, value: object) -> str:
+    if not isinstance(value, str) or len(value) != 64:
+        raise ValueError(f"{name} must be a SHA-256 digest")
+    try:
+        int(value, 16)
+    except ValueError as reason:
+        raise ValueError(f"{name} must be a SHA-256 digest") from reason
+    return value
+
+
+def legacy_policy_contract() -> PolicyEnvironmentContract:
+    """Return the frozen V1 contract used by existing runtime callers."""
+
+    return PolicyEnvironmentContract(
+        spec_version=spaces.SPEC_VERSION,
+        observation_fields=spaces.OBSERVATION_NAMES,
+        action_fields=spaces.ACTION_NAMES,
+        environment_id=spaces.ENVIRONMENT_ID,
+        environment_contract_digest=spaces.ENVIRONMENT_CONTRACT_DIGEST,
+    )
+
+
+@dataclass(frozen=True)
 class CheckpointMetadata:
     """Everything needed to decide whether this policy may drive this plant."""
 
@@ -83,6 +165,10 @@ class CheckpointMetadata:
     #: These fields are last to preserve the positional shape of older callers.
     environment_id: str = spaces.ENVIRONMENT_ID
     environment_contract_digest: str = spaces.ENVIRONMENT_CONTRACT_DIGEST
+    #: Full task identity. Empty only for historical V1 metadata.
+    checkpoint_contract_digest: str = ""
+    #: Optional content hash for the algorithm artifact itself.
+    policy_artifact_sha256: str = ""
 
     @property
     def observation_size(self) -> int:
@@ -108,47 +194,77 @@ class CheckpointMetadata:
         }
 
     @classmethod
-    def from_dict(cls, raw: dict[str, Any], *, path: Path | None = None) -> "CheckpointMetadata":
+    def from_dict(
+        cls, raw: dict[str, Any], *, path: Path | None = None
+    ) -> "CheckpointMetadata":
         where = f" in {path}" if path else ""
         try:
             checkpoint_format = str(raw["format"])
         except (KeyError, TypeError) as reason:
-            raise CorruptCheckpointError(f"checkpoint metadata has no format{where}") from reason
+            raise CorruptCheckpointError(
+                f"checkpoint metadata has no format{where}"
+            ) from reason
         if checkpoint_format not in FORMATS:
             raise CorruptCheckpointError(
                 f"unsupported checkpoint format {checkpoint_format!r}{where}: "
                 f"expected one of {', '.join(FORMATS)}"
             )
-        return cls(
-            format=checkpoint_format,
-            algorithm=str(raw.get("algorithm", "unknown")),
-            spec_version=int(raw.get("spec_version", 0)),
-            observation_fields=tuple(str(name) for name in raw.get("observation_fields", ())),
-            action_fields=tuple(str(name) for name in raw.get("action_fields", ())),
-            plant_sim_version=str(raw.get("plant_sim_version", "unknown")),
-            created_at=str(raw.get("created_at", "")),
-            seed=None if raw.get("seed") is None else int(raw["seed"]),
-            total_timesteps=int(raw.get("total_timesteps", 0)),
-            training_config=dict(raw.get("training_config") or {}),
-            extra=dict(raw.get("extra") or {}),
-            notes=str(raw.get("notes", "")),
-            # Metadata written before contract digests existed is V1. An empty
-            # digest is its legacy sentinel and is checked by version/names only.
-            environment_id=str(raw.get("environment_id", spaces.ENVIRONMENT_ID)),
-            environment_contract_digest=str(raw.get("environment_contract_digest", "")),
-        )
+        try:
+            metadata = cls(
+                format=checkpoint_format,
+                algorithm=str(raw.get("algorithm", "unknown")),
+                spec_version=int(raw.get("spec_version", 0)),
+                observation_fields=tuple(
+                    str(name) for name in raw.get("observation_fields", ())
+                ),
+                action_fields=tuple(str(name) for name in raw.get("action_fields", ())),
+                plant_sim_version=str(raw.get("plant_sim_version", "unknown")),
+                created_at=str(raw.get("created_at", "")),
+                seed=None if raw.get("seed") is None else int(raw["seed"]),
+                total_timesteps=int(raw.get("total_timesteps", 0)),
+                training_config=dict(raw.get("training_config") or {}),
+                extra=dict(raw.get("extra") or {}),
+                notes=str(raw.get("notes", "")),
+                # Metadata written before contract digests existed is V1. An empty
+                # digest is its legacy sentinel and is checked by version/names only.
+                environment_id=str(raw.get("environment_id", spaces.ENVIRONMENT_ID)),
+                environment_contract_digest=str(
+                    raw.get("environment_contract_digest", "")
+                ),
+                checkpoint_contract_digest=str(
+                    raw.get("checkpoint_contract_digest", "")
+                ),
+                policy_artifact_sha256=str(raw.get("policy_artifact_sha256", "")),
+            )
+        except (TypeError, ValueError) as reason:
+            raise CorruptCheckpointError(
+                f"checkpoint metadata has malformed fields{where}: {reason}"
+            ) from reason
+        if metadata.seed is not None and metadata.seed < 0:
+            raise CorruptCheckpointError(f"checkpoint seed must be non-negative{where}")
+        if metadata.total_timesteps < 0:
+            raise CorruptCheckpointError(
+                f"checkpoint total_timesteps must be non-negative{where}"
+            )
+        return metadata
 
-    def check_compatible(self, *, path: Path | None = None) -> None:
+    def check_compatible(
+        self,
+        *,
+        path: Path | None = None,
+        contract: PolicyEnvironmentContract | None = None,
+    ) -> None:
         """Raise unless this checkpoint speaks the current observation/action space."""
         where = f" ({path})" if path else ""
-        if self.spec_version != spaces.SPEC_VERSION:
+        expected = contract or legacy_policy_contract()
+        if self.spec_version != expected.spec_version:
             raise IncompatibleCheckpointError(
                 f"checkpoint spec version {self.spec_version} does not match "
-                f"this build's {spaces.SPEC_VERSION}{where}: retrain the policy"
+                f"this environment's {expected.spec_version}{where}: retrain the policy"
             )
         for label, recorded, current in (
-            ("observation", self.observation_fields, spaces.OBSERVATION_NAMES),
-            ("action", self.action_fields, spaces.ACTION_NAMES),
+            ("observation", self.observation_fields, expected.observation_fields),
+            ("action", self.action_fields, expected.action_fields),
         ):
             if recorded == current:
                 continue
@@ -166,21 +282,39 @@ class CheckpointMetadata:
                 f"checkpoint {label} fields differ from this plant's{where}: "
                 f"{'; '.join(differing)}"
             )
-        if self.environment_id != spaces.ENVIRONMENT_ID:
+        if self.environment_id != expected.environment_id:
             raise IncompatibleCheckpointError(
                 f"checkpoint environment {self.environment_id!r} does not match "
-                f"this build's {spaces.ENVIRONMENT_ID!r}{where}: retrain the policy"
+                f"this task's {expected.environment_id!r}{where}: retrain the policy"
+            )
+        if contract is not None and not self.environment_contract_digest:
+            raise IncompatibleCheckpointError(
+                "checkpoint metadata has no policy interface digest"
+                f"{where}: retrain the policy"
             )
         if (
             self.environment_contract_digest
-            and self.environment_contract_digest != spaces.ENVIRONMENT_CONTRACT_DIGEST
+            and self.environment_contract_digest != expected.environment_contract_digest
         ):
             raise IncompatibleCheckpointError(
                 "checkpoint environment contract digest "
-                f"{self.environment_contract_digest!r} does not match this build's "
-                f"{spaces.ENVIRONMENT_CONTRACT_DIGEST!r}{where}: the observation/action "
+                f"{self.environment_contract_digest!r} does not match this task's "
+                f"{expected.environment_contract_digest!r}{where}: the observation/action "
                 "semantics differ; retrain the policy"
             )
+        if expected.checkpoint_contract_digest:
+            if not self.checkpoint_contract_digest:
+                raise IncompatibleCheckpointError(
+                    "checkpoint metadata has no full task contract digest"
+                    f"{where}: retrain the policy"
+                )
+            if self.checkpoint_contract_digest != expected.checkpoint_contract_digest:
+                raise IncompatibleCheckpointError(
+                    "checkpoint task contract digest "
+                    f"{self.checkpoint_contract_digest!r} does not match this task's "
+                    f"{expected.checkpoint_contract_digest!r}{where}: the plant, episode, "
+                    "constraints, objective, or assumptions differ; retrain the policy"
+                )
 
 
 def metadata_path(path: Path | str) -> Path:
@@ -199,11 +333,18 @@ def save_metadata(path: Path | str, metadata: CheckpointMetadata) -> Path:
     payload = metadata.to_dict()
     if not payload.get("created_at"):
         payload["created_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
-    target.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    target.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
     return target
 
 
-def load_metadata(path: Path | str, *, check: bool = True) -> CheckpointMetadata:
+def load_metadata(
+    path: Path | str,
+    *,
+    check: bool = True,
+    contract: PolicyEnvironmentContract | None = None,
+) -> CheckpointMetadata:
     """Read and (by default) verify the metadata of a checkpoint directory."""
     directory = Path(path)
     if not directory.exists():
@@ -221,10 +362,34 @@ def load_metadata(path: Path | str, *, check: bool = True) -> CheckpointMetadata
         raise CorruptCheckpointError(f"{target} does not contain a metadata object")
     metadata = CheckpointMetadata.from_dict(raw, path=directory)
     if check:
-        metadata.check_compatible(path=directory)
+        metadata.check_compatible(path=directory, contract=contract)
         if metadata.format != FORMAT_FIXED and not policy_path(directory).is_file():
             raise CorruptCheckpointError(
                 f"{directory} declares format {metadata.format!r} but has no {POLICY_FILE}"
+            )
+        if metadata.format != FORMAT_FIXED and metadata.policy_artifact_sha256:
+            artifact = policy_path(directory)
+            try:
+                _require_digest(
+                    "policy_artifact_sha256",
+                    metadata.policy_artifact_sha256,
+                )
+                actual = hashlib.sha256(artifact.read_bytes()).hexdigest()
+            except (OSError, ValueError) as reason:
+                raise CorruptCheckpointError(
+                    f"cannot verify {artifact}: {reason}"
+                ) from reason
+            if actual != metadata.policy_artifact_sha256:
+                raise CorruptCheckpointError(
+                    f"{artifact} content does not match policy_artifact_sha256"
+                )
+        elif (
+            metadata.format != FORMAT_FIXED
+            and contract is not None
+            and contract.checkpoint_contract_digest
+        ):
+            raise CorruptCheckpointError(
+                f"{directory} has no policy artifact digest in its metadata"
             )
     return metadata
 
@@ -234,16 +399,26 @@ def write_fixed_checkpoint(
     action: Sequence[float],
     *,
     notes: str = "Mock checkpoint: a constant action. Not a trained policy.",
+    contract: PolicyEnvironmentContract | None = None,
 ) -> Path:
     """Write a `fixed` checkpoint. For tests and wiring checks only."""
     values = [float(value) for value in action]
-    if len(values) != spaces.ACTION_SIZE:
-        raise ValueError(f"a fixed action needs {spaces.ACTION_SIZE} entries, got {len(values)}")
+    expected = contract or legacy_policy_contract()
+    if len(values) != len(expected.action_fields):
+        raise ValueError(
+            f"a fixed action needs {len(expected.action_fields)} entries, got {len(values)}"
+        )
     save_metadata(
         path,
         CheckpointMetadata(
             format=FORMAT_FIXED,
             algorithm="fixed-action (mock)",
+            spec_version=expected.spec_version,
+            observation_fields=expected.observation_fields,
+            action_fields=expected.action_fields,
+            environment_id=expected.environment_id,
+            environment_contract_digest=expected.environment_contract_digest,
+            checkpoint_contract_digest=expected.checkpoint_contract_digest,
             extra={"action": values},
             notes=notes,
         ),
@@ -263,6 +438,8 @@ __all__ = [
     "CorruptCheckpointError",
     "IncompatibleCheckpointError",
     "MissingCheckpointError",
+    "PolicyEnvironmentContract",
+    "legacy_policy_contract",
     "load_metadata",
     "metadata_path",
     "policy_path",

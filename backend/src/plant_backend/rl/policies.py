@@ -18,9 +18,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Protocol, runtime_checkable
+from typing import Any, Protocol, cast, runtime_checkable
 
 import numpy as np
+from numpy.typing import NDArray
 
 from . import checkpoints
 from .checkpoints import CheckpointError, CheckpointMetadata
@@ -30,7 +31,7 @@ from .checkpoints import CheckpointError, CheckpointMetadata
 class Policy(Protocol):
     """Observation in, action out. Deterministic: the plant is not exploring."""
 
-    def act(self, observation: np.ndarray) -> np.ndarray: ...
+    def act(self, observation: NDArray[np.generic]) -> NDArray[np.float32]: ...
 
 
 @dataclass(frozen=True)
@@ -48,11 +49,15 @@ class LoadedPolicy:
 class FixedActionPolicy:
     """Returns the same action every step. A stand-in, never a trained policy."""
 
-    def __init__(self, action: np.ndarray | list[float]) -> None:
-        self._action = np.asarray(action, dtype=np.float32).reshape(-1)
+    def __init__(self, action: NDArray[np.generic] | list[float]) -> None:
+        self._action = cast(
+            NDArray[np.float32],
+            np.asarray(action, dtype=np.float32).reshape(-1),
+        )
 
-    def act(self, observation: np.ndarray) -> np.ndarray:
-        return self._action.copy()
+    def act(self, observation: NDArray[np.generic]) -> NDArray[np.float32]:
+        del observation
+        return cast(NDArray[np.float32], self._action.copy())
 
 
 class SB3Policy:
@@ -61,15 +66,22 @@ class SB3Policy:
     def __init__(self, model: Any) -> None:
         self._model = model
 
-    def act(self, observation: np.ndarray) -> np.ndarray:
+    def act(self, observation: NDArray[np.generic]) -> NDArray[np.float32]:
         action, _ = self._model.predict(observation, deterministic=True)
-        return np.asarray(action, dtype=np.float32).reshape(-1)
+        return cast(
+            NDArray[np.float32],
+            np.asarray(action, dtype=np.float32).reshape(-1),
+        )
 
 
-def load_policy(path: Path | str) -> LoadedPolicy:
+def load_policy(
+    path: Path | str,
+    *,
+    contract: checkpoints.PolicyEnvironmentContract | None = None,
+) -> LoadedPolicy:
     """Load a checkpoint for inference, or raise `CheckpointError` saying why not."""
     directory = Path(path)
-    metadata = checkpoints.load_metadata(directory)
+    metadata = checkpoints.load_metadata(directory, contract=contract)
     if metadata.format == checkpoints.FORMAT_FIXED:
         action = metadata.extra.get("action")
         if not isinstance(action, list) or len(action) != metadata.action_size:

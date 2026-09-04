@@ -696,7 +696,41 @@ done this repository claims nothing about forecast quality.
 
 ---
 
-## V7: the RL foundation
+## Current research path: controller-neutral Environment V2 RL
+
+The maintained V1 stack below remains available for the live control-room demo. The research
+branch now also has a separately identified RL path for the more realistic Environment V2
+tasks. It uses four normalized **absolute process targets**, so a learned policy, the
+transparent heuristic adapter, and service MPC no longer receive different physical authority.
+
+```text
+62 public physical + tariff values -> policy -> 4 normalized targets
+    -> checkpoint-bound ProcessSetpointCommandV1
+    -> common one-minute dispatcher -> safety guard -> plant -> EUR ledger
+```
+
+The checkpoint records both the policy interface and the complete task digest. A policy is
+therefore refused if the plant, episode distribution, constraints, objective, tariff,
+assumptions, observation semantics, or action semantics differ. Real policy bytes are hashed;
+fixed-action checkpoints remain explicitly untrained test fixtures.
+
+```bash
+make v2-train-dry                                      # constructs and identifies; trains nothing
+make v2-train CONFIG=/path/to/training.json OUTPUT=runs/new-v2-run
+make v2-rl-eval CHECKPOINT=runs/new-v2-run/checkpoint SEEDS=3
+```
+
+No four-target policy has been trained or evaluated as a research contender in this
+repository. A disposable two-transition PPO wiring test trains, saves, resumes to four
+transitions, reloads, and evaluates a checkpoint when the optional training dependency is
+available; it is not a controller result. The integration is preparation for a registered
+experiment, not evidence that RL outperforms the heuristic or MPC. See
+[`docs/research/CONTROLLER_NEUTRAL_RL_INTEGRATION.md`](docs/research/CONTROLLER_NEUTRAL_RL_INTEGRATION.md)
+for the exact admission and claim boundary.
+
+---
+
+## V7: the historical RL foundation
 
 V7 makes the plant learnable without letting anything unproven drive it. It adds the
 environment, the reward, the training and evaluation entry points, checkpoint handling and

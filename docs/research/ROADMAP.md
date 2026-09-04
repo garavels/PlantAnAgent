@@ -108,6 +108,15 @@ equipment consequences.
   overlay, while the inherited legacy-share method fails before state movement. The six-hour
   rate-35/seed-0 H-versus-M task-expression cell and E1--E6 decision rule are frozen in
   `ECONOMIC_MECHANISM_SMOKE_PROTOCOL.md`; neither trajectory has been opened.
+- The remaining software integration for learned four-target policies is now explicit and
+  implemented behind a separate V2 path. Strict training configuration constructs either the
+  57/4 physical ablation or 62/4 economic task; checkpoint admission binds field order,
+  interface digest, complete task digest, and policy artifact bytes; deterministic inference
+  binds its exact vector and checkpoint into `ProcessSetpointCommandV1`; and paired
+  heuristic/policy evaluation retains the same generic execution ledger. Historical V1
+  loading and runtime behavior remain unchanged. Tiny fixed-policy fixtures and one disposable
+  two-transition train/four-transition resume/load/evaluate smoke have run. No research-scale
+  four-target policy, comparative RL performance outcome, or selection result exists.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.
 

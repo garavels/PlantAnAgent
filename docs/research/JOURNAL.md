@@ -4892,3 +4892,111 @@ No six-hour action has been requested, no solver outcome beyond the tiny unit fi
 used, and no heuristic/MPC ranking has been observed. The next commit must add a hash-bound,
 clean-source, exclusive-output runner and its outcome-free tests. Only after that runner is
 committed may the single registered cell execute.
+
+## 2026-09-04 — Controller-neutral RL integration completed and exercised end to end
+
+The integration audit separated physical authority from training-stack readiness. The common
+setpoint work had already made heuristic, normalized Gym, and MPC targets physically
+comparable, and the economic task already exposed a 62-observation/four-action Gym interface.
+However, the maintained trainer, checkpoint loader, and policy evaluator still assumed the
+historical V1 30-observation/five-action environment. A policy could be trained through the new
+Gym class, but there was no repository-supported way to prove which V2 task produced its bytes,
+load it against that exact task, reconstruct its structured observation, bind its output to a
+common command, or compare it with a non-learning controller through retained physical
+evidence. That—not another environment change—was the remaining controller-neutral RL gap.
+
+Checkpoint admission is now environment-explicit. `PolicyEnvironmentContract` carries ordered
+observation and action names, interface version, environment ID, interface digest, and optional
+full task digest. Historical callers that omit it retain the frozen V1 behavior. Both V2
+four-target tasks supply it explicitly and require the full checkpoint contract, so a model is
+rejected when plant design, episode distribution, safety constraints, diagnostic objective,
+tariff, economic assumptions, observation semantics, or action semantics differ. Non-mock
+policy bytes carry their own SHA-256 and are verified before deserialization. Missing or
+malformed metadata, a missing digest, changed bytes, or a wrong task fails rather than creating
+or substituting a policy. Fixed-action checkpoints remain visibly untrained wiring fixtures.
+
+`NormalizedSetpointPolicyControllerV1` is the learned side of the common door. It reconstructs
+the exact float32 observation from `ControllerObservationV2`; the economic variant appends the
+same five causal tariff values used by Gym and validates tariff and economic-assumption
+identities. Deterministic inference produces four normalized values, which the existing common
+adapter clips and decodes into absolute electrolyser, DAC, methanator, and battery-charge
+targets. Each decision binds the public physical observation, optional economic observation,
+exact policy vector, checkpoint metadata, environment contract, raw/bounded action, decoded
+targets, and issued `ProcessSetpointCommandV1`. The controller has no internal heuristic or idle
+fallback. Inference failure is retained without physical movement.
+
+The final review found one genuine fail-open seam in that adapter. Construction validated the
+checkpoint against an environment containing frozen safety constraints, but `compute_command`
+still accepted a constraints argument and did not compare it with the checkpoint-bound value.
+A caller could therefore have changed observation normalization and target limits while
+retaining the old task identity. The controller now stores and reports the admitted constraints
+and rejects runtime drift before inference or state movement. It already enforced plant design,
+commitment profile, observation kind, and economic identities.
+
+The new `ControllerNeutralTrainingConfigV1` round-trips the complete physical or economic task,
+seed, vectorization, PPO settings, checkpoint cadence, output, resume source, and notes. Nested
+unknown keys are rejected. JSON numbers are normalized to their declared scalar types so
+semantically equal values do not create different hashes; booleans, numeric strings, non-finite
+values, invalid PPO ranges, and incompatible rollout/batch sizes fail early. Dry-run constructs
+and resets the exact task without importing the optional trainer and reports 57/4 or 62/4
+shapes, interface/full-task identities, episode arithmetic, and Stable-Baselines3 whole-rollout
+rounding. Real training is explicit. Resume admission checks the exact task before loading.
+Intermediate and final saves are complete checkpoint directories rather than unauthenticated
+ZIP files. Existing paths are never overwritten, and missing dependencies or rejected resume
+sources no longer leave an empty directory that could be mistaken for a run.
+
+The paired evaluator creates independent heuristic and policy environments for each unique,
+non-negative seed and requires their complete manifest identities to match. Both arms issue
+`ProcessSetpointCommandV1` and retain every decision, interval execution, and one-minute
+application. The learned arm additionally checks on every decision—not only reset—that its
+structured encoder produced the exact vector returned by Gym; a two-decision fixture exercises
+the stateful solar-trend field. Decisions are retained even if downstream dispatch subsequently
+fails. Runtime timings remain in the report but outside the deterministic episode and
+evaluation digests. JSON publication uses exclusive creation. Fixed checkpoints are labelled
+integration smokes; trained checkpoints remain descriptive until seeds, benchmark arms,
+selection rules, and statistics are separately frozen.
+
+A real optional-dependency smoke used Stable-Baselines3 2.7.0, Torch 2.10.0, Gymnasium 1.2.0,
+and NumPy 2.0.2 from the local `/opt/anaconda3` runtime. It trained PPO for two transitions on
+the economic four-target task, saved and hash-verified the model, resumed it for two additional
+transitions, reloaded the four-transition checkpoint, and completed a paired seed-11
+heuristic/policy evaluation in **2.30 seconds**. This is intentionally far below one useful
+rollout and is evidence only that the real serialization/resume/inference path works. The
+project `.venv` does not contain the optional trainer, so the same regression test skips there
+instead of pulling Torch into ordinary development or CI. No reward comparison from this smoke
+is interpreted or retained as a controller outcome.
+
+The already preregistered economic mechanism runner was also completed without opening its
+trajectory. It validates both H and M reset identities before the first action, executes H
+through generic command evidence and M through the rich transition-reconciled MPC door, retains
+partial failures, applies frozen E1--E6 accounting/claim gates, requires clean unchanged source,
+and publishes atomically to a new file outside Git. Review corrected draft controller IDs to the
+actual heuristic and service-MPC issuer constants and made incomplete-arm accounting
+reportable. The protocol and dependency lock remain exactly
+`41c0ce9a1d49bcbfca34d88c0fb20b7fc7eb0ab91d15ed405aded512135cd795` and
+`080d96275581ebbec1b2c27b354ea54e3e66419bfaadb034896da1fd22b228dd`.
+The registered six-hour H/M trajectory is still unopened.
+
+The first complete-suite attempt provided a useful immutability check. A narrative clarification
+had also been placed in `setpoint_spaces.describe()`. Although it did not change the interface
+digest, that machine-readable limitation is embedded in the economic audit manifest and changed
+the frozen seed-0 manifest from its preregistered identity. The manifest test failed before any
+experiment ran. The code wording was restored and the clarification remains only in narrative
+documentation; the frozen manifest and protocol identities are unchanged.
+
+The final focused compatibility selection passes **134 tests with 1 optional-dependency skip in
+2.72 seconds**. The disposable real-SB3 test separately passes in **2.30 seconds**. Strict
+targeted MyPy passes on all nine touched source modules with import following and cache disabled;
+Black, Python compilation, Git whitespace validation, protocol hash, and dependency-lock hash
+pass. After restoring the frozen wording, the complete repository passes **1,176 tests with 3
+skips in 42.90 seconds**. The only warning is the existing Starlette/httpx deprecation; trailing
+HiGHS output remains upstream solver logging.
+
+This increment completes the controller-neutral RL software integration, not the RL research
+claim. No research-scale four-target policy, hyperparameter selection, protected multi-seed
+evaluation, MPC/RL tournament, HEPA fit, language-layer experiment, field calibration, or
+commercial result exists. The immediate empirical step remains the single frozen six-hour
+heuristic/MPC economic mechanism cell. If E1--E5 pass, a separately preregistered development
+tournament should establish whether meaningful non-saturated control headroom exists. Only
+then is a bounded RL baseline scientifically justified; otherwise more environment realism is
+required before compute is spent on learning.

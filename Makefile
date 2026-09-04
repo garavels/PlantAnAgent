@@ -1,4 +1,4 @@
-.PHONY: help setup dev backend frontend sim test eval foresight-eval rl-eval rl-ceiling v2-eval v2-weather-eval v2-controller-eval v2-planner v2-mpc v2-mpc-report v2-mpc-setpoint train-dry train \
+.PHONY: help setup dev backend frontend sim test eval foresight-eval rl-eval rl-ceiling v2-eval v2-weather-eval v2-controller-eval v2-planner v2-mpc v2-mpc-report v2-mpc-setpoint v2-economic-smoke v2-train-dry v2-train v2-rl-eval train-dry train \
 	hepa-collect hepa-pretrain-dry hepa-pretrain hepa-finetune-dry hepa-finetune \
 	hepa-eval build clean
 
@@ -77,6 +77,24 @@ v2-mpc-setpoint:  ## run the single frozen absolute-setpoint mechanism cell (ext
 	$(if $(OUTPUT),,$(error OUTPUT=/absolute/path/outside/repository.json is required))
 	uv run --frozen python -m plant_backend.rl.v2.mpc_setpoint_experiment \
 		--output $(OUTPUT)
+
+v2-economic-smoke: ## run the single frozen heuristic/MPC economic mechanism cell
+	$(if $(OUTPUT),,$(error OUTPUT=/absolute/path/outside/repository.json is required))
+	uv run --frozen python -m plant_backend.rl.v2.economic_smoke_experiment $(OUTPUT)
+
+v2-train-dry:     ## identify the controller-neutral RL task; trains nothing
+	uv run --frozen python -m plant_backend.rl.v2.training --dry-run \
+		$(if $(CONFIG),--config $(CONFIG),)
+
+v2-train:         ## train PPO through the four-target door (long; opt-in)
+	uv run --frozen python -m plant_backend.rl.v2.training \
+		$(if $(CONFIG),--config $(CONFIG),) $(if $(OUTPUT),--output $(OUTPUT),)
+
+v2-rl-eval:       ## pair a compatible four-target checkpoint with the heuristic
+	$(if $(CHECKPOINT),,$(error CHECKPOINT=<checkpoint-directory> is required))
+	uv run --frozen python -m plant_backend.rl.v2.policy_evaluation \
+		--checkpoint $(CHECKPOINT) --seed-start $(or $(SEED_START),0) \
+		--count $(or $(SEEDS),1) $(if $(JSON),--json $(JSON),)
 
 train-dry:        ## build the RL environment and print the training plan; trains nothing
 	uv run python -m plant_backend.rl.training.train --dry-run

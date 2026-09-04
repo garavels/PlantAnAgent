@@ -83,6 +83,13 @@ from .setpoint_controllers import (
     LegacyHeuristicSetpointDecisionV1,
     LegacyHeuristicSetpointEvidenceV1,
 )
+from .policy_setpoint_controller import (
+    NORMALIZED_POLICY_SETPOINT_CONTROLLER_ID,
+    NormalizedSetpointPolicyControllerV1,
+    PolicySetpointDecisionEvidenceV1,
+    PolicySetpointDecisionV1,
+    policy_contract_for_environment,
+)
 from .setpoint_execution import (
     ProcessSetpointIntervalExecutionV1,
     ProcessSetpointMinuteApplicationV1,
@@ -136,11 +143,13 @@ __all__ = [
     "MPCSetpointDecisionFailureV1",
     "MPCSetpointDecisionV1",
     "MPCSetpointIntervalExecutionV1",
+    "NORMALIZED_POLICY_SETPOINT_CONTROLLER_ID",
     "OBSERVATION_NAMES",
     "OBSERVATION_SIZE",
     "PlantEnvV2",
     "PlantEconomicSetpointEnvV2",
     "PlantSetpointEnvV2",
+    "NormalizedSetpointPolicyControllerV1",
     "LegacyHeuristicSetpointControllerV1",
     "LegacyHeuristicSetpointDecisionV1",
     "LegacyHeuristicSetpointEvidenceV1",
@@ -152,6 +161,8 @@ __all__ = [
     "ProcessSetpointMinuteApplicationV1",
     "ProcessSetpointMinuteDispatchV1",
     "ProcessSetpointTargetsV1",
+    "PolicySetpointDecisionEvidenceV1",
+    "PolicySetpointDecisionV1",
     "RewardWeightsV2",
     "RiskAdjustedIssuedForecastControllerV2",
     "SPEC_VERSION",
@@ -174,5 +185,6 @@ __all__ = [
     "issue_process_setpoint_command",
     "resolve_process_setpoint_envelope",
     "record_process_setpoint_application",
+    "policy_contract_for_environment",
     "sample_episode",
 ]
