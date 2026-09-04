@@ -97,11 +97,17 @@ equipment consequences.
   electrolyser exposure, and changes in deficits below the episode's starting CH4-equivalent
   and battery inventories. Liability changes telescope exactly to the final deficit, preventing
   free liquidation without rewarding terminal surplus. Every coefficient and all 24 tariff
-  points are checkpoint-bound and explicitly labelled as sensitivity assumptions. Eleven new
+  points are checkpoint-bound and explicitly labelled as sensitivity assumptions. Thirteen new
   tests prove identity/physics isolation, exact tariff integration, accounting direction,
-  terminal shaping, determinism, and Gym compliance; the complete repository passes 1,151 tests
+  terminal shaping, determinism, Gym compliance, rich MPC reconciliation, and legacy-door
+  rejection; the complete repository passes 1,153 tests
   with 2 skips. This is still task infrastructure: no heuristic/MPC outcome, multi-seed claim,
   RL training, calibrated saving, or commercial return has been opened.
+- Pre-smoke review closed the last execution asymmetry: normalized Gym actions, generic
+  controller-neutral commands, and rich MPC setpoints now all receive the same economic
+  overlay, while the inherited legacy-share method fails before state movement. The six-hour
+  rate-35/seed-0 H-versus-M task-expression cell and E1--E6 decision rule are frozen in
+  `ECONOMIC_MECHANISM_SMOKE_PROTOCOL.md`; neither trajectory has been opened.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.
 

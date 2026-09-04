@@ -203,6 +203,8 @@ The implementation gate is outcome-free:
   episode identity, but not the physical transition under the same target;
 - tariff windows integrate exactly across hour and day boundaries;
 - reward components sum exactly to the returned scalar and episode ledger;
+- both common-command and rich MPC-evidence execution doors receive the economic objective,
+  while the legacy share-action door is rejected before physical movement;
 - negative prices cannot create fictitious consumption revenue;
 - endowment liability changes telescope under depletion and restoration;
 - battery throughput and equipment exposure monotonically increase their costs;

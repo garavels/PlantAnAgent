@@ -6,13 +6,19 @@ import hashlib
 import json
 import math
 from copy import deepcopy
+from dataclasses import dataclass
 from numbers import Real
 from typing import Any, cast
 
 import numpy as np
 from gymnasium.spaces import Box
 from numpy.typing import NDArray
-from plant_sim import PlantConfig
+from plant_sim import (
+    Action,
+    ElectrolyserCommitmentSnapshot,
+    PlantConfig,
+    PlantState,
+)
 
 from ...controllers.base import Constraints
 from . import economic_spaces
@@ -34,8 +40,24 @@ from .setpoint_env import (
     PlantSetpointEnvV2,
     describe_setpoint_checkpoint_contract,
 )
+from .mpc_setpoints import MPCProcessSetpointsV1
 
 ECONOMIC_CHECKPOINT_CONTRACT_SCHEMA_VERSION = 5
+
+_StepResult = tuple[NDArray[np.generic], float, bool, bool, dict[str, Any]]
+
+
+@dataclass(frozen=True)
+class _EconomicStepStart:
+    state: PlantState
+    commitment: ElectrolyserCommitmentSnapshot | None
+    decisions: int
+    solar_kwh: float
+    curtailed_kwh: float
+    battery_throughput_kwh: float
+    delivered_kg: float
+    unmet_kg: float
+    opportunity_price_eur_per_mwh: float
 
 
 def _canonical_sha256(payload: dict[str, Any]) -> str:
@@ -125,6 +147,12 @@ def describe_economic_checkpoint_contract(
                 "hourly piecewise-constant public tariff; controller decisions "
                 "align with and do not cross tariff boundaries"
             ),
+            "execution_doors": {
+                "normalized_four_target_gym": "economic objective",
+                "controller_neutral_process_command": "economic objective",
+                "mpc_setpoint_with_rich_execution_evidence": "economic objective",
+                "legacy_share_action": "rejected before physical state movement",
+            },
         }
     )
     return {"checkpoint_contract_digest": contract_digest(inherited), **inherited}
@@ -192,59 +220,89 @@ class PlantEconomicSetpointEnvV2(PlantSetpointEnvV2):  # type: ignore[misc]
         command: ProcessSetpointCommandV1,
         *,
         controller_invalid: bool = False,
-    ) -> tuple[NDArray[np.generic], float, bool, bool, dict[str, Any]]:
+    ) -> _StepResult:
         """Run the common physical door, then replace only its scalar objective."""
 
-        if self.control_state is None:
-            raise RuntimeError("reset() must be called before step_process_setpoints()")
-        before = self.telemetry
-        before_commitment = self.simulator.electrolyser_commitment
-        before_decisions = self.decisions_taken
-        before_solar_kwh = self.metrics.solar_kwh
-        before_curtailed_kwh = self.metrics.curtailed_kwh
-        before_battery_throughput_kwh = self.metrics.battery_throughput_kwh
-        before_delivered_kg = self.metrics.delivered_kg
-        before_unmet_kg = self.metrics.unmet_kg
-        price = self.economic_assumptions.tariff.price_at(before.time_h)
-
-        (
-            observation,
-            legacy_reward,
-            terminated,
-            truncated,
-            info,
-        ) = super().step_process_setpoints(
-            command,
-            controller_invalid=controller_invalid,
+        start = self._capture_economic_step()
+        result = super().step_process_setpoints(
+            command, controller_invalid=controller_invalid
         )
+        return self._finish_economic_step(start, result)
+
+    def step_setpoints(self, setpoints: MPCProcessSetpointsV1) -> _StepResult:
+        """Preserve rich MPC execution evidence under the same economic ledger."""
+
+        start = self._capture_economic_step()
+        result = super().step_setpoints(setpoints)
+        return self._finish_economic_step(start, result)
+
+    def step_action(
+        self,
+        action: Action,
+        *,
+        controller_invalid: bool = False,
+    ) -> _StepResult:
+        """Reject the legacy share door instead of silently returning another reward."""
+
+        del action, controller_invalid
+        raise RuntimeError(
+            "economic task requires normalized, common-process, or MPC setpoint input"
+        )
+
+    def _capture_economic_step(self) -> _EconomicStepStart:
+        if self.control_state is None:
+            raise RuntimeError("reset() must be called before an economic step")
+        state = self.telemetry
+        return _EconomicStepStart(
+            state=state,
+            commitment=self.simulator.electrolyser_commitment,
+            decisions=self.decisions_taken,
+            solar_kwh=self.metrics.solar_kwh,
+            curtailed_kwh=self.metrics.curtailed_kwh,
+            battery_throughput_kwh=self.metrics.battery_throughput_kwh,
+            delivered_kg=self.metrics.delivered_kg,
+            unmet_kg=self.metrics.unmet_kg,
+            opportunity_price_eur_per_mwh=(
+                self.economic_assumptions.tariff.price_at(state.time_h)
+            ),
+        )
+
+    def _finish_economic_step(
+        self,
+        start: _EconomicStepStart,
+        result: _StepResult,
+    ) -> _StepResult:
+        observation, legacy_reward, terminated, truncated, info = result
         after = self.telemetry
-        interval_s = (self.decisions_taken - before_decisions) * (
+        interval_s = (self.decisions_taken - start.decisions) * (
             self.episode_config.decision_interval_s
         )
         exposure = CommitmentExposureV2.between(
-            before_commitment,
+            start.commitment,
             self.simulator.electrolyser_commitment,
             interval_s=interval_s,
         )
-        interval_solar_kwh = self.metrics.solar_kwh - before_solar_kwh
-        interval_curtailed_kwh = self.metrics.curtailed_kwh - before_curtailed_kwh
+        interval_solar_kwh = self.metrics.solar_kwh - start.solar_kwh
+        interval_curtailed_kwh = self.metrics.curtailed_kwh - start.curtailed_kwh
         accepted_solar_kwh = max(0.0, interval_solar_kwh - interval_curtailed_kwh)
         outcome = EconomicIntervalOutcomeV1(
-            opportunity_price_eur_per_mwh=price,
+            opportunity_price_eur_per_mwh=start.opportunity_price_eur_per_mwh,
             accepted_solar_kwh=accepted_solar_kwh,
-            delivered_kg=max(0.0, self.metrics.delivered_kg - before_delivered_kg),
-            unmet_kg=max(0.0, self.metrics.unmet_kg - before_unmet_kg),
+            delivered_kg=max(0.0, self.metrics.delivered_kg - start.delivered_kg),
+            unmet_kg=max(0.0, self.metrics.unmet_kg - start.unmet_kg),
             battery_throughput_kwh=max(
                 0.0,
-                self.metrics.battery_throughput_kwh - before_battery_throughput_kwh,
+                self.metrics.battery_throughput_kwh - start.battery_throughput_kwh,
             ),
             initial_ch4_equivalent_kg=(self.economic_metrics.initial_ch4_equivalent_kg),
-            ch4_equivalent_before_kg=ch4_equivalent_inventory_kg(before, self.config),
+            ch4_equivalent_before_kg=ch4_equivalent_inventory_kg(
+                start.state, self.config
+            ),
             ch4_equivalent_after_kg=ch4_equivalent_inventory_kg(after, self.config),
             initial_battery_energy_kwh=(
                 self.economic_metrics.initial_battery_energy_kwh
             ),
-            battery_energy_before_kwh=before.battery_energy_kwh,
+            battery_energy_before_kwh=start.state.battery_energy_kwh,
             battery_energy_after_kwh=after.battery_energy_kwh,
             commitment=exposure,
         )
@@ -267,7 +325,9 @@ class PlantEconomicSetpointEnvV2(PlantSetpointEnvV2):  # type: ignore[misc]
         info["economic_metrics"] = self.economic_metrics.to_dict()
         info["economic_interval"] = {
             **breakdown.signals,
-            "tariff": self.economic_assumptions.tariff.observe(before.time_h).to_dict(),
+            "tariff": self.economic_assumptions.tariff.observe(
+                start.state.time_h
+            ).to_dict(),
         }
         return observation, breakdown.total_eur, terminated, truncated, info
 

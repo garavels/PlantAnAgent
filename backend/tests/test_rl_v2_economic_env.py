@@ -5,7 +5,7 @@ from dataclasses import replace
 import numpy as np
 import pytest
 from gymnasium.utils.env_checker import check_env
-from plant_sim import PlantConfig
+from plant_sim import Action, PlantConfig
 
 from plant_backend.rl.v2 import (
     DayAheadTariffV1,
@@ -20,6 +20,8 @@ from plant_backend.rl.v2 import economic_spaces, setpoint_spaces
 from plant_backend.rl.v2.boundary import CommitmentExposureV2
 from plant_backend.rl.v2.config import EpisodeConfigV2
 from plant_backend.rl.v2.economics import MAX_ABS_TARIFF_EUR_PER_MWH
+from plant_backend.rl.v2.mpc_schema import ServiceMPCSetpointSettingsV1
+from plant_backend.rl.v2.mpc_setpoint_controller import ServiceMPCSetpointControllerV1
 
 
 def _one_interval_episode(*, start_hour: float = 12.0) -> EpisodeConfigV2:
@@ -177,6 +179,9 @@ def test_environment_has_distinct_interface_and_preserves_physical_episode() -> 
     assert old_info["environment_id"] != setpoint_info["environment_id"]
     assert setpoint_info["environment_id"] == setpoint_spaces.ENVIRONMENT_ID
     assert economic_info["environment_id"] == economic_spaces.ENVIRONMENT_ID
+    assert economic.checkpoint_contract["execution_doors"][
+        "legacy_share_action"
+    ].startswith("rejected")
     assert (
         len(
             {
@@ -241,6 +246,51 @@ def test_step_replaces_scalar_reward_but_retains_legacy_diagnostics() -> None:
     assert info["reward"]["components_eur"]["solar_opportunity_cost"] == pytest.approx(
         -expected_energy_cost
     )
+
+
+def test_mpc_evidence_door_uses_economic_reward_and_remains_reconcilable() -> None:
+    environment = PlantEconomicSetpointEnvV2(episode=_one_interval_episode())
+    environment.reset(seed=7)
+    controller = ServiceMPCSetpointControllerV1(
+        ServiceMPCSetpointSettingsV1(
+            task_horizon_h=0.25,
+            planning_horizon_h=0.25,
+        )
+    )
+    decision = controller.compute_setpoints(
+        environment.controller_observation,
+        constraints=environment.constraints,
+        config=environment.config,
+        commitment_profile=environment.episode_config.electrolyser_commitment,
+    )
+
+    _, reward, terminated, truncated, info = environment.step_setpoints(
+        decision.setpoints
+    )
+
+    execution = environment.last_setpoint_execution
+    assert execution is not None
+    controller.observe_transition(
+        environment.controller_observation,
+        execution=execution,
+    )
+    assert controller.has_pending_transition is False
+    assert terminated is True
+    assert truncated is False
+    assert reward == info["reward"]["total_eur"]
+    assert info["legacy_reward"]["diagnostic_only"] is True
+
+
+def test_legacy_share_door_cannot_bypass_the_economic_objective() -> None:
+    environment = PlantEconomicSetpointEnvV2(episode=_one_interval_episode())
+    environment.reset(seed=9)
+    before = environment.telemetry
+
+    with pytest.raises(RuntimeError, match="requires normalized"):
+        environment.step_action(Action.idle())
+
+    assert environment.telemetry == before
+    assert environment.decisions_taken == 0
 
 
 def test_tariff_changes_reward_and_identity_not_physics() -> None:

@@ -4846,3 +4846,49 @@ opened, and no HEPA or language-layer claim changed. The next bounded step is a 
 predeclared common-door heuristic/MPC smoke comparison to establish whether this task actually
 creates nonzero economic separation at comparable delivery and zero hard violations. Only a
 positive mechanism check justifies a frozen multi-seed tournament or RL training.
+
+## 2026-09-04 — Economic execution doors hardened and mechanism smoke frozen
+
+Pre-experiment integration review found one remaining route asymmetry. Normalized Gym and
+generic `ProcessSetpointCommandV1` actions received the economic overlay, but the inherited
+MPC-specific `step_setpoints` method still returned the diagnostic version-3 reward. Simply
+adapting MPC output to a generic command was not sufficient for the existing MPC controller:
+its next solve is fail-closed until `observe_transition` reconciles the richer
+`MPCSetpointIntervalExecutionV1`, including commitment boundaries and planned residuals. A
+future comparison could therefore either lose MPC provenance or silently score the wrong
+objective.
+
+`PlantEconomicSetpointEnvV2` now captures one immutable pre-step economic boundary and applies
+one shared post-step ledger to both the generic process-command door and the rich MPC setpoint
+door. Normalized Gym actions continue to reach the generic door dynamically. The inherited
+legacy share-action method is explicitly rejected before physical movement, so no public
+controller route can silently bypass the economic objective. Checkpoint schema 5 now records
+all four execution-door semantics; this intentionally changes the default checkpoint digest
+from the earlier `be79106` value to
+`49da4e3aa6a97fd07a2c87980d0b7e4138392bf189f9383b9030511774ab6215`.
+
+Two tests were added. A tiny real service-MPC solve executes through the economic environment,
+returns the economic scalar, retains its diagnostic legacy reward and rich execution object,
+and successfully closes the controller's pending transition. A separate fixture proves the
+legacy share door raises before decision counters or telemetry move. The economic suite now
+passes 13 cases; the economic plus common-door selection passes **30 tests in 0.94 seconds**.
+
+Before opening a controller trajectory, `ECONOMIC_MECHANISM_SMOKE_PROTOCOL.md` freezes exactly
+one six-hour, rate-35, seed-0 development cell. Arm H is the transparent common-door legacy
+heuristic. Arm M is the current delivery-oriented service MPC with a six-hour task and planning
+horizon; it is explicitly not relabelled as economic MPC and neither arm uses tariff in its
+decision. Both receive the same physical/economic episode. E1--E6 require complete execution,
+typed authority evidence, zero shutdown/out-of-range/forced-stop events, identical delivered
+and unmet methane within `1e-6 kg`, more than 1 EUR net-value separation plus a material raw
+driver difference, exact additive/liability accounting, and a one-cell descriptive claim
+boundary. A failure is retained without same-revision retry or coefficient tuning.
+
+The current complete repository gate passes **1,153 tests with 2 skips in 45.06 seconds**.
+Strict targeted type checking, Black, compilation, dependency-lock identity, and Git whitespace
+also remain clean; the warning and trailing HiGHS logging are unchanged from the preceding
+entry.
+
+No six-hour action has been requested, no solver outcome beyond the tiny unit fixture has been
+used, and no heuristic/MPC ranking has been observed. The next commit must add a hash-bound,
+clean-source, exclusive-output runner and its outcome-free tests. Only after that runner is
+committed may the single registered cell execute.

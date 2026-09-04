@@ -144,6 +144,10 @@ fallback behavior.
   CH4-equivalent/battery endowment liabilities. It records every synthetic assumption,
   evidence boundary, checkpoint-isolation requirement, and the gate that must pass before
   any controller comparison or RL training.
+- [`ECONOMIC_MECHANISM_SMOKE_PROTOCOL.md`](ECONOMIC_MECHANISM_SMOKE_PROTOCOL.md)
+  preregisters one six-hour rate-35/seed-0 heuristic/MPC task-expression cell, its exact
+  information asymmetry, execution order, accounting checks, no-retry rule, and E1--E6
+  interpretation boundary before either controller trajectory is opened.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.
