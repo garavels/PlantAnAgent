@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
+from datetime import datetime, timezone
 import hashlib
 import json
 from numbers import Integral, Real
@@ -37,7 +38,7 @@ from .evaluation import (
 )
 from .mpc_controller import ServiceMPCControllerV1
 from .mpc_execution import SERVICE_MPC_RUN_EVIDENCE_FORMAT
-from .mpc_schema import SERVICE_MPC_CONTROLLER_ID, canonical_json
+from .mpc_schema import SERVICE_MPC_CONTROLLER_ID, canonical_json, domain_sha256
 from .reward import RewardWeightsV2
 
 
@@ -45,6 +46,9 @@ REGISTERED_MPC_RATES = (35.0, 42.0)
 REGISTERED_MPC_SEEDS = (0, 1, 2)
 REGISTERED_MPC_HORIZON_H = 72.0
 REGISTERED_MPC_DECISIONS = 288
+REGISTERED_MPC_CELLS = tuple(
+    (rate, seed) for rate in REGISTERED_MPC_RATES for seed in REGISTERED_MPC_SEEDS
+)
 REGISTERED_MPC_CONTROLLER_IDS = (
     LegacyHeuristicControllerV2.id,
     IssuedForecastControllerV2.id,
@@ -59,6 +63,23 @@ REGISTERED_MPC_CONTRASTS = (
         treatment=SERVICE_MPC_CONTROLLER_ID,
         control=IssuedForecastControllerV2.id,
     ),
+)
+REGISTERED_MPC_CELL_EXECUTION_FORMAT = "registered-service-mpc-cell-execution-v1"
+REGISTERED_MPC_MATRIX_CONTRACT = {
+    "format": "causal-service-mpc-development-matrix-v1",
+    "order": [
+        {"delivery_rate_kg_h": rate, "seed": seed}
+        for rate, seed in REGISTERED_MPC_CELLS
+    ],
+    "horizon_h": REGISTERED_MPC_HORIZON_H,
+    "decisions_per_arm": REGISTERED_MPC_DECISIONS,
+    "controller_order": list(REGISTERED_MPC_CONTROLLER_IDS),
+    "contrasts": [item.to_dict() for item in REGISTERED_MPC_CONTRASTS],
+    "execution_unit": "one fresh process per cell",
+}
+REGISTERED_MPC_MATRIX_CONTRACT_SHA256 = domain_sha256(
+    "causal-service-mpc-development-matrix-contract-v1",
+    REGISTERED_MPC_MATRIX_CONTRACT,
 )
 
 Evaluator = Callable[..., CausalControllerEvaluationV2]
@@ -111,6 +132,52 @@ def _registered_cell(delivery_rate_kg_h: object, seed: object) -> tuple[float, i
     if chosen_seed not in REGISTERED_MPC_SEEDS:
         raise ValueError("seed must be 0, 1, or 2")
     return rate, chosen_seed
+
+
+def _utc_now() -> str:
+    return (
+        datetime.now(timezone.utc)
+        .isoformat(timespec="microseconds")
+        .replace("+00:00", "Z")
+    )
+
+
+def _utc_instant(name: str, value: object) -> datetime:
+    if not isinstance(value, str) or not value.endswith("Z"):
+        raise ValueError(f"{name} must be an RFC 3339 UTC timestamp")
+    try:
+        parsed = datetime.fromisoformat(value[:-1] + "+00:00")
+    except ValueError as exc:
+        raise ValueError(f"{name} must be an RFC 3339 UTC timestamp") from exc
+    if parsed.tzinfo != timezone.utc:
+        raise ValueError(f"{name} must be an RFC 3339 UTC timestamp")
+    return parsed
+
+
+def _execution_metadata(
+    *,
+    delivery_rate_kg_h: float,
+    seed: int,
+    started_at_utc: str,
+    evaluation_completed_at_utc: str,
+) -> dict[str, Any]:
+    cell = (delivery_rate_kg_h, seed)
+    try:
+        sequence_index = REGISTERED_MPC_CELLS.index(cell)
+    except ValueError as exc:  # pragma: no cover - guarded by _registered_cell
+        raise ValueError("registered cell is absent from the matrix") from exc
+    started = _utc_instant("started_at_utc", started_at_utc)
+    completed = _utc_instant("evaluation_completed_at_utc", evaluation_completed_at_utc)
+    if completed < started:
+        raise ValueError("registered cell completion precedes its start")
+    return {
+        "format": REGISTERED_MPC_CELL_EXECUTION_FORMAT,
+        "matrix_contract_sha256": REGISTERED_MPC_MATRIX_CONTRACT_SHA256,
+        "sequence_index": sequence_index,
+        "cell": {"delivery_rate_kg_h": delivery_rate_kg_h, "seed": seed},
+        "started_at_utc": started_at_utc,
+        "evaluation_completed_at_utc": evaluation_completed_at_utc,
+    }
 
 
 def find_repository_root(start: Path | None = None) -> Path:
@@ -225,6 +292,24 @@ def validate_registered_result(
             raise ValueError(f"registered result pairing failed: {name}")
 
     provenance = _mapping("registered provenance", result.provenance)
+    execution_metadata = _mapping(
+        "registered cell execution metadata",
+        provenance.get("registered_service_mpc_cell"),
+    )
+    started_at_utc = execution_metadata.get("started_at_utc")
+    evaluation_completed_at_utc = execution_metadata.get("evaluation_completed_at_utc")
+    if not isinstance(started_at_utc, str) or not isinstance(
+        evaluation_completed_at_utc, str
+    ):
+        raise ValueError("registered cell execution timestamps are invalid")
+    expected_metadata = _execution_metadata(
+        delivery_rate_kg_h=rate,
+        seed=chosen_seed,
+        started_at_utc=started_at_utc,
+        evaluation_completed_at_utc=evaluation_completed_at_utc,
+    )
+    if dict(execution_metadata) != expected_metadata:
+        raise ValueError("registered cell execution metadata is invalid")
     source = _mapping("registered source", provenance.get("source"))
     source_audit = _mapping(
         "registered execution source audit",
@@ -412,6 +497,7 @@ def run_registered_service_mpc_cell(
     constraints = Constraints()
     weights = RewardWeightsV2()
     controllers = _controllers()
+    started_at_utc = _utc_now()
     result = evaluator(
         seeds=[chosen_seed],
         controllers=controllers,
@@ -420,6 +506,12 @@ def run_registered_service_mpc_cell(
         constraints=constraints,
         weights=weights,
         require_clean_source=True,
+    )
+    result.provenance["registered_service_mpc_cell"] = _execution_metadata(
+        delivery_rate_kg_h=rate,
+        seed=chosen_seed,
+        started_at_utc=started_at_utc,
+        evaluation_completed_at_utc=_utc_now(),
     )
     validate_registered_result(
         result,
@@ -511,10 +603,14 @@ if __name__ == "__main__":  # pragma: no cover - CLI
 
 __all__ = [
     "PublishedServiceMPCCellV1",
+    "REGISTERED_MPC_CELLS",
+    "REGISTERED_MPC_CELL_EXECUTION_FORMAT",
     "REGISTERED_MPC_CONTROLLER_IDS",
     "REGISTERED_MPC_CONTRASTS",
     "REGISTERED_MPC_DECISIONS",
     "REGISTERED_MPC_HORIZON_H",
+    "REGISTERED_MPC_MATRIX_CONTRACT",
+    "REGISTERED_MPC_MATRIX_CONTRACT_SHA256",
     "REGISTERED_MPC_RATES",
     "REGISTERED_MPC_SEEDS",
     "build_parser",

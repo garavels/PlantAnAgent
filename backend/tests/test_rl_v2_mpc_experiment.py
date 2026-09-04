@@ -26,9 +26,12 @@ from plant_backend.rl.v2.metrics import EpisodeMetricsV2
 from plant_backend.rl.v2.mpc_controller import ServiceMPCControllerV1
 from plant_backend.rl.v2.mpc_execution import SERVICE_MPC_RUN_EVIDENCE_FORMAT
 from plant_backend.rl.v2.mpc_experiment import (
+    REGISTERED_MPC_CELLS,
+    REGISTERED_MPC_CELL_EXECUTION_FORMAT,
     REGISTERED_MPC_CONTROLLER_IDS,
     REGISTERED_MPC_CONTRASTS,
     REGISTERED_MPC_DECISIONS,
+    REGISTERED_MPC_MATRIX_CONTRACT_SHA256,
     run_registered_service_mpc_cell,
     validate_artifact_destination,
     validate_registered_result,
@@ -54,7 +57,12 @@ def _controllers() -> tuple[
     )
 
 
-def _provenance(repository_root: Path) -> dict[str, Any]:
+def _provenance(
+    repository_root: Path,
+    *,
+    rate: float,
+    seed: int,
+) -> dict[str, Any]:
     root = repository_root.resolve()
     lock_sha = hashlib.sha256((root / "uv.lock").read_bytes()).hexdigest()
     source = {
@@ -77,6 +85,14 @@ def _provenance(repository_root: Path) -> dict[str, Any]:
             "clean_at_end": True,
             "start_worktree_identity_sha256": _SOURCE_SHA,
             "end_worktree_identity_sha256": _SOURCE_SHA,
+        },
+        "registered_service_mpc_cell": {
+            "format": REGISTERED_MPC_CELL_EXECUTION_FORMAT,
+            "matrix_contract_sha256": REGISTERED_MPC_MATRIX_CONTRACT_SHA256,
+            "sequence_index": REGISTERED_MPC_CELLS.index((rate, seed)),
+            "cell": {"delivery_rate_kg_h": rate, "seed": seed},
+            "started_at_utc": "2026-09-03T08:00:00.000000Z",
+            "evaluation_completed_at_utc": "2026-09-03T08:01:00.000000Z",
         },
     }
 
@@ -161,7 +177,7 @@ def _registered_result(
             horizon_h=72.0,
             delivery_rate_kg_h=rate,
         ).validate(PlantConfig()),
-        provenance=_provenance(repository_root),
+        provenance=_provenance(repository_root, rate=rate, seed=seed),
         runs=runs,
         labels={controller.id: controller.label for controller in controllers},
         information_sets={
@@ -334,6 +350,9 @@ def test_registered_runner_uses_exact_inputs_and_atomically_publishes_failure(
         mpc_experiment.canonical_json(result.to_dict())
     )
     assert result.execution_summary()["all_planned_arms_succeeded"] is False
+    metadata = result.provenance["registered_service_mpc_cell"]
+    assert metadata["sequence_index"] == REGISTERED_MPC_CELLS.index((42.0, 2))
+    assert metadata["matrix_contract_sha256"] == (REGISTERED_MPC_MATRIX_CONTRACT_SHA256)
 
 
 def test_existing_destination_blocks_valid_cell_before_evaluator(

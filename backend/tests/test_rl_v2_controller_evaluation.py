@@ -118,7 +118,9 @@ def test_run_controller_passes_only_public_current_issue_to_forecast_policy() ->
     assert all(not hasattr(item, "_issue_stream_sha256") for item in issues)
 
 
-def test_paired_controller_evaluation_records_declared_information_and_settings() -> None:
+def test_paired_controller_evaluation_records_declared_information_and_settings() -> (
+    None
+):
     blind = SpyControllerV2(uses_forecast=False)
     forecast = SpyControllerV2(uses_forecast=True)
     forecast.id = "spy_forecast"
@@ -135,7 +137,7 @@ def test_paired_controller_evaluation_records_declared_information_and_settings(
     assert result.pairing()["full_manifest_match_by_seed"] is True
     assert result.pairing()["all_arms_present_by_seed"] is True
     assert payload["evidence_scope"] == "development_comparator"
-    assert payload["schema_version"] == 6
+    assert payload["schema_version"] == 7
     assert payload["disclaimer"] == CAUSAL_COMPARATOR_DISCLAIMER
     assert payload["controller_specs"]["spy"]["uses_forecast"] is False
     assert payload["controller_specs"]["spy_forecast"]["uses_forecast"] is True

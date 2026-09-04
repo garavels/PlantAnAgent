@@ -132,7 +132,7 @@ def test_state_signature_is_exact_complete_and_sensitive_to_nested_state() -> No
     assert initial.canonical_bytes == repeated.canonical_bytes
     assert initial.sha256 == repeated.sha256
     assert initial.sha256 == (
-        "813d00aa0681aaab954a8724ff87e49efcbf7148bbb3bfa05f14d32245a8227f"
+        "c18278e534284b89abf2382debc3fa2e8c1dee060f20da0caf44cb30fe7e7500"
     )
 
     changed_metric = clone_environment(env)

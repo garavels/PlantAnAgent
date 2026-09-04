@@ -10,29 +10,32 @@ import pytest
 from plant_backend.rl.v2 import compare
 
 
-def test_compare_cli_runs_declared_arms_and_writes_schema_six(
+def test_compare_cli_runs_declared_arms_and_writes_schema_seven(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     target = tmp_path / "causal-comparison.json"
-    assert compare.main(
-        [
-            "--seed-start",
-            "0",
-            "--count",
-            "1",
-            "--hours",
-            "6",
-            "--delivery-rate",
-            "35",
-            "--allow-dirty-development",
-            "--json",
-            str(target),
-        ]
-    ) == 0
+    assert (
+        compare.main(
+            [
+                "--seed-start",
+                "0",
+                "--count",
+                "1",
+                "--hours",
+                "6",
+                "--delivery-rate",
+                "35",
+                "--allow-dirty-development",
+                "--json",
+                str(target),
+            ]
+        )
+        == 0
+    )
 
     payload = json.loads(target.read_text(encoding="utf-8"))
-    assert payload["schema_version"] == 6
+    assert payload["schema_version"] == 7
     assert payload["evidence_scope"] == "development_comparator"
     assert list(payload["labels"]) == [
         "legacy_heuristic",
@@ -97,9 +100,7 @@ def test_compare_cli_returns_nonzero_when_any_planned_arm_failed(
     )
 
     target = tmp_path / "failed.json"
-    assert compare.main(
-        ["--allow-dirty-development", "--json", str(target)]
-    ) == 1
+    assert compare.main(["--allow-dirty-development", "--json", str(target)]) == 1
     captured = capsys.readouterr()
     assert "invalid comparison" in captured.out
     assert written == [target]
@@ -120,9 +121,7 @@ def test_compare_cli_source_audit_abort_writes_nothing(
     monkeypatch.setattr(compare, "write", lambda *args: writes.append(args))
 
     target = tmp_path / "must-not-exist.json"
-    assert compare.main(
-        ["--allow-dirty-development", "--json", str(target)]
-    ) == 1
+    assert compare.main(["--allow-dirty-development", "--json", str(target)]) == 1
     assert writes == []
     assert not target.exists()
     assert "failed closed" in capsys.readouterr().err

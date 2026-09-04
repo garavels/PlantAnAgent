@@ -56,7 +56,7 @@ LEGACY_INFORMATION_SET = (
 )
 OPEN_LOOP_INFORMATION_SET = "constant action; observes no environment information"
 RESULT_SCHEMA_VERSION = 4
-CAUSAL_RESULT_SCHEMA_VERSION = 6
+CAUSAL_RESULT_SCHEMA_VERSION = 7
 CAUSAL_COMPARATOR_DISCLAIMER = (
     "DEVELOPMENT COMPARISON ONLY: transparent causal controllers are evaluated on "
     "development seeds selected during task calibration. Results are not held out, "
@@ -122,6 +122,11 @@ PAIRED_CONTRAST_METRICS: tuple[tuple[str, str, str], ...] = (
         "battery_discharged_kwh",
         "diagnostic",
         "battery discharge (kWh; no automatic benefit sign)",
+    ),
+    (
+        "battery_throughput_kwh",
+        "diagnostic",
+        "battery bus-side throughput (kWh; no automatic benefit sign)",
     ),
     (
         "dispatch_gap_kwh",

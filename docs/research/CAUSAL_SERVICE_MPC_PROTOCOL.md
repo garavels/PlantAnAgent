@@ -2,9 +2,13 @@
 
 Date: **2026-09-03**
 
-Status: **pre-outcome protocol; implementation and unit fixtures are authorized, but no
-full 35/42 kg/h MPC rollout may be opened until the implementation gate below is frozen
-on a clean revision**
+Status: **pre-outcome protocol; the implementation gate is closed, and no full 35/42 kg/h
+MPC rollout may be opened until the linked reporting addendum is committed and passes its
+clean-source gate**
+
+The dated pre-outcome reporting interpretation and schema-7 instrumentation correction are
+frozen in
+[`CAUSAL_SERVICE_MPC_REPORT_FREEZE.md`](CAUSAL_SERVICE_MPC_REPORT_FREEZE.md).
 
 ## Purpose and claim boundary
 

@@ -3554,3 +3554,84 @@ whitespace checks pass, and a dry Make invocation expands to the frozen one-cell
 No registered episode, MPC solve, or performance outcome has yet been opened. The last
 pre-outcome task is to freeze and test the six-cell admission, aggregation, and gate report;
 only then may the cells run in the declared rate-major, seed-minor order.
+
+## 2026-09-04 — Service-MPC reporting and six-cell admission frozen before outcomes
+
+The final pre-outcome reporting audit found one substantive instrumentation omission in the
+ordinary causal evaluator: the protocol required battery throughput, while
+`EpisodeMetricsV2` retained only discharge inferred from battery power. The frozen feasible
+planner had already computed throughput as the ordered bus-side sum of accepted
+solar-to-battery energy and accepted battery-support energy. The environment now passes those
+two independently accounted interval values into the metric accumulator, which adds them in
+the same left-to-right binary64 order. The metric is serialized and included in causal
+contrasts as a diagnostic with no fabricated benefit sign. It does not enter observations,
+actions, rewards, controller logic, the plant, or any gate. Because the causal artifact shape
+changed, its schema advances from 6 to **7 before any registered result exists**.
+
+This metric addition intentionally changes the exact planner-state fingerprint because a
+complete environment checkpoint includes accumulated metrics. The broader focused gate first
+exposed both that stale expected fingerprint and three stale schema-6 test assertions. The
+new fingerprint was reproduced twice from the same authorized two-decision fixture, and the
+expectations were updated to schema 7 and the new exact digest. No registered episode or
+service-MPC performance was inspected to make those corrections.
+
+The one-cell runner now embeds a domain-separated matrix contract binding the exact ordered
+cells `35/0, 35/1, 35/2, 42/0, 42/1, 42/2`, 72-hour horizon, 288 decisions per arm, A0/A2/M
+controller order, the two registered contrasts, and one fresh process per cell. Every output
+records its sequence index plus UTC evaluation start and completion. Result validation
+reconstructs that metadata rather than trusting it. These additions do not introduce a
+controller or threshold choice.
+
+A separate frozen postprocessor now admits exactly those six absolute, external,
+non-symlink, non-overwriting JSON artifacts in order. It requires strict unique-key UTF-8
+JSON in the exact registered serializer form, non-overlapping declared execution windows,
+and an identical clean Git snapshot, dependency lock, and runtime across every cell and the
+reporting process. It binds each cell's manifest and exogenous-episode hashes to the exact
+committed feasible-planner reference, whose raw and internal report digests are hard-coded.
+The complete current A0 metric payload must replay the frozen A0 payload exactly; the newly
+instrumented throughput must separately reproduce the throughput retained by that reference.
+
+For every successful M arm the postprocessor independently checks 288 contiguous decisions,
+288 exact plant applications, the shrinking `min(96, 288-k)` horizon, two ordered successful
+HiGHS stages, the frozen controller settings, requested-action equality, public residuals,
+and every action/residual/decision/application/request/guarded-action/interval-power/run
+digest and cross-reference. It recomputes latency distributions and all intervention,
+correction, invalidity, refusal/reroute, and authority-distance aggregates. A failed M arm
+remains a retained outcome, but it fails G1 and makes the complete aggregate `null`; G2--G7
+become `not_evaluated`, so no successful-arm subset can be reported.
+
+All seven gate calculations are now executable and fixed before outcomes: the exact complete
+execution totals; rate-42 improved-cell count and mean feasible-gap capture; rate-42 complete
+commitment total; rate-35 mean-fill and saturated-seed preservation; rollout-level safety
+and validity; terminal SOC and cold starts; and pooled plus per-rollout nearest-rank decision
+p99/max latency. The compact report retains all physical metrics for all three arms,
+terminal CH4-equivalent feedstock, A2/A0/M effects and eligible capture, mechanism summaries,
+solver reliability and latency, each gate observation, raw artifact hashes, and compact
+evidence-ledger hashes. Its own domain digest and raw SHA-256 are published through an
+fsynced, hard-link-based, no-overwrite atomic boundary outside Git.
+
+The first synthetic admission test compared Python controller descriptors directly and
+rejected legitimate JSON arrays because the source descriptor contained tuples. Admission
+now compares canonical JSON values, preserving exact serialized equality without depending
+on Python's tuple/list representation. This was an outcome-free representation defect. A
+later coverage audit also added an explicit mutation in which every arm agrees on fabricated
+manifest and exogenous hashes but disagrees with the frozen planner cell; admission rejects
+it before aggregation.
+
+The outcome-free reporting suite now has **16 passing cases**, including a complete invented
+matrix that passes all gates; incomplete execution suppressing every aggregate; independent
+G2--G7 failures; and rejection of order, source, overlap, fallback, A0 replay, planner
+identity, file-form, and overwrite mutations. The full V2/planner/MPC surface passes **395
+tests** after the schema/fingerprint corrections. The entire repository passes **986 tests,
+2 skipped**, with only the unchanged Starlette/httpx deprecation warning. The new
+metric/runner/postprocessor production surface and both runner/report test modules pass
+isolated strict type checking; Python compilation, Black formatting, Git whitespace, the
+unchanged 92-package lock, and the frozen Make expansion also pass. An initial concurrent
+strict-type invocation shared the global mypy cache and hit mypy's internal unresolved-cache
+assertion; rerunning with isolated disabled caches produced the clean results above.
+
+No registered 72-hour cell, full service-MPC development solve, held-out result, or RL
+comparison has been opened. The next action is to commit this reporting freeze, repeat the
+complete gate from that clean revision, and only then execute the six cells sequentially in
+their registered order. While a cell is running, the research process will wait silently;
+it will not spend model tokens narrating or polling the solve.

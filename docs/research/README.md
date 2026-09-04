@@ -67,6 +67,10 @@ fallback behavior.
 - [`CAUSAL_SERVICE_MPC_PREFREEZE_AUDIT.md`](CAUSAL_SERVICE_MPC_PREFREEZE_AUDIT.md)
   maps every implementation-gate obligation to executable evidence, reviews the
   source authority boundaries, and preserves the tiny-fixture/full-rollout boundary.
+- [`CAUSAL_SERVICE_MPC_REPORT_FREEZE.md`](CAUSAL_SERVICE_MPC_REPORT_FREEZE.md)
+  freezes schema-7 battery-throughput instrumentation, six-cell admission, exact
+  planner cross-binding, no-subset aggregation, and executable interpretations of
+  all seven development gates before any registered outcome is opened.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

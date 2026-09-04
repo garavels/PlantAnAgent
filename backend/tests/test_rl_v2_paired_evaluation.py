@@ -240,6 +240,7 @@ def test_inventory_diagnostics_never_receive_a_fabricated_benefit_sign() -> None
     assert "benefit_delta" not in diagnostic["by_seed"][0]
     for name in (
         "battery_discharged_kwh",
+        "battery_throughput_kwh",
         "dispatch_gap_kwh",
         "request_application_gap_kwh",
     ):
@@ -371,7 +372,7 @@ def test_controller_failure_is_retained_and_pair_is_explicitly_unavailable() -> 
     )
     payload = result.to_dict()
 
-    assert payload["schema_version"] == 6
+    assert payload["schema_version"] == 7
     assert len(payload["runs"]) == 4
     assert payload["execution"]["by_controller"]["treatment"] == {
         "planned_runs": 2,
@@ -384,8 +385,7 @@ def test_controller_failure_is_retained_and_pair_is_explicitly_unavailable() -> 
     assert all(item["status"] == "failed" for item in failures)
     assert all(item["metrics"] is None for item in failures)
     assert all(
-        item["failure"]["phase"] == "controller_compute_action"
-        for item in failures
+        item["failure"]["phase"] == "controller_compute_action" for item in failures
     )
     assert all(
         item["failure"]["message"] == "intentional controller failure"
@@ -393,7 +393,8 @@ def test_controller_failure_is_retained_and_pair_is_explicitly_unavailable() -> 
     )
     contrast = payload["contrasts"][0]
     assert all(
-        item == {
+        item
+        == {
             "seed": seed,
             "status": "unavailable",
             "reasons": ["treatment_failed"],
@@ -451,9 +452,10 @@ def test_failure_in_any_planned_arm_invalidates_every_aggregate_contrast() -> No
     assert contrast["effect_summary_status"] == (
         "invalid_incomplete_or_mismatched_execution"
     )
-    assert contrast["metrics"]["delivery_fill_rate"][
-        "raw_treatment_minus_control_summary"
-    ] is None
+    assert (
+        contrast["metrics"]["delivery_fill_rate"]["raw_treatment_minus_control_summary"]
+        is None
+    )
     assert result.execution_summary()["all_planned_arms_succeeded"] is False
     assert "Aggregate effects are ineligible" in result.report()
 
@@ -631,9 +633,10 @@ def test_dirty_provenance_binds_tracked_patch_and_untracked_contents(
     )
 
     assert source["git_dirty"] is True
-    assert source["tracked_binary_diff_sha256"] == hashlib.sha256(
-        expected_patch
-    ).hexdigest()
+    assert (
+        source["tracked_binary_diff_sha256"]
+        == hashlib.sha256(expected_patch).hexdigest()
+    )
     assert source["tracked_binary_diff_bytes"] == len(expected_patch)
     assert source["untracked_files"] == [
         {

@@ -57,7 +57,9 @@ def test_v1_and_v2_are_explicit_coexisting_contracts() -> None:
     assert v2_spaces.ENVIRONMENT_ID == "plant-env-v2-commitment-alpha"
     assert v1_observation.shape == (30,)
     assert v2_observation.shape == (57,)
-    assert v1_spaces.ENVIRONMENT_CONTRACT_DIGEST != v2_spaces.ENVIRONMENT_CONTRACT_DIGEST
+    assert (
+        v1_spaces.ENVIRONMENT_CONTRACT_DIGEST != v2_spaces.ENVIRONMENT_CONTRACT_DIGEST
+    )
     assert v1.observation_space.contains(v1_observation)
     assert v2.observation_space.contains(v2_observation)
 
@@ -139,19 +141,18 @@ def test_full_checkpoint_contract_changes_with_timing_and_objective() -> None:
         "weather_generator": WEATHER_GENERATOR_VERSION,
         "electrolyser_commitment": COMMITMENT_DYNAMICS_VERSION,
     }
-    assert "simulator-owned solar bus" in base.checkpoint_contract["timing"][
-        "guard_semantics"
-    ]
-    assert "terminated=true" in base.checkpoint_contract["timing"][
-        "episode_end_semantics"
-    ]
+    assert (
+        "simulator-owned solar bus"
+        in base.checkpoint_contract["timing"]["guard_semantics"]
+    )
+    assert (
+        "terminated=true" in base.checkpoint_contract["timing"]["episode_end_semantics"]
+    )
 
 
 def test_commitment_profile_changes_full_identity_but_not_sampled_conditions() -> None:
     committed = PlantEnvV2(episode=SHORT)
-    compatibility_off = PlantEnvV2(
-        episode=replace(SHORT, electrolyser_commitment=None)
-    )
+    compatibility_off = PlantEnvV2(episode=replace(SHORT, electrolyser_commitment=None))
     slower_start = PlantEnvV2(
         episode=replace(
             SHORT,
@@ -162,11 +163,17 @@ def test_commitment_profile_changes_full_identity_but_not_sampled_conditions() -
         )
     )
 
-    assert committed.checkpoint_contract_digest != compatibility_off.checkpoint_contract_digest
-    assert committed.checkpoint_contract_digest != slower_start.checkpoint_contract_digest
-    assert committed.episode_config.to_dict()["electrolyser_commitment"][
-        "profile_id"
-    ] == DEFAULT_ELECTROLYSER_COMMITMENT_PROFILE.profile_id
+    assert (
+        committed.checkpoint_contract_digest
+        != compatibility_off.checkpoint_contract_digest
+    )
+    assert (
+        committed.checkpoint_contract_digest != slower_start.checkpoint_contract_digest
+    )
+    assert (
+        committed.episode_config.to_dict()["electrolyser_commitment"]["profile_id"]
+        == DEFAULT_ELECTROLYSER_COMMITMENT_PROFILE.profile_id
+    )
     assert compatibility_off.episode_config.to_dict()["electrolyser_commitment"] is None
 
     committed.reset(seed=41)
@@ -176,8 +183,7 @@ def test_commitment_profile_changes_full_identity_but_not_sampled_conditions() -
     assert left["manifest_sha256"] != right["manifest_sha256"]
     assert left["exogenous_episode_sha256"] == right["exogenous_episode_sha256"]
     assert (
-        left["episode"]["exogenous_episode_sha256"]
-        == left["exogenous_episode_sha256"]
+        left["episode"]["exogenous_episode_sha256"] == left["exogenous_episode_sha256"]
     )
 
 
@@ -251,7 +257,9 @@ def test_v2_episode_configuration_rejects_misaligned_or_invalid_values(
         config.validate(PlantConfig())
 
 
-def test_commitment_alpha_freezes_one_minute_physics_but_off_ablation_does_not() -> None:
+def test_commitment_alpha_freezes_one_minute_physics_but_off_ablation_does_not() -> (
+    None
+):
     five_minute_plant = PlantConfig(dt_s=300.0)
     with pytest.raises(ValueError, match="requires a 60 s physics timestep"):
         SHORT.validate(five_minute_plant)
@@ -268,10 +276,16 @@ def test_named_random_streams_keep_inventory_draws_stable() -> None:
         seed=42,
     )
     assert tuple(first.stream_spawn_keys) == ("inventories", "weather", "contracts")
-    assert first.scenario.initial.battery_soc == changed_contract.scenario.initial.battery_soc
+    assert (
+        first.scenario.initial.battery_soc
+        == changed_contract.scenario.initial.battery_soc
+    )
     assert first.scenario.initial.h2_kg == changed_contract.scenario.initial.h2_kg
     assert first.scenario.initial.co2_kg == changed_contract.scenario.initial.co2_kg
-    assert first.commitments[0].requested_kg != changed_contract.commitments[0].requested_kg
+    assert (
+        first.commitments[0].requested_kg
+        != changed_contract.commitments[0].requested_kg
+    )
 
 
 @pytest.mark.parametrize("value", [-0.01, float("nan"), float("inf")])
@@ -323,7 +337,9 @@ def test_environment_consumes_private_weather_at_the_expected_boundaries() -> No
     _, _, _, _, info = env.step_action(Action.idle())
 
     assert env.simulator.step_index == 15
-    assert env.simulator.state.solar_output_factor == pytest.approx(tape.at_boundary(15))
+    assert env.simulator.state.solar_output_factor == pytest.approx(
+        tape.at_boundary(15)
+    )
     assert info["forecast"]["issued_at_physics_boundary_step"] == 15
     assert env.control_state is not None
     interval = env.control_state.previous_interval
@@ -349,9 +365,7 @@ def test_a_decision_holds_one_action_for_fifteen_physics_steps() -> None:
 
 
 def test_commitment_timers_and_exposures_advance_on_the_inner_physics_grid() -> None:
-    env = PlantEnvV2(
-        episode=replace(SHORT, battery_soc=(0.65, 0.65))
-    )
+    env = PlantEnvV2(episode=replace(SHORT, battery_soc=(0.65, 0.65)))
     env.reset(seed=2)
     timer_at = v2_spaces.OBSERVATION_NAMES.index("electrolyser_startup_remaining")
     running_at = v2_spaces.OBSERVATION_NAMES.index("electrolyser_mode_running")
@@ -370,17 +384,13 @@ def test_commitment_timers_and_exposures_advance_on_the_inner_physics_grid() -> 
     assert first_info["reward"]["components"]["nonproductive_energy"] < 0.0
 
     for _ in range(3):
-        observation, _, _, _, info = env.step_action(
-            Action(battery_support_kw=3_000.0)
-        )
+        observation, _, _, _, info = env.step_action(Action(battery_support_kw=3_000.0))
     assert observation[running_at] == 1.0
     assert observation[timer_at] == 0.0
     assert info["electrolyser_commitment"]["mode"] == "running"
     assert info["electrolyser_commitment"]["min_up_remaining_s"] == 3_600.0
     assert info["metrics"]["electrolyser_cold_starts"] == 1
-    assert info["metrics"]["electrolyser_startup_energy_kwh"] == pytest.approx(
-        600.0
-    )
+    assert info["metrics"]["electrolyser_startup_energy_kwh"] == pytest.approx(600.0)
     assert info["metrics"]["electrolyser_mode_time_s"][
         "cold_starting"
     ] == pytest.approx(3_600.0)
@@ -557,7 +567,9 @@ def test_v2_energy_penalty_is_absolute_and_partition_invariant() -> None:
         {"min_battery_soc": 1.01},
     ),
 )
-def test_interval_outcome_rejects_corrupt_accounting(changes: dict[str, object]) -> None:
+def test_interval_outcome_rejects_corrupt_accounting(
+    changes: dict[str, object]
+) -> None:
     with pytest.raises((TypeError, ValueError), match="interval outcome"):
         _interval_outcome(**changes)
 
@@ -590,14 +602,14 @@ def test_v2_reports_requested_and_applied_energy_over_the_whole_decision() -> No
         authority["request_application_integral_l1_kwh"]
     )
     accepted = sum(
-        power["applied_kwh"][name]
-        for name in ("electrolyser", "dac", "methanator")
+        power["applied_kwh"][name] for name in ("electrolyser", "dac", "methanator")
     )
-    assert info["metrics"]["accepted_process_energy_kwh"] == pytest.approx(
-        accepted
-    )
+    assert info["metrics"]["accepted_process_energy_kwh"] == pytest.approx(accepted)
     assert info["metrics"]["electrolyser_applied_energy_kwh"] == pytest.approx(
         power["applied_kwh"]["electrolyser"]
+    )
+    assert info["metrics"]["battery_throughput_kwh"] == pytest.approx(
+        power["applied_kwh"]["battery"] + power["applied_kwh"]["battery_support"]
     )
 
 
@@ -610,7 +622,9 @@ def test_process_energy_intensity_is_undefined_without_delivered_product() -> No
     assert info["metrics"]["accepted_process_energy_per_delivered_kg"] is None
 
 
-def test_process_energy_intensity_counts_each_accepted_conversion_channel_once() -> None:
+def test_process_energy_intensity_counts_each_accepted_conversion_channel_once() -> (
+    None
+):
     metrics = EpisodeMetricsV2(
         delivered_kg=10.0,
         electrolyser_applied_energy_kwh=520.0,
@@ -620,9 +634,9 @@ def test_process_energy_intensity_counts_each_accepted_conversion_channel_once()
 
     assert metrics.accepted_process_energy_kwh == pytest.approx(620.0)
     assert metrics.accepted_process_energy_per_delivered_kg == pytest.approx(62.0)
-    assert metrics.to_dict()["accepted_process_energy_per_delivered_kg"] == pytest.approx(
-        62.0
-    )
+    assert metrics.to_dict()[
+        "accepted_process_energy_per_delivered_kg"
+    ] == pytest.approx(62.0)
 
 
 def test_episode_metrics_track_complete_initial_and_terminal_inventory_vector() -> None:
@@ -661,6 +675,10 @@ def test_episode_metrics_track_complete_initial_and_terminal_inventory_vector() 
     assert metrics["battery_energy_change_kwh"] == pytest.approx(
         terminal.battery_energy_kwh - initial.battery_energy_kwh
     )
+    assert metrics["battery_throughput_kwh"] == pytest.approx(
+        info["interval_power"]["applied_kwh"]["battery"]
+        + info["interval_power"]["applied_kwh"]["battery_support"]
+    )
 
 
 def test_episode_metrics_reject_corrupt_terminal_inventory() -> None:
@@ -679,6 +697,8 @@ def test_episode_metrics_reject_corrupt_terminal_inventory() -> None:
             breakdown,
             (),
             corrected_physics_steps=0,
+            battery_charge_applied_kwh=0.0,
+            battery_support_applied_kwh=0.0,
             electrolyser_applied_energy_kwh=0.0,
             dac_applied_energy_kwh=0.0,
             methanator_applied_energy_kwh=0.0,

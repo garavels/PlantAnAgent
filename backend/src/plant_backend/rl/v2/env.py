@@ -17,7 +17,13 @@ from typing import Any
 import gymnasium as gym
 import numpy as np
 from gymnasium.spaces import Box
-from plant_sim import Action, DeliverySettlement, PlantConfig, PlantSimulator, PlantState
+from plant_sim import (
+    Action,
+    DeliverySettlement,
+    PlantConfig,
+    PlantSimulator,
+    PlantState,
+)
 from plant_sim.state import CRITICAL, OFFLINE
 
 from ...controllers.base import Constraints
@@ -109,7 +115,9 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
         episode_seed = (
             int(seed)
             if seed is not None
-            else int(self.np_random.integers(0, np.iinfo(np.uint32).max, dtype=np.uint32))
+            else int(
+                self.np_random.integers(0, np.iinfo(np.uint32).max, dtype=np.uint32)
+            )
         )
         drawn = sample_episode(self.episode_config, self.config, seed=episode_seed)
         self._episode = drawn
@@ -213,9 +221,7 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
                 step_before,
                 constraints=self.constraints,
                 config=self.config,
-                dispatch_solar_available_kw=(
-                    self.simulator.next_dispatch_solar_kw()
-                ),
+                dispatch_solar_available_kw=(self.simulator.next_dispatch_solar_kw()),
             )
             last_applied = validated.action
             if validated.adjustments:
@@ -234,7 +240,9 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
             requested_kg += delivery.requested_kg
             delivered_kg += delivery.delivered_kg
             unmet_kg += delivery.unmet_kg
-            battery_discharged_kwh += max(0.0, -after_step.battery_power_kw) * self.config.dt_h
+            battery_discharged_kwh += (
+                max(0.0, -after_step.battery_power_kw) * self.config.dt_h
+            )
             min_soc = min(min_soc, after_step.battery_soc)
             shutdown_steps += int(after_step.plant_status in (CRITICAL, OFFLINE))
 
@@ -272,9 +280,7 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
             corrections=len(adjustments),
             guard_intervention_kwh=power.guard_intervention_l1_kwh,
             dispatch_gap_kwh=power.dispatch_gap_integral_l1_kwh,
-            request_application_gap_kwh=(
-                power.request_application_integral_l1_kwh
-            ),
+            request_application_gap_kwh=(power.request_application_integral_l1_kwh),
             out_of_range=decoded.clipped,
             terminal_ch4_kg=after.ch4_level_kg,
             reference_delivery_kg=self.episode_config.delivery_amount_kg,
@@ -293,6 +299,8 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
             breakdown,
             settlements,
             corrected_physics_steps=corrected_steps,
+            battery_charge_applied_kwh=power.applied_kwh["battery"],
+            battery_support_applied_kwh=power.applied_kwh["battery_support"],
             electrolyser_applied_energy_kwh=power.applied_kwh["electrolyser"],
             dac_applied_energy_kwh=power.applied_kwh["dac"],
             methanator_applied_energy_kwh=power.applied_kwh["methanator"],
@@ -318,9 +326,7 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
                 "guard_intervention_integral_l1_kwh": (
                     power.guard_intervention_integral_l1_kwh
                 ),
-                "dispatch_gap_integral_l1_kwh": (
-                    power.dispatch_gap_integral_l1_kwh
-                ),
+                "dispatch_gap_integral_l1_kwh": (power.dispatch_gap_integral_l1_kwh),
                 "request_application_integral_l1_kwh": (
                     power.request_application_integral_l1_kwh
                 ),
@@ -372,7 +378,9 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
     def delivery_observation(self) -> DeliveryObservation:
         """Current-deadline view, separated from the private delivery schedule."""
         if self._episode is None:
-            raise RuntimeError("reset() must be called before requesting delivery state")
+            raise RuntimeError(
+                "reset() must be called before requesting delivery state"
+            )
         next_delivery = self.simulator.next_delivery
         current = self.simulator.delivery_step
         return DeliveryObservation(
@@ -433,7 +441,8 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
                 None
                 if next_delivery is None
                 else {
-                    "steps_until_due": next_delivery.due_step - self.simulator.step_index,
+                    "steps_until_due": next_delivery.due_step
+                    - self.simulator.step_index,
                     "requested_kg": next_delivery.requested_kg,
                 }
             ),

@@ -41,6 +41,7 @@ class EpisodeMetricsV2:
     solar_kwh: float = 0.0
     curtailed_kwh: float = 0.0
     battery_discharged_kwh: float = 0.0
+    battery_throughput_kwh: float = 0.0
     electrolyser_applied_energy_kwh: float = 0.0
     dac_applied_energy_kwh: float = 0.0
     methanator_applied_energy_kwh: float = 0.0
@@ -75,6 +76,8 @@ class EpisodeMetricsV2:
         settlements: Iterable[DeliverySettlement],
         *,
         corrected_physics_steps: int,
+        battery_charge_applied_kwh: float,
+        battery_support_applied_kwh: float,
         electrolyser_applied_energy_kwh: float,
         dac_applied_energy_kwh: float,
         methanator_applied_energy_kwh: float,
@@ -101,7 +104,7 @@ class EpisodeMetricsV2:
             isinstance(terminal_soc, bool)
             or not isinstance(terminal_soc, Real)
             or not math.isfinite(float(terminal_soc))
-            or not 0.0 <= terminal_soc <= 1.0
+            or not 0.0 <= float(terminal_soc) <= 1.0
         ):
             raise ValueError("terminal battery SOC must be finite and within [0, 1]")
         applied_process_energy = {
@@ -109,6 +112,20 @@ class EpisodeMetricsV2:
             "dac": dac_applied_energy_kwh,
             "methanator": methanator_applied_energy_kwh,
         }
+        applied_battery_energy = {
+            "charge": battery_charge_applied_kwh,
+            "support": battery_support_applied_kwh,
+        }
+        for name, value in applied_battery_energy.items():
+            if (
+                isinstance(value, bool)
+                or not isinstance(value, Real)
+                or not math.isfinite(float(value))
+                or value < 0.0
+            ):
+                raise ValueError(
+                    f"battery {name} applied energy must be finite and non-negative"
+                )
         for name, value in applied_process_energy.items():
             if (
                 isinstance(value, bool)
@@ -137,9 +154,10 @@ class EpisodeMetricsV2:
         self.solar_kwh += outcome.solar_kwh
         self.curtailed_kwh += outcome.curtailed_kwh
         self.battery_discharged_kwh += outcome.battery_discharged_kwh
-        self.electrolyser_applied_energy_kwh += float(
-            electrolyser_applied_energy_kwh
-        )
+        # Match the frozen planner's bus-side, left-to-right accumulation exactly.
+        self.battery_throughput_kwh += float(battery_charge_applied_kwh)
+        self.battery_throughput_kwh += float(battery_support_applied_kwh)
+        self.electrolyser_applied_energy_kwh += float(electrolyser_applied_energy_kwh)
         self.dac_applied_energy_kwh += float(dac_applied_energy_kwh)
         self.methanator_applied_energy_kwh += float(methanator_applied_energy_kwh)
         self.min_battery_soc = min(self.min_battery_soc, outcome.min_battery_soc)
@@ -199,8 +217,7 @@ class EpisodeMetricsV2:
     @property
     def electrolyser_nonproductive_energy_kwh(self) -> float:
         return (
-            self.electrolyser_startup_energy_kwh
-            + self.electrolyser_standby_energy_kwh
+            self.electrolyser_startup_energy_kwh + self.electrolyser_standby_energy_kwh
         )
 
     @property
@@ -270,9 +287,8 @@ class EpisodeMetricsV2:
             "curtailed_kwh": self.curtailed_kwh,
             "solar_utilisation": self.solar_utilisation,
             "battery_discharged_kwh": self.battery_discharged_kwh,
-            "electrolyser_applied_energy_kwh": (
-                self.electrolyser_applied_energy_kwh
-            ),
+            "battery_throughput_kwh": self.battery_throughput_kwh,
+            "electrolyser_applied_energy_kwh": (self.electrolyser_applied_energy_kwh),
             "dac_applied_energy_kwh": self.dac_applied_energy_kwh,
             "methanator_applied_energy_kwh": self.methanator_applied_energy_kwh,
             "accepted_process_energy_kwh": self.accepted_process_energy_kwh,

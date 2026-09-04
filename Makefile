@@ -1,4 +1,4 @@
-.PHONY: help setup dev backend frontend sim test eval foresight-eval rl-eval rl-ceiling v2-eval v2-weather-eval v2-controller-eval v2-planner v2-mpc train-dry train \
+.PHONY: help setup dev backend frontend sim test eval foresight-eval rl-eval rl-ceiling v2-eval v2-weather-eval v2-controller-eval v2-planner v2-mpc v2-mpc-report train-dry train \
 	hepa-collect hepa-pretrain-dry hepa-pretrain hepa-finetune-dry hepa-finetune \
 	hepa-eval build clean
 
@@ -58,6 +58,19 @@ v2-mpc:           ## run one registered causal service-MPC cell (external OUTPUT
 	$(if $(OUTPUT),,$(error OUTPUT=/absolute/path/outside/repository.json is required))
 	uv run --frozen python -m plant_backend.rl.v2.mpc_experiment \
 		--delivery-rate $(or $(DELIVERY_RATE),35) --seed $(or $(SEED),0) \
+		--output $(OUTPUT)
+
+v2-mpc-report:    ## aggregate six registered causal service-MPC cells (external paths required)
+	$(if $(CELL_35_0),,$(error CELL_35_0=/absolute/rate35-seed0.json is required))
+	$(if $(CELL_35_1),,$(error CELL_35_1=/absolute/rate35-seed1.json is required))
+	$(if $(CELL_35_2),,$(error CELL_35_2=/absolute/rate35-seed2.json is required))
+	$(if $(CELL_42_0),,$(error CELL_42_0=/absolute/rate42-seed0.json is required))
+	$(if $(CELL_42_1),,$(error CELL_42_1=/absolute/rate42-seed1.json is required))
+	$(if $(CELL_42_2),,$(error CELL_42_2=/absolute/rate42-seed2.json is required))
+	$(if $(OUTPUT),,$(error OUTPUT=/absolute/path/outside/repository.json is required))
+	uv run --frozen python -m plant_backend.rl.v2.mpc_report \
+		--cell $(CELL_35_0) --cell $(CELL_35_1) --cell $(CELL_35_2) \
+		--cell $(CELL_42_0) --cell $(CELL_42_1) --cell $(CELL_42_2) \
 		--output $(OUTPUT)
 
 train-dry:        ## build the RL environment and print the training plan; trains nothing
