@@ -175,7 +175,10 @@ the share-only supervisory command with absolute process setpoints and a determi
 inner-loop dispatcher. The one-shot bridge probe confirmed startup recovery but also showed
 that additive authority cannot represent a target: it supplied 14.41 MWh against 28.50 kWh
 planned over its valid prefix. The next contract must make target tracking and unplanned
-energy explicit acceptance criteria.
+energy explicit acceptance criteria. That contract is now frozen: it preserves the Gym
+action and simulator, adds a versioned absolute setpoint seam, realizes it through a pure
+reserve-aware one-minute dispatcher, and repairs solver projection only when feasibility is
+preserved. Implementation remains outcome-free until the complete authorization gate passes.
 
 ## Stage D — Progressive operational realism
 

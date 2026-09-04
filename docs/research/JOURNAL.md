@@ -4061,3 +4061,37 @@ shortfall from the battery, remain below the existing guard, and bind plan, targ
 minute command, and actual power in evidence. Solver canonicalization will be repaired as a
 separate disclosed prerequisite. Full details and artifact identities are retained in
 `results/v2_service_mpc_actuation_bridge_probe_709e477.md`.
+
+## 2026-09-04 — Absolute-setpoint and inner-dispatch architecture frozen
+
+Before changing code again, the replacement architecture was frozen in
+`CAUSAL_SERVICE_MPC_SETPOINT_DISPATCH_PROTOCOL.md`, raw SHA-256
+`21b12eaa245b21d20d9458b9e3d0b8d163c682ef85ad9d5579fde392647e8782`.
+It preserves the historical five-dimensional Gym/share-action path and exact simulator,
+while adding a new service-MPC command that declares absolute electrolyser, DAC,
+methanator, and battery-charge targets. The command retains expected MILP support and all
+planned solar routes as evidence; neither becomes implicit actuator authority.
+
+The deterministic minute dispatcher is now specified algebraically. It reserves enough
+current solar to keep the electrolyser target reachable under reserve-aware battery support,
+shares remaining scarcity proportionally between the two processes that cannot currently use
+battery support, then uses surplus solar to reduce electrolyser support and finally charge
+the battery. It cannot request charging and support together, cannot over-offer the
+electrolyser target, sees only the contemporaneous bus already available to the guard, and
+emits an ordinary `Action` through the unchanged guard and plant. This explicitly separates
+15-minute forecast reasoning from one-minute actuator realization.
+
+The protocol also freezes the independent solver repair exposed by the failed bridge run.
+Raw vectors still must pass the current audit. The identical nearest-bound projection is
+attempted and independently audited; it is selected only if the complete projected vector
+remains feasible, otherwise the already valid raw vector is retained and must still survive
+plan extraction. The CO2-state and tiny gated-support counterexamples are both mandatory,
+and no tolerance may change.
+
+The future evidence graph binds plan to setpoint, every one-minute dispatcher input/output,
+ordinary request, guard, application, and next public residual. Its predeclared gates now
+make the missing conditions explicit: zero target overshoot, exact reachable pre-guard
+tracking, zero unexplained deficit, no simultaneous charge/support, complete energy
+attribution, and separate controller/dispatcher latency. PPO, HEPA, language-supervisor,
+economic-objective, and realism work remains outside this slice. No setpoint controller
+rollout or new outcome was opened while freezing the protocol.

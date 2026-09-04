@@ -92,6 +92,10 @@ fallback behavior.
   records the probe's B1 canonicalization failure, the 223-decision startup-recovery prefix,
   the separately labelled target-fidelity failure, and the decision to replace the held
   share/additive-support seam with absolute setpoints and a deterministic inner dispatcher.
+- [`CAUSAL_SERVICE_MPC_SETPOINT_DISPATCH_PROTOCOL.md`](CAUSAL_SERVICE_MPC_SETPOINT_DISPATCH_PROTOCOL.md)
+  freezes the new absolute command, reserve-aware one-minute allocation algorithm,
+  feasibility-preserving solver selection, evidence graph, implementation gate, and first
+  development-run decision rule before any new controller code or outcome is opened.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.
