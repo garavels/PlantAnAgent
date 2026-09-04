@@ -38,7 +38,12 @@ from .evaluation import (
 )
 from .mpc_controller import ServiceMPCControllerV1
 from .mpc_execution import SERVICE_MPC_RUN_EVIDENCE_FORMAT
-from .mpc_schema import SERVICE_MPC_CONTROLLER_ID, canonical_json, domain_sha256
+from .mpc_schema import (
+    DEFAULT_SERVICE_MPC_SETTINGS_V1,
+    SERVICE_MPC_CONTROLLER_ID,
+    canonical_json,
+    domain_sha256,
+)
 from .reward import RewardWeightsV2
 
 
@@ -64,9 +69,19 @@ REGISTERED_MPC_CONTRASTS = (
         control=IssuedForecastControllerV2.id,
     ),
 )
-REGISTERED_MPC_CELL_EXECUTION_FORMAT = "registered-service-mpc-cell-execution-v1"
+REGISTERED_MPC_CELL_EXECUTION_FORMAT = (
+    "registered-service-mpc-replication-cell-execution-v2"
+)
 REGISTERED_MPC_MATRIX_CONTRACT = {
-    "format": "causal-service-mpc-development-matrix-v1",
+    "format": "causal-service-mpc-engineering-replication-matrix-v2",
+    "registration": "post-initial-g1-failure-repair-replication-v1",
+    "prior_registered_result": {
+        "source_revision": "59e377c4bda4c46fa1873abc8e3506c0f4215946",
+        "report_sha256": (
+            "22fadb2da9c72baf7f61ddc9fa2373c18b317cb494462dd12c126823df1a0961"
+        ),
+        "gate_result": "G1_failed_no_performance_aggregate",
+    },
     "order": [
         {"delivery_rate_kg_h": rate, "seed": seed}
         for rate, seed in REGISTERED_MPC_CELLS
@@ -75,10 +90,20 @@ REGISTERED_MPC_MATRIX_CONTRACT = {
     "decisions_per_arm": REGISTERED_MPC_DECISIONS,
     "controller_order": list(REGISTERED_MPC_CONTROLLER_IDS),
     "contrasts": [item.to_dict() for item in REGISTERED_MPC_CONTRASTS],
+    "service_mpc_settings_sha256": DEFAULT_SERVICE_MPC_SETTINGS_V1.sha256,
+    "permitted_repair_scope": [
+        "non_negative_methanator_bus_power_round_trip",
+        "explicit_highs_mip_feasibility_and_scaled_independent_audit",
+        "solver_feasible_bound_canonicalization_and_plan_extraction",
+        "deep_validation_and_hash_compaction_of_failed_ledgers",
+    ],
+    "development_claim_boundary": (
+        "engineering replication on previously inspected cells; not holdout evidence"
+    ),
     "execution_unit": "one fresh process per cell",
 }
 REGISTERED_MPC_MATRIX_CONTRACT_SHA256 = domain_sha256(
-    "causal-service-mpc-development-matrix-contract-v1",
+    "causal-service-mpc-engineering-replication-matrix-contract-v2",
     REGISTERED_MPC_MATRIX_CONTRACT,
 )
 

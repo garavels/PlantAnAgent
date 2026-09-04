@@ -31,18 +31,40 @@ from plant_backend.rl.v2.mpc_experiment import (
     REGISTERED_MPC_CONTROLLER_IDS,
     REGISTERED_MPC_CONTRASTS,
     REGISTERED_MPC_DECISIONS,
+    REGISTERED_MPC_MATRIX_CONTRACT,
     REGISTERED_MPC_MATRIX_CONTRACT_SHA256,
     run_registered_service_mpc_cell,
     validate_artifact_destination,
     validate_registered_result,
 )
 from plant_backend.rl.v2.controllers import IssuedForecastControllerV2
+from plant_backend.rl.v2.mpc_schema import DEFAULT_SERVICE_MPC_SETTINGS_V1
 import plant_backend.rl.v2.mpc_experiment as mpc_experiment
 
 
 _MANIFEST_SHA = "a" * 64
 _EXOGENOUS_SHA = "b" * 64
 _SOURCE_SHA = "c" * 64
+
+
+def test_replication_contract_binds_prior_result_repair_scope_and_settings() -> None:
+    contract = REGISTERED_MPC_MATRIX_CONTRACT
+
+    assert contract["format"] == (
+        "causal-service-mpc-engineering-replication-matrix-v2"
+    )
+    assert contract["service_mpc_settings_sha256"] == (
+        DEFAULT_SERVICE_MPC_SETTINGS_V1.sha256
+    )
+    assert contract["prior_registered_result"] == {
+        "source_revision": "59e377c4bda4c46fa1873abc8e3506c0f4215946",
+        "report_sha256": (
+            "22fadb2da9c72baf7f61ddc9fa2373c18b317cb494462dd12c126823df1a0961"
+        ),
+        "gate_result": "G1_failed_no_performance_aggregate",
+    }
+    assert len(contract["permitted_repair_scope"]) == 4
+    assert len(REGISTERED_MPC_MATRIX_CONTRACT_SHA256) == 64
 
 
 def _controllers() -> tuple[

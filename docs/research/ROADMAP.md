@@ -18,7 +18,7 @@ The near-term research goal is to show that this separation creates attributable
 on a benchmark whose optimal action depends on uncertain future conditions and delayed
 equipment consequences.
 
-## Progress snapshot — 2026-09-03
+## Progress snapshot — 2026-09-04
 
 - Gate A is **partially complete**: the V1 tank-filling ceiling and heuristic
   saturation are reproduced, but the colleague's trained-policy artifact has not yet
@@ -43,6 +43,12 @@ equipment consequences.
   a material, exactly realizable scheduling gap and now justifies causal service MPC.
   It is not a prospective, field, economic, or site-generalization result, and the
   sustainable terminal objective must be strengthened before commercial benchmarking.
+- The first registered causal service-MPC matrix is an auditable **G1 engineering
+  failure**: all six MPC arms stopped before completion, no fallback was used, and no
+  performance aggregate survived. Post-outcome diagnosis localized four failures to a
+  one-ULP negative-curtailment invariant and two to an undeclared solver-feasibility
+  scale mismatch. Narrow invariant, numerical-contract, and failed-ledger repairs are
+  now frozen for a separately versioned replication on the same contaminated cells.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.
 

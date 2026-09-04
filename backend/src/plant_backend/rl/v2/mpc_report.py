@@ -1,4 +1,4 @@
-"""Frozen admission, aggregation, and gate report for the service-MPC matrix.
+"""Frozen admission, aggregation, and gate report for the service-MPC replication.
 
 The registered cell runner deliberately writes each large causal artifact outside Git.
 This module admits exactly the six declared artifacts, binds them to the already-frozen
@@ -40,6 +40,8 @@ from .mpc_execution import (
     SERVICE_MPC_ACTION_DOMAIN,
     SERVICE_MPC_APPLICATION_DOMAIN,
     SERVICE_MPC_DECISION_DOMAIN,
+    SERVICE_MPC_FAILURE_DOMAIN,
+    SERVICE_MPC_FAILURE_SCHEMA,
     SERVICE_MPC_GUARDED_ACTION_DOMAIN,
     SERVICE_MPC_INTERVAL_POWER_DOMAIN,
     SERVICE_MPC_REQUEST_DOMAIN,
@@ -69,8 +71,8 @@ from .mpc_schema import (
 from .reward import RewardWeightsV2
 
 
-SERVICE_MPC_REPORT_SCHEMA_VERSION = 1
-SERVICE_MPC_REPORT_FORMAT = "causal-service-mpc-development-report-v1"
+SERVICE_MPC_REPORT_SCHEMA_VERSION = 2
+SERVICE_MPC_REPORT_FORMAT = "causal-service-mpc-engineering-replication-report-v2"
 SERVICE_MPC_REPORT_DOMAIN = SERVICE_MPC_REPORT_FORMAT
 FROZEN_PLANNER_RELATIVE_PATH = Path(
     "docs/research/results/v2_feasible_planner_matrix_564002c.json"
@@ -181,6 +183,28 @@ class _CellAudit:
         if len(matches) != 1:  # pragma: no cover - protected by admission
             raise ValueError("admitted cell lost its unique controller arm")
         return matches[0]
+
+
+@dataclass(frozen=True, slots=True)
+class _SuccessEventAudit:
+    event: dict[str, Any]
+    sha256: str
+    action: dict[str, Any]
+    residual: dict[str, Any] | None
+    decision_latency_ns: int
+    stage_latencies_ns: tuple[int, int]
+
+
+@dataclass(frozen=True, slots=True)
+class _ApplicationAudit:
+    guard_interventions: int
+    corrected_physics_steps: int
+    out_of_range: bool
+    guard_changed_request: bool
+    plant_refused_or_rerouted_power: bool
+    guard_gap_kwh: float
+    dispatch_gap_kwh: float
+    request_gap_kwh: float
 
 
 @dataclass(frozen=True, slots=True)
@@ -384,28 +408,409 @@ def _nearest_rank_latency(values: Sequence[int]) -> dict[str, int | float | str]
     }
 
 
-def _validate_stage(value: object, *, expected_name: str, name: str) -> int:
+def _validate_latency_summary(
+    name: str,
+    value: object,
+    *,
+    expected: dict[str, int | float | str],
+) -> None:
+    summary = _mapping(name, value)
+    if set(summary) != set(expected):
+        raise ValueError(f"{name} shape is invalid")
+    for key in ("count", "minimum_ns", "p99_ns", "maximum_ns"):
+        _integer(f"{name} {key}", summary.get(key))
+    _finite(f"{name} mean_ns", summary.get("mean_ns"), minimum=0.0)
+    if summary.get("p99_method") != "empirical nearest rank":
+        raise ValueError(f"{name} method is invalid")
+    if summary != expected:
+        raise ValueError(f"{name} is invalid")
+
+
+def _validate_stage_record(
+    value: object,
+    *,
+    expected_name: str,
+    expected_success: bool | None,
+    name: str,
+) -> tuple[int, bool]:
     stage = _mapping(name, value)
     if stage.get("stage") != expected_name:
         raise ValueError(f"{name} is out of order")
-    if stage.get("success") is not True or stage.get("status") != 0:
-        raise ValueError(f"{name} is not an evidenced optimal solve")
+    success = stage.get("success")
+    if not isinstance(success, bool):
+        raise TypeError(f"{name} success must be bool")
+    if expected_success is not None and success is not expected_success:
+        raise ValueError(f"{name} has invalid success status")
+    status = stage.get("status")
+    if isinstance(status, bool) or not isinstance(status, Integral):
+        raise TypeError(f"{name} status must be an integer")
     if stage.get("solver") != SERVICE_MPC_SOLVER:
         raise ValueError(f"{name} solver identity is invalid")
     for key in ("message", "scipy_version", "highs_version"):
         if not isinstance(stage.get(key), str) or not stage[key]:
             raise ValueError(f"{name} {key} is missing")
-    for key in ("objective_value", "mip_dual_bound", "mip_gap"):
-        _finite(f"{name} {key}", stage.get(key))
-    _integer(f"{name} mip_node_count", stage.get("mip_node_count"))
-    require_sha256(f"{name} solution_sha256", stage.get("solution_sha256"))
-    return _integer(f"{name} elapsed_ns", stage.get("elapsed_ns"))
+    if len(stage["message"]) > 500:
+        raise ValueError(f"{name} message exceeds the evidence bound")
+    if success:
+        if status != 0:
+            raise ValueError(f"{name} is not an evidenced optimal solve")
+        for key in ("objective_value", "mip_dual_bound"):
+            _finite(f"{name} {key}", stage.get(key))
+        _finite(f"{name} mip_gap", stage.get("mip_gap"), minimum=0.0)
+        _integer(f"{name} mip_node_count", stage.get("mip_node_count"))
+        require_sha256(f"{name} solution_sha256", stage.get("solution_sha256"))
+    else:
+        if stage.get("solution_sha256") is not None:
+            raise ValueError(f"{name} failed solve publishes a solution digest")
+        for key in ("objective_value", "mip_dual_bound", "mip_gap"):
+            if stage.get(key) is not None:
+                _finite(
+                    f"{name} {key}",
+                    stage[key],
+                    minimum=0.0 if key == "mip_gap" else None,
+                )
+        if stage.get("mip_node_count") is not None:
+            _integer(f"{name} mip_node_count", stage["mip_node_count"])
+    return _integer(f"{name} elapsed_ns", stage.get("elapsed_ns")), success
 
 
-def _validate_mpc_evidence(
+def _validate_stage(value: object, *, expected_name: str, name: str) -> int:
+    elapsed_ns, _ = _validate_stage_record(
+        value,
+        expected_name=expected_name,
+        expected_success=True,
+        name=name,
+    )
+    return elapsed_ns
+
+
+def _validate_success_event(
+    value: object,
+    *,
+    index: int,
+    settings_sha256: str,
+    trace_action: Mapping[str, Any] | None,
+) -> _SuccessEventAudit:
+    event = _mapping(f"service-MPC event {index}", value)
+    if (
+        event.get("schema") != "service-mpc-decision-evidence-v1"
+        or event.get("controller_id") != SERVICE_MPC_CONTROLLER_ID
+        or event.get("settings_sha256") != settings_sha256
+    ):
+        raise ValueError(f"service-MPC event {index} identity is invalid")
+    if (
+        _integer(
+            f"service-MPC event {index} decision_index",
+            event.get("decision_index"),
+        )
+        != index
+    ):
+        raise ValueError(f"service-MPC event {index} identity is invalid")
+    expected_horizon = min(96, REGISTERED_MPC_DECISIONS - index)
+    if (
+        expected_horizon <= 0
+        or _integer(
+            f"service-MPC event {index} horizon_intervals",
+            event.get("horizon_intervals"),
+            minimum=1,
+        )
+        != expected_horizon
+    ):
+        raise ValueError(f"service-MPC event {index} horizon is invalid")
+    stages = _sequence(f"service-MPC event {index} stages", event.get("stages"))
+    if len(stages) != 2:
+        raise ValueError(f"service-MPC event {index} lacks two solver stages")
+    stage_latencies = (
+        _validate_stage(
+            stages[0],
+            expected_name="primary_delivery",
+            name=f"service-MPC event {index} primary stage",
+        ),
+        _validate_stage(
+            stages[1],
+            expected_name="secondary_tiebreak",
+            name=f"service-MPC event {index} secondary stage",
+        ),
+    )
+    decision_latency = _integer(
+        f"service-MPC event {index} decision latency",
+        event.get("decision_elapsed_ns"),
+    )
+    if decision_latency < sum(stage_latencies):
+        raise ValueError(f"service-MPC event {index} latency is impossible")
+
+    event_identity = deepcopy(event)
+    event_digest = require_sha256(
+        f"service-MPC event {index} sha256", event_identity.pop("sha256", None)
+    )
+    event_identity.pop("decision_elapsed_ns", None)
+    identity_stages = _sequence(
+        f"service-MPC event {index} identity stages",
+        event_identity.pop("stages", None),
+    )
+    event_identity["stage_solution_sha256"] = [
+        _mapping("solver stage", stage)["solution_sha256"] for stage in identity_stages
+    ]
+    if domain_sha256(SERVICE_MPC_DECISION_DOMAIN, event_identity) != event_digest:
+        raise ValueError(f"service-MPC event {index} digest is invalid")
+
+    action = _digest_body(
+        f"service-MPC event {index} action",
+        SERVICE_MPC_ACTION_DOMAIN,
+        event.get("action"),
+    )
+    action_values = _mapping(
+        f"service-MPC event {index} action values", action.get("action")
+    )
+    action_fields = {
+        "battery_share",
+        "electrolyser_share",
+        "dac_share",
+        "methanator_share",
+        "battery_support_kw",
+    }
+    if set(action_values) != action_fields:
+        raise ValueError(f"service-MPC event {index} action shape is invalid")
+    shares = tuple(
+        _finite(
+            f"service-MPC event {index} action {key}",
+            action_values[key],
+            minimum=0.0,
+        )
+        for key in (
+            "battery_share",
+            "electrolyser_share",
+            "dac_share",
+            "methanator_share",
+        )
+    )
+    if any(value > 1.0 for value in shares) or math.fsum(shares) > 1.0:
+        raise ValueError(f"service-MPC event {index} action simplex is invalid")
+    _finite(
+        f"service-MPC event {index} action battery_support_kw",
+        action_values["battery_support_kw"],
+        minimum=0.0,
+    )
+    if trace_action is not None:
+        for key in action_fields:
+            if action_values.get(key) != trace_action[key]:
+                raise ValueError(
+                    f"service-MPC event {index} differs from its requested trace"
+                )
+    raw_residual = event.get("residual")
+    residual = None
+    if raw_residual is not None:
+        residual = _digest_body(
+            f"service-MPC event {index} residual",
+            SERVICE_MPC_RESIDUAL_DOMAIN,
+            raw_residual,
+        )
+        if (
+            _integer(
+                f"service-MPC event {index} residual decision_index",
+                residual.get("decision_index"),
+            )
+            != index
+        ):
+            raise ValueError(f"service-MPC event {index} residual index is invalid")
+    return _SuccessEventAudit(
+        event=event,
+        sha256=event_digest,
+        action=action,
+        residual=residual,
+        decision_latency_ns=decision_latency,
+        stage_latencies_ns=stage_latencies,
+    )
+
+
+def _validate_failure_event(
+    value: object,
+    *,
+    index: int,
+) -> tuple[dict[str, Any], tuple[int, ...]]:
+    name = f"service-MPC failure event {index}"
+    event = _mapping(name, value)
+    if (
+        event.get("schema") != SERVICE_MPC_FAILURE_SCHEMA
+        or event.get("controller_id") != SERVICE_MPC_CONTROLLER_ID
+    ):
+        raise ValueError(f"{name} identity is invalid")
+    if _integer(f"{name} decision_index", event.get("decision_index")) != index:
+        raise ValueError(f"{name} identity is invalid")
+    phase = event.get("phase")
+    valid_phases = {
+        "transition_reconciliation",
+        "input_validation",
+        "forecast_projection",
+        "model_construction",
+        "solver",
+        "action_realization",
+        "evidence_construction",
+    }
+    if phase not in valid_phases:
+        raise ValueError(f"{name} phase is invalid")
+    for key in ("exception_type", "message"):
+        if not isinstance(event.get(key), str) or not event[key]:
+            raise ValueError(f"{name} {key} is missing")
+    if len(event["message"]) > 500:
+        raise ValueError(f"{name} message exceeds the evidence bound")
+    _integer(f"{name} elapsed_ns", event.get("elapsed_ns"))
+    for key in (
+        "observation_sha256",
+        "public_forecast_sha256",
+        "projection_sha256",
+        "model_sha256",
+        "plan_sha256",
+    ):
+        if event.get(key) is not None:
+            require_sha256(f"{name} {key}", event[key])
+    stages = _sequence(f"{name} stages", event.get("stages"))
+    if len(stages) > 2:
+        raise ValueError(f"{name} contains too many solver stages")
+    expected_names = ("primary_delivery", "secondary_tiebreak")
+    latencies: list[int] = []
+    successes: list[bool] = []
+    for stage_index, raw_stage in enumerate(stages):
+        elapsed_ns, success = _validate_stage_record(
+            raw_stage,
+            expected_name=expected_names[stage_index],
+            expected_success=None,
+            name=f"{name} stage {stage_index}",
+        )
+        latencies.append(elapsed_ns)
+        successes.append(success)
+    if any(not success for success in successes[:-1]):
+        raise ValueError(f"{name} failed before its final attempted stage")
+    if stages and phase not in {
+        "solver",
+        "action_realization",
+        "evidence_construction",
+    }:
+        raise ValueError(f"{name} phase cannot contain solver stages")
+    if (
+        event["exception_type"] == "ServiceMPCSolveError"
+        and successes
+        and successes[-1]
+    ):
+        raise ValueError(f"{name} solve failure ends with a successful stage")
+    if phase in {"action_realization", "evidence_construction"} and any(
+        not success for success in successes
+    ):
+        raise ValueError(f"{name} post-solve failure contains a failed stage")
+
+    identity = deepcopy(event)
+    observed = require_sha256(f"{name} sha256", identity.pop("sha256", None))
+    identity.pop("elapsed_ns", None)
+    if domain_sha256(SERVICE_MPC_FAILURE_DOMAIN, identity) != observed:
+        raise ValueError(f"{name} digest is invalid")
+    return event, tuple(latencies)
+
+
+def _validate_application(
+    value: object,
+    *,
+    index: int,
+    event: _SuccessEventAudit,
+) -> _ApplicationAudit:
+    application = _digest_body(
+        f"service-MPC application {index}",
+        SERVICE_MPC_APPLICATION_DOMAIN,
+        value,
+    )
+    residual = event.residual
+    if residual is None:
+        raise ValueError(f"service-MPC application {index} has no public residual")
+    if (
+        application.get("schema") != "service-mpc-decision-application-v1"
+        or application.get("controller_id") != SERVICE_MPC_CONTROLLER_ID
+        or application.get("decision_evidence_sha256") != event.sha256
+        or application.get("action_sha256") != event.action["sha256"]
+        or application.get("residual_sha256") != residual["sha256"]
+    ):
+        raise ValueError(f"service-MPC application {index} binding is invalid")
+    if (
+        _integer(
+            f"service-MPC application {index} decision_index",
+            application.get("decision_index"),
+        )
+        != index
+    ):
+        raise ValueError(f"service-MPC application {index} binding is invalid")
+    for key, domain in (
+        ("request", SERVICE_MPC_REQUEST_DOMAIN),
+        ("guarded_action", SERVICE_MPC_GUARDED_ACTION_DOMAIN),
+        ("interval_power", SERVICE_MPC_INTERVAL_POWER_DOMAIN),
+    ):
+        payload = _mapping(f"service-MPC application {index} {key}", application[key])
+        if application.get(f"{key}_sha256") != domain_sha256(domain, payload):
+            raise ValueError(f"service-MPC application {index} {key} digest is invalid")
+    intervention_count = _integer(
+        f"service-MPC application {index} interventions",
+        application.get("guard_interventions"),
+    )
+    adjustments = _sequence(
+        f"service-MPC application {index} adjustments",
+        application.get("adjustments"),
+    )
+    if len(adjustments) != intervention_count or any(
+        not isinstance(item, str) or not item for item in adjustments
+    ):
+        raise ValueError(f"service-MPC application {index} adjustments are invalid")
+    corrected = _integer(
+        f"service-MPC application {index} corrected steps",
+        application.get("corrected_physics_steps"),
+    )
+    for key in (
+        "out_of_range",
+        "guard_changed_request",
+        "plant_refused_or_rerouted_power",
+    ):
+        if not isinstance(application.get(key), bool):
+            raise TypeError(f"service-MPC application {index} {key} must be bool")
+    guard_gap = _finite(
+        f"service-MPC application {index} guard gap",
+        application.get("guard_intervention_integral_l1_kwh"),
+        minimum=0.0,
+    )
+    dispatch_gap = _finite(
+        f"service-MPC application {index} dispatch gap",
+        application.get("dispatch_gap_integral_l1_kwh"),
+        minimum=0.0,
+    )
+    request_gap = _finite(
+        f"service-MPC application {index} request gap",
+        application.get("request_application_integral_l1_kwh"),
+        minimum=0.0,
+    )
+    expected_guard_change = bool(
+        application["out_of_range"]
+        or corrected > 0
+        or guard_gap > MODEL_BALANCE_TOLERANCE
+    )
+    if application["guard_changed_request"] != expected_guard_change:
+        raise ValueError(f"service-MPC application {index} guard flag is invalid")
+    expected_refusal = dispatch_gap > MODEL_BALANCE_TOLERANCE
+    if application["plant_refused_or_rerouted_power"] != expected_refusal:
+        raise ValueError(f"service-MPC application {index} refusal flag is invalid")
+    return _ApplicationAudit(
+        guard_interventions=intervention_count,
+        corrected_physics_steps=corrected,
+        out_of_range=application["out_of_range"],
+        guard_changed_request=application["guard_changed_request"],
+        plant_refused_or_rerouted_power=application["plant_refused_or_rerouted_power"],
+        guard_gap_kwh=guard_gap,
+        dispatch_gap_kwh=dispatch_gap,
+        request_gap_kwh=request_gap,
+    )
+
+
+def _validate_mpc_run_evidence(
     value: object,
     *,
     trace: _TraceAudit,
+    expected_status: str,
+    completed_decisions: int,
+    runner_failure_phase: str | None,
 ) -> tuple[dict[str, Any], tuple[int, ...], tuple[int, ...]]:
     evidence = _digest_body(
         "service-MPC run evidence",
@@ -415,224 +820,186 @@ def _validate_mpc_evidence(
     expected_scalars: dict[str, object] = {
         "format": SERVICE_MPC_RUN_EVIDENCE_FORMAT,
         "controller_id": SERVICE_MPC_CONTROLLER_ID,
-        "status": "complete",
-        "completed_decisions": REGISTERED_MPC_DECISIONS,
-        "runner_failure_phase": None,
-        "pending_transition": False,
-        "event_count": REGISTERED_MPC_DECISIONS,
-        "successful_decision_count": REGISTERED_MPC_DECISIONS,
-        "failed_decision_count": 0,
-        "application_count": REGISTERED_MPC_DECISIONS,
-        "fallback_action_count": 0,
-        "all_successful_decisions_reconciled": True,
+        "status": expected_status,
+        "runner_failure_phase": runner_failure_phase,
     }
     for key, expected in expected_scalars.items():
         if evidence.get(key) != expected:
             raise ValueError(f"service-MPC run evidence has invalid {key}")
+    if (
+        _integer(
+            "service-MPC run evidence completed_decisions",
+            evidence.get("completed_decisions"),
+        )
+        != completed_decisions
+    ):
+        raise ValueError("service-MPC run evidence has invalid completed_decisions")
+    if (
+        _integer(
+            "service-MPC run evidence fallback_action_count",
+            evidence.get("fallback_action_count"),
+        )
+        != 0
+    ):
+        raise ValueError("service-MPC run evidence has invalid fallback_action_count")
+    if trace.count != completed_decisions:
+        raise ValueError("service-MPC trace and completed decisions disagree")
+    pending = evidence.get("pending_transition")
+    if not isinstance(pending, bool):
+        raise TypeError("service-MPC pending_transition must be bool")
+
     events = _sequence("service-MPC events", evidence.get("events"))
     applications = _sequence("service-MPC applications", evidence.get("applications"))
-    if len(events) != REGISTERED_MPC_DECISIONS or len(applications) != (
-        REGISTERED_MPC_DECISIONS
-    ):
-        raise ValueError("service-MPC evidence ledgers are incomplete")
+    raw_successes: list[object] = []
+    raw_failures: list[object] = []
+    for raw_event in events:
+        schema = _mapping("service-MPC event", raw_event).get("schema")
+        if schema == "service-mpc-decision-evidence-v1" and not raw_failures:
+            raw_successes.append(raw_event)
+        elif schema == SERVICE_MPC_FAILURE_SCHEMA and not raw_failures:
+            raw_failures.append(raw_event)
+        else:
+            raise ValueError(
+                "service-MPC failure event must terminate the event sequence"
+            )
+    if len(raw_failures) > 1:
+        raise ValueError("service-MPC run contains multiple failure events")
+
+    successes_count = len(raw_successes)
+    failures_count = len(raw_failures)
+    applications_count = len(applications)
+    expected_counts = {
+        "event_count": len(events),
+        "successful_decision_count": successes_count,
+        "failed_decision_count": failures_count,
+        "application_count": applications_count,
+    }
+    for key, expected in expected_counts.items():
+        if _integer(f"service-MPC run evidence {key}", evidence.get(key)) != expected:
+            raise ValueError(f"service-MPC run evidence has invalid {key}")
+    if successes_count - completed_decisions not in (0, 1):
+        raise ValueError("service-MPC successes and completed decisions disagree")
+    if completed_decisions - applications_count not in (0, 1):
+        raise ValueError("service-MPC applications and completed decisions disagree")
+    if applications_count > successes_count:
+        raise ValueError("service-MPC applications exceed successful decisions")
+    if expected_status == "complete":
+        if (
+            runner_failure_phase is not None
+            or failures_count
+            or pending
+            or successes_count != completed_decisions
+            or applications_count != completed_decisions
+        ):
+            raise ValueError("complete service-MPC run evidence is incomplete")
+    elif expected_status == "failed":
+        if not isinstance(runner_failure_phase, str) or not runner_failure_phase:
+            raise ValueError("failed service-MPC run lacks a runner failure phase")
+    else:  # pragma: no cover - closed internal call surface
+        raise ValueError("service-MPC evidence status is unsupported")
 
     expected_settings = _mapping(
         "service-MPC settings descriptor",
         _expected_controller_specs()[SERVICE_MPC_CONTROLLER_ID]["settings"],
     )
-    settings_sha256 = expected_settings["sha256"]
-    decision_latencies: list[int] = []
-    stage_latencies: list[int] = []
-    guard_interventions = 0
-    corrected_steps = 0
-    out_of_range = 0
-    guard_changed = 0
-    plant_refusal = 0
-    guard_gap_values: list[float] = []
-    dispatch_gap_values: list[float] = []
-    request_gap_values: list[float] = []
-    for index, (raw_event, raw_application, trace_action) in enumerate(
-        zip(events, applications, trace.actions, strict=True)
-    ):
-        event = _mapping(f"service-MPC event {index}", raw_event)
-        if (
-            event.get("schema") != "service-mpc-decision-evidence-v1"
-            or event.get("controller_id") != SERVICE_MPC_CONTROLLER_ID
-            or event.get("decision_index") != index
-            or event.get("settings_sha256") != settings_sha256
-        ):
-            raise ValueError(f"service-MPC event {index} identity is invalid")
-        expected_horizon = min(96, REGISTERED_MPC_DECISIONS - index)
-        if event.get("horizon_intervals") != expected_horizon:
-            raise ValueError(f"service-MPC event {index} horizon is invalid")
-        stages = _sequence(f"service-MPC event {index} stages", event.get("stages"))
-        if len(stages) != 2:
-            raise ValueError(f"service-MPC event {index} lacks two solver stages")
-        event_stage_latencies = (
-            _validate_stage(
-                stages[0],
-                expected_name="primary_delivery",
-                name=f"service-MPC event {index} primary stage",
-            ),
-            _validate_stage(
-                stages[1],
-                expected_name="secondary_tiebreak",
-                name=f"service-MPC event {index} secondary stage",
-            ),
+    settings_sha256 = require_sha256(
+        "service-MPC settings descriptor sha256",
+        expected_settings.get("sha256"),
+    )
+    audited_successes = tuple(
+        _validate_success_event(
+            raw_event,
+            index=index,
+            settings_sha256=settings_sha256,
+            trace_action=trace.actions[index] if index < trace.count else None,
         )
-        stage_latencies.extend(event_stage_latencies)
-        decision_elapsed = _integer(
-            f"service-MPC event {index} decision latency",
-            event.get("decision_elapsed_ns"),
+        for index, raw_event in enumerate(raw_successes)
+    )
+    failure_stage_latencies: tuple[int, ...] = ()
+    if raw_failures:
+        _, failure_stage_latencies = _validate_failure_event(
+            raw_failures[0],
+            index=successes_count,
         )
-        if decision_elapsed < sum(event_stage_latencies):
-            raise ValueError(f"service-MPC event {index} latency is impossible")
-        decision_latencies.append(decision_elapsed)
+    unreconciled = tuple(item.residual is None for item in audited_successes)
+    if pending != bool(audited_successes and unreconciled[-1]):
+        raise ValueError("service-MPC pending state and final residual disagree")
+    if any(unreconciled[:-1]):
+        raise ValueError("only the final service-MPC success may be unreconciled")
+    all_reconciled = all(not item for item in unreconciled)
+    if evidence.get("all_successful_decisions_reconciled") is not all_reconciled:
+        raise ValueError("service-MPC reconciliation summary is invalid")
 
-        event_identity = deepcopy(event)
-        event_digest = require_sha256(
-            f"service-MPC event {index} sha256", event_identity.pop("sha256", None)
-        )
-        event_identity.pop("decision_elapsed_ns", None)
-        identity_stages = _sequence(
-            f"service-MPC event {index} identity stages",
-            event_identity.pop("stages", None),
-        )
-        event_identity["stage_solution_sha256"] = [
-            _mapping("solver stage", stage)["solution_sha256"]
-            for stage in identity_stages
-        ]
-        if domain_sha256(SERVICE_MPC_DECISION_DOMAIN, event_identity) != event_digest:
-            raise ValueError(f"service-MPC event {index} digest is invalid")
-
-        action = _digest_body(
-            f"service-MPC event {index} action",
-            SERVICE_MPC_ACTION_DOMAIN,
-            event.get("action"),
-        )
-        action_values = _mapping(
-            f"service-MPC event {index} action values", action.get("action")
-        )
-        for key in (
-            "battery_share",
-            "electrolyser_share",
-            "dac_share",
-            "methanator_share",
-            "battery_support_kw",
-        ):
-            if action_values.get(key) != trace_action[key]:
-                raise ValueError(
-                    f"service-MPC event {index} differs from its requested trace"
-                )
-        residual = _digest_body(
-            f"service-MPC event {index} residual",
-            SERVICE_MPC_RESIDUAL_DOMAIN,
-            event.get("residual"),
-        )
-        if residual.get("decision_index") != index:
-            raise ValueError(f"service-MPC event {index} residual index is invalid")
-
-        application = _digest_body(
-            f"service-MPC application {index}",
-            SERVICE_MPC_APPLICATION_DOMAIN,
+    audited_applications = tuple(
+        _validate_application(
             raw_application,
+            index=index,
+            event=audited_successes[index],
         )
-        if (
-            application.get("schema") != "service-mpc-decision-application-v1"
-            or application.get("controller_id") != SERVICE_MPC_CONTROLLER_ID
-            or application.get("decision_index") != index
-            or application.get("decision_evidence_sha256") != event_digest
-            or application.get("action_sha256") != action["sha256"]
-            or application.get("residual_sha256") != residual["sha256"]
-        ):
-            raise ValueError(f"service-MPC application {index} binding is invalid")
-        for key, domain in (
-            ("request", SERVICE_MPC_REQUEST_DOMAIN),
-            ("guarded_action", SERVICE_MPC_GUARDED_ACTION_DOMAIN),
-            ("interval_power", SERVICE_MPC_INTERVAL_POWER_DOMAIN),
-        ):
-            payload = _mapping(
-                f"service-MPC application {index} {key}", application[key]
-            )
-            if application.get(f"{key}_sha256") != domain_sha256(domain, payload):
-                raise ValueError(
-                    f"service-MPC application {index} {key} digest is invalid"
-                )
-        intervention_count = _integer(
-            f"service-MPC application {index} interventions",
-            application.get("guard_interventions"),
+        for index, raw_application in enumerate(applications)
+    )
+    decision_latencies = tuple(item.decision_latency_ns for item in audited_successes)
+    stage_latencies = (
+        tuple(
+            latency for item in audited_successes for latency in item.stage_latencies_ns
         )
-        adjustment_rows = _sequence(
-            f"service-MPC application {index} adjustments",
-            application.get("adjustments"),
-        )
-        if len(adjustment_rows) != intervention_count or any(
-            not isinstance(item, str) or not item for item in adjustment_rows
-        ):
-            raise ValueError(f"service-MPC application {index} adjustments are invalid")
-        corrected = _integer(
-            f"service-MPC application {index} corrected steps",
-            application.get("corrected_physics_steps"),
-        )
-        for key in (
-            "out_of_range",
-            "guard_changed_request",
-            "plant_refused_or_rerouted_power",
-        ):
-            if not isinstance(application.get(key), bool):
-                raise TypeError(f"service-MPC application {index} {key} must be bool")
-        guard_gap = _finite(
-            f"service-MPC application {index} guard gap",
-            application.get("guard_intervention_integral_l1_kwh"),
-            minimum=0.0,
-        )
-        dispatch_gap = _finite(
-            f"service-MPC application {index} dispatch gap",
-            application.get("dispatch_gap_integral_l1_kwh"),
-            minimum=0.0,
-        )
-        request_gap = _finite(
-            f"service-MPC application {index} request gap",
-            application.get("request_application_integral_l1_kwh"),
-            minimum=0.0,
-        )
-        expected_guard_change = bool(
-            application["out_of_range"]
-            or corrected > 0
-            or guard_gap > MODEL_BALANCE_TOLERANCE
-        )
-        if application["guard_changed_request"] != expected_guard_change:
-            raise ValueError(f"service-MPC application {index} guard flag is invalid")
-        if application["plant_refused_or_rerouted_power"] != (
-            dispatch_gap > MODEL_BALANCE_TOLERANCE
-        ):
-            raise ValueError(f"service-MPC application {index} refusal flag is invalid")
-        guard_interventions += intervention_count
-        corrected_steps += corrected
-        out_of_range += int(application["out_of_range"])
-        guard_changed += int(application["guard_changed_request"])
-        plant_refusal += int(application["plant_refused_or_rerouted_power"])
-        guard_gap_values.append(guard_gap)
-        dispatch_gap_values.append(dispatch_gap)
-        request_gap_values.append(request_gap)
-
+        + failure_stage_latencies
+    )
     expected_aggregates: dict[str, int | float] = {
-        "guard_intervention_count": guard_interventions,
-        "corrected_physics_steps": corrected_steps,
-        "out_of_range_decisions": out_of_range,
-        "guard_changed_decisions": guard_changed,
-        "plant_refusal_or_reroute_decisions": plant_refusal,
-        "guard_intervention_integral_l1_kwh": math.fsum(guard_gap_values),
-        "dispatch_gap_integral_l1_kwh": math.fsum(dispatch_gap_values),
-        "request_application_integral_l1_kwh": math.fsum(request_gap_values),
+        "guard_intervention_count": sum(
+            item.guard_interventions for item in audited_applications
+        ),
+        "corrected_physics_steps": sum(
+            item.corrected_physics_steps for item in audited_applications
+        ),
+        "out_of_range_decisions": sum(
+            item.out_of_range for item in audited_applications
+        ),
+        "guard_changed_decisions": sum(
+            item.guard_changed_request for item in audited_applications
+        ),
+        "plant_refusal_or_reroute_decisions": sum(
+            item.plant_refused_or_rerouted_power for item in audited_applications
+        ),
+        "guard_intervention_integral_l1_kwh": math.fsum(
+            item.guard_gap_kwh for item in audited_applications
+        ),
+        "dispatch_gap_integral_l1_kwh": math.fsum(
+            item.dispatch_gap_kwh for item in audited_applications
+        ),
+        "request_application_integral_l1_kwh": math.fsum(
+            item.request_gap_kwh for item in audited_applications
+        ),
+    }
+    integer_aggregates = {
+        "guard_intervention_count",
+        "corrected_physics_steps",
+        "out_of_range_decisions",
+        "guard_changed_decisions",
+        "plant_refusal_or_reroute_decisions",
     }
     for key, expected in expected_aggregates.items():
-        if evidence.get(key) != expected:
+        observed: int | float
+        if key in integer_aggregates:
+            observed = _integer(f"service-MPC run evidence {key}", evidence.get(key))
+        else:
+            observed = _finite(
+                f"service-MPC run evidence {key}",
+                evidence.get(key),
+                minimum=0.0,
+            )
+        if observed != expected:
             raise ValueError(f"service-MPC run evidence aggregate {key} is invalid")
-    if evidence.get("decision_latency") != _nearest_rank_latency(decision_latencies):
-        raise ValueError("service-MPC decision latency summary is invalid")
-    if evidence.get("solver_stage_latency") != _nearest_rank_latency(stage_latencies):
-        raise ValueError("service-MPC stage latency summary is invalid")
+    _validate_latency_summary(
+        "service-MPC decision latency summary",
+        evidence.get("decision_latency"),
+        expected=_nearest_rank_latency(decision_latencies),
+    )
+    _validate_latency_summary(
+        "service-MPC stage latency summary",
+        evidence.get("solver_stage_latency"),
+        expected=_nearest_rank_latency(stage_latencies),
+    )
 
     compact = {
         key: deepcopy(evidence[key])
@@ -645,26 +1012,40 @@ def _validate_mpc_evidence(
     compact["application_ledger_sha256"] = hashlib.sha256(
         canonical_json(applications).encode("utf-8")
     ).hexdigest()
-    return compact, tuple(decision_latencies), tuple(stage_latencies)
+    return compact, decision_latencies, stage_latencies
 
 
-def _validate_failed_run_evidence(value: object) -> dict[str, Any] | None:
+def _validate_mpc_evidence(
+    value: object,
+    *,
+    trace: _TraceAudit,
+) -> tuple[dict[str, Any], tuple[int, ...], tuple[int, ...]]:
+    return _validate_mpc_run_evidence(
+        value,
+        trace=trace,
+        expected_status="complete",
+        completed_decisions=REGISTERED_MPC_DECISIONS,
+        runner_failure_phase=None,
+    )
+
+
+def _validate_failed_run_evidence(
+    value: object,
+    *,
+    trace: _TraceAudit,
+    completed_decisions: int,
+    runner_failure_phase: str,
+) -> dict[str, Any] | None:
     if value is None:
         return None
-    evidence = _mapping("failed service-MPC run evidence", value)
-    if evidence.get("format") != SERVICE_MPC_RUN_EVIDENCE_FORMAT:
-        raise ValueError("failed service-MPC evidence format is invalid")
-    if evidence.get("status") != "failed":
-        raise ValueError("failed service-MPC run is not labelled failed")
-    if evidence.get("fallback_action_count", 0) != 0:
-        raise ValueError("failed service-MPC run contains hidden fallback")
-    if "sha256" in evidence:
-        _digest_body(
-            "failed service-MPC run evidence",
-            SERVICE_MPC_RUN_EVIDENCE_DOMAIN,
-            evidence,
-        )
-    return deepcopy(evidence)
+    compact, _, _ = _validate_mpc_run_evidence(
+        value,
+        trace=trace,
+        expected_status="failed",
+        completed_decisions=completed_decisions,
+        runner_failure_phase=runner_failure_phase,
+    )
+    return compact
 
 
 def _validate_run(
@@ -729,7 +1110,12 @@ def _validate_run(
         raise ValueError(f"{controller} failed trace length is invalid")
     evidence = None
     if controller == SERVICE_MPC_CONTROLLER_ID:
-        evidence = _validate_failed_run_evidence(run.get("controller_evidence"))
+        evidence = _validate_failed_run_evidence(
+            run.get("controller_evidence"),
+            trace=trace,
+            completed_decisions=completed,
+            runner_failure_phase=failure["phase"],
+        )
     elif "controller_evidence" in run:
         raise ValueError(f"{controller} unexpectedly contains controller evidence")
     return _RunAudit(
@@ -1750,11 +2136,11 @@ def build_service_mpc_report(
     body: dict[str, Any] = {
         "schema_version": SERVICE_MPC_REPORT_SCHEMA_VERSION,
         "format": SERVICE_MPC_REPORT_FORMAT,
-        "study": "causal_service_mpc_development_matrix",
+        "study": "causal_service_mpc_engineering_replication_matrix",
         "status": (
-            "complete_development_gate_passed"
+            "complete_engineering_replication_gate_passed"
             if development_gate["all_predeclared_gates_passed"]
-            else "complete_development_gate_failed"
+            else "complete_engineering_replication_gate_failed"
         ),
         "evidence_scope": "already_inspected_synthetic_development_cells",
         "disclaimer": (

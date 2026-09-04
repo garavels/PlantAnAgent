@@ -32,6 +32,8 @@ from plant_backend.rl.v2.mpc_execution import (
     SERVICE_MPC_ACTION_DOMAIN,
     SERVICE_MPC_APPLICATION_DOMAIN,
     SERVICE_MPC_DECISION_DOMAIN,
+    SERVICE_MPC_FAILURE_DOMAIN,
+    SERVICE_MPC_FAILURE_SCHEMA,
     SERVICE_MPC_GUARDED_ACTION_DOMAIN,
     SERVICE_MPC_INTERVAL_POWER_DOMAIN,
     SERVICE_MPC_REQUEST_DOMAIN,
@@ -360,6 +362,101 @@ def _mpc_run_evidence() -> dict[str, Any]:
     return _digest(SERVICE_MPC_RUN_EVIDENCE_DOMAIN, body)
 
 
+def _failed_mpc_run_evidence() -> dict[str, Any]:
+    complete = _mpc_run_evidence()
+    failure_body = {
+        "schema": SERVICE_MPC_FAILURE_SCHEMA,
+        "controller_id": SERVICE_MPC_CONTROLLER_ID,
+        "decision_index": 1,
+        "phase": "input_validation",
+        "exception_type": "RuntimeError",
+        "message": "synthetic outcome-free failure fixture",
+        "elapsed_ns": 50,
+        "observation_sha256": None,
+        "public_forecast_sha256": None,
+        "projection_sha256": None,
+        "model_sha256": None,
+        "plan_sha256": None,
+        "stages": [],
+    }
+    failure_identity = deepcopy(failure_body)
+    failure_identity.pop("elapsed_ns")
+    failure = {
+        **failure_body,
+        "sha256": domain_sha256(SERVICE_MPC_FAILURE_DOMAIN, failure_identity),
+    }
+    body = {
+        "format": SERVICE_MPC_RUN_EVIDENCE_FORMAT,
+        "controller_id": SERVICE_MPC_CONTROLLER_ID,
+        "status": "failed",
+        "completed_decisions": 1,
+        "runner_failure_phase": "controller_compute_action",
+        "pending_transition": False,
+        "event_count": 2,
+        "successful_decision_count": 1,
+        "failed_decision_count": 1,
+        "application_count": 1,
+        "fallback_action_count": 0,
+        "all_successful_decisions_reconciled": True,
+        "decision_latency": {
+            "count": 1,
+            "mean_ns": 300.0,
+            "minimum_ns": 300,
+            "p99_ns": 300,
+            "maximum_ns": 300,
+            "p99_method": "empirical nearest rank",
+        },
+        "solver_stage_latency": {
+            "count": 2,
+            "mean_ns": 100.0,
+            "minimum_ns": 100,
+            "p99_ns": 100,
+            "maximum_ns": 100,
+            "p99_method": "empirical nearest rank",
+        },
+        "guard_intervention_count": 0,
+        "corrected_physics_steps": 0,
+        "out_of_range_decisions": 0,
+        "guard_changed_decisions": 0,
+        "plant_refusal_or_reroute_decisions": 0,
+        "guard_intervention_integral_l1_kwh": 0.0,
+        "dispatch_gap_integral_l1_kwh": 0.0,
+        "request_application_integral_l1_kwh": 0.0,
+        "events": [deepcopy(complete["events"][0]), failure],
+        "applications": [deepcopy(complete["applications"][0])],
+    }
+    return _digest(SERVICE_MPC_RUN_EVIDENCE_DOMAIN, body)
+
+
+def _pending_failed_mpc_run_evidence() -> dict[str, Any]:
+    failed = _failed_mpc_run_evidence()
+    event = deepcopy(failed["events"][0])
+    event["residual"] = None
+    event_identity = deepcopy(event)
+    event_identity.pop("sha256")
+    event_identity.pop("decision_elapsed_ns")
+    stages = event_identity.pop("stages")
+    event_identity["stage_solution_sha256"] = [
+        stage["solution_sha256"] for stage in stages
+    ]
+    event["sha256"] = domain_sha256(SERVICE_MPC_DECISION_DOMAIN, event_identity)
+
+    body = {key: deepcopy(value) for key, value in failed.items() if key != "sha256"}
+    body.update(
+        {
+            "runner_failure_phase": "controller_transition_observation",
+            "pending_transition": True,
+            "event_count": 1,
+            "failed_decision_count": 0,
+            "application_count": 0,
+            "all_successful_decisions_reconciled": False,
+            "events": [event],
+            "applications": [],
+        }
+    )
+    return _digest(SERVICE_MPC_RUN_EVIDENCE_DOMAIN, body)
+
+
 def _cell_document(
     repository_root: Path,
     planner: dict[str, Any],
@@ -390,15 +487,12 @@ def _cell_document(
                         phase="controller_compute_action",
                         exception_type="RuntimeError",
                         message="synthetic outcome-free failure fixture",
-                        completed_decisions=0,
-                        elapsed_hours=0.0,
+                        completed_decisions=1,
+                        elapsed_hours=0.25,
                         partial_metrics={},
                     ),
-                    requested_actions=(),
-                    controller_evidence={
-                        "format": SERVICE_MPC_RUN_EVIDENCE_FORMAT,
-                        "status": "failed",
-                    },
+                    requested_actions=traces[:1],
+                    controller_evidence=_failed_mpc_run_evidence(),
                 )
             )
             continue
@@ -535,7 +629,7 @@ def test_complete_synthetic_matrix_passes_every_frozen_gate(
 ) -> None:
     report = _report(admitted_matrix)
 
-    assert report["status"] == "complete_development_gate_passed"
+    assert report["status"] == "complete_engineering_replication_gate_passed"
     assert report["development_gate"]["all_predeclared_gates_passed"] is True
     assert [row["status"] for row in report["development_gate"]["gates"]] == [
         "pass"
@@ -554,12 +648,53 @@ def test_failed_mpc_arm_suppresses_every_subset_aggregate(
     cells = admit_registered_service_mpc_matrix(paths, repository_root=Path.cwd())
     report = _report(cells)
 
-    assert report["status"] == "complete_development_gate_failed"
+    assert report["status"] == "complete_engineering_replication_gate_failed"
     assert report["aggregate"] is None
     assert _gate(report, "G1")["status"] == "fail"
     assert [_gate(report, f"G{index}")["status"] for index in range(2, 8)] == [
         "not_evaluated"
     ] * 6
+    failed_evidence = report["cells"][4]["runs"][-1]["controller_evidence"]
+    assert failed_evidence["event_count"] == 2
+    assert failed_evidence["application_count"] == 1
+    assert "events" not in failed_evidence
+    assert "applications" not in failed_evidence
+    assert len(failed_evidence["event_ledger_sha256"]) == 64
+    assert len(failed_evidence["application_ledger_sha256"]) == 64
+
+
+def test_pending_transition_failure_is_validated_and_compacted() -> None:
+    action = RequestedActionV2.from_action(0, Action.idle()).to_dict()
+    encoded = json.dumps(
+        [action],
+        allow_nan=False,
+        ensure_ascii=True,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8")
+    trace = mpc_report._validate_trace(
+        {
+            "format": "controller-requested-action-v1",
+            "count": 1,
+            "sha256": hashlib.sha256(encoded).hexdigest(),
+            "actions": [action],
+        },
+        name="pending failure trace",
+    )
+
+    compact = mpc_report._validate_failed_run_evidence(
+        _pending_failed_mpc_run_evidence(),
+        trace=trace,
+        completed_decisions=1,
+        runner_failure_phase="controller_transition_observation",
+    )
+
+    assert compact is not None
+    assert compact["pending_transition"] is True
+    assert compact["event_count"] == 1
+    assert compact["application_count"] == 0
+    assert "events" not in compact
+    assert "applications" not in compact
 
 
 def _mutate_gate(cells: tuple[_CellAudit, ...], gate_id: str) -> None:
@@ -669,6 +804,49 @@ def test_admission_rejects_hidden_fallback_and_a0_drift(tmp_path: Path) -> None:
     )
     _write(paths[0], changed)
     with pytest.raises(ValueError, match="differs from the frozen planner A0"):
+        admit_registered_service_mpc_matrix(paths, repository_root=Path.cwd())
+
+
+@pytest.mark.parametrize(
+    ("mutation", "match"),
+    (
+        ("event_digest", "event 0 digest"),
+        ("application_count", "application_count"),
+        ("application_binding", "application 0 binding"),
+    ),
+)
+def test_failed_mpc_ledger_is_deeply_validated_before_compaction(
+    tmp_path: Path,
+    mutation: str,
+    match: str,
+) -> None:
+    paths = list(_matrix_paths(tmp_path, fail_cell=(42.0, 1)))
+    changed = json.loads(paths[4].read_text("utf-8"))
+    evidence = changed["runs"][-1]["controller_evidence"]
+    if mutation == "event_digest":
+        evidence["events"][0]["sha256"] = "f" * 64
+    elif mutation == "application_count":
+        evidence["application_count"] = 0
+    elif mutation == "application_binding":
+        application = evidence["applications"][0]
+        application["decision_evidence_sha256"] = "f" * 64
+        application_body = dict(application)
+        application_body.pop("sha256")
+        application["sha256"] = domain_sha256(
+            SERVICE_MPC_APPLICATION_DOMAIN,
+            application_body,
+        )
+    else:  # pragma: no cover - closed parameter table
+        raise AssertionError(mutation)
+    evidence_body = dict(evidence)
+    evidence_body.pop("sha256")
+    evidence["sha256"] = domain_sha256(
+        SERVICE_MPC_RUN_EVIDENCE_DOMAIN,
+        evidence_body,
+    )
+    _write(paths[4], changed)
+
+    with pytest.raises(ValueError, match=match):
         admit_registered_service_mpc_matrix(paths, repository_root=Path.cwd())
 
 

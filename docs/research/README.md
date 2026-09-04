@@ -75,6 +75,10 @@ fallback behavior.
   records the first registered six-cell result: a G1 engineering failure caused by
   numerical curtailment and solver-residual contracts, with no eligible performance
   aggregate and complete external artifact hashes.
+- [`CAUSAL_SERVICE_MPC_REPLICATION_PROTOCOL.md`](CAUSAL_SERVICE_MPC_REPLICATION_PROTOCOL.md)
+  freezes the narrow post-failure numerical and reporting repairs, discloses partial
+  repair diagnostics, version-separates the new evidence, and preregisters the unchanged
+  six-cell engineering replication before any repaired full rollout is opened.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

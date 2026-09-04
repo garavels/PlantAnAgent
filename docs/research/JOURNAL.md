@@ -3698,3 +3698,102 @@ The immediate next phase is numerical-contract repair plus outcome-independent r
 fixtures. After a new clean gate, a separately labelled replication matrix may test whether
 M can finally complete; the failed `59e377c` matrix will remain the first registered result
 and cannot be replaced.
+
+## 2026-09-04 — Numerical execution contracts repaired and replication separated
+
+The repair began at the physical source of the four first-transition failures. Two exact
+offers retained from the failed records showed a kW-to-kg-to-kW binary64 round trip returning
+the next representable power value above the offer; one representative input is
+`float.fromhex("0x1.2e35a8ccf9062p+6")`. The methanator now treats its incoming bus offer as
+authoritative and reports the minimum of the offer and power reconstructed from actual CH4
+production. An allocator-level regression sends only that exact offer to the methanator and
+requires exact accepted power, zero battery spill, and zero curtailment. A second regression
+uses the registered 72-hour/rate-35/seed-1 boundary, computes the real first MPC action,
+advances the exact plant, and closes its public residual with exactly zero observed
+curtailment. This changes no reaction yield or material movement; it prevents numerical
+representation from manufacturing energy.
+
+The first full-suite run correctly stopped at the weather-alpha exact compatibility hash.
+To avoid laundering a behavioral change as a fingerprint update, the 96-decision trace was
+generated twice in one process: once with the repaired component and once with a wrapper
+that restored the exact legacy reconstructed-power assignment. The wrapper reproduced the
+old frozen digest
+`5858920bf829d5c5bc1c755552ec22943e8c8338b0f67b5c7ce67c34b02324e6`; the repair produced
+`be16187347bf80825f191f392da595c5d7f6619ad617ceb830829e423135fcab`. Recursive comparison
+found exactly nine changed telemetry scalars and no structural, action, reward, inventory,
+production, delivery, or termination change. The maximum absolute numerical delta was
+`2.842170943040401e-14`; affected fields were methanator power/load, curtailment, and their
+derived interval authority-distance accumulators. The compatibility constant now names the
+repaired invariant, while this journal retains both identities and the exact audit result.
+
+The solver repair was deliberately not a blanket relaxation. The installed SciPy 1.18.1
+wrapper accepts unknown options and forwards them to HiGHS, while the HiGHS 1.12.0 option
+reference defines `mip_feasibility_tolerance` with default `1e-6` and minimum `1e-10`.
+The controller settings now explicitly choose and hash-bind `1e-7`; the adapter suppresses
+only SciPy's exact warning for forwarding this named option. A fake-runtime regression
+proves the declared value reaches the optimizer. Values outside the documented range are
+rejected by settings construction.
+
+The first attempted independent-audit repair used an absolute `1e-7` term plus a relative
+`1e-7 * sum(abs(coefficient * value))` row scale. A real rate-35/seed-0 diagnostic exposed
+why that formula is incomplete: it failed at decision 66 even though HiGHS returned status
+zero. The failing rows were gated continuous variables beside zero binaries. Examples were
+`productive_maximum[32]` at `1.4948606019693498e-05 kW` and
+`startup_power[33]` at `8.036523313492694e-06 kW`. Multiplying coefficient by the zero
+binary erased the 1.2--3 MW row scale, so a numerically ordinary unscaled solver residual
+was misclassified. This rejected formula was not used for a matrix result.
+
+The final row audit retains coefficient scale at zero:
+`sum(abs(coefficient) * max(1, abs(value)))`, combined with finite row bounds and an
+absolute floor. Bounds use `max(1, abs(value), finite bounds)`; integrality remains an
+absolute check. Hand-solvable fixtures cover both cancellation near a running binary and
+near-zero leakage beside an off binary. The adapter now validates the raw finite vector,
+projects only values within the same declared bound tolerance to their nearest finite
+bound, and audits the projected vector again before hashing or extraction.
+
+A second real diagnostic then crossed the row-audit failure but stopped at decision 86
+during plan extraction. Its future interval 13 contained only
+`3.935447649175992e-05 kW` of battery support beside a true charging binary and
+`76.80528330204667 kW` of charge. Related startup/productive and trace-material values were
+also at coefficient-scaled numerical epsilon. The strict plan schema correctly exposed
+that the extraction boundary still used an unrelated fixed absolute tolerance. The final
+repair projects bound-level numerical noise and evaluates plan electrical identities with
+the explicit absolute-plus-relative interval-power scale. A unit fixture accepts a
+sub-milliwatt-scale equivalent at a 10 kW interval and still rejects a material 1 W
+simultaneous request. After those changes, the disclosed rate-35/seed-0 diagnostic completed
+130 consecutive MPC decisions, with 130 reconciled events, no pending transition, and no
+exception. This crosses the first matrix's decision-114 failure but is not a full rollout;
+no final performance metric or paired effect was inspected.
+
+After adding the separate raw-vector audit ahead of projection, a final 90-decision
+rate-35/seed-0 check completed with 90 reconciled events and no pending transition. It
+crossed both the earlier decision-66 row-scale failure and decision-86 extraction failure,
+confirming that projection does not conceal an invalid raw vector on those known cases.
+This shorter repeat was limited to the newly introduced validation boundary; it did not
+open a complete episode outcome.
+
+Failed evidence reporting was independently hardened. The reporter now verifies the full
+run digest; exact counts and failure phase; contiguous successful and application prefixes;
+at most one terminal typed failure; settings, stage, action, residual, failure, request,
+guarded-action, interval-power, and application digests; all decision/action/residual
+cross-bindings; pending reconciliation; latency summaries; and every intervention/gap
+aggregate. Only then are the large ledgers replaced by canonical event/application ledger
+hashes. Synthetic failure evidence now includes a successful applied prefix plus a terminal
+failure, and adversarial tests recompute outer hashes after corrupting an event digest,
+application count, or application binding; admission rejects all three. The failed compact
+report fixture proves neither raw ledger survives in the report.
+
+Because these repairs were selected after the first G1 result, the original version-1
+matrix cannot be overwritten or pooled with repaired output. Cell execution, matrix, and
+report contracts advance to replication version 2. The new matrix identity binds the exact
+failed source/report, four permitted repair classes, unchanged ordered cells and controller
+arms, contrasts, horizon, decision count, and repaired settings digest. The separate
+`CAUSAL_SERVICE_MPC_REPLICATION_PROTOCOL.md` discloses every partial diagnostic and freezes
+the unchanged gates and sequential no-subset execution rule before any repaired 288-step
+rollout or complete matrix is opened.
+
+At this checkpoint the combined simulator, MPC controller/model/schema/solver, registered
+runner, and report suites pass **130 tests**. The next step is the broader focused and full
+repository authorization gate, strict type/format/compile/lock checks, a clean auditable
+commit, and only then the six-cell engineering replication. Long executions will be waited
+on silently; no model tokens will be spent narrating an unchanged running process.
