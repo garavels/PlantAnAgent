@@ -159,7 +159,14 @@ fallback behavior.
   freezes the next outcome-blind gate: H/M across horizons 6/24 h, rates 35/42 kg/h, and fresh
   development seeds 20--24. R1--R8 require complete paired evidence, safety, accounting,
   repeated service-comparable separation, full-day survival, and nonterminal expression after
-  removing methane liability. No fresh trajectory has been opened.
+  removing methane liability. Its sequential, clean-source, exclusive-output runner and deep
+  verifier are now implemented and tested without resetting a protected seed. No fresh
+  trajectory has been opened.
+- [`ECONOMIC_ROBUSTNESS_TOURNAMENT_ADMISSION.md`](ECONOMIC_ROBUSTNESS_TOURNAMENT_ADMISSION.md)
+  maps the frozen matrix to the implementation and outcome-free evidence: paired reset-before-
+  action admission, settings identities, immediate per-cell publication, failure retention,
+  deterministic timing exclusion, stratum/sensitivity reporting, and whole-directory
+  verification. It is the execution admission record, not a result.
 - [`CONTROLLER_NEUTRAL_RL_INTEGRATION.md`](CONTROLLER_NEUTRAL_RL_INTEGRATION.md)
   defines the remaining RL wiring gate: strict four-target training configuration, exact
   full-task checkpoint compatibility, artifact hashing, checkpoint-bound inference evidence,

@@ -128,7 +128,11 @@ equipment consequences.
   repeated equal-service value separation in every stratum, including after removing methane
   endowment liability, plus full-day safety and accounting. A pass admits only bounded
   development PPO and a tariff-aware economic MPC implementation under new protocols; a failure
-  sends the objective or horizon back for repair.
+  sends the objective or horizon back for repair. The hash-bound sequential runner and deep
+  whole-directory verifier are now implemented outcome-free. They publish each cell before
+  proceeding, retain failed cells without a surviving-subset substitute, separate timing from
+  deterministic outcome identity, and recompute every R1--R8 input. Protected seeds remain
+  unopened until this implementation is committed cleanly.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.
 

@@ -5089,3 +5089,82 @@ and no coefficient has been changed. A complete R1--R7 pass will permit only sep
 registered bounded PPO development and a tariff-aware economic MPC implementation. Failure of
 service comparability, nonterminal expression, or full-day robustness returns the task for
 repair before training.
+
+## 2026-09-04 — Economic robustness runner and deep verifier implemented outcome-free
+
+Implementation began from the frozen tournament rather than from a controller result. The
+initial analysis draft correctly encoded the 20-cell order, paired economic components, and
+R4--R6 thresholds, but an admission audit found three protocol gaps before it was allowed near a
+protected seed. First, the cell execution check did not directly bind the MPC settings identity,
+closed pending-transition state, rich evidence counts, or heuristic evidence ledger. Second,
+the aggregate did not yet report every coefficient sensitivity, ranking flip, latency, and
+six-versus-24-hour distribution by stratum. Third, its deterministic cell projection embedded
+the complete analysis—including wall time—and its verifier assumed every arm was complete,
+which would make a retained failure unverifiable. These were software findings only; no
+environment was reset to discover them.
+
+`economic_robustness.py` now owns the frozen cell and matrix contract. A canonical cell derives
+its exact episode arithmetic and one of two frozen service-MPC settings identities. The
+heuristic verifier recomputes its aggregate evidence hash, decision/command/execution digest
+ledgers, and minute cardinality. The MPC path invokes the existing deep setpoint-run verifier,
+then additionally checks its controller, settings, expected/completed decisions, pending state,
+solver-stage counts, interval executions, and physical minutes against the cell. Per-arm reward,
+component, interval-driver, methane-liability, and battery-liability accounting is recomputed.
+Safety requires zero shutdown, out-of-range, forced-stop, accounting-chain, target-overshoot,
+reachable-tracking, unattributed-deficit, and support-authority violations.
+
+The per-cell analysis reports every registered physical/economic M-minus-H metric, service
+comparability, default task expression, no-methane expression, settlement completion, and all
+frozen algebraic sensitivities. The stratum aggregator now retains all five values in seed order,
+complete/missing counts, mean, population standard deviation, median, extrema, the raw-minimum
+seed convention, and sign counts. R8 includes every 0/0.5/1/2 methane, wear, and solar multiplier,
+all three leave-out views, higher-arm labels, and sign flips by seed and stratum. A separate
+horizon table shows the 6-hour and 24-hour default/no-methane distributions and change in mean,
+without inventing a direction threshold. Controller, solver, dispatcher, cell, and tournament
+latencies remain reportable but are removed from deterministic evidence projections.
+
+`economic_robustness_experiment.py` implements the registered one-shot path. It rejects a
+relative, in-repository, existing, or parentless output directory. Before directory creation or
+reset it requires a clean completely identified revision, the exact protocol bytes, and the
+frozen lock. Within each cell it constructs both environments, resets and identity-checks both
+before H acts, executes H then M sequentially, computes the cell analysis, and publishes the
+cell immediately using exclusive non-overwriting creation. It reopens that artifact and deeply
+verifies it before proceeding. A reset, arm-invocation, or analysis exception becomes typed
+retained evidence; subsequent cells still run and missingness cannot be replaced by a
+surviving-subset aggregate. After the matrix, the source identity is rechecked and `report.json`
+references each raw, full, and deterministic cell hash.
+
+The report verifier independently reopens all cell files; rejects missing, extra, duplicate,
+reordered, renamed, path-escaping, or byte-changed artifacts; recomputes each cell analysis;
+rebuilds all strata and R1--R8; and verifies the matrix's deterministic and full hashes. The
+common heuristic executor now records decision-compute latency separately from its dispatcher
+latency. This timing augments the full evidence hash but is deliberately absent from the
+deterministic outcome hash.
+
+Twelve new outcome-blind tests use fabricated controller evidence under non-protected
+identifiers 901 and 902, plus one 15-minute generic-door wiring reset at non-protected seed 903.
+They cover the protocol/lock identities, 2,400-decision and
+36,000-minute matrix arithmetic, strict cell serialization, settings hashes, sensitivity
+algebra, cell gates,
+four-stratum aggregation, deep tamper rejection, timing exclusion, output refusal, paired
+reset-before-action order, preflight-failure retention and continuation, full-directory
+verification, and registered seed-substitution refusal. Together with the existing economic
+smoke tests, the focused selection currently passes **19 tests in 0.89 seconds**. A read-only
+compatibility check reopened the already-published seed-0 mechanism artifact; the new verifier
+accepted its heuristic/MPC evidence and all seven per-cell conditions, including nonterminal
+expression. Building a detached cell wrapper around those retained arms exposed one final
+identity edge: integer-valued constructor inputs such as `6` and `35` validated but could derive
+JSON numbers different from a reconstructed `6.0`/`35.0` cell. The frozen cell now normalizes
+both values and its seed at construction, and the complete detached cell verifier passes. That
+check performed no simulator reset and no controller action.
+
+No seed 20, 21, 22, 23, or 24 environment has been constructed or reset. No registered
+controller trajectory, value, inventory, weather realization, or latency has been observed.
+The broader controller/economic compatibility selection passes **73 tests with one optional
+training-dependency skip in 6.41 seconds**. The complete repository passes **1,188 tests with
+3 skips in 43.76 seconds**. Its one warning is the existing Starlette/httpx deprecation;
+trailing HiGHS messages remain unchanged solver output. Black, Python compilation, strict
+targeted MyPy with imported legacy modules skipped and cache disabled, Git whitespace,
+Makefile command expansion, the frozen protocol hash, and the unchanged dependency-lock hash
+all pass. This runner and admission record are ready for a clean commit; the tournament remains
+forbidden until that commit exists and the worktree is clean.

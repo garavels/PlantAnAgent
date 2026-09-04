@@ -1,4 +1,4 @@
-.PHONY: help setup dev backend frontend sim test eval foresight-eval rl-eval rl-ceiling v2-eval v2-weather-eval v2-controller-eval v2-planner v2-mpc v2-mpc-report v2-mpc-setpoint v2-economic-smoke v2-train-dry v2-train v2-rl-eval train-dry train \
+.PHONY: help setup dev backend frontend sim test eval foresight-eval rl-eval rl-ceiling v2-eval v2-weather-eval v2-controller-eval v2-planner v2-mpc v2-mpc-report v2-mpc-setpoint v2-economic-smoke v2-economic-robustness v2-economic-robustness-verify v2-train-dry v2-train v2-rl-eval train-dry train \
 	hepa-collect hepa-pretrain-dry hepa-pretrain hepa-finetune-dry hepa-finetune \
 	hepa-eval build clean
 
@@ -81,6 +81,16 @@ v2-mpc-setpoint:  ## run the single frozen absolute-setpoint mechanism cell (ext
 v2-economic-smoke: ## run the single frozen heuristic/MPC economic mechanism cell
 	$(if $(OUTPUT),,$(error OUTPUT=/absolute/path/outside/repository.json is required))
 	uv run --frozen python -m plant_backend.rl.v2.economic_smoke_experiment $(OUTPUT)
+
+v2-economic-robustness: ## run the frozen 20-cell task-robustness tournament
+	$(if $(OUTPUT),,$(error OUTPUT=/absolute/new/directory/outside/repository is required))
+	uv run --frozen python -m plant_backend.rl.v2.economic_robustness_experiment \
+		run $(OUTPUT)
+
+v2-economic-robustness-verify: ## deeply verify a robustness report and all cell artifacts
+	$(if $(REPORT),,$(error REPORT=/absolute/path/to/report.json is required))
+	uv run --frozen python -m plant_backend.rl.v2.economic_robustness_experiment \
+		verify $(REPORT)
 
 v2-train-dry:     ## identify the controller-neutral RL task; trains nothing
 	uv run --frozen python -m plant_backend.rl.v2.training --dry-run \

@@ -736,6 +736,22 @@ it does not establish general controller or commercial superiority. The next gat
 multi-seed, multi-regime robustness tournament before substantive RL training. See
 [`docs/research/results/v2_economic_mechanism_smoke_a46aabf.md`](docs/research/results/v2_economic_mechanism_smoke_a46aabf.md).
 
+That tournament is now preregistered and its outcome-blind runner/verifier is implemented. It
+will execute 20 sequential H/M cells across 6/24-hour horizons, 35/42 kg/h demand, and fresh
+development seeds 20--24. Each cell is published and deeply verified before the compact matrix
+report; failures remain visible and wall-clock latency is excluded from deterministic outcome
+hashes. No protected seed has yet been reset. After a clean implementation commit, the admitted
+commands are:
+
+```bash
+make v2-economic-robustness OUTPUT=/absolute/new/external/directory
+make v2-economic-robustness-verify REPORT=/absolute/external/directory/report.json
+```
+
+See
+[`docs/research/ECONOMIC_ROBUSTNESS_TOURNAMENT_ADMISSION.md`](docs/research/ECONOMIC_ROBUSTNESS_TOURNAMENT_ADMISSION.md)
+for the execution and claim boundary.
+
 ---
 
 ## V7: the historical RL foundation

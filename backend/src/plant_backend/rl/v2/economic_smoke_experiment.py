@@ -352,18 +352,21 @@ def execute_heuristic_arm(
     totals = _interval_totals()
     decisions: list[dict[str, Any]] = []
     executions: list[dict[str, Any]] = []
+    controller_elapsed_ns: list[int] = []
     dispatcher_elapsed_ns: list[list[int]] = []
     terminated = truncated = False
     failure: dict[str, Any] | None = None
     started_ns = time.perf_counter_ns()
     try:
         while not terminated and not truncated:
+            decision_started_ns = time.perf_counter_ns()
             decision = controller.compute_command(
                 environment.controller_observation,
                 constraints=constraints,
                 config=plant,
                 commitment_profile=episode.electrolyser_commitment,
             )
+            controller_elapsed_ns.append(time.perf_counter_ns() - decision_started_ns)
             _, reward, terminated, truncated, info = environment.step_process_setpoints(
                 decision.command,
                 controller_invalid=decision.invalid,
@@ -404,6 +407,7 @@ def execute_heuristic_arm(
         "execution_sha256": [str(item["sha256"]) for item in executions],
         "decisions": decisions,
         "executions": executions,
+        "controller_elapsed_ns": controller_elapsed_ns,
         "dispatcher_elapsed_ns": dispatcher_elapsed_ns,
     }
     evidence_body["sha256"] = domain_sha256(
