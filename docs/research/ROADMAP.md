@@ -47,8 +47,15 @@ equipment consequences.
   failure**: all six MPC arms stopped before completion, no fallback was used, and no
   performance aggregate survived. Post-outcome diagnosis localized four failures to a
   one-ULP negative-curtailment invariant and two to an undeclared solver-feasibility
-  scale mismatch. Narrow invariant, numerical-contract, and failed-ledger repairs are
-  now frozen for a separately versioned replication on the same contaminated cells.
+  scale mismatch. Narrow invariant, numerical-contract, and failed-ledger repairs were
+  frozen for a separately versioned replication on the same contaminated cells.
+- The repaired replication is now a complete, execution-valid **negative controller
+  result**. G1 and G7 pass; G2--G6 fail. MPC loses 1.60--1.68 tonnes of mean delivery
+  against A0, meets only 20/72 commitments, and aborts 204 of 206 physical starts. The
+  optimizer schedules a 15-minute expected battery flow, but the plant action interprets
+  that field as a contingent top-up ceiling and enforces commitment at one-minute
+  resolution. The next work is therefore a versioned commitment-aware actuation bridge,
+  not weight tuning, RL training, or additional environment complexity.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.
 
@@ -153,6 +160,14 @@ gap it captures. PPO training begins only after that equal-information comparato
 sustainable terminal objective exist. RL earns a role only by closing a measured residual
 gap, improving tail risk or latency, or handling nonlinear/scenario complexity that the MPC
 does not capture.
+
+The first service-MPC replication proves that equal information and a valid MILP are not
+sufficient when the supervisory action contract loses commitment intent. Before comparing
+controller families, Stage C must separate planned battery energy, real-time top-up
+authority, and applied discharge. A bounded bridge repair will test that hypothesis on the
+already contaminated development cells. Failure of that bridge is the trigger to replace
+the share-only supervisory command with absolute process setpoints and a deterministic
+inner-loop dispatcher.
 
 ## Stage D — Progressive operational realism
 

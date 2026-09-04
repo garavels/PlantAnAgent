@@ -79,6 +79,10 @@ fallback behavior.
   freezes the narrow post-failure numerical and reporting repairs, discloses partial
   repair diagnostics, version-separates the new evidence, and preregisters the unchanged
   six-cell engineering replication before any repaired full rollout is opened.
+- [`results/v2_service_mpc_replication_3796eb5.md`](results/v2_service_mpc_replication_3796eb5.md)
+  records the complete execution-valid replication, its G1/G7 passes and G2--G6 failures,
+  the 204-of-206 aborted-start diagnosis, and the decision to repair the supervisory
+  actuation contract before objective tuning, added realism, or RL training.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

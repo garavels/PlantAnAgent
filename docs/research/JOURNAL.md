@@ -3833,3 +3833,60 @@ No complete repaired rollout or performance aggregate has been opened. The autho
 gate is now closed: after this journal-only record is committed and the executable tree is
 confirmed unchanged, the next action is the exact six-cell sequential replication. No
 source change is permitted after its first cell starts.
+
+## 2026-09-04 — Repaired service-MPC replication completes and fails the controller gate
+
+The authorization record was committed as `3796eb5`. A Git comparison confirmed that its
+only difference from executable revision `d5658a7` was this journal, and the worktree was
+clean. The six cells then ran in fresh processes, sequentially in the registered order
+`35/0, 35/1, 35/2, 42/0, 42/1, 42/2`. The repository was not modified after execution
+began. Long-running solves were waited on silently; no progress narration or reasoning was
+generated while a cell was active.
+
+All six cells completed. The version-2 reporter admitted the common clean revision,
+worktree identity, dependency lock, runtime, non-overlapping order, all 18 arms, all 1,728
+MPC decisions, all 3,456 solver stages, and zero fallback. G1 therefore passes: unlike the
+initial matrix, this is eligible controller evidence. G7 also passes, with a pooled decision
+latency p99 of 0.784 s and maximum 1.094 s. G2--G6 fail.
+
+At 35 kg/h, A0 mean fill is 97.72% and MPC mean fill is 34.17%; MPC loses 1,601.55 kg
+against A0. At 42 kg/h, A0 mean fill is 84.97% and MPC mean fill is 29.49%; MPC loses
+1,677.72 kg. MPC improves A0 in none of the six cells and meets only 9/36 stress-rate
+commitments. It has no reserve breach, invalid action, out-of-range decision, or shutdown,
+but every rollout has forced electrolyser stops. Every MPC cell terminates with 100% battery
+SOC and approximately full CO2 storage while mean curtailment exceeds 56 MWh. The poor
+delivery is therefore not caused by exhausted renewable or feedstock endowment.
+
+The retained transition ledger localizes the mechanism. The MILP uses a 15-minute mean
+power balance and treats `battery_support_kw` as expected discharge. The simulator defines
+the same action field as contingent top-up authority, applied only when routed solar leaves
+electrolyser headroom. `realize_first_mpc_action` copies the expected flow into the authority
+field. A startup plan consequently requests exactly 600 kW in the mean, while four solar
+shares are held across 15 one-minute physics steps. The exact commitment state machine
+requires 600 kW at each minute and trips after two shortfall minutes.
+
+For example, seed-0 decision 192 follows one fully powered startup interval. The new plan
+contains 94.150 kW solar and 505.850 kW support, exactly 600 kW in aggregate, but the exact
+plant accepts 0 kW over the next held interval after intra-interval shortfall. Across the
+matrix the plant records 206 cold starts, 204 aborted starts, and 204 forced stops. Seeds 0
+and 2 never reach a productive MPC first interval at either demand rate; seed 1 reaches 34
+productive decisions per rate. At every initial boundary the optimizer nevertheless
+reports the next four commitments fully deliverable with 100% minimum fill. Solver status,
+objective feasibility, and plant execution are each internally valid; their temporal and
+actuation semantics are not aligned.
+
+The result rules out objective-weight tuning as the next scientific step. It would also be
+premature to train PPO or add more plant complexity: either would be evaluated through a
+known lossy actuator seam. The next bounded intervention will version the first-action
+realization and distinguish planned discharge, contingent real-time support authority, and
+applied discharge. The MILP, forecast, objective, safety reserve, and physical kernel must
+remain unchanged for that mechanism test. If the bridge cannot preserve the target without
+unbounded energy deviation, the supervisory interface will move to explicit absolute
+process setpoints plus a deterministic inner loop.
+
+The external artifacts remain at
+`/private/tmp/plantanagent-service-mpc-replication.AiZGHf/`. The compact report has raw
+SHA-256 `bab822476d5b1b986ad03bdecbeaad6217727cfc3539e117af38af09bc458905`, internal
+digest `5a5acf5f46ea0363bfee90925b1346d33b11ffc0766fb214ee55d8baaee2df13`, and size
+207,908 bytes. Every cell hash and outcome is recorded in
+`results/v2_service_mpc_replication_3796eb5.md`.
