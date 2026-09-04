@@ -69,8 +69,9 @@ equipment consequences.
   path are also implemented and outcome-free. A separately versioned causal MPC now produces
   those commands and closes them against the physical minute ledger and next public boundary.
   A frozen pre-outcome clarification resolves the incompatible old/new digest requirement
-  through exact three-boundary structural equivalence. Its executable fixture and the
-  complete authorization audit remain pending.
+  through exact three-boundary structural equivalence. Its executable fixture and a deep
+  run-level evidence/attribution validator now pass. The clean-revision authorization audit
+  remains pending.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.
 
@@ -197,7 +198,10 @@ typed physical execution has been reconciled. A pre-outcome clarification now re
 protocol's impossible byte-identical cross-version model/plan condition by freezing exact
 three-boundary identities plus structural equality of the forecasts, normalized models, and
 complete plan quantities. The executable equivalence fixture and complete authorization
-audit remain prerequisites to any full rollout.
+audit remain prerequisites to any full rollout. The fixture now reproduces every frozen
+identity and exact structural equality. The run validator also closes ordered public and
+physical boundaries, residual power/inventory values, minute latency cardinality, target
+deficit attribution, energy totals, and deterministic evidence-graph identities.
 
 ## Stage D — Progressive operational realism
 

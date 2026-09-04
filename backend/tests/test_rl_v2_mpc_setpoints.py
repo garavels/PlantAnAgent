@@ -275,6 +275,43 @@ def test_night_dispatch_can_reach_the_stack_target_from_reserve(
     assert dispatched.unallocated_solar_kw == 0.0
 
 
+def test_derated_operator_envelope_is_respected_by_target_and_support() -> None:
+    plant = PlantConfig()
+    derated = Constraints(
+        electrolyser_max_kw=900.0,
+        battery_support_max_kw=400.0,
+    )
+    command = _command(
+        config=plant,
+        constraints=derated,
+        electrolyser_kw=900.0,
+        dac_kw=0.0,
+        methanator_kw=0.0,
+        battery_charge_kw=0.0,
+        extra_planned_curtailment_kw=0.0,
+    )
+    initial = PlantSimulator(plant).get_telemetry()
+    boundary = replace(
+        initial,
+        battery_soc=0.90,
+        battery_energy_kwh=0.90 * initial.battery_capacity_kwh,
+    )
+    dispatched = dispatch_mpc_setpoints(
+        command,
+        boundary,
+        solar_available_kw=500.0,
+        constraints=derated,
+        config=plant,
+    )
+
+    assert command.envelope.electrolyser_limit_kw == 900.0
+    assert command.envelope.battery_support_limit_kw == 400.0
+    assert dispatched.solar_to_electrolyser_kw == pytest.approx(500.0)
+    assert dispatched.battery_support_kw == pytest.approx(400.0)
+    assert dispatched.electrolyser_offered_kw == pytest.approx(900.0)
+    assert dispatched.electrolyser_target_reachable is True
+
+
 def test_four_fluctuating_minutes_hold_a_600_kw_cold_start_target(
     boundary: PlantState,
 ) -> None:

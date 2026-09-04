@@ -4389,3 +4389,58 @@ No new setpoint was executed and no physical trajectory or performance outcome w
 The clarification explicitly remains insufficient on its own: an executable fixture must
 reproduce all identities and equalities before the complete admission audit can authorize a
 full mechanism run.
+
+## 2026-09-04 — Three-boundary equivalence and run-level evidence gate implemented
+
+The executable form of clarification 001 now reconstructs the first three historical
+rate-35/seed-0 public boundaries without applying any new setpoint. At every boundary it
+independently builds and solves the historical and setpoint settings variants. It reproduces
+all 24 frozen observation, public-issue, projection, old-model, old-plan, new-model, new-plan,
+and setpoint identities. The two complete forecast projections are exactly equal; replacing
+only the settings digest makes each complete typed model exactly equal; and every delivery,
+horizon, ordered plan step, and reported plan scalar is exactly equal. The test explicitly
+requires the solver-vector identities to remain version-separated rather than laundering
+them into historical provenance.
+
+`build_mpc_setpoint_run_evidence` is the new fail-closed run boundary. It accepts only typed
+setpoint-controller events and exact per-execution dispatcher timing groups under one
+`ServiceMPCSetpointSettingsV1`. It validates contiguous successful decisions, at most one
+terminal failure, shrinking planning horizons, closed-versus-pending state, the exact public
+observation chain, the complete physical boundary and commitment chain, final public
+observation identity, one dispatcher timing for every minute record, and no fallback. A
+successful run must contain exactly the settings-declared number of fully closed decisions.
+An explicitly failed or pending run is retained rather than converted to a partial success.
+
+The validator independently reconciles each physical execution against the controller's
+public residual: interval duration; solar, battery-net, electrolyser, DAC, methanator, and
+curtailment mean power; terminal battery/H2/CO2/CH4 state; and cumulative H2/CO2/CH4
+production. It aggregates planned, target, requested, guarded, and applied energy; requested,
+guarded, and applied target errors; empirical nearest-rank controller, solver-stage, and
+dispatcher latency distributions; and ordered event, execution, and application identities.
+Every minute's applied target deficit is decomposed into resource shortfall, guard reduction,
+and plant refusal/rerouting. It reports absolute 1e-7 kW overshoot and reachable-tracking
+violations, simultaneous charge/support, applied-support authority violations, and explicit
+zero accounting/chain violations. A deterministic evidence-graph digest excludes all timing,
+while the outer run digest binds the complete raw payload including measured timing.
+
+Adversarial tests alter the public residual chain, terminal residual state, minute-latency
+cardinality, outer run payload, and deterministic graph identity; every substitution fails
+closed. Retiming an otherwise identical run changes the outer artifact but preserves the
+deterministic graph. A four-decision short run yields 60 ordered minute applications, eight
+successful solver stages, no fallback, no requested target overshoot, no reachable-tracking
+violation, and no simultaneous charge/support request.
+
+Two previously implicit implementation-gate cases are now explicit. A 900 kW operator-
+derated stack with 400 kW support authority reaches its absolute target using exactly 500 kW
+solar plus 400 kW reserve. Separate typed minute fixtures show a running stack refusing power
+because of its ramp limit while H2 headroom remains available, and because the H2 tank is
+full while the guard leaves the request unchanged. The ledger distinguishes these physical
+causes through headroom, commitment mode/counters, and guard-to-plant power gaps.
+
+The focused setpoint/run/execution surface passes **38 tests** after these additions. The
+complete repository passes **1,077 tests with 2 skips** in 42.78 seconds; the only warning is
+the unchanged Starlette/httpx test-client deprecation. No 72-hour setpoint trajectory,
+registered mechanism cell, performance metric, holdout, PPO training, simulator change,
+objective change, or parameter tuning ran. The remaining prerequisite is a clean committed
+revision audit that maps every frozen implementation gate to exact executable evidence and
+freezes the one-shot runner contract before any outcome is opened.

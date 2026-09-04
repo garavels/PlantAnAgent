@@ -8,9 +8,12 @@ import pytest
 from plant_sim import (
     DEFAULT_ELECTROLYSER_COMMITMENT_PROFILE,
     Action,
+    ElectrolyserCommitmentState,
+    ElectrolyserMode,
     PlantConfig,
     PlantSimulator,
     SolarFactorTape,
+    StorageConfig,
 )
 
 from plant_backend.controllers import Constraints
@@ -292,6 +295,86 @@ def test_guard_and_component_refusal_remain_separate_causes() -> None:
     assert (
         refusal_info["energy_kwh"]["electrolyser_target_error"]["applied_overshoot"]
         == 0.0
+    )
+
+
+def test_ramp_and_storage_refusal_are_distinct_in_minute_evidence() -> None:
+    config = PlantConfig()
+    constraints = Constraints()
+    command = _setpoints(
+        config=config,
+        constraints=constraints,
+        electrolyser_kw=1_500.0,
+        dac_kw=0.0,
+        methanator_kw=0.0,
+        battery_charge_kw=0.0,
+        planned_curtailment_kw=0.0,
+    )
+    ramp_limited = PlantSimulator(
+        config,
+        electrolyser_commitment=DEFAULT_ELECTROLYSER_COMMITMENT_PROFILE,
+    )
+    ramp_limited.electrolyser._commitment_state = ElectrolyserCommitmentState(
+        mode=ElectrolyserMode.RUNNING,
+        mode_elapsed_s=600.0,
+        previous_power_kw=600.0,
+    )
+    ramp_application = _record_one(
+        ramp_limited,
+        command,
+        ordinal=0,
+        constraints=constraints,
+    )
+
+    assert not ramp_application.guard_changed_request
+    assert ramp_application.plant_refused_or_rerouted_power
+    assert ramp_application.h2_headroom_before_kg > 0.0
+    assert ramp_application.commitment_mode_before == "running"
+    assert ramp_application.commitment_mode_after == "running"
+    assert ramp_application.commitment_after is not None
+    assert ramp_application.commitment_after.ramp_limited_intervals == 1
+    assert (
+        ramp_application.applied_electrolyser_kw
+        < ramp_application.guarded_electrolyser_kw
+    )
+
+    full_h2_config = replace(
+        config,
+        h2_tank=StorageConfig(capacity_kg=2_000.0, initial_kg=2_000.0),
+    )
+    storage_command = _setpoints(
+        config=full_h2_config,
+        constraints=constraints,
+        electrolyser_kw=600.0,
+        dac_kw=0.0,
+        methanator_kw=0.0,
+        battery_charge_kw=0.0,
+        planned_curtailment_kw=0.0,
+    )
+    storage_limited = PlantSimulator(
+        full_h2_config,
+        electrolyser_commitment=DEFAULT_ELECTROLYSER_COMMITMENT_PROFILE,
+    )
+    storage_limited.electrolyser._commitment_state = ElectrolyserCommitmentState(
+        mode=ElectrolyserMode.RUNNING,
+        mode_elapsed_s=600.0,
+        previous_power_kw=600.0,
+    )
+    storage_application = _record_one(
+        storage_limited,
+        storage_command,
+        ordinal=0,
+        constraints=constraints,
+    )
+
+    assert not storage_application.guard_changed_request
+    assert storage_application.plant_refused_or_rerouted_power
+    assert storage_application.h2_headroom_before_kg == 0.0
+    assert storage_application.commitment_mode_before == "running"
+    assert storage_application.commitment_mode_after == "hot_standby"
+    assert (
+        storage_application.applied_electrolyser_kw
+        < storage_application.guarded_electrolyser_kw
     )
 
 

@@ -44,6 +44,7 @@ from .mpc_setpoint_execution import (
     SERVICE_MPC_SETPOINT_INTERVAL_SCHEMA,
     commitment_boundary_sha256,
 )
+from .mpc_setpoint_run import SERVICE_MPC_SETPOINT_RUN_EVIDENCE_FORMAT
 from .mpc_setpoints import (
     MPCProcessSetpointsV1,
     SERVICE_MPC_PROCESS_SETPOINT_SCHEMA,
@@ -52,10 +53,6 @@ from .mpc_setpoints import (
 )
 from .mpc_solver import solve_service_mpc_model
 from .weather import PublicForecastIssueV2
-
-SERVICE_MPC_SETPOINT_RUN_EVIDENCE_FORMAT = (
-    "service-mpc-setpoint-controller-run-evidence-v1"
-)
 
 
 @runtime_checkable
