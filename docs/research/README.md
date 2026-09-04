@@ -138,6 +138,12 @@ fallback behavior.
   equivalence gate. The complete door is now implemented outcome-free: normalized RL actions,
   transparent A0 targets, and MPC provenance all reach the same dispatcher, guard, and plant;
   the historical environment and checkpoint identity remain isolated.
+- [`ECONOMIC_WEAR_TASK_PROTOCOL.md`](ECONOMIC_WEAR_TASK_PROTOCOL.md) defines the first
+  controller-discriminative task after authority parity: public time-varying electricity
+  value, measured battery throughput, explicit electrolyser exposure, and telescoping
+  CH4-equivalent/battery endowment liabilities. It records every synthetic assumption,
+  evidence boundary, checkpoint-isolation requirement, and the gate that must pass before
+  any controller comparison or RL training.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

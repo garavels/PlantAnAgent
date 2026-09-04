@@ -89,6 +89,19 @@ equipment consequences.
   The complete repository passes 1,140 tests with 2 skips. No RL policy has been trained and
   no controller-performance claim follows. Economic/wear pressure and a sustainable terminal
   condition are the next task-design boundary before comparative training.
+- That next task-design boundary is now implemented outcome-free as the separately versioned
+  `plant-env-v2-economic-wear-alpha`. It keeps the four common absolute targets, appends five
+  causal public tariff features to the unchanged 57-field plant observation, and returns an
+  additive EUR ledger instead of modifying objective version 3. The ledger values delivered
+  service, shortfall, physically accepted solar, bus-side battery throughput, declared
+  electrolyser exposure, and changes in deficits below the episode's starting CH4-equivalent
+  and battery inventories. Liability changes telescope exactly to the final deficit, preventing
+  free liquidation without rewarding terminal surplus. Every coefficient and all 24 tariff
+  points are checkpoint-bound and explicitly labelled as sensitivity assumptions. Eleven new
+  tests prove identity/physics isolation, exact tariff integration, accounting direction,
+  terminal shaping, determinism, and Gym compliance; the complete repository passes 1,151 tests
+  with 2 skips. This is still task infrastructure: no heuristic/MPC outcome, multi-seed claim,
+  RL training, calibrated saving, or commercial return has been opened.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.
 

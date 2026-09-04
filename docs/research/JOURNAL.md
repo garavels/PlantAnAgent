@@ -4738,3 +4738,111 @@ equipment-wear change, or commercial outcome was opened. This commit establishes
 actuator semantics, not controller quality. The next task-design slice must make tied service
 outcomes economically discriminative with explicit energy value, cycling/equipment wear, and
 a sustainable terminal condition before heuristic, MPC, and RL are compared.
+
+## 2026-09-04 — Economic/wear task implemented without opening a controller outcome
+
+The registered setpoint mechanism result established the next task-design requirement: MPC,
+A0, and the certified ceiling all delivered 2,520 kg on the only admitted mechanism cell,
+while MPC accepted 3.49% more process energy and moved 58.36% more energy through the battery.
+The old delivery objective could not decide whether this behavior was economically useful.
+This increment therefore adds a separately identified task rather than tuning a controller or
+mutating the historical objective.
+
+The evidence review was deliberately narrow. ACER's wholesale-market reporting supports
+time-varying, low, and negative day-ahead electricity values as a genuine flexibility signal.
+ENTSO-E provides the eventual traceable European price-data boundary. The Clean Hydrogen JU
+KPI table provides an AEL 2024 capital target of 480 EUR/kW, alongside explicit system-boundary
+and interdependence warnings. DOE storage assessments treat replacement, augmentation, cycle
+life, and calendar life separately; the Storage Innovations LFP scenario's 2,640-cycle value
+is retained only as a sensitivity anchor. These sources support which variables to expose.
+They do not calibrate this plant, justify a vendor-specific degradation law, or turn the alpha
+into a financial forecast. All source links, numerical statuses, and non-claims are frozen in
+`ECONOMIC_WEAR_TASK_PROTOCOL.md`.
+
+The new opt-in `PlantEconomicSetpointEnvV2` publishes environment ID
+`plant-env-v2-economic-wear-alpha`, interface digest
+`0b7c71e56a939c1a1acd92e93a2fce072de43fa962a5371d94715c2d3382197a`, and checkpoint
+schema 5. It inherits the common four-target action without widening controller authority.
+The first 57 observations are unchanged. Five append-only observations publish the current
+hourly opportunity price and exact public 1-hour mean plus 6-hour minimum, mean, and maximum,
+producing a 62-float Gym observation. Values are divided by 300 EUR/MWh and bounded to
+`[-1, 1]`. The default 24-hour stress shape repeats deterministically, ranges from -10 to
+150 EUR/MWh, and has explicit low-midday/high-evening structure. It is not labelled as a
+historical day or probabilistic forecast. Controller intervals must divide an hour and start
+on a matching boundary, ensuring one price applies to every physical minute in a held command.
+The detached `EconomicControllerObservationV1` carries the same physical observation and raw
+tariff values, plus tariff and assumption identities, to structured heuristic or optimizer
+controllers. This closes an implementation-review gap in which only the Gym vector initially
+had direct price access; non-Gym controllers no longer need to scrape step metadata.
+
+The economic assumptions have default digest
+`dce6ba3082e0e2a16c1e341589afb25d8f1d0b2da9124522499dafd705fe6ee2`. The complete
+default checkpoint digest is
+`455bde44efc7f15783ad2f28133630136c2055405f075cc6495f2f6532fcde5d`; every tariff
+point, coefficient, plant/episode setting, constraint, physical interface, and diagnostic
+legacy reward is inside that identity. The same seed retains the exact physical exogenous
+episode digest across historical V2, common-setpoint V2, and economic V2. The economic audit
+adds a second episode digest over the physical episode reference and tariff so different
+economic conditions cannot be called the same paired cell.
+
+The returned scalar is now an additive EUR ledger with seven visible components: delivered
+service value, unmet-delivery penalty, measured accepted-solar opportunity cost, bus-side
+battery-throughput reserve, electrolyser-life exposure reserve, change in CH4-equivalent
+endowment liability, and change in battery-energy endowment liability. The previous objective
+version 3 still executes to preserve established physical diagnostics, but it is returned under
+`legacy_reward` and cannot affect the scalar. Historical `EpisodeMetricsV2` remains structurally
+unchanged; a separate `EconomicEpisodeMetricsV1` accumulates the new components and physical
+cost drivers.
+
+Accepted renewable energy is authoritative generated-minus-curtailed kWh, not requested or
+guarded power. The plant has no grid port, so the tariff is explicitly an export-opportunity
+shadow price. Curtailment remains available and negative prices are therefore floored at zero
+for cost: a negative public observation creates cheap flexibility but cannot invent revenue
+for consumption. Battery wear uses physical charge plus discharge throughput and a transparent
+linear reserve of replacement EUR/kWh divided by twice the full-cycle life. It reports
+equivalent full cycles separately. Defaults of 300 EUR/kWh and 2,640 cycles are sensitivity
+assumptions, not a warranty or chemistry model.
+
+Electrolyser exposure converts exact simulator counters into equivalent hours: operating time,
+a 50% premium on low-load time, and declared equivalent-hour coefficients of 2/0.25/2/4 for
+cold starts, hot starts, aborted starts, and forced stops. A linear 480 EUR/kW over 80,000
+hours reserve then makes that exposure economically visible. Only the capital anchor is tied
+directly to the cited JU KPI. The lifetime and event coefficients remain synthetic and must be
+ablated. The code makes no degradation, failure-time, maintenance, or stack-replacement claim.
+It intentionally does not assign DAC or methanator wear because those components lack the
+necessary operating and thermal states.
+
+The sustainable terminal condition is implemented as dense but path-independent shaping.
+CH4-equivalent inventory is saleable methane plus the smaller stoichiometric methane potential
+of stored H2 and CO2. Any deficit below the episode's initial CH4-equivalent inventory and
+battery energy carries a liability; surplus above the start has no credit. Each interval pays
+only the liability change, so depletion followed by restoration cancels exactly and the whole
+episode telescopes to the final deficit cost. This avoids both free liquidation of sampled
+starting resources and terminal overproduction gaming without adding private state to the
+policy observation.
+
+Eleven new tests cover exact tariff integration across midnight; malformed price/assumption
+rejection; negative-price semantics; liability telescoping; monotonic battery/electrolyser
+exposure cost; distinct 57/57/62 observation and 5/4/4 action contracts; physical exogenous
+identity; exact appended tariff values; scalar/ledger summation; preservation of the diagnostic
+legacy reward; tariff-dependent reward/checkpoint/economic-episode identity with identical
+physical transitions; deterministic reset/step; Gymnasium compliance; and cadence rejection.
+The first tariff-window test failed because its hand-calculated six-hour cross-midnight mean
+omitted the final half-hour. Recalculation showed the implementation's 4.0 EUR/MWh mean was
+correct; the erroneous expected value was fixed, with no production change.
+
+The focused economic/common-door selection passes **28 tests in 0.47 seconds**. Strict targeted
+MyPy passes with import following disabled and its cache disabled; an earlier import-following
+invocation surfaced existing legacy typing debt, and the first cached targeted invocation hit
+the already documented mypy unresolved-placeholder internal assertion. Black, compilation,
+Git whitespace validation, and the unchanged dependency-lock digest
+`080d96275581ebbec1b2c27b354ea54e3e66419bfaadb034896da1fd22b228dd` pass. The complete
+repository passes **1,151 tests with 2 skips in 40.54 seconds**. Its only warning is the existing
+Starlette/httpx test-client deprecation; trailing HiGHS text is unchanged upstream solver output.
+
+No heuristic, MPC, random-policy, or RL episode was compared on the new objective. No price
+dataset was downloaded, no coefficient was tuned against an outcome, no protected seed was
+opened, and no HEPA or language-layer claim changed. The next bounded step is a short,
+predeclared common-door heuristic/MPC smoke comparison to establish whether this task actually
+creates nonzero economic separation at comparable delivery and zero hard violations. Only a
+positive mechanism check justifies a frozen multi-seed tournament or RL training.

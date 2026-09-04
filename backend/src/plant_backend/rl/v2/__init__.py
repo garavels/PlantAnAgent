@@ -20,6 +20,18 @@ from .controllers import (
     RiskAdjustedIssuedForecastControllerV2,
 )
 from .env import PlantEnvV2
+from .economic_env import PlantEconomicSetpointEnvV2
+from .economics import (
+    DayAheadTariffV1,
+    EconomicAssumptionsV1,
+    EconomicControllerObservationV1,
+    EconomicEpisodeMetricsV1,
+    EconomicIntervalOutcomeV1,
+    EconomicRewardBreakdownV1,
+    TariffObservationV1,
+    ch4_equivalent_inventory_kg,
+    compute_economic_reward,
+)
 from .setpoint_env import PlantSetpointEnvV2
 from .evaluation import (
     BaselineEvaluation,
@@ -104,6 +116,12 @@ __all__ = [
     "DeliveryObservation",
     "DeliveryPlannerSettingsV2",
     "DecodedProcessSetpointActionV1",
+    "DayAheadTariffV1",
+    "EconomicAssumptionsV1",
+    "EconomicControllerObservationV1",
+    "EconomicEpisodeMetricsV1",
+    "EconomicIntervalOutcomeV1",
+    "EconomicRewardBreakdownV1",
     "EpisodeConfigV2",
     "EpisodeMetricsV2",
     "EpisodeV2",
@@ -121,6 +139,7 @@ __all__ = [
     "OBSERVATION_NAMES",
     "OBSERVATION_SIZE",
     "PlantEnvV2",
+    "PlantEconomicSetpointEnvV2",
     "PlantSetpointEnvV2",
     "LegacyHeuristicSetpointControllerV1",
     "LegacyHeuristicSetpointDecisionV1",
@@ -141,9 +160,12 @@ __all__ = [
     "ServiceMPCSetpointSettingsV1",
     "ServiceMPCSettingsV1",
     "SetpointControllerV2",
+    "TariffObservationV1",
     "WeatherConfigV2",
     "adapt_mpc_process_setpoints",
     "allocate_process_setpoint_targets",
+    "ch4_equivalent_inventory_kg",
+    "compute_economic_reward",
     "describe",
     "dispatch_mpc_setpoints",
     "dispatch_process_setpoint_command",

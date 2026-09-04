@@ -367,6 +367,14 @@ law is smuggled into the reward. The exposure deltas are derived from monotonic 
 counters at each decision boundary, so both metrics and the two penalties are additive
 and invariant to how the same physical horizon is partitioned into controller intervals.
 
+The later opt-in `plant-env-v2-economic-wear-alpha` task does not mutate this objective.
+It retains objective version 3 as a diagnostic, appends five public tariff observations,
+and returns a separately versioned euro-denominated reward for delivered service, unmet
+commitments, accepted-renewable opportunity cost, battery throughput, declared electrolyser
+exposure, and path-independent changes in starting-resource liabilities. Its coefficients
+are literature-anchored benchmark assumptions rather than calibrated plant economics; the
+complete boundary and limitations are frozen in `ECONOMIC_WEAR_TASK_PROTOCOL.md`.
+
 Hard physical limits, safety reserve, forbidden modes, and thermal/purity constraints
 are not exchangeable reward terms. They are enforced and reported separately. Reward
 components remain visible for diagnosis, but final comparisons use the primary
