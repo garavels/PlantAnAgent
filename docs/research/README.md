@@ -129,7 +129,9 @@ fallback behavior.
 - [`COMMON_SETPOINT_AUTHORITY_PROTOCOL.md`](COMMON_SETPOINT_AUTHORITY_PROTOCOL.md)
   freezes phase 1 of controller parity: a controller-neutral four-target value, the exact
   shared allocation kernel, and a normalized RL adapter that cannot command additive battery
-  support or inherit MPC provenance.
+  support or inherit MPC provenance. The phase is now implemented outcome-free: MPC delegates
+  to the shared kernel, historical Gym/checkpoint semantics remain unchanged, and the complete
+  1,106-test repository gate passes.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

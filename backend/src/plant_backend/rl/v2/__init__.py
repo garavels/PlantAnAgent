@@ -49,6 +49,13 @@ from .mpc_setpoints import (
     dispatch_mpc_setpoints,
 )
 from .reward import RewardWeightsV2
+from .setpoint_control import (
+    DecodedProcessSetpointActionV1,
+    ProcessSetpointActionAdapterV1,
+    ProcessSetpointAllocationV1,
+    ProcessSetpointTargetsV1,
+    allocate_process_setpoint_targets,
+)
 from .weather import ForecastIssueV2, PublicForecastIssueV2, WeatherConfigV2
 from .spaces import (
     ACTION_NAMES,
@@ -76,6 +83,7 @@ __all__ = [
     "DeliveryAwareControllerV2",
     "DeliveryObservation",
     "DeliveryPlannerSettingsV2",
+    "DecodedProcessSetpointActionV1",
     "EpisodeConfigV2",
     "EpisodeMetricsV2",
     "EpisodeV2",
@@ -93,6 +101,9 @@ __all__ = [
     "OBSERVATION_NAMES",
     "OBSERVATION_SIZE",
     "PlantEnvV2",
+    "ProcessSetpointActionAdapterV1",
+    "ProcessSetpointAllocationV1",
+    "ProcessSetpointTargetsV1",
     "RewardWeightsV2",
     "RiskAdjustedIssuedForecastControllerV2",
     "SPEC_VERSION",
@@ -102,6 +113,7 @@ __all__ = [
     "ServiceMPCSettingsV1",
     "SetpointControllerV2",
     "WeatherConfigV2",
+    "allocate_process_setpoint_targets",
     "describe",
     "dispatch_mpc_setpoints",
     "evaluate",

@@ -20,7 +20,6 @@ from ...safety.validation import (
     BatterySupportAvailability,
     battery_support_availability,
 )
-from .control import close_unit_simplex
 from .mpc_forecast import MPCForecastTrajectoryV1
 from .mpc_schema import (
     MODEL_BALANCE_TOLERANCE,
@@ -29,6 +28,10 @@ from .mpc_schema import (
     ServiceMPCPlanError,
     domain_sha256,
     require_sha256,
+)
+from .setpoint_control import (
+    ProcessSetpointTargetsV1,
+    allocate_process_setpoint_targets,
 )
 
 SERVICE_MPC_PROCESS_SETPOINT_SCHEMA = "service-mpc-process-setpoints-v1"
@@ -404,114 +407,6 @@ def minute_boundary_sha256(boundary: PlantState) -> str:
 
 
 @dataclass(frozen=True, slots=True)
-class _DispatchAllocation:
-    routes_kw: tuple[float, float, float, float]
-    support_kw: float
-    unallocated_kw: float
-    target_reachable: bool
-    action: Action
-
-
-def _proportional_unsupported_routes(
-    remaining_solar_kw: float,
-    dac_target_kw: float,
-    methanator_target_kw: float,
-) -> tuple[float, float]:
-    total_target = dac_target_kw + methanator_target_kw
-    if total_target <= 0.0 or remaining_solar_kw <= 0.0:
-        return 0.0, 0.0
-    factor = min(1.0, remaining_solar_kw / total_target)
-    dac_kw = dac_target_kw * factor
-    methanator_kw = methanator_target_kw * factor
-    routed = dac_kw + methanator_kw
-    if routed > remaining_solar_kw:
-        closure = math.nextafter(remaining_solar_kw / routed, 0.0)
-        dac_kw *= closure
-        methanator_kw *= closure
-    return dac_kw, methanator_kw
-
-
-def _allocate_dispatch(
-    *,
-    solar_kw: float,
-    electrolyser_target_kw: float,
-    dac_target_kw: float,
-    methanator_target_kw: float,
-    battery_charge_ceiling_kw: float,
-    support: BatterySupportAvailability,
-) -> _DispatchAllocation:
-    reserved_electrolyser_kw = min(
-        solar_kw,
-        max(0.0, electrolyser_target_kw - support.available_kw),
-    )
-    remaining_kw = max(0.0, solar_kw - reserved_electrolyser_kw)
-    dac_kw, methanator_kw = _proportional_unsupported_routes(
-        remaining_kw,
-        dac_target_kw,
-        methanator_target_kw,
-    )
-    remaining_kw = max(0.0, remaining_kw - dac_kw - methanator_kw)
-    extra_electrolyser_kw = min(
-        remaining_kw,
-        max(0.0, electrolyser_target_kw - reserved_electrolyser_kw),
-    )
-    electrolyser_solar_kw = reserved_electrolyser_kw + extra_electrolyser_kw
-    remaining_kw = max(0.0, remaining_kw - extra_electrolyser_kw)
-    support_kw = min(
-        support.available_kw,
-        max(0.0, electrolyser_target_kw - electrolyser_solar_kw),
-    )
-    battery_kw = (
-        min(battery_charge_ceiling_kw, remaining_kw) if support_kw == 0.0 else 0.0
-    )
-
-    if solar_kw > 0.0:
-        shares = close_unit_simplex(
-            (
-                battery_kw / solar_kw,
-                electrolyser_solar_kw / solar_kw,
-                dac_kw / solar_kw,
-                methanator_kw / solar_kw,
-            )
-        )
-    else:
-        shares = (0.0, 0.0, 0.0, 0.0)
-    action = Action(
-        battery_share=shares[0],
-        electrolyser_share=shares[1],
-        dac_share=shares[2],
-        methanator_share=shares[3],
-        battery_support_kw=support_kw,
-    )
-    if Action.sanitised(action) != action:
-        raise RuntimeError("setpoint dispatcher did not close the action simplex")
-    routes = (
-        shares[0] * solar_kw,
-        shares[1] * solar_kw,
-        shares[2] * solar_kw,
-        shares[3] * solar_kw,
-    )
-    unallocated_kw = max(0.0, solar_kw - math.fsum(routes))
-    target_reachable = bool(
-        electrolyser_target_kw == 0.0
-        or (
-            support.electrolyser_available
-            and electrolyser_target_kw
-            <= support.electrolyser_headroom_kw + MODEL_BALANCE_TOLERANCE
-            and solar_kw + support.available_kw
-            >= electrolyser_target_kw - MODEL_BALANCE_TOLERANCE
-        )
-    )
-    return _DispatchAllocation(
-        routes_kw=routes,
-        support_kw=support_kw,
-        unallocated_kw=unallocated_kw,
-        target_reachable=target_reachable,
-        action=action,
-    )
-
-
-@dataclass(frozen=True, slots=True)
 class MPCMinuteDispatchV1:
     """Self-auditing request produced for one contemporaneous physical minute."""
 
@@ -565,13 +460,15 @@ class MPCMinuteDispatchV1:
         if Action.sanitised(self.action) != self.action:
             raise ValueError("minute dispatch action is not a sanitizer fixed point")
 
-        expected = _allocate_dispatch(
-            solar_kw=self.solar_available_kw,
-            electrolyser_target_kw=self.electrolyser_target_kw,
-            dac_target_kw=self.dac_target_kw,
-            methanator_target_kw=self.methanator_target_kw,
-            battery_charge_ceiling_kw=self.battery_charge_ceiling_kw,
-            support=self.support_availability,
+        expected = allocate_process_setpoint_targets(
+            ProcessSetpointTargetsV1(
+                electrolyser_target_kw=self.electrolyser_target_kw,
+                dac_target_kw=self.dac_target_kw,
+                methanator_target_kw=self.methanator_target_kw,
+                battery_charge_ceiling_kw=self.battery_charge_ceiling_kw,
+            ),
+            solar_available_kw=self.solar_available_kw,
+            support_availability=self.support_availability,
         )
         if (
             (
@@ -732,13 +629,15 @@ def dispatch_mpc_setpoints(
         electrolyser_headroom_kw=active_envelope.electrolyser_limit_kw,
     )
 
-    allocation = _allocate_dispatch(
-        solar_kw=solar_kw,
-        electrolyser_target_kw=setpoints.electrolyser_target_kw,
-        dac_target_kw=setpoints.dac_target_kw,
-        methanator_target_kw=setpoints.methanator_target_kw,
-        battery_charge_ceiling_kw=setpoints.battery_charge_ceiling_kw,
-        support=support,
+    allocation = allocate_process_setpoint_targets(
+        ProcessSetpointTargetsV1(
+            electrolyser_target_kw=setpoints.electrolyser_target_kw,
+            dac_target_kw=setpoints.dac_target_kw,
+            methanator_target_kw=setpoints.methanator_target_kw,
+            battery_charge_ceiling_kw=setpoints.battery_charge_ceiling_kw,
+        ),
+        solar_available_kw=solar_kw,
+        support_availability=support,
     )
     routes = allocation.routes_kw
     return MPCMinuteDispatchV1(

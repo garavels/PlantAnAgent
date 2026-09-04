@@ -70,8 +70,15 @@ equipment consequences.
   those commands and closes them against the physical minute ledger and next public boundary.
   A frozen pre-outcome clarification resolves the incompatible old/new digest requirement
   through exact three-boundary structural equivalence. Its executable fixture and a deep
-  run-level evidence/attribution validator now pass. The clean-revision authorization audit
-  remains pending.
+  run-level evidence/attribution validator now pass. The clean implementation revision was
+  admitted and its one registered mechanism cell passed S1--S8, restoring the full 2,520 kg
+  delivery but tying A0 and the certified ceiling. MPC uses 58.36% more battery throughput
+  than A0, so the mechanism is accepted while controller superiority is rejected.
+- Controller-parity phase 1 is complete without opening another outcome. A plain four-target
+  value and one reserve-aware allocation kernel now define the physical authority that the
+  heuristic, MPC, and future RL policy must share. The existing MPC dispatcher delegates to
+  that kernel with byte-stable frozen boundaries. The normalized adapter is not installed in
+  a Gym environment yet, so historical policies cannot be silently reinterpreted.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.
 
@@ -213,11 +220,14 @@ deliver 2,520 kg on this cell, however, while A0 uses 3.856 MWh less battery thr
 1.043 kWh/kg less accepted process energy. The actuation architecture is accepted, but the
 task remains saturated and establishes no controller superiority.
 
-Before Stage D changes the environment, Stage C must give the transparent heuristic and RL
-the same absolute-setpoint authority and complete one separately frozen multi-seed mechanism
-replication. The first Stage D pressure should then make the observed operating tradeoff
-commercially legible: time-varying energy value and explicit cycling/equipment wear are the
-leading candidate because service is tied while battery throughput differs by 58%.
+The controller-neutral target value, normalized policy adapter, and common allocation kernel
+now close the first authority phase without changing the historical Gym task. Before Stage D
+changes the environment, Stage C must bind observations and executions to that common door,
+route a transparent heuristic and opt-in RL environment through it, preserve MPC provenance,
+and prove paired authority equivalence. A separately frozen multi-seed mechanism replication
+then precedes controller claims. The first Stage D pressure should make the observed operating
+tradeoff commercially legible: time-varying energy value and explicit cycling/equipment wear
+are the leading candidate because service is tied while battery throughput differs by 58%.
 
 ## Stage D — Progressive operational realism
 

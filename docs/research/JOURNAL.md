@@ -4571,3 +4571,56 @@ door, then replicate mechanism robustness across seeds. The leading realism incr
 time-varying electricity value plus explicit cycling/equipment wear, because it turns the
 observed tied-service/58%-throughput difference into a commercially meaningful decision.
 No new matrix, environment change, or training was opened while documenting this result.
+
+## 2026-09-04 — Common setpoint authority phase 1 closes without an outcome
+
+The outcome-free controller-parity phase frozen in
+`COMMON_SETPOINT_AUTHORITY_PROTOCOL.md` is now implemented. Its unchanged raw SHA-256 is
+`088d6ec4bbf1c1ef1b8743166a09a1c7f7c9cf8203914678498471b99385b801`; the dependency lock
+also remains unchanged at
+`080d96275581ebbec1b2c27b354ea54e3e66419bfaadb034896da1fd22b228dd`.
+
+`ProcessSetpointTargetsV1` is a controller-neutral value containing exactly four finite,
+non-negative absolute targets: total electrolyser input, DAC input, methanator input, and a
+battery-charge ceiling. It contains no optimizer, plan, forecast, solver, controller, or
+future-state identity. `ProcessSetpointActionAdapterV1` accepts exactly four normalized
+policy coordinates, rejects booleans, strings, wrong shapes, and non-finite inputs, retains
+the raw and clipped vectors, and maps `[-1, 1]` linearly into the resolved active equipment
+limits. It does not allocate resources or step the plant. Historical Gym spaces and
+checkpoints remain untouched.
+
+The existing `reserve-aware-proportional-unsupported-loads-v1` arithmetic has been extracted
+once into `allocate_process_setpoint_targets`. The typed result binds the targets,
+contemporaneous solar, reserve-aware support envelope, four solar routes, battery support,
+unallocated solar, reachability, ordinary plant action, and a deterministic digest. It
+requires a sanitizer-fixed-point action, exact route/action and solar-bus closure, bounded
+support, no simultaneous battery charge and discharge, target ceilings, and exact tracking
+whenever the electrolyser target is reachable. Battery support remains deterministic
+dispatcher authority, never a learned fifth action.
+
+The private duplicated MPC allocator was deleted. Both new minute dispatch construction and
+the existing `MPCMinuteDispatchV1` self-audit now delegate to the common kernel using a plain
+`ProcessSetpointTargetsV1`. A recording-spy test proves both calls cross that shared boundary;
+the old day, night, surplus, deficit, reserve, operator-derating, proportional-scarcity, and
+dispatch-grid fixtures remain exact. The three frozen rate-35/seed-0 model, plan, setpoint,
+and physical-boundary identities also remain exact, and the registered one-shot contract
+digest remains
+`421561b2ee75650024c11fdf55d806012275b44838a33f6b3714635fa689e304`.
+
+The first focused adapter/dispatcher run found two assertion-message mismatches and no
+implementation failure; the assertions were corrected without weakening input rejection.
+The final adapter and dispatcher surface passes **41 tests in 0.66 seconds**. The wider
+compatibility selection passes **114 tests in 5.14 seconds**, including the frozen
+three-boundary equivalence fixture, the real four-decision/60-minute short executor, the
+registered-runner admission tests, and historical action/controller paths. The complete
+repository passes **1,106 tests with 2 skips in 41.81 seconds**. The only warning is the
+unchanged Starlette/httpx test-client deprecation; post-test Highs messages remain upstream
+solver logging. Black, Python compilation, strict targeted MyPy, Git whitespace validation,
+and lock identity all pass.
+
+No 72-hour controller episode, protected outcome, multi-seed matrix, policy training,
+environment modification, objective modification, HEPA fitting, or NLP evaluation ran in
+this phase. The next admissible slice is the separately versioned common command and
+execution door: an opt-in four-target Gym contract, a transparent heuristic using that same
+door, and an explicit adapter retaining the MPC's original provenance. Economic or wear
+pressure remains behind that parity gate.

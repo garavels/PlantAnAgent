@@ -7,6 +7,7 @@ from dataclasses import replace
 import pytest
 from plant_sim import Action, ComponentHealth, PlantConfig, PlantSimulator, PlantState
 
+import plant_backend.rl.v2.mpc_setpoints as mpc_setpoints_module
 from plant_backend.controllers.base import Constraints
 from plant_backend.rl.v2.config import EpisodeConfigV2
 from plant_backend.rl.v2.env import PlantEnvV2
@@ -30,7 +31,12 @@ from plant_backend.rl.v2.mpc_setpoints import (
     resolve_setpoint_envelope,
 )
 from plant_backend.rl.v2.mpc_solver import solve_service_mpc_model
-from plant_backend.safety import validate
+from plant_backend.rl.v2.setpoint_control import (
+    ProcessSetpointAllocationV1,
+    ProcessSetpointTargetsV1,
+    allocate_process_setpoint_targets,
+)
+from plant_backend.safety import BatterySupportAvailability, validate
 
 
 _SHA = "a" * 64
@@ -413,6 +419,61 @@ def test_dispatch_is_byte_deterministic_and_rejects_a_changed_envelope(
             constraints=Constraints(battery_min_soc=0.30),
             config=plant,
         )
+
+
+def test_mpc_dispatch_delegates_to_the_controller_neutral_kernel(
+    boundary: PlantState,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    command = _command()
+    calls: list[ProcessSetpointAllocationV1] = []
+
+    def record_common_allocation(
+        targets: ProcessSetpointTargetsV1,
+        *,
+        solar_available_kw: float,
+        support_availability: BatterySupportAvailability,
+    ) -> ProcessSetpointAllocationV1:
+        allocation = allocate_process_setpoint_targets(
+            targets,
+            solar_available_kw=solar_available_kw,
+            support_availability=support_availability,
+        )
+        calls.append(allocation)
+        return allocation
+
+    monkeypatch.setattr(
+        mpc_setpoints_module,
+        "allocate_process_setpoint_targets",
+        record_common_allocation,
+    )
+    dispatched = dispatch_mpc_setpoints(
+        command,
+        boundary,
+        solar_available_kw=723.5,
+        constraints=Constraints(),
+        config=PlantConfig(),
+    )
+
+    assert len(calls) == 2
+    assert calls[0] == calls[1]
+    common = calls[0]
+    assert common.targets == ProcessSetpointTargetsV1(
+        electrolyser_target_kw=command.electrolyser_target_kw,
+        dac_target_kw=command.dac_target_kw,
+        methanator_target_kw=command.methanator_target_kw,
+        battery_charge_ceiling_kw=command.battery_charge_ceiling_kw,
+    )
+    assert common.routes_kw == (
+        dispatched.solar_to_battery_kw,
+        dispatched.solar_to_electrolyser_kw,
+        dispatched.solar_to_dac_kw,
+        dispatched.solar_to_methanator_kw,
+    )
+    assert common.support_kw == dispatched.battery_support_kw
+    assert common.unallocated_kw == dispatched.unallocated_solar_kw
+    assert common.target_reachable == dispatched.electrolyser_target_reachable
+    assert common.action == dispatched.action
 
 
 def test_minute_dispatch_evidence_rejects_policy_and_reachability_substitution(
