@@ -155,6 +155,11 @@ fallback behavior.
   unmet demand, while M is descriptively 382.532 EUR higher because avoided terminal methane
   liability more than offsets additional cycling and electrolyser exposure. This establishes
   one-cell task expression, not controller or commercial superiority.
+- [`ECONOMIC_ROBUSTNESS_TOURNAMENT_PROTOCOL.md`](ECONOMIC_ROBUSTNESS_TOURNAMENT_PROTOCOL.md)
+  freezes the next outcome-blind gate: H/M across horizons 6/24 h, rates 35/42 kg/h, and fresh
+  development seeds 20--24. R1--R8 require complete paired evidence, safety, accounting,
+  repeated service-comparable separation, full-day survival, and nonterminal expression after
+  removing methane liability. No fresh trajectory has been opened.
 - [`CONTROLLER_NEUTRAL_RL_INTEGRATION.md`](CONTROLLER_NEUTRAL_RL_INTEGRATION.md)
   defines the remaining RL wiring gate: strict four-target training configuration, exact
   full-task checkpoint compatibility, artifact hashing, checkpoint-bound inference evidence,

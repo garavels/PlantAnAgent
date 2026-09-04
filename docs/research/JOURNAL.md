@@ -5057,3 +5057,35 @@ liability from tariff, battery, and electrolyser terms. A substantive PPO baseli
 only if that tournament shows consistent, service-comparable residual headroom that is not an
 artifact of one synthetic terminal coefficient. The complete result and artifact custody are
 recorded in `results/v2_economic_mechanism_smoke_a46aabf.md`.
+
+## 2026-09-04 — Economic robustness tournament frozen before fresh seeds
+
+The one-cell pass did not directly trigger PPO. Its dominant 543.016 EUR methane-liability
+difference and six-hour endpoint make a repeated robustness gate necessary. Repository seed
+custody shows that seeds 0--3 were directly inspected during controller development and seeds
+0--19 appeared in earlier V2 baseline work. Seeds 20--24 were not present in any recorded V2
+trajectory or fixture; they are now consumed as fresh development seeds by the frozen protocol
+and may never be relabelled as holdout evidence.
+
+`ECONOMIC_ROBUSTNESS_TOURNAMENT_PROTOCOL.md` freezes 20 paired H/M cells before any of those
+seeds is reset: horizons 6 and 24 hours, delivery rates 35 and 42 kg/h, and seeds 20 through 24.
+The matrix contains 40 trajectories, 2,400 controller decisions, and 36,000 one-minute
+applications. M keeps a six-hour causal planning horizon in both task horizons; neither arm sees
+tariff or economic coefficients. The comparison remains a task probe with unequal controller
+information, not an algorithm ranking.
+
+R1--R3 require the entire declared matrix, exact identity/accounting, and zero hard safety or
+authority failures. R4 requires at least four of five equal-service cells per horizon/rate
+stratum. R5 requires those cells to have more than 1 EUR separation plus a material raw driver.
+R6 repeats that gate after algebraically removing methane-endowment liability from both arms,
+preventing the seed-0 dominant term from carrying readiness. R7 requires both 24-hour strata to
+pass independently. R8 reports, without a pass threshold, every ranking flip across frozen
+methane, wear, and solar-cost multiplier grids.
+
+The raw-file protocol SHA-256 is
+`6fb5eb11933ba5ee601849210b4e61278e4cec2ddb97c8e31b05817ee7141412`.
+No seed 20--24 environment has been constructed or reset, no controller outcome has been opened,
+and no coefficient has been changed. A complete R1--R7 pass will permit only separately
+registered bounded PPO development and a tariff-aware economic MPC implementation. Failure of
+service comparability, nonterminal expression, or full-day robustness returns the task for
+repair before training.

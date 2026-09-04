@@ -122,6 +122,13 @@ equipment consequences.
   loading and runtime behavior remain unchanged. Tiny fixed-policy fixtures and one disposable
   two-transition train/four-transition resume/load/evaluate smoke have run. No research-scale
   four-target policy, comparative RL performance outcome, or selection result exists.
+- The next task-readiness decision is preregistered in
+  `ECONOMIC_ROBUSTNESS_TOURNAMENT_PROTOCOL.md` before any seed 20--24 trajectory is opened.
+  Twenty paired cells cross 6/24-hour horizons and 35/42 kg/h demand. The go/no-go rule requires
+  repeated equal-service value separation in every stratum, including after removing methane
+  endowment liability, plus full-day safety and accounting. A pass admits only bounded
+  development PPO and a tariff-aware economic MPC implementation under new protocols; a failure
+  sends the objective or horizon back for repair.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.
 
