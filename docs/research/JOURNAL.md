@@ -4444,3 +4444,52 @@ registered mechanism cell, performance metric, holdout, PPO training, simulator 
 objective change, or parameter tuning ran. The remaining prerequisite is a clean committed
 revision audit that maps every frozen implementation gate to exact executable evidence and
 freezes the one-shot runner contract before any outcome is opened.
+
+## 2026-09-04 — Fixed one-shot setpoint mechanism runner implemented outcome-free
+
+`plant_backend.rl.v2.mpc_setpoint_experiment` now encodes the only permitted first
+absolute-setpoint rollout. Its public CLI accepts one argument, an absolute new `.json`
+destination outside the repository. Rate 35 kg/h, seed 0, the 72-hour horizon, 288 decisions,
+4,320 physical minutes, the default setpoint-controller settings, manifest and exogenous
+episode identities, protocol and clarification hashes, dependency-lock hash, eight outcome
+gates, and claim boundary are code-bound rather than operator choices. The no-same-revision
+retry rule remains a preregistered governance obligation: the stateless CLI enforces a new
+non-overwriting destination but cannot discover artifacts deliberately written elsewhere.
+`make v2-mpc-setpoint OUTPUT=/absolute/external/result.json` is the corresponding
+frozen entry point; it has not been invoked.
+
+The internal execution loop is separately testable with a short task but the public boundary
+always constructs the frozen cell. For every decision it computes one typed command, applies
+it through the opt-in minute dispatcher, retrieves the exact interval execution, reconciles
+the next public controller boundary, and only then admits the dispatch-timing group. It
+passes the resulting typed events to the existing deep run validator. Controller,
+environment, transition, truncation, and evidence-validation failures are retained without a
+fallback. When a failure prevents construction of a valid evidence graph, the artifact
+labels the material unvalidated and retains the controller events, dispatcher timings, and
+any unreconciled execution rather than presenting a partial success.
+
+S1 requires a complete evidence graph with exactly 288 closed decisions, 576 attempted and
+successful solver stages, 288 interval executions, 4,320 physical minute applications,
+matching identity-list cardinalities, matching environment metrics, and zero fallback. An
+S1 failure mechanically makes S2--S8 `not_evaluated`. After S1, the runner independently
+checks target overshoot and simultaneous battery modes (S2), reachable tracking and deficit
+decomposition (S3), productive commitment behavior (S4), reserve/SOC/validity/shutdown
+safety (S5), digest/chain/accounting/authority closure (S6), the frozen delivery-direction
+diagnostic (S7), and separate controller/dispatcher latency limits (S8).
+
+The runner validates the frozen documents and lock before an outcome, requires a complete
+clean Git content identity, verifies that revision/content/lock identity is unchanged before
+publication, and rechecks it after publication. Output uses a temporary file, byte and
+canonical-JSON round-trip verification, an atomic no-overwrite hard link, filesystem sync,
+and a final byte digest. The report verifier recomputes its domain digest, deeply verifies
+run-evidence digests when present, recomputes all gates and status, and rejects substitution.
+
+Nine focused admission tests pass in 1.19 seconds. They run one real four-decision/60-minute
+setpoint episode, reject episode/controller horizon mismatch, prove S1 suppresses downstream
+interpretation, exercise every S1--S8 threshold, publish and reopen a typed failure artifact,
+reject overwrite, refuse a dirty source before calling the executor, reject report
+substitution, and prove the CLI has no seed/rate/tuning surface. The implementation admission
+document now maps all twelve outcome-free gates to named executable tests. Final formatting,
+types, focused regression, full regression, and clean-revision checks remain pending. No
+72-hour setpoint outcome, performance metric, holdout, training, simulator change, or tuning
+was opened in this slice.

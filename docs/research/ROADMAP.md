@@ -202,6 +202,11 @@ audit remain prerequisites to any full rollout. The fixture now reproduces every
 identity and exact structural equality. The run validator also closes ordered public and
 physical boundaries, residual power/inventory values, minute latency cardinality, target
 deficit attribution, energy totals, and deterministic evidence-graph identities.
+The one-shot mechanism runner is now implemented without a tuning surface: it binds rate 35,
+seed 0, the exact exogenous episode, protocol and lock digests, clean source identity,
+non-overwriting external publication, and S1--S8. The implementation audit maps all twelve
+outcome-free gates to tests; only the final committed-clean verification remains before the
+single mechanism cell may be authorized.
 
 ## Stage D — Progressive operational realism
 

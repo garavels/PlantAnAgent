@@ -105,14 +105,18 @@ fallback behavior.
   absolute intent and requires that physical ledger before its next solve. A run-level deep
   validator now checks decision/event order, public and physical boundary chains, residuals,
   minute counts, target-deficit attribution, support authority, energy aggregates, and
-  separate controller/solver/dispatcher latencies. The final clean-revision admission audit
-  and any full rollout remain pending.
+  separate controller/solver/dispatcher latencies. A fixed one-shot runner now binds the
+  exact cell, protocols, dependency lock, source revision, non-overwriting publication, and
+  S1--S8 decision rule. Any full rollout remains pending the final clean-revision audit.
 - [`CAUSAL_SERVICE_MPC_SETPOINT_DISPATCH_CLARIFICATION_001.md`](CAUSAL_SERVICE_MPC_SETPOINT_DISPATCH_CLARIFICATION_001.md)
   preserves the original protocol while replacing its impossible byte-identical cross-version
   model/plan requirement with a frozen three-boundary structural-equivalence test. It binds
   exact historical and new identities, requires identical forecast projections, normalized
   models, and complete selected-plan quantities, and retains truthful version-separated
   provenance.
+- [`CAUSAL_SERVICE_MPC_SETPOINT_DISPATCH_ADMISSION.md`](CAUSAL_SERVICE_MPC_SETPOINT_DISPATCH_ADMISSION.md)
+  maps every outcome-free implementation gate to executable evidence and freezes the
+  one-shot runner's clean-source, failure-retention, publication, and S1--S8 contracts.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

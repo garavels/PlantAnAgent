@@ -1,4 +1,4 @@
-.PHONY: help setup dev backend frontend sim test eval foresight-eval rl-eval rl-ceiling v2-eval v2-weather-eval v2-controller-eval v2-planner v2-mpc v2-mpc-report train-dry train \
+.PHONY: help setup dev backend frontend sim test eval foresight-eval rl-eval rl-ceiling v2-eval v2-weather-eval v2-controller-eval v2-planner v2-mpc v2-mpc-report v2-mpc-setpoint train-dry train \
 	hepa-collect hepa-pretrain-dry hepa-pretrain hepa-finetune-dry hepa-finetune \
 	hepa-eval build clean
 
@@ -71,6 +71,11 @@ v2-mpc-report:    ## aggregate six registered causal service-MPC cells (external
 	uv run --frozen python -m plant_backend.rl.v2.mpc_report \
 		--cell $(CELL_35_0) --cell $(CELL_35_1) --cell $(CELL_35_2) \
 		--cell $(CELL_42_0) --cell $(CELL_42_1) --cell $(CELL_42_2) \
+		--output $(OUTPUT)
+
+v2-mpc-setpoint:  ## run the single frozen absolute-setpoint mechanism cell (external OUTPUT required)
+	$(if $(OUTPUT),,$(error OUTPUT=/absolute/path/outside/repository.json is required))
+	uv run --frozen python -m plant_backend.rl.v2.mpc_setpoint_experiment \
 		--output $(OUTPUT)
 
 train-dry:        ## build the RL environment and print the training plan; trains nothing
