@@ -17,13 +17,22 @@ from numbers import Integral, Real
 from typing import Any, NoReturn, Sequence
 import warnings
 
-from .mpc_model import MPCSparseRowV1, ServiceMPCModelV1, delivery_lock_row
+from .mpc_model import (
+    MPCSolutionAuditV1,
+    MPCSparseRowV1,
+    ServiceMPCModelV1,
+    delivery_lock_row,
+)
 from .mpc_schema import (
     MODEL_BALANCE_TOLERANCE,
     MPCPlanStepV1,
     MPCPlanV1,
+    MPCSolutionAuditEvidenceV1,
+    MPCSolutionSelectionV1,
     MPCStageSolveV1,
+    SERVICE_MPC_FEASIBILITY_SELECTION_POLICY,
     SERVICE_MPC_SOLUTION_DOMAIN,
+    SERVICE_MPC_STRICT_PROJECTION_POLICY,
     ServiceMPCInputError,
     ServiceMPCPlanError,
     ServiceMPCSettingsV1,
@@ -81,6 +90,12 @@ class _SciPyRuntime:
 class _SolvedStage:
     solution: tuple[float, ...]
     evidence: MPCStageSolveV1
+
+
+@dataclass(frozen=True, slots=True)
+class _SelectedSolution:
+    solution: tuple[float, ...]
+    evidence: MPCSolutionSelectionV1 | None
 
 
 def _validate_solver_model(model: ServiceMPCModelV1) -> None:
@@ -276,6 +291,106 @@ def _canonical_solution(
     return tuple(values)
 
 
+def _audit_evidence(audit: MPCSolutionAuditV1) -> MPCSolutionAuditEvidenceV1:
+    return MPCSolutionAuditEvidenceV1(
+        valid=audit.valid,
+        max_bound_violation=audit.max_bound_violation,
+        max_row_violation=audit.max_row_violation,
+        max_integrality_violation=audit.max_integrality_violation,
+        worst_row=audit.worst_row,
+    )
+
+
+def _audit_failure_message(
+    *,
+    stage: str,
+    qualifier: str,
+    audit: MPCSolutionAuditV1,
+) -> str:
+    return (
+        f"service-MPC {stage} {qualifier} failed independent residual audit: "
+        f"bounds={audit.max_bound_violation:.6g}, "
+        f"rows={audit.max_row_violation:.6g}, "
+        f"integrality={audit.max_integrality_violation:.6g}, "
+        f"worst_row={audit.worst_row!r}"
+    )
+
+
+def _select_feasible_solution(
+    model: ServiceMPCModelV1,
+    raw_solution: object,
+    *,
+    stage: str,
+    settings: ServiceMPCSettingsV1,
+    extra_rows: Sequence[MPCSparseRowV1] = (),
+) -> _SelectedSolution:
+    """Project harmless bound noise without replacing a feasible vector by an invalid one."""
+
+    raw_values = _solution_vector(model, raw_solution)
+    raw_audit = model.audit_solution(
+        raw_values,
+        tolerance=settings.solver_mip_feasibility_tolerance,
+        relative_tolerance=settings.solver_mip_feasibility_tolerance,
+        extra_rows=extra_rows,
+    )
+    if not raw_audit.valid:
+        raise ServiceMPCPlanError(
+            _audit_failure_message(
+                stage=stage,
+                qualifier="raw solution",
+                audit=raw_audit,
+            )
+        )
+
+    projected = _canonical_solution(
+        model,
+        raw_values,
+        absolute_tolerance=settings.solver_mip_feasibility_tolerance,
+        relative_tolerance=settings.solver_mip_feasibility_tolerance,
+    )
+    projected_audit = model.audit_solution(
+        projected,
+        tolerance=settings.solver_mip_feasibility_tolerance,
+        relative_tolerance=settings.solver_mip_feasibility_tolerance,
+        extra_rows=extra_rows,
+    )
+    changed_deltas = tuple(
+        abs(raw - candidate)
+        for raw, candidate in zip(raw_values, projected, strict=True)
+        if raw != candidate
+    )
+    policy = settings.solution_selection_policy
+    if policy == SERVICE_MPC_STRICT_PROJECTION_POLICY:
+        if not projected_audit.valid:
+            raise ServiceMPCPlanError(
+                _audit_failure_message(
+                    stage=stage,
+                    qualifier="solution",
+                    audit=projected_audit,
+                )
+            )
+        return _SelectedSolution(solution=projected, evidence=None)
+    if policy != SERVICE_MPC_FEASIBILITY_SELECTION_POLICY:
+        raise ServiceMPCInputError(
+            "service-MPC solution selection policy is unsupported"
+        )
+
+    selected = (
+        "projected" if projected_audit.valid else "raw_feasible_projection_rejected"
+    )
+    evidence = MPCSolutionSelectionV1(
+        selected=selected,
+        projection_count=len(changed_deltas),
+        max_projection_delta=max(changed_deltas, default=0.0),
+        raw_audit=_audit_evidence(raw_audit),
+        projected_audit=_audit_evidence(projected_audit),
+    )
+    return _SelectedSolution(
+        solution=projected if projected_audit.valid else raw_values,
+        evidence=evidence,
+    )
+
+
 def _solution_sha256(
     model: ServiceMPCModelV1,
     *,
@@ -468,41 +583,14 @@ def _solve_stage(
             raise ServiceMPCPlanError(
                 f"service-MPC {stage} returned status zero without a solution"
             )
-        raw_solution_values = _solution_vector(model, raw_solution)
-        raw_audit = model.audit_solution(
-            raw_solution_values,
-            tolerance=settings.solver_mip_feasibility_tolerance,
-            relative_tolerance=settings.solver_mip_feasibility_tolerance,
-            extra_rows=extra_rows,
-        )
-        if not raw_audit.valid:
-            raise ServiceMPCPlanError(
-                f"service-MPC {stage} raw solution failed independent residual "
-                f"audit: bounds={raw_audit.max_bound_violation:.6g}, "
-                f"rows={raw_audit.max_row_violation:.6g}, "
-                f"integrality={raw_audit.max_integrality_violation:.6g}, "
-                f"worst_row={raw_audit.worst_row!r}"
-            )
-        solution = _canonical_solution(
+        selection = _select_feasible_solution(
             model,
-            raw_solution_values,
-            absolute_tolerance=settings.solver_mip_feasibility_tolerance,
-            relative_tolerance=settings.solver_mip_feasibility_tolerance,
-        )
-        audit = model.audit_solution(
-            solution,
-            tolerance=settings.solver_mip_feasibility_tolerance,
-            relative_tolerance=settings.solver_mip_feasibility_tolerance,
+            raw_solution,
+            stage=stage,
+            settings=settings,
             extra_rows=extra_rows,
         )
-        if not audit.valid:
-            raise ServiceMPCPlanError(
-                f"service-MPC {stage} solution failed independent residual audit: "
-                f"bounds={audit.max_bound_violation:.6g}, "
-                f"rows={audit.max_row_violation:.6g}, "
-                f"integrality={audit.max_integrality_violation:.6g}, "
-                f"worst_row={audit.worst_row!r}"
-            )
+        solution = selection.solution
 
         if len(objective) != model.variable_count:
             raise ServiceMPCPlanError(
@@ -561,6 +649,7 @@ def _solve_stage(
             ),
             scipy_version=runtime.scipy_version,
             highs_version=runtime.highs_version,
+            solution_selection=selection.evidence,
         )
         return _SolvedStage(solution=solution, evidence=evidence)
     except (ServiceMPCPlanError, TypeError, ValueError) as exc:
@@ -737,6 +826,13 @@ def solve_service_mpc_model(
         raise TypeError("model must be ServiceMPCModelV1")
     if not isinstance(settings, ServiceMPCSettingsV1):
         raise TypeError("settings must be ServiceMPCSettingsV1")
+    if settings.solution_selection_policy not in {
+        SERVICE_MPC_STRICT_PROJECTION_POLICY,
+        SERVICE_MPC_FEASIBILITY_SELECTION_POLICY,
+    }:
+        raise ServiceMPCInputError(
+            "service-MPC solution selection policy is unsupported"
+        )
     if model.settings_sha256 != settings.sha256:
         raise ServiceMPCInputError("service-MPC model/settings identity mismatch")
     _validate_solver_model(model)

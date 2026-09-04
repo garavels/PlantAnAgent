@@ -4095,3 +4095,52 @@ tracking, zero unexplained deficit, no simultaneous charge/support, complete ene
 attribution, and separate controller/dispatcher latency. PPO, HEPA, language-supervisor,
 economic-objective, and realism work remains outside this slice. No setpoint controller
 rollout or new outcome was opened while freezing the protocol.
+
+## 2026-09-04 — Feasibility-preserving solver selection implemented
+
+The first implementation slice under the frozen setpoint-dispatch protocol repairs only the
+solver-output selection boundary. It does not change the MILP, forecast, horizon, objective,
+solver tolerances, plan extraction, simulator, action path, or any physical parameter. The
+historical `ServiceMPCSettingsV1` retains its strict projection behavior and exact SHA-256
+`0e8896cfb9fe47dc3ac3b285fc729e029a80803e31eddf4a885795d2d04253f2`.
+The new `ServiceMPCSetpointSettingsV1` uses controller identity
+`service-mpc-setpoint-dispatch-v1`, settings domain
+`service-mpc-setpoint-settings-v1`, and selection policy
+`feasibility-preserving-bound-projection-v1`; its default settings digest is
+`e418dc37401482cf78036daefa61d80fa23fef0411a7215c3fb549a91085fb1b`.
+
+The adapter still validates the exact raw vector first and rejects it when bounds, rows,
+integrality, or any stage-lock row fail the unchanged absolute-plus-relative audit. It then
+constructs the identical nearest-bound/near-integral candidate and audits the complete
+candidate. Under historical settings an invalid candidate still fails exactly as before.
+Under the new settings, a valid candidate is selected; if and only if the raw vector passed
+and the candidate fails, the adapter retains the raw binary64 values exactly. Objective and
+plan-extraction checks still run on whichever vector is selected, so this rule cannot turn
+an invalid solver result into a physical plan.
+
+Successful stages under the new settings now publish typed selection evidence: selected
+mode, projection count, maximum proposed delta, and complete raw/projected audit summaries.
+Failed stages cannot publish that evidence. The matrix report admission path deeply checks
+the optional record and rejects unknown fields, policies, inconsistent validity, impossible
+projection counts, and selection evidence attached to a failed solve. The field remains
+absent for historical stages, preserving their serialized evidence and plan identities.
+
+Four outcome-free adversarial controls implement the protocol's required claims. In the
+observed bridge failure, a raw-feasible `3.495807901682279e-05 kg` state with a 6,000 kg
+upper bound would be projected to zero while its coupled CO2 flow remains nonzero; the new
+policy retains the raw vector and records `co2_balance[1]` as the projected failure. In the
+earlier gated-flow case, `3.935447649175992e-05 kW` support beside an off binary is safely
+projected to zero and selected. A `1e-3` material row error is rejected at the raw audit.
+A candidate that leaves base rows valid but breaks a supplied lexicographic lock also causes
+exact raw retention. A separate control proves the historical settings still reject the
+CO2 projection case.
+
+The schema/solver tests and focused report/controller/evaluation regressions pass **78
+tests**. The complete repository passes **1,020 tests with 2 skips** in 33.46 seconds; its
+only warning is the unchanged Starlette/httpx test-client deprecation. Black formatting,
+compilation, Git whitespace checks, and isolated targeted strict type checking of the four
+touched production modules pass. No full controller rollout,
+registered cell, holdout, PPO training, environment-realism change, or performance outcome
+was opened. The next implementation slice is the immutable process-setpoint command and pure
+one-minute dispatcher, beginning with shared reserve-aware support availability so the
+dispatcher and independent guard cannot diverge.

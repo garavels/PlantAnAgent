@@ -5,14 +5,19 @@ from dataclasses import replace
 import pytest
 
 from plant_backend.rl.v2.mpc_schema import (
+    DEFAULT_SERVICE_MPC_SETPOINT_SETTINGS_V1,
     DEFAULT_SERVICE_MPC_SETTINGS_V1,
     MPCDeliveryTargetV1,
     MPCPlanStepV1,
     MPCPlanV1,
+    MPCSolutionAuditEvidenceV1,
+    MPCSolutionSelectionV1,
     MPCStageSolveV1,
     SERVICE_MPC_CONTROLLER_ID,
+    SERVICE_MPC_FEASIBILITY_SELECTION_POLICY,
     SERVICE_MPC_MODEL_VERSION,
     SERVICE_MPC_OBJECTIVE_VERSION,
+    SERVICE_MPC_SETPOINT_CONTROLLER_ID,
     ServiceMPCSettingsV1,
     ServiceMPCSolveError,
     canonical_json,
@@ -20,6 +25,26 @@ from plant_backend.rl.v2.mpc_schema import (
 
 
 _SHA = "a" * 64
+
+
+def _audit(*, valid: bool = True) -> MPCSolutionAuditEvidenceV1:
+    return MPCSolutionAuditEvidenceV1(
+        valid=valid,
+        max_bound_violation=0.0,
+        max_row_violation=0.0 if valid else 1e-5,
+        max_integrality_violation=0.0,
+        worst_row=None if valid else "co2_balance[1]",
+    )
+
+
+def _selection() -> MPCSolutionSelectionV1:
+    return MPCSolutionSelectionV1(
+        selected="raw_feasible_projection_rejected",
+        projection_count=1,
+        max_projection_delta=1e-5,
+        raw_audit=_audit(),
+        projected_audit=_audit(valid=False),
+    )
 
 
 def _stage(name: str) -> MPCStageSolveV1:
@@ -101,6 +126,26 @@ def test_default_settings_exactly_encode_the_frozen_protocol() -> None:
     }
     assert len(settings.sha256) == 64
     assert canonical_json(payload) == canonical_json(settings.to_dict())
+
+
+def test_setpoint_settings_version_the_feasibility_preserving_selection_rule() -> None:
+    historical = DEFAULT_SERVICE_MPC_SETTINGS_V1
+    settings = DEFAULT_SERVICE_MPC_SETPOINT_SETTINGS_V1
+    payload = settings.to_dict()
+
+    assert historical.sha256 == (
+        "0e8896cfb9fe47dc3ac3b285fc729e029a80803e31eddf4a885795d2d04253f2"
+    )
+    assert settings.controller_id == SERVICE_MPC_SETPOINT_CONTROLLER_ID
+    assert settings.schema_version == 2
+    assert payload["solution_selection_policy"] == (
+        SERVICE_MPC_FEASIBILITY_SELECTION_POLICY
+    )
+    assert (
+        "retain the exactly raw vector"
+        in payload["independent_residual_audit"]["solution_selection"]
+    )
+    assert settings.sha256 != historical.sha256
 
 
 def test_settings_identity_changes_with_every_tuning_surface() -> None:
@@ -202,6 +247,31 @@ def test_solver_status_never_turns_a_failed_stage_into_evidence() -> None:
     assert independently_rejected.solution_sha256 is None
     with pytest.raises(ValueError, match="unsuccessful stage"):
         ServiceMPCSolveError("invalid evidence", stages=(success,))
+
+
+def test_solution_selection_evidence_is_fail_closed_and_stage_bound() -> None:
+    selection = _selection()
+    stage = replace(_stage("primary_delivery"), solution_selection=selection)
+
+    assert stage.to_dict()["solution_selection"] == selection.to_dict()
+    assert selection.to_dict()["policy"] == SERVICE_MPC_FEASIBILITY_SELECTION_POLICY
+    with pytest.raises(ValueError, match="valid projected audit"):
+        replace(selection, selected="projected")
+    with pytest.raises(ValueError, match="rejected projected audit"):
+        replace(selection, projected_audit=_audit())
+    with pytest.raises(ValueError, match="at least one projection"):
+        replace(selection, projection_count=0, max_projection_delta=0.0)
+    with pytest.raises(ValueError, match="cannot publish solution selection"):
+        replace(
+            stage,
+            success=False,
+            status=1,
+            objective_value=None,
+            mip_dual_bound=None,
+            mip_gap=None,
+            mip_node_count=None,
+            solution_sha256=None,
+        )
 
 
 def test_plan_step_validates_buses_and_battery_direction() -> None:

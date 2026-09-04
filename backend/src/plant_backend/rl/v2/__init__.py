@@ -29,7 +29,7 @@ from .evaluation import (
 )
 from .metrics import EpisodeMetricsV2
 from .mpc_controller import ServiceMPCControllerV1
-from .mpc_schema import ServiceMPCSettingsV1
+from .mpc_schema import ServiceMPCSetpointSettingsV1, ServiceMPCSettingsV1
 from .reward import RewardWeightsV2
 from .weather import ForecastIssueV2, PublicForecastIssueV2, WeatherConfigV2
 from .spaces import (
@@ -72,6 +72,7 @@ __all__ = [
     "RiskAdjustedIssuedForecastControllerV2",
     "SPEC_VERSION",
     "ServiceMPCControllerV1",
+    "ServiceMPCSetpointSettingsV1",
     "ServiceMPCSettingsV1",
     "WeatherConfigV2",
     "describe",

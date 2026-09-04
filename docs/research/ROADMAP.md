@@ -60,7 +60,12 @@ equipment consequences.
   zero forced/aborted starts, but actual battery support is 505.62 times planned support and
   positive-target decisions overshoot by 717.57 kW on average. The bridge is therefore
   rejected as a target-realization seam; absolute process setpoints plus a deterministic
-  one-minute dispatcher are next.
+  one-minute dispatcher are next. The first prerequisite is now implemented without
+  changing the legacy controller: the new versioned settings audit raw and projected
+  solver vectors, retain the raw vector only when projection breaks feasibility, and bind
+  that choice plus both residual summaries into stage evidence. The frozen CO2, gated-flow,
+  material-infeasibility, and lexicographic-lock counterexamples pass. Setpoint command and
+  dispatcher implementation remain pending and outcome-free.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.
 
@@ -178,7 +183,8 @@ planned over its valid prefix. The next contract must make target tracking and u
 energy explicit acceptance criteria. That contract is now frozen: it preserves the Gym
 action and simulator, adds a versioned absolute setpoint seam, realizes it through a pure
 reserve-aware one-minute dispatcher, and repairs solver projection only when feasibility is
-preserved. Implementation remains outcome-free until the complete authorization gate passes.
+preserved. The solver repair is complete under a separately hashed settings contract; the
+setpoint/dispatcher path remains outcome-free until the complete authorization gate passes.
 
 ## Stage D — Progressive operational realism
 

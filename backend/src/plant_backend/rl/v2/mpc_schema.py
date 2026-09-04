@@ -19,6 +19,11 @@ SERVICE_MPC_SOLVER = "scipy.optimize.milp"
 SERVICE_MPC_PLAN_DOMAIN = "service-mpc-plan-v1"
 SERVICE_MPC_SETTINGS_DOMAIN = "service-mpc-settings-v1"
 SERVICE_MPC_SOLUTION_DOMAIN = "service-mpc-solution-vector-v1"
+SERVICE_MPC_STRICT_PROJECTION_POLICY = "strict-bound-projection-v1"
+SERVICE_MPC_SETPOINT_SCHEMA_VERSION = 2
+SERVICE_MPC_SETPOINT_CONTROLLER_ID = "service-mpc-setpoint-dispatch-v1"
+SERVICE_MPC_SETPOINT_SETTINGS_DOMAIN = "service-mpc-setpoint-settings-v1"
+SERVICE_MPC_FEASIBILITY_SELECTION_POLICY = "feasibility-preserving-bound-projection-v1"
 MODEL_BALANCE_TOLERANCE = 1e-7
 
 
@@ -112,6 +117,7 @@ class ServiceMPCSettingsV1:
     objective_version: ClassVar[str] = SERVICE_MPC_OBJECTIVE_VERSION
     forecast_projection_version: ClassVar[str] = FORECAST_PROJECTION_VERSION
     solver: ClassVar[str] = SERVICE_MPC_SOLVER
+    solution_selection_policy: ClassVar[str] = SERVICE_MPC_STRICT_PROJECTION_POLICY
 
     def __post_init__(self) -> None:
         task_h = _finite("task_horizon_h", self.task_horizon_h, minimum=0.0)
@@ -251,6 +257,33 @@ DEFAULT_SERVICE_MPC_SETTINGS_V1 = ServiceMPCSettingsV1()
 
 
 @dataclass(frozen=True, slots=True)
+class ServiceMPCSetpointSettingsV1(ServiceMPCSettingsV1):
+    """Versioned settings for the setpoint controller and feasible selection rule."""
+
+    schema_version: ClassVar[int] = SERVICE_MPC_SETPOINT_SCHEMA_VERSION
+    controller_id: ClassVar[str] = SERVICE_MPC_SETPOINT_CONTROLLER_ID
+    solution_selection_policy: ClassVar[str] = SERVICE_MPC_FEASIBILITY_SELECTION_POLICY
+
+    def body(self) -> dict[str, Any]:
+        body = ServiceMPCSettingsV1.body(self)
+        residual_audit = dict(body["independent_residual_audit"])
+        residual_audit["solution_selection"] = (
+            "select projected vector when its complete audit passes; otherwise "
+            "retain the exactly raw vector only when its complete audit passed"
+        )
+        body["independent_residual_audit"] = residual_audit
+        body["solution_selection_policy"] = self.solution_selection_policy
+        return body
+
+    @property
+    def sha256(self) -> str:
+        return domain_sha256(SERVICE_MPC_SETPOINT_SETTINGS_DOMAIN, self.body())
+
+
+DEFAULT_SERVICE_MPC_SETPOINT_SETTINGS_V1 = ServiceMPCSetpointSettingsV1()
+
+
+@dataclass(frozen=True, slots=True)
 class MPCDeliveryTargetV1:
     """One announced or causally inferred settlement in the MPC horizon."""
 
@@ -289,6 +322,95 @@ class MPCDeliveryTargetV1:
 
 
 @dataclass(frozen=True, slots=True)
+class MPCSolutionAuditEvidenceV1:
+    """Serializable independent residual audit for one solver vector."""
+
+    valid: bool
+    max_bound_violation: float
+    max_row_violation: float
+    max_integrality_violation: float
+    worst_row: str | None
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.valid, bool):
+            raise TypeError("solution-audit valid must be a bool")
+        for name in (
+            "max_bound_violation",
+            "max_row_violation",
+            "max_integrality_violation",
+        ):
+            _finite(name, getattr(self, name), minimum=0.0)
+        if self.worst_row is not None and (
+            not isinstance(self.worst_row, str) or not self.worst_row
+        ):
+            raise ValueError("worst_row must be a non-empty string or None")
+
+    def to_dict(self) -> dict[str, bool | float | str | None]:
+        return {
+            "valid": self.valid,
+            "max_bound_violation": float(self.max_bound_violation),
+            "max_row_violation": float(self.max_row_violation),
+            "max_integrality_violation": float(self.max_integrality_violation),
+            "worst_row": self.worst_row,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class MPCSolutionSelectionV1:
+    """Evidence for choosing a projected or exactly raw feasible solver vector."""
+
+    selected: str
+    projection_count: int
+    max_projection_delta: float
+    raw_audit: MPCSolutionAuditEvidenceV1
+    projected_audit: MPCSolutionAuditEvidenceV1
+
+    schema_version: ClassVar[int] = 1
+    policy: ClassVar[str] = SERVICE_MPC_FEASIBILITY_SELECTION_POLICY
+
+    def __post_init__(self) -> None:
+        if self.selected not in {"projected", "raw_feasible_projection_rejected"}:
+            raise ValueError("MPC solution selection is invalid")
+        if (
+            isinstance(self.projection_count, bool)
+            or not isinstance(self.projection_count, Integral)
+            or self.projection_count < 0
+        ):
+            raise ValueError("projection_count must be a non-negative integer")
+        maximum_delta = _finite(
+            "max_projection_delta", self.max_projection_delta, minimum=0.0
+        )
+        if not isinstance(self.raw_audit, MPCSolutionAuditEvidenceV1) or not isinstance(
+            self.projected_audit, MPCSolutionAuditEvidenceV1
+        ):
+            raise TypeError("solution selection audits must be typed evidence")
+        if not self.raw_audit.valid:
+            raise ValueError("selected solution requires a valid raw audit")
+        if self.projection_count == 0 and maximum_delta != 0.0:
+            raise ValueError("zero projections require zero maximum delta")
+        if self.projection_count > 0 and maximum_delta <= 0.0:
+            raise ValueError("positive projections require a positive maximum delta")
+        if self.selected == "projected" and not self.projected_audit.valid:
+            raise ValueError("projected selection requires a valid projected audit")
+        if self.selected == "raw_feasible_projection_rejected":
+            if self.projected_audit.valid:
+                raise ValueError("raw fallback requires a rejected projected audit")
+            if self.projection_count == 0:
+                raise ValueError("raw fallback requires at least one projection")
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema_version": self.schema_version,
+            "policy": self.policy,
+            "selected": self.selected,
+            "projection_count": int(self.projection_count),
+            "max_projection_delta": float(self.max_projection_delta),
+            "raw_audit": self.raw_audit.to_dict(),
+            "projected_audit": self.projected_audit.to_dict(),
+        }
+
+
+@dataclass(frozen=True, slots=True)
 class MPCStageSolveV1:
     """Bounded solver-status evidence for one lexicographic stage."""
 
@@ -304,6 +426,7 @@ class MPCStageSolveV1:
     solution_sha256: str | None
     scipy_version: str
     highs_version: str
+    solution_selection: MPCSolutionSelectionV1 | None = None
 
     def __post_init__(self) -> None:
         if self.stage not in {"primary_delivery", "secondary_tiebreak"}:
@@ -326,6 +449,10 @@ class MPCStageSolveV1:
             value = getattr(self, name)
             if not isinstance(value, str) or not value:
                 raise ValueError(f"{name} must be non-empty")
+        if self.solution_selection is not None and not isinstance(
+            self.solution_selection, MPCSolutionSelectionV1
+        ):
+            raise TypeError("solution_selection must be typed evidence or None")
         if self.success:
             if self.status != 0:
                 raise ValueError("successful MPC solve requires optimal status zero")
@@ -344,6 +471,8 @@ class MPCStageSolveV1:
                 raise ValueError("successful MPC solve requires a node count")
             require_sha256("solution_sha256", self.solution_sha256)
         else:
+            if self.solution_selection is not None:
+                raise ValueError("failed MPC solve cannot publish solution selection")
             if self.solution_sha256 is not None:
                 raise ValueError("failed MPC solve cannot publish a solution digest")
             for name in ("objective_value", "mip_dual_bound", "mip_gap"):
@@ -359,7 +488,7 @@ class MPCStageSolveV1:
                     raise ValueError("MPC node count must be non-negative when present")
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        payload = {
             "stage": self.stage,
             "success": self.success,
             "status": int(self.status),
@@ -374,6 +503,9 @@ class MPCStageSolveV1:
             "scipy_version": self.scipy_version,
             "highs_version": self.highs_version,
         }
+        if self.solution_selection is not None:
+            payload["solution_selection"] = self.solution_selection.to_dict()
+        return payload
 
 
 @dataclass(frozen=True, slots=True)
@@ -691,23 +823,32 @@ class ServiceMPCPlanError(ServiceMPCError):
 
 
 __all__ = [
+    "DEFAULT_SERVICE_MPC_SETPOINT_SETTINGS_V1",
     "DEFAULT_SERVICE_MPC_SETTINGS_V1",
     "MODEL_BALANCE_TOLERANCE",
     "MPCDeliveryTargetV1",
     "MPCPlanStepV1",
     "MPCPlanV1",
+    "MPCSolutionAuditEvidenceV1",
+    "MPCSolutionSelectionV1",
     "MPCStageSolveV1",
     "SERVICE_MPC_CONTROLLER_ID",
+    "SERVICE_MPC_FEASIBILITY_SELECTION_POLICY",
     "SERVICE_MPC_MODEL_VERSION",
     "SERVICE_MPC_OBJECTIVE_VERSION",
     "SERVICE_MPC_PLAN_DOMAIN",
     "SERVICE_MPC_SCHEMA_VERSION",
+    "SERVICE_MPC_SETPOINT_CONTROLLER_ID",
+    "SERVICE_MPC_SETPOINT_SCHEMA_VERSION",
+    "SERVICE_MPC_SETPOINT_SETTINGS_DOMAIN",
     "SERVICE_MPC_SETTINGS_DOMAIN",
     "SERVICE_MPC_SOLUTION_DOMAIN",
     "SERVICE_MPC_SOLVER",
+    "SERVICE_MPC_STRICT_PROJECTION_POLICY",
     "ServiceMPCError",
     "ServiceMPCInputError",
     "ServiceMPCPlanError",
+    "ServiceMPCSetpointSettingsV1",
     "ServiceMPCSettingsV1",
     "ServiceMPCSolveError",
     "canonical_json",

@@ -64,6 +64,7 @@ from .mpc_experiment import (
 from .mpc_schema import (
     MODEL_BALANCE_TOLERANCE,
     SERVICE_MPC_CONTROLLER_ID,
+    SERVICE_MPC_FEASIBILITY_SELECTION_POLICY,
     SERVICE_MPC_SOLVER,
     canonical_json,
     domain_sha256,
@@ -427,6 +428,80 @@ def _validate_latency_summary(
         raise ValueError(f"{name} is invalid")
 
 
+def _validate_solution_audit(value: object, *, name: str) -> bool:
+    audit = _mapping(name, value)
+    expected_keys = {
+        "valid",
+        "max_bound_violation",
+        "max_row_violation",
+        "max_integrality_violation",
+        "worst_row",
+    }
+    if set(audit) != expected_keys:
+        raise ValueError(f"{name} fields are invalid")
+    valid = audit.get("valid")
+    if not isinstance(valid, bool):
+        raise TypeError(f"{name} valid must be bool")
+    for key in (
+        "max_bound_violation",
+        "max_row_violation",
+        "max_integrality_violation",
+    ):
+        _finite(f"{name} {key}", audit.get(key), minimum=0.0)
+    worst_row = audit.get("worst_row")
+    if worst_row is not None and (not isinstance(worst_row, str) or not worst_row):
+        raise ValueError(f"{name} worst_row is invalid")
+    return valid
+
+
+def _validate_solution_selection(value: object, *, name: str) -> None:
+    selection = _mapping(name, value)
+    expected_keys = {
+        "schema_version",
+        "policy",
+        "selected",
+        "projection_count",
+        "max_projection_delta",
+        "raw_audit",
+        "projected_audit",
+    }
+    if set(selection) != expected_keys:
+        raise ValueError(f"{name} fields are invalid")
+    if selection.get("schema_version") != 1:
+        raise ValueError(f"{name} schema version is invalid")
+    if selection.get("policy") != SERVICE_MPC_FEASIBILITY_SELECTION_POLICY:
+        raise ValueError(f"{name} policy is invalid")
+    selected = selection.get("selected")
+    if selected not in {"projected", "raw_feasible_projection_rejected"}:
+        raise ValueError(f"{name} selected mode is invalid")
+    projection_count = _integer(
+        f"{name} projection_count", selection.get("projection_count")
+    )
+    maximum_delta = _finite(
+        f"{name} max_projection_delta",
+        selection.get("max_projection_delta"),
+        minimum=0.0,
+    )
+    raw_valid = _validate_solution_audit(
+        selection.get("raw_audit"), name=f"{name} raw_audit"
+    )
+    projected_valid = _validate_solution_audit(
+        selection.get("projected_audit"), name=f"{name} projected_audit"
+    )
+    if not raw_valid:
+        raise ValueError(f"{name} raw audit is invalid")
+    if projection_count == 0 and maximum_delta != 0.0:
+        raise ValueError(f"{name} zero projections have nonzero delta")
+    if projection_count > 0 and maximum_delta <= 0.0:
+        raise ValueError(f"{name} positive projections have no delta")
+    if selected == "projected" and not projected_valid:
+        raise ValueError(f"{name} selected an invalid projection")
+    if selected == "raw_feasible_projection_rejected" and (
+        projected_valid or projection_count == 0
+    ):
+        raise ValueError(f"{name} raw selection is inconsistent")
+
+
 def _validate_stage_record(
     value: object,
     *,
@@ -460,7 +535,14 @@ def _validate_stage_record(
         _finite(f"{name} mip_gap", stage.get("mip_gap"), minimum=0.0)
         _integer(f"{name} mip_node_count", stage.get("mip_node_count"))
         require_sha256(f"{name} solution_sha256", stage.get("solution_sha256"))
+        if stage.get("solution_selection") is not None:
+            _validate_solution_selection(
+                stage["solution_selection"],
+                name=f"{name} solution_selection",
+            )
     else:
+        if stage.get("solution_selection") is not None:
+            raise ValueError(f"{name} failed solve publishes solution selection")
         if stage.get("solution_sha256") is not None:
             raise ValueError(f"{name} failed solve publishes a solution digest")
         for key in ("objective_value", "mip_dual_bound", "mip_gap"):

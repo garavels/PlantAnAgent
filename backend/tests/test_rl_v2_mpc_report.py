@@ -63,6 +63,7 @@ from plant_backend.rl.v2.mpc_report import (
 import plant_backend.rl.v2.mpc_report as mpc_report
 from plant_backend.rl.v2.mpc_schema import (
     SERVICE_MPC_CONTROLLER_ID,
+    SERVICE_MPC_FEASIBILITY_SELECTION_POLICY,
     SERVICE_MPC_SOLVER,
     domain_sha256,
 )
@@ -72,6 +73,30 @@ from plant_backend.rl.v2.reward import RewardWeightsV2
 _SOURCE_REVISION = "d" * 40
 _WORKTREE_SHA = "e" * 64
 _EMPTY_SHA = hashlib.sha256(b"").hexdigest()
+
+
+def _solution_selection() -> dict[str, Any]:
+    return {
+        "schema_version": 1,
+        "policy": SERVICE_MPC_FEASIBILITY_SELECTION_POLICY,
+        "selected": "raw_feasible_projection_rejected",
+        "projection_count": 1,
+        "max_projection_delta": 3.495807901682279e-05,
+        "raw_audit": {
+            "valid": True,
+            "max_bound_violation": 0.0,
+            "max_row_violation": 0.0,
+            "max_integrality_violation": 0.0,
+            "worst_row": None,
+        },
+        "projected_audit": {
+            "valid": False,
+            "max_bound_violation": 0.0,
+            "max_row_violation": 3.495807901682279e-05,
+            "max_integrality_violation": 0.0,
+            "worst_row": "co2_balance[1]",
+        },
+    }
 
 
 def _controllers() -> tuple[
@@ -958,3 +983,21 @@ def test_publisher_atomically_round_trips_complete_report(
     body = dict(reopened)
     observed = body.pop("report_sha256")
     assert observed == domain_sha256(mpc_report.SERVICE_MPC_REPORT_DOMAIN, body)
+
+
+def test_solution_selection_admission_rejects_semantic_substitution() -> None:
+    selection = _solution_selection()
+    mpc_report._validate_solution_selection(selection, name="selection")
+
+    mutations: tuple[tuple[str, object, str], ...] = (
+        ("policy", "unknown", "policy"),
+        ("selected", "projected", "invalid projection"),
+        ("projection_count", 0, "zero projections"),
+        ("max_projection_delta", 0.0, "no delta"),
+        ("unexpected", True, "fields"),
+    )
+    for key, value, message in mutations:
+        changed = deepcopy(selection)
+        changed[key] = value
+        with pytest.raises(ValueError, match=message):
+            mpc_report._validate_solution_selection(changed, name="selection")

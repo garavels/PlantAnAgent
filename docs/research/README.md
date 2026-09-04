@@ -95,7 +95,9 @@ fallback behavior.
 - [`CAUSAL_SERVICE_MPC_SETPOINT_DISPATCH_PROTOCOL.md`](CAUSAL_SERVICE_MPC_SETPOINT_DISPATCH_PROTOCOL.md)
   freezes the new absolute command, reserve-aware one-minute allocation algorithm,
   feasibility-preserving solver selection, evidence graph, implementation gate, and first
-  development-run decision rule before any new controller code or outcome is opened.
+  development-run decision rule before any new controller code or outcome is opened. Its
+  solver-selection prerequisite is now implemented and adversarially tested under a new
+  settings identity; the historical controller identity and strict behavior remain intact.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

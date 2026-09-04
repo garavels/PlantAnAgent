@@ -11,10 +11,16 @@ import pytest
 from plant_backend.rl.v2.config import EpisodeConfigV2
 from plant_backend.rl.v2.env import PlantEnvV2
 from plant_backend.rl.v2.mpc_forecast import project_issued_mean_solar
-from plant_backend.rl.v2.mpc_model import MPCSparseRowV1, ServiceMPCModelV1
+from plant_backend.rl.v2.mpc_model import (
+    MPCSparseRowV1,
+    MPCVariableGroupV1,
+    ServiceMPCModelV1,
+)
 from plant_backend.rl.v2.mpc_schema import (
+    DEFAULT_SERVICE_MPC_SETPOINT_SETTINGS_V1,
     DEFAULT_SERVICE_MPC_SETTINGS_V1,
     MPCPlanV1,
+    SERVICE_MPC_MODEL_VERSION,
     ServiceMPCInputError,
     ServiceMPCPlanError,
     ServiceMPCSolveError,
@@ -24,6 +30,33 @@ import plant_backend.rl.v2.mpc_solver as mpc_solver
 
 
 SETTINGS = DEFAULT_SERVICE_MPC_SETTINGS_V1
+SETPOINT_SETTINGS = DEFAULT_SERVICE_MPC_SETPOINT_SETTINGS_V1
+
+
+def _two_variable_model(
+    *,
+    names: tuple[str, str],
+    upper: tuple[float, float],
+    integrality: tuple[int, int] = (0, 0),
+    rows: tuple[MPCSparseRowV1, ...],
+) -> ServiceMPCModelV1:
+    return ServiceMPCModelV1(
+        model_version=SERVICE_MPC_MODEL_VERSION,
+        settings_sha256=SETPOINT_SETTINGS.sha256,
+        forecast_sha256="f" * 64,
+        interval_s=900.0,
+        horizon_intervals=1,
+        deliveries=(),
+        variable_names=names,
+        variable_lower=(0.0, 0.0),
+        variable_upper=upper,
+        integrality=integrality,
+        primary_objective=(0.0, 0.0),
+        secondary_objective=(0.0, 0.0),
+        groups=(MPCVariableGroupV1(name="fixture", indices=(0, 1)),),
+        rows=rows,
+        metadata_json="{}",
+    )
 
 
 @pytest.fixture(scope="module")
@@ -121,6 +154,169 @@ def test_solution_canonicalization_projects_scaled_noise_to_a_declared_bound(
         relative_tolerance=SETTINGS.solver_mip_feasibility_tolerance,
     )
     assert retained[support_index] == 1.0
+
+
+def test_feasible_raw_co2_state_survives_an_invalid_scaled_bound_projection() -> None:
+    observed_state = 3.495807901682279e-05
+    model = _two_variable_model(
+        names=("co2_inventory_kg[1]", "co2_captured_kg[0]"),
+        upper=(6_000.0, 1.0),
+        rows=(
+            MPCSparseRowV1(
+                name="co2_balance[1]",
+                lower=0.0,
+                upper=0.0,
+                coefficients=((0, 1.0), (1, -1.0)),
+            ),
+        ),
+    )
+
+    selected = mpc_solver._select_feasible_solution(
+        model,
+        (observed_state, observed_state),
+        stage="secondary_tiebreak",
+        settings=SETPOINT_SETTINGS,
+    )
+
+    assert selected.solution == (observed_state, observed_state)
+    assert selected.evidence is not None
+    assert selected.evidence.selected == "raw_feasible_projection_rejected"
+    assert selected.evidence.projection_count == 1
+    assert selected.evidence.max_projection_delta == observed_state
+    assert selected.evidence.raw_audit.valid is True
+    assert selected.evidence.projected_audit.valid is False
+    assert selected.evidence.projected_audit.worst_row == "co2_balance[1]"
+
+
+def test_feasible_gated_support_noise_still_selects_the_projected_vector() -> None:
+    observed_support = 3.935447649175992e-05
+    model = _two_variable_model(
+        names=("battery_support_kw[0]", "running[0]"),
+        upper=(1_250.0, 1.0),
+        integrality=(0, 1),
+        rows=(
+            MPCSparseRowV1(
+                name="battery_support_gated[0]",
+                lower=None,
+                upper=0.0,
+                coefficients=((0, 1.0), (1, -1_250.0)),
+            ),
+        ),
+    )
+
+    selected = mpc_solver._select_feasible_solution(
+        model,
+        (observed_support, 0.0),
+        stage="primary_delivery",
+        settings=SETPOINT_SETTINGS,
+    )
+
+    assert selected.solution == (0.0, 0.0)
+    assert selected.evidence is not None
+    assert selected.evidence.selected == "projected"
+    assert selected.evidence.projection_count == 1
+    assert selected.evidence.max_projection_delta == observed_support
+    assert selected.evidence.raw_audit.valid is True
+    assert selected.evidence.projected_audit.valid is True
+
+
+def test_materially_invalid_raw_vector_remains_rejected() -> None:
+    model = _two_variable_model(
+        names=("co2_inventory_kg[1]", "co2_captured_kg[0]"),
+        upper=(6_000.0, 1.0),
+        rows=(
+            MPCSparseRowV1(
+                name="co2_balance[1]",
+                lower=0.0,
+                upper=0.0,
+                coefficients=((0, 1.0), (1, -1.0)),
+            ),
+        ),
+    )
+
+    with pytest.raises(ServiceMPCPlanError, match="raw solution.*residual audit"):
+        mpc_solver._select_feasible_solution(
+            model,
+            (1e-3, 0.0),
+            stage="primary_delivery",
+            settings=SETPOINT_SETTINGS,
+        )
+
+
+def test_projection_that_breaks_a_stage_lock_selects_the_raw_vector() -> None:
+    locked_value = 3.495807901682279e-05
+    model = _two_variable_model(
+        names=("locked_objective_value", "fixed_auxiliary"),
+        upper=(6_000.0, 1.0),
+        rows=(
+            MPCSparseRowV1(
+                name="fixed_auxiliary",
+                lower=0.0,
+                upper=0.0,
+                coefficients=((1, 1.0),),
+            ),
+        ),
+    )
+    lock = MPCSparseRowV1(
+        name="primary_delivery_lock",
+        lower=locked_value,
+        upper=locked_value,
+        coefficients=((0, 1.0),),
+    )
+
+    selected = mpc_solver._select_feasible_solution(
+        model,
+        (locked_value, 0.0),
+        stage="secondary_tiebreak",
+        settings=SETPOINT_SETTINGS,
+        extra_rows=(lock,),
+    )
+
+    assert selected.solution == (locked_value, 0.0)
+    assert selected.evidence is not None
+    assert selected.evidence.selected == "raw_feasible_projection_rejected"
+    assert selected.evidence.projected_audit.worst_row == "primary_delivery_lock"
+
+
+def test_historical_settings_retain_the_strict_projection_failure_contract() -> None:
+    observed_state = 3.495807901682279e-05
+    model = _two_variable_model(
+        names=("co2_inventory_kg[1]", "co2_captured_kg[0]"),
+        upper=(6_000.0, 1.0),
+        rows=(
+            MPCSparseRowV1(
+                name="co2_balance[1]",
+                lower=0.0,
+                upper=0.0,
+                coefficients=((0, 1.0), (1, -1.0)),
+            ),
+        ),
+    )
+
+    with pytest.raises(ServiceMPCPlanError, match="solution failed.*residual audit"):
+        mpc_solver._select_feasible_solution(
+            model,
+            (observed_state, observed_state),
+            stage="secondary_tiebreak",
+            settings=SETTINGS,
+        )
+
+
+def test_setpoint_settings_publish_selection_evidence_for_both_stages(
+    tiny_model: ServiceMPCModelV1,
+) -> None:
+    pytest.importorskip("scipy")
+    setpoint_model = replace(tiny_model, settings_sha256=SETPOINT_SETTINGS.sha256)
+
+    plan = solve_service_mpc_model(setpoint_model, settings=SETPOINT_SETTINGS)
+
+    for stage in plan.stages:
+        assert stage.solution_selection is not None
+        selection = stage.solution_selection
+        assert selection.raw_audit.valid is True
+        assert selection.projected_audit.valid is True
+        assert selection.selected == "projected"
+        assert stage.to_dict()["solution_selection"] == selection.to_dict()
 
 
 def test_solver_rejects_a_settings_identity_change_before_runtime_load(
