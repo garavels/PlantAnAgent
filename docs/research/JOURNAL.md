@@ -3797,3 +3797,39 @@ runner, and report suites pass **130 tests**. The next step is the broader focus
 repository authorization gate, strict type/format/compile/lock checks, a clean auditable
 commit, and only then the six-cell engineering replication. Long executions will be waited
 on silently; no model tokens will be spent narrating an unchanged running process.
+
+## 2026-09-04 — Repaired service-MPC replication authorization gate passes
+
+The repair was divided into three reviewable commits:
+
+1. `4a5bc5d` restores the methanator offered-power invariant and advances the audited
+   compatibility trace;
+2. `5b97149` binds the HiGHS feasibility setting, raw/projected scaled audits, bound
+   canonicalization, and scaled plan extraction; and
+3. `d5658a7` deep-validates/compacts failed ledgers and freezes the version-2 engineering
+   replication contract and protocol.
+
+From clean revision `d5658a7e61a11e95aee274c709b71deda2cfc571`, the complete repository
+suite passed **1,000 tests with 2 skips** in 28.72 seconds. The only warning remains the
+pre-existing Starlette/httpx test-client deprecation. Twelve changed backend source/test
+files pass deterministic Black checking. The five changed backend production modules pass
+strict isolated type checking, and the six changed backend MPC test modules pass the same
+check with only the external untyped pytest-decorator diagnostic disabled. Python
+compilation succeeds across backend and simulator source/tests, the unchanged dependency
+lock resolves **92 packages**, Git whitespace validation passes, and the worktree is clean.
+
+A direct strict check that recursively opened the simulator package also reported seven
+pre-existing transitive diagnostics in `faults.py`, `delivery.py`, `allocation.py`, and
+`simulator.py`; the changed methanator module itself introduced none. Those unrelated
+annotations are not hidden as part of this gate: functional coverage for the simulator
+repair is included in the full passing suite, while the strict claim is limited to the
+new backend surface as it was for the original MPC freeze.
+
+The exact repaired controller-settings digest is
+`0e8896cfb9fe47dc3ac3b285fc729e029a80803e31eddf4a885795d2d04253f2`; the version-2
+matrix-contract digest is
+`39a085da394c5469484cfdd4489982f3021b4de029af2e513684f725f6db74eb`.
+No complete repaired rollout or performance aggregate has been opened. The authorization
+gate is now closed: after this journal-only record is committed and the executable tree is
+confirmed unchanged, the next action is the exact six-cell sequential replication. No
+source change is permitted after its first cell starts.
