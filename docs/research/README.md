@@ -83,6 +83,10 @@ fallback behavior.
   records the complete execution-valid replication, its G1/G7 passes and G2--G6 failures,
   the 204-of-206 aborted-start diagnosis, and the decision to repair the supervisory
   actuation contract before objective tuning, added realism, or RL training.
+- [`CAUSAL_SERVICE_MPC_ACTUATION_BRIDGE_PROTOCOL.md`](CAUSAL_SERVICE_MPC_ACTUATION_BRIDGE_PROTOCOL.md)
+  freezes the expected-flow versus contingent-authority hypothesis, permitted bridge-only
+  repair, executable obligations, single-cell mechanism probe, and decision rule before
+  implementation.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

@@ -3890,3 +3890,24 @@ SHA-256 `bab822476d5b1b986ad03bdecbeaad6217727cfc3539e117af38af09bc458905`, inte
 digest `5a5acf5f46ea0363bfee90925b1346d33b11ffc0766fb214ee55d8baaee2df13`, and size
 207,908 bytes. Every cell hash and outcome is recorded in
 `results/v2_service_mpc_replication_3796eb5.md`.
+
+## 2026-09-04 — Actuation-bridge hypothesis frozen before implementation
+
+The post-replication action is now bounded by
+`CAUSAL_SERVICE_MPC_ACTUATION_BRIDGE_PROTOCOL.md`. The controller's MILP treats battery
+support as expected 15-minute discharge, while the physical action treats it as contingent
+instantaneous authority. The registered realization copied one into the other. The frozen
+repair will preserve the model, plan, four solar shares, forecast, objective, settings,
+safety guard, and plant, but will expose planned discharge and support authority as separate
+hash-bound quantities. Active authority is capped at the planned electrolyser target and
+the existing constraint; inactive authority remains exactly zero.
+
+Implementation must prove the distinction at a fluctuating one-minute startup boundary,
+prove that the reserve guard is unchanged, and preserve deterministic causal identities.
+Only after the focused and full repository gates pass may one rate-35/seed-0 72-hour
+development probe run. Its mechanism gate permits at most four aborted/forced starts and
+requires a productive interval, versus the frozen 41/41 failure. Safety, accounting,
+latency, and delivered-product direction are reported separately. A mechanism failure
+triggers an explicit absolute-setpoint/inner-dispatcher design rather than another
+share-interface patch. No objective tuning, PPO, HEPA/NLP change, or added environment
+complexity is permitted in this package.
