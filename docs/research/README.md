@@ -126,6 +126,10 @@ fallback behavior.
   records the first-and-only mechanism result: all S1--S8 gates pass and full delivery is
   restored, but A0 already reaches the same delivery ceiling with lower energy intensity
   and battery throughput. The setpoint architecture is accepted; superiority is not.
+- [`COMMON_SETPOINT_AUTHORITY_PROTOCOL.md`](COMMON_SETPOINT_AUTHORITY_PROTOCOL.md)
+  freezes phase 1 of controller parity: a controller-neutral four-target value, the exact
+  shared allocation kernel, and a normalized RL adapter that cannot command additive battery
+  support or inherit MPC provenance.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.
