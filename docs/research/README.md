@@ -135,8 +135,9 @@ fallback behavior.
 - [`COMMON_SETPOINT_COMMAND_PROTOCOL.md`](COMMON_SETPOINT_COMMAND_PROTOCOL.md)
   freezes the separately versioned observation-bound command, common minute dispatcher,
   opt-in four-target Gym door, A0 authority adapter, MPC provenance adapter, and outcome-free
-  equivalence gate. The command/dispatcher seam is implemented; the Gym and heuristic door
-  remain pending.
+  equivalence gate. The complete door is now implemented outcome-free: normalized RL actions,
+  transparent A0 targets, and MPC provenance all reach the same dispatcher, guard, and plant;
+  the historical environment and checkpoint identity remain isolated.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

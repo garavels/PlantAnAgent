@@ -1,6 +1,6 @@
 # Common setpoint command and execution door
 
-Status: **frozen before implementation**
+Status: **implemented; outcome-free acceptance gate passed**
 
 Date: **2026-09-04**
 
@@ -43,6 +43,13 @@ plant boundary, current solar bus, static plant configuration, and active constr
 The existing `dispatch_mpc_setpoints` must delegate to that function and wrap the result in
 its unchanged MPC evidence schema. The ordinary independent `validate` guard remains the
 only interface safety filter, and the simulator remains the final physical authority.
+
+Implementation clarification (2026-09-04): the battery-charge ceiling limits the
+dispatcher-owned direct battery route. The existing plant physics automatically redirects
+solar refused by a starting, ramp-limited, or storage-constrained process into the battery
+when it can accept it. That recovered spill is plant-side conservation, not added controller
+authority; common execution evidence must attribute it separately and must not misclassify
+it as a target violation.
 
 ## Opt-in Gym contract
 

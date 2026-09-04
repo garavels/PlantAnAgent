@@ -20,6 +20,7 @@ from .controllers import (
     RiskAdjustedIssuedForecastControllerV2,
 )
 from .env import PlantEnvV2
+from .setpoint_env import PlantSetpointEnvV2
 from .evaluation import (
     BaselineEvaluation,
     CausalControllerEvaluationV2,
@@ -64,6 +65,16 @@ from .setpoint_command import (
     dispatch_process_setpoint_command,
     issue_process_setpoint_command,
     resolve_process_setpoint_envelope,
+)
+from .setpoint_controllers import (
+    LegacyHeuristicSetpointControllerV1,
+    LegacyHeuristicSetpointDecisionV1,
+    LegacyHeuristicSetpointEvidenceV1,
+)
+from .setpoint_execution import (
+    ProcessSetpointIntervalExecutionV1,
+    ProcessSetpointMinuteApplicationV1,
+    record_process_setpoint_application,
 )
 from .weather import ForecastIssueV2, PublicForecastIssueV2, WeatherConfigV2
 from .spaces import (
@@ -110,10 +121,16 @@ __all__ = [
     "OBSERVATION_NAMES",
     "OBSERVATION_SIZE",
     "PlantEnvV2",
+    "PlantSetpointEnvV2",
+    "LegacyHeuristicSetpointControllerV1",
+    "LegacyHeuristicSetpointDecisionV1",
+    "LegacyHeuristicSetpointEvidenceV1",
     "ProcessSetpointActionAdapterV1",
     "ProcessSetpointAllocationV1",
     "ProcessSetpointCommandV1",
     "ProcessSetpointEnvelopeV1",
+    "ProcessSetpointIntervalExecutionV1",
+    "ProcessSetpointMinuteApplicationV1",
     "ProcessSetpointMinuteDispatchV1",
     "ProcessSetpointTargetsV1",
     "RewardWeightsV2",
@@ -134,5 +151,6 @@ __all__ = [
     "evaluate_controllers",
     "issue_process_setpoint_command",
     "resolve_process_setpoint_envelope",
+    "record_process_setpoint_application",
     "sample_episode",
 ]

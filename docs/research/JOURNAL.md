@@ -4660,3 +4660,81 @@ MyPy and Black pass. The complete repository passes **1,123 tests with 2 skips i
 seconds** with only the pre-existing Starlette/httpx deprecation warning. No Gym contract,
 physical outcome, training run, economics change, or controller comparison was opened. The
 next commit must add the separately identified four-target Gym door and common-door heuristic.
+
+## 2026-09-04 — Controller-neutral RL and heuristic execution door completed
+
+The outcome-free authority-parity boundary is now implemented end to end. The new opt-in
+`PlantSetpointEnvV2` publishes environment ID
+`plant-env-v2-common-setpoint-alpha` and interface digest
+`a192861bdd43d3d822cb99c099450c7dbb3a10cabb69faae70e875ee92016b38`. It reuses
+the historical V2 encoder and exact 57-field observation order but replaces the five-field
+share/support action with exactly four normalized absolute targets. The default
+`PlantEnvV2`, its five-action space, and its checkpoint contract remain unchanged. For the
+same seed, both environments sample the same exogenous episode, while their environment and
+checkpoint identities differ and reject one another in both compatibility directions.
+
+Every normalized vector is rejected before state movement if it has the wrong shape, a
+boolean/string entry, or a non-finite value. Valid entries are retained before and after
+clipping, decoded through `ProcessSetpointActionAdapterV1`, bound to the exact public
+observation and active envelope in `ProcessSetpointCommandV1`, and executed for fifteen
+one-minute physics steps through `dispatch_process_setpoint_command`, the independent
+`validate` guard, and the simulator. The Gym path returns the source decision, common
+command, reward and plant metrics, and a complete typed minute execution chain. Raw wall-
+clock dispatcher timings remain available to dedicated controller runners but are replaced
+by a deterministic call count in Gym `info`, because otherwise identical seeded transitions
+would violate Gymnasium's deterministic contract.
+
+`ProcessSetpointMinuteApplicationV1` and
+`ProcessSetpointIntervalExecutionV1` close the controller-neutral physical evidence path.
+They bind each dispatch to a physical boundary, guarded and applied actions, adjustments,
+solar/electrolyser bus balances, process target authority, next boundary, contiguous minute
+order, and the command hold duration. Evidence construction rejects action substitution,
+process overdraw, missing minutes, and broken physical chains. This schema is deliberately
+separate from the richer MPC-only execution schema: it requires no optimizer, forecast,
+plan, solver, or commitment-transition evidence.
+
+The first smoke execution exposed an incorrect draft invariant rather than a plant defect.
+When a starting, ramp-limited, or storage-constrained process refuses offered solar, the
+existing physical allocator conserves that power by charging the battery if possible. The
+draft generic evidence compared applied charging only with the direct battery share and
+therefore rejected legitimate recovered spill. The final invariant follows the already
+validated MPC boundary: process and battery-support draws may never exceed guarded target
+authority, while the battery target limits only the dispatcher's direct route. Execution
+evidence separately records direct dispatch, its ceiling, applied charge including spill,
+and recovered/guard-redirected power. This interpretation is now explicit in the frozen
+protocol and machine-readable interface contract.
+
+`LegacyHeuristicSetpointControllerV1` is a transparent authority adapter around the existing
+`HeuristicController`; it adds no forecast, delivery context, commitment logic, or policy
+rule. At each public boundary it retains the exact sanitized A0 action and notes, converts
+solar shares into absolute process targets using the measured boundary solar, adds requested
+battery support only to the electrolyser target, and binds that evidence into the common
+command. If A0's residual battery share would exceed the physical charge rating, only the
+direct charge target is capped and that fact is explicit in the evidence. The arm is labelled
+as behaviorally distinct from A0-share because absolute targets, rather than shares, are held
+as solar changes during the interval.
+
+An exact cross-source fixture constructs the same `(0, 0, 0, 2500 kW)` target through the
+heuristic adapter, normalized RL adapter, and MPC provenance adapter. Their issuer and source
+digests remain distinct, while target values and active envelopes are equal and the generic
+dispatcher produces identical physical allocations. Existing MPC tests continue to prove
+that its legacy wrapper delegates to this dispatcher and independently revalidates the common
+allocation.
+
+Seventeen new tests cover the distinct Gym/checkpoint identity, identical exogenous sampling,
+Gymnasium contract, normalized target mapping, deterministic source binding, complete minute
+execution, recovered-spill attribution, invalid/clipped inputs, stale indices/observations/
+durations/envelopes, chain tampering, A0 conversion and charge limiting, deterministic reset,
+and three-source authority equality. The focused setpoint selection passes **86 tests in
+1.28 seconds**; the wider V2 compatibility selection passes **105 tests in 2.05 seconds**.
+The complete repository passes **1,140 tests with 2 skips in 41.84 seconds**. The only warning
+is the pre-existing Starlette/httpx test-client deprecation; trailing HiGHS messages remain
+upstream solver logging. Black, Python compilation, strict targeted MyPy, Git whitespace
+validation, and the unchanged dependency-lock digest
+`080d96275581ebbec1b2c27b354ea54e3e66419bfaadb034896da1fd22b228dd` pass.
+
+No protected rollout, multi-seed comparison, RL training, HEPA fit, economics change,
+equipment-wear change, or commercial outcome was opened. This commit establishes equal
+actuator semantics, not controller quality. The next task-design slice must make tied service
+outcomes economically discriminative with explicit energy value, cycling/equipment wear, and
+a sustainable terminal condition before heuristic, MPC, and RL are compared.

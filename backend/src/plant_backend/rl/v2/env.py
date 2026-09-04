@@ -56,6 +56,16 @@ from .mpc_setpoints import (
 )
 from .observation import ObservationEncoderV2
 from .reward import OBJECTIVE_VERSION, IntervalOutcome, RewardWeightsV2, compute
+from .setpoint_command import (
+    ProcessSetpointCommandV1,
+    dispatch_process_setpoint_command,
+    resolve_process_setpoint_envelope,
+)
+from .setpoint_execution import (
+    ProcessSetpointIntervalExecutionV1,
+    ProcessSetpointMinuteApplicationV1,
+    record_process_setpoint_application,
+)
 from .weather import PublicForecastIssueV2
 
 
@@ -114,6 +124,9 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
         self.episode_physics_steps = self.episode_config.physics_steps(self.config)
         self.episode_decisions = self.episode_config.decision_steps(self.config)
         self._last_setpoint_execution: MPCSetpointIntervalExecutionV1 | None = None
+        self._last_process_setpoint_execution: (
+            ProcessSetpointIntervalExecutionV1 | None
+        ) = None
 
     def reset(
         self,
@@ -164,6 +177,7 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
         self.physics_steps_taken = 0
         self.decisions_taken = 0
         self._last_setpoint_execution = None
+        self._last_process_setpoint_execution = None
         self.control_state = ControlStateV2(
             boundary=self.telemetry,
             electrolyser_commitment=self.simulator.electrolyser_commitment,
@@ -264,14 +278,64 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
 
         return self._apply(None, setpoints=setpoints)
 
+    def step_process_setpoints(
+        self,
+        command: ProcessSetpointCommandV1,
+        *,
+        controller_invalid: bool = False,
+    ) -> tuple[np.ndarray, float, bool, bool, dict[str, Any]]:
+        """Apply one controller-neutral observation-bound target command."""
+
+        if not isinstance(command, ProcessSetpointCommandV1):
+            raise TypeError("command must be ProcessSetpointCommandV1")
+        if not isinstance(controller_invalid, bool):
+            raise TypeError("controller_invalid must be a bool")
+        if self._episode is None:
+            raise RuntimeError("reset() must be called before step_process_setpoints()")
+        if command.decision_index != self.decisions_taken:
+            raise ValueError(
+                "process setpoint decision index is stale or from another run"
+            )
+        observation = self.controller_observation
+        if command.observation_sha256 != public_observation_sha256(observation):
+            raise ValueError("process setpoint command belongs to another observation")
+        expected_hold_s = self._episode.decision_stride * self.config.dt_s
+        if not math.isclose(
+            command.hold_duration_s,
+            expected_hold_s,
+            rel_tol=0.0,
+            abs_tol=1e-9,
+        ):
+            raise ValueError("process setpoint hold differs from environment cadence")
+        active_envelope = resolve_process_setpoint_envelope(
+            constraints=self.constraints,
+            config=self.config,
+        )
+        if command.envelope != active_envelope:
+            raise ValueError("process setpoint authority envelope is stale")
+        return self._apply(
+            None,
+            process_command=command,
+            process_controller_invalid=controller_invalid,
+        )
+
     def _apply(
         self,
         decoded: DecodedAction | None,
         *,
         setpoints: MPCProcessSetpointsV1 | None = None,
+        process_command: ProcessSetpointCommandV1 | None = None,
+        process_controller_invalid: bool = False,
     ) -> tuple[np.ndarray, float, bool, bool, dict[str, Any]]:
-        if (decoded is None) == (setpoints is None):
+        request_count = sum(
+            item is not None for item in (decoded, setpoints, process_command)
+        )
+        if request_count != 1:
             raise ValueError("exactly one action or setpoint request is required")
+        if not isinstance(process_controller_invalid, bool):
+            raise TypeError("process_controller_invalid must be a bool")
+        if process_command is None and process_controller_invalid:
+            raise ValueError("process invalidity requires a common setpoint command")
         if self._episode is None:
             raise RuntimeError("reset() must be called before step()")
         remaining = self.episode_physics_steps - self.physics_steps_taken
@@ -279,6 +343,7 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
         if inner_steps <= 0:
             raise RuntimeError("episode is already terminated; call reset()")
         self._last_setpoint_execution = None
+        self._last_process_setpoint_execution = None
 
         before = self.simulator.state
         commitment_before = self.simulator.electrolyser_commitment
@@ -293,11 +358,15 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
         power = IntervalPowerAccounting()
         interval_telemetry = IntervalTelemetryAccumulator()
         setpoint_applications: list[MPCMinuteApplicationV1] = []
+        process_applications: list[ProcessSetpointMinuteApplicationV1] = []
         dispatcher_elapsed_ns: list[int] = []
 
         for ordinal in range(inner_steps):
             step_before = self.telemetry
-            if setpoints is None:
+            minute_dispatch = None
+            process_dispatch = None
+            minute_commitment_before = None
+            if decoded is not None:
                 assert decoded is not None
                 requested_action = decoded.action
                 validated = validate(
@@ -309,9 +378,7 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
                         self.simulator.next_dispatch_solar_kw()
                     ),
                 )
-                minute_dispatch = None
-                minute_commitment_before = None
-            else:
+            elif setpoints is not None:
                 dispatch_solar_kw = self.simulator.next_dispatch_solar_kw()
                 dispatch_started_ns = time.perf_counter_ns()
                 minute_dispatch = dispatch_mpc_setpoints(
@@ -333,6 +400,28 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
                     dispatch_solar_available_kw=dispatch_solar_kw,
                 )
                 minute_commitment_before = self.simulator.electrolyser_commitment
+            else:
+                assert process_command is not None
+                dispatch_solar_kw = self.simulator.next_dispatch_solar_kw()
+                dispatch_started_ns = time.perf_counter_ns()
+                process_dispatch = dispatch_process_setpoint_command(
+                    process_command,
+                    step_before,
+                    solar_available_kw=dispatch_solar_kw,
+                    constraints=self.constraints,
+                    config=self.config,
+                )
+                dispatcher_elapsed_ns.append(
+                    time.perf_counter_ns() - dispatch_started_ns
+                )
+                requested_action = process_dispatch.action
+                validated = validate(
+                    requested_action,
+                    step_before,
+                    constraints=self.constraints,
+                    config=self.config,
+                    dispatch_solar_available_kw=dispatch_solar_kw,
+                )
             last_applied = validated.action
             if validated.adjustments:
                 corrected_steps += 1
@@ -357,6 +446,17 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
                         next_boundary=next_boundary,
                         commitment_before=minute_commitment_before,
                         commitment_after=self.simulator.electrolyser_commitment,
+                    )
+                )
+            elif process_dispatch is not None:
+                process_applications.append(
+                    record_process_setpoint_application(
+                        ordinal=ordinal,
+                        before=step_before,
+                        dispatch=process_dispatch,
+                        validated=validated,
+                        after=after_step,
+                        next_boundary=next_boundary,
                     )
                 )
             delivery = self.simulator.delivery_step
@@ -405,7 +505,9 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
             guard_intervention_kwh=power.guard_intervention_l1_kwh,
             dispatch_gap_kwh=power.dispatch_gap_integral_l1_kwh,
             request_application_gap_kwh=(power.request_application_integral_l1_kwh),
-            out_of_range=False if decoded is None else decoded.clipped,
+            out_of_range=(
+                decoded.clipped if decoded is not None else process_controller_invalid
+            ),
             terminal_ch4_kg=after.ch4_level_kg,
             reference_delivery_kg=self.episode_config.delivery_amount_kg,
             reference_period_h=self.episode_config.delivery_period_h,
@@ -430,18 +532,24 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
             methanator_applied_energy_kwh=power.applied_kwh["methanator"],
             terminal_state=after,
         )
-        if setpoints is None:
-            assert decoded is not None
+        if decoded is not None:
             requested = decoded.to_dict()
             requested["requested_kw_basis"] = (
                 "latest completed one-minute solar sample at the decision boundary; "
                 "authoritative interval energy is reported in interval_power"
             )
-        else:
+        elif setpoints is not None:
             requested = setpoints.to_dict()
             requested["requested_kw_basis"] = (
                 "absolute process targets held at the decision boundary; each "
                 "one-minute action is independently dispatched and guarded"
+            )
+        else:
+            assert process_command is not None
+            requested = process_command.to_dict()
+            requested["requested_kw_basis"] = (
+                "controller-neutral absolute targets held at the decision boundary; "
+                "each one-minute action is independently dispatched and guarded"
             )
         info = {
             **self._public_info(),
@@ -450,7 +558,11 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
             "guard": {
                 "interventions": len(adjustments),
                 "corrected_physics_steps": corrected_steps,
-                "out_of_range": False if decoded is None else decoded.clipped,
+                "out_of_range": (
+                    decoded.clipped
+                    if decoded is not None
+                    else process_controller_invalid
+                ),
                 "intervention_l1_kwh": power.guard_intervention_l1_kwh,
             },
             "interval_power": power.to_dict(),
@@ -483,6 +595,15 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
             )
             self._last_setpoint_execution = execution
             info["setpoint_execution"] = execution.to_dict()
+            info["dispatcher_elapsed_ns"] = dispatcher_elapsed_ns
+        elif process_command is not None:
+            process_execution = ProcessSetpointIntervalExecutionV1(
+                command=process_command,
+                physics_step_s=self.config.dt_s,
+                applications=tuple(process_applications),
+            )
+            self._last_process_setpoint_execution = process_execution
+            info["process_setpoint_execution"] = process_execution.to_dict()
             info["dispatcher_elapsed_ns"] = dispatcher_elapsed_ns
         # The contract horizon is part of the finite-horizon MDP and pays a
         # one-time inventory salvage value. It is therefore a true termination,
@@ -635,6 +756,14 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
         """Latest immutable opt-in execution record, absent on action paths."""
 
         return self._last_setpoint_execution
+
+    @property
+    def last_process_setpoint_execution(
+        self,
+    ) -> ProcessSetpointIntervalExecutionV1 | None:
+        """Latest common-command execution record, absent on other action paths."""
+
+        return self._last_process_setpoint_execution
 
 
 __all__ = ["PlantEnvV2"]

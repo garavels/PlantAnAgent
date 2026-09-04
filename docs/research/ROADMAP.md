@@ -77,12 +77,18 @@ equipment consequences.
 - Controller-parity phase 1 is complete without opening another outcome. A plain four-target
   value and one reserve-aware allocation kernel now define the physical authority that the
   heuristic, MPC, and future RL policy must share. The existing MPC dispatcher delegates to
-  that kernel with byte-stable frozen boundaries. The normalized adapter is not installed in
-  a Gym environment yet, so historical policies cannot be silently reinterpreted.
-- The observation-bound common command and generic minute dispatcher are now implemented.
-  MPC retains its complete original provenance while crossing that dispatcher, and frozen
-  MPC outputs remain unchanged. The opt-in Gym contract and transparent A0-setpoint arm are
-  the remaining authority-parity implementation boundary before economic realism.
+  that kernel with byte-stable frozen boundaries.
+- The controller-authority implementation gate is now closed without opening a performance
+  outcome. `plant-env-v2-common-setpoint-alpha` reuses the exact 57 observations but exposes
+  four normalized absolute targets under a distinct interface and checkpoint identity. The
+  normalized policy path and a source-bound A0-setpoint adapter both cross the observation-
+  bound common command, generic minute dispatcher, independent guard, and physical plant;
+  MPC retains its complete original provenance through that same dispatcher. Cross-source
+  fixtures prove identical targets produce identical physical allocations. Applied battery
+  charging now distinguishes direct controller routing from process-refusal spill recovery.
+  The complete repository passes 1,140 tests with 2 skips. No RL policy has been trained and
+  no controller-performance claim follows. Economic/wear pressure and a sustainable terminal
+  condition are the next task-design boundary before comparative training.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.
 
