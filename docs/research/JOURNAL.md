@@ -4358,3 +4358,34 @@ byte-identical model/plan identities with an executable structural-equivalence o
 while retaining exact public-observation identity and freezing the new digests. This finding
 blocks the rollout gate only; it does not prevent implementation of the outcome-free run
 evidence validator and admission audit next.
+
+## 2026-09-04 — Cross-version identity gate clarified before admission
+
+The impossible part of implementation gate 9 is now resolved without editing the frozen
+protocol or weakening its scientific invariant. The pre-outcome addendum
+`CAUSAL_SERVICE_MPC_SETPOINT_DISPATCH_CLARIFICATION_001.md`, raw SHA-256
+`5aecfc8e87b87deeb8fb03a4f226854f1b6245ec762209325f88c9c08aaea349`, supersedes only
+the demand for byte-identical model and plan digests across deliberately different settings,
+controller, and solution-selection identities. Every other implementation gate, S1--S8,
+rollout rule, plant contract, optimization coefficient, and tolerance remains unchanged.
+
+The clarification freezes an outcome-free three-boundary counterfactual on the already known
+historical rate-35/seed-0 path. At all three public boundaries, the historical and new
+forecast projections are exactly equal. Replacing only the new model's settings digest with
+the historical digest makes the complete typed models exactly equal, including variables,
+bounds, integrality, objectives, sparse rows, deliveries, initial state, forecast values, and
+metadata. The complete ordered plan steps, delivery targets, horizons, and all six reported
+plan scalars are also exactly equal—not merely tolerance-close. The differing model, plan,
+and solver-vector digests remain in stored evidence because they correctly disclose the new
+settings domain and feasibility-preserving selection policy.
+
+The addendum binds exact public-observation, forecast-issue, projection, historical-model,
+historical-plan, new-model, new-plan, and unexecuted-setpoint identities for decisions 0--2.
+The new model/plan/setpoint triples are respectively
+`9fc997f369fc...` / `a26f020ef6e5...` / `6066dc1d012b...`,
+`6ee66de7f236...` / `505669051798...` / `9c3190dac065...`, and
+`6119c5ddb426...` / `7acc746a9f63...` / `de427a3d6991...`.
+No new setpoint was executed and no physical trajectory or performance outcome was opened.
+The clarification explicitly remains insufficient on its own: an executable fixture must
+reproduce all identities and equalities before the complete admission audit can authorize a
+full mechanism run.

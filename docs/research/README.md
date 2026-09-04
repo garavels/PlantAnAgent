@@ -103,8 +103,13 @@ fallback behavior.
   unchanged guard on every physical minute, returning a hash-chained requested/guarded/
   applied ledger. The separately versioned command-producing controller now emits only this
   absolute intent and requires that physical ledger before its next solve. The complete
-  admission audit, resolution of one protocol identity contradiction, and any full rollout
-  remain pending.
+  admission audit and any full rollout remain pending.
+- [`CAUSAL_SERVICE_MPC_SETPOINT_DISPATCH_CLARIFICATION_001.md`](CAUSAL_SERVICE_MPC_SETPOINT_DISPATCH_CLARIFICATION_001.md)
+  preserves the original protocol while replacing its impossible byte-identical cross-version
+  model/plan requirement with a frozen three-boundary structural-equivalence test. It binds
+  exact historical and new identities, requires identical forecast projections, normalized
+  models, and complete selected-plan quantities, and retains truthful version-separated
+  provenance.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

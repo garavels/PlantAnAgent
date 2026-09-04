@@ -68,8 +68,9 @@ equipment consequences.
   absolute command, pure minute dispatcher, and opt-in Environment V2 execution/evidence
   path are also implemented and outcome-free. A separately versioned causal MPC now produces
   those commands and closes them against the physical minute ledger and next public boundary.
-  The complete authorization audit remains pending, including explicit resolution of the
-  frozen gate's incompatible old/new digest-identity requirement.
+  A frozen pre-outcome clarification resolves the incompatible old/new digest requirement
+  through exact three-boundary structural equivalence. Its executable fixture and the
+  complete authorization audit remain pending.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.
 
@@ -192,9 +193,11 @@ realization are complete under separately hashed contracts. The environment now 
 every minute's boundary, dispatch, guard, physical application, commitment transition, and
 energy attribution without changing the historical action doors. The separately versioned
 MPC controller is now complete and cannot issue a second solve until the first command's
-typed physical execution has been reconciled. The complete authorization audit remains an
-outcome-free prerequisite to any full rollout; it must explicitly resolve the fact that a
-new settings/hash domain cannot also retain the old model and plan digests byte-for-byte.
+typed physical execution has been reconciled. A pre-outcome clarification now resolves the
+protocol's impossible byte-identical cross-version model/plan condition by freezing exact
+three-boundary identities plus structural equality of the forecasts, normalized models, and
+complete plan quantities. The executable equivalence fixture and complete authorization
+audit remain prerequisites to any full rollout.
 
 ## Stage D — Progressive operational realism
 
