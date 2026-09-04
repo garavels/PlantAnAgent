@@ -97,7 +97,9 @@ fallback behavior.
   feasibility-preserving solver selection, evidence graph, implementation gate, and first
   development-run decision rule before any new controller code or outcome is opened. Its
   solver-selection prerequisite is now implemented and adversarially tested under a new
-  settings identity; the historical controller identity and strict behavior remain intact.
+  settings identity. Its typed absolute command and pure minute dispatcher are implemented
+  behind a new opt-in API; the historical controller identity and strict behavior remain
+  intact, and environment integration is not yet enabled.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

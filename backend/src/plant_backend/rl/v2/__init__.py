@@ -30,6 +30,11 @@ from .evaluation import (
 from .metrics import EpisodeMetricsV2
 from .mpc_controller import ServiceMPCControllerV1
 from .mpc_schema import ServiceMPCSetpointSettingsV1, ServiceMPCSettingsV1
+from .mpc_setpoints import (
+    MPCMinuteDispatchV1,
+    MPCProcessSetpointsV1,
+    dispatch_mpc_setpoints,
+)
 from .reward import RewardWeightsV2
 from .weather import ForecastIssueV2, PublicForecastIssueV2, WeatherConfigV2
 from .spaces import (
@@ -65,6 +70,8 @@ __all__ = [
     "PublicForecastIssueV2",
     "IntervalSummaryV2",
     "IssuedForecastControllerV2",
+    "MPCMinuteDispatchV1",
+    "MPCProcessSetpointsV1",
     "OBSERVATION_NAMES",
     "OBSERVATION_SIZE",
     "PlantEnvV2",
@@ -76,6 +83,7 @@ __all__ = [
     "ServiceMPCSettingsV1",
     "WeatherConfigV2",
     "describe",
+    "dispatch_mpc_setpoints",
     "evaluate",
     "evaluate_controllers",
     "sample_episode",

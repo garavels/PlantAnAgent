@@ -4161,6 +4161,59 @@ positive synthetic SOC now has zero support authority and the guard records that
 Focused safety and MPC-controller regressions pass **54 tests**. The complete repository
 passes **1,027 tests with 2 skips** in 31.65 seconds, with only the unchanged test-client
 deprecation warning. Formatting, compilation, Git whitespace validation, and isolated
-strict typing of the safety modules pass. No
-environment contract, controller decision, optimizer, simulator physics, or experiment was
-changed. The next slice will consume this primitive in the pure absolute-setpoint dispatcher.
+strict typing of the safety modules pass. No environment contract, controller decision,
+optimizer, simulator physics, or experiment was changed. The next slice will consume this
+primitive in the pure absolute-setpoint dispatcher.
+
+## 2026-09-04 — Absolute process intent and deterministic minute dispatch implemented
+
+The next outcome-free slice implements the new supervisory/actuation seam without yet
+connecting it to `PlantEnvV2`. `MPCProcessSetpointsV1` is the immutable
+`service-mpc-process-setpoints-v1` command. It binds the decision, public observation,
+forecast issue, projected trajectory and first interval, settings, unchanged model, selected
+plan, 15-minute hold duration, resolved operating envelope, and fixed dispatch policy. It
+declares absolute electrolyser, DAC, methanator, and battery-charge targets. The MILP's
+expected battery discharge and every original planned solar route/curtailment remain
+separate diagnostic evidence and do not become actuator authority.
+
+Construction fails closed on non-finite or negative power, targets above the issue-time
+envelope, expected support above either the support cap or electrolyser target, an unbalanced
+planned solar bus, a target that does not reproduce the selected first interval, an unknown
+policy, a model/plan/projection/public-issue identity mismatch, a different first projected
+solar interval, or solver stages lacking the new feasibility-selection evidence. The active
+envelope is hashed from resolved equipment, charge, support, and reserve limits and must
+remain identical during the held command.
+
+`dispatch_mpc_setpoints` implements the frozen one-minute algebra as a pure function. It
+uses the contemporaneous solar bus and the shared reserve-aware support primitive, reserves
+the minimum solar needed to keep the electrolyser target reachable, allocates remaining
+scarcity proportionally to DAC and methanation, uses further solar to displace battery
+support, and charges only when no support is requested. Its ordinary five-field `Action` is
+closed downward to the unit simplex and remains a sanitizer fixed point. The resulting
+`MPCMinuteDispatchV1` binds the command, detached minute boundary, exact bus, support
+availability, targets, every requested route, unallocated solar, reachability, and action.
+The record independently recomputes the entire allocation policy on construction, so a
+balanced but policy-substituted ledger is rejected.
+
+The implementation preserves the key architectural distinctions exposed by the failed
+bridge. Expected support is never consulted by the minute actuator. Actual support is only
+the remaining absolute target shortfall and therefore cannot duplicate solar power.
+Electrolyser solar plus support cannot exceed the target; it equals the target whenever the
+declared electrical reachability test passes. Charge and support are mutually exclusive,
+unsupported loads never exceed their targets, support never exceeds the current reserve,
+and every solar kW is routed or explicitly unallocated. Offline/ramp/storage refusal remains
+the responsibility of the unchanged guard and simulator and can therefore be attributed
+rather than hidden inside optimizer behavior.
+
+The focused suite passes **20 tests**. It covers surplus, deficit, darkness, exact reserve,
+proportional scarcity, a four-minute fluctuating 600 kW cold-start command, offline-stack
+guard intervention, deterministic object/digest reproduction, stale-envelope rejection,
+policy/reachability substitution, the real tiny MILP-to-command binding, legacy-stage and
+digest substitution, and a 54-case SOC/solar/target invariant grid. The production module
+and tests pass Black, compilation, Git whitespace, and isolated strict type checking. The
+complete repository passes **1,047 tests with 2 skips** in 31.30 seconds; the only warning
+remains the test-client deprecation. No Environment V2 step path, historical Gym/share
+action, controller, simulator, episode,
+registered cell, or outcome has changed. The next slice is the opt-in `step_setpoints`
+environment door and ordered minute ledger, followed by the separately versioned MPC
+controller evidence that issues these commands.
