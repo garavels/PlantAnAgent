@@ -119,6 +119,9 @@ fallback behavior.
   maps every outcome-free implementation gate to executable evidence and freezes the
   one-shot runner's clean-source, failure-retention, publication, and S1--S8 contracts. It
   records the exact clean revision and verification evidence authorized for one execution.
+- [`CAUSAL_SERVICE_MPC_SETPOINT_EXECUTION_REGISTRATION.md`](CAUSAL_SERVICE_MPC_SETPOINT_EXECUTION_REGISTRATION.md)
+  prerecords the exact admitted source revision and external destination for the single
+  rate-35/seed-0 mechanism execution before its outcome is opened.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.
