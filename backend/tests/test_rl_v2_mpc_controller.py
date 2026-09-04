@@ -9,14 +9,16 @@ from typing import NoReturn
 import pytest
 from plant_sim import Action
 
-from plant_backend.controllers.base import ControlDecision
+from plant_backend.controllers.base import Constraints, ControlDecision
 from plant_backend.rl.v2.config import EpisodeConfigV2
 from plant_backend.rl.v2.control import ControllerV2
 from plant_backend.rl.v2.env import PlantEnvV2
 from plant_backend.rl.v2.mpc_controller import ServiceMPCControllerV1
 from plant_backend.rl.v2.mpc_execution import (
+    MPCActionRealizationV2,
     MPCDecisionEvidenceV1,
     MPCDecisionFailureV2,
+    SERVICE_MPC_ACTION_SCHEMA,
 )
 from plant_backend.rl.v2.mpc_schema import (
     MPCStageSolveV1,
@@ -26,6 +28,7 @@ from plant_backend.rl.v2.mpc_schema import (
     canonical_json,
 )
 import plant_backend.rl.v2.mpc_controller as mpc_controller_module
+from plant_backend.safety.validation import validate
 
 
 SHORT_EPISODE = EpisodeConfigV2(
@@ -79,6 +82,8 @@ def test_controller_descriptor_is_immutable_and_declares_no_fallback() -> None:
     assert "private weather truth" in information_set
     assert descriptor["decision_failure_schema"] == "service-mpc-decision-failure-v2"
     assert descriptor["run_evidence_format"] == "service-mpc-controller-run-evidence-v2"
+    assert descriptor["action_realization_schema"] == SERVICE_MPC_ACTION_SCHEMA
+    assert "separately evidenced" in descriptor["support_semantics"]
     json.dumps(descriptor, allow_nan=False, sort_keys=True)
 
 
@@ -96,11 +101,18 @@ def test_first_decision_is_valid_and_fully_hash_bound() -> None:
     assert len(controller.decision_events) == 1
     event = controller.decision_events[0]
     assert isinstance(event, MPCDecisionEvidenceV1)
+    assert isinstance(event.action, MPCActionRealizationV2)
     assert event.decision_index == 0
     assert event.horizon_intervals == 4
     assert event.settings_sha256 == SHORT_SETTINGS.sha256
     assert event.action.action == decision.action
     assert event.action.plan_sha256 == event.plan_sha256
+    assert event.action.to_dict()["schema"] == SERVICE_MPC_ACTION_SCHEMA
+    assert (
+        event.action.planned_battery_support_kw == event.first_step.battery_support_kw
+    )
+    assert event.action.battery_support_authority_kw == 0.0
+    assert event.action.action.battery_support_kw == 0.0
     assert event.first_step.index == 0
     assert event.residual is None
     assert all(stage.success for stage in event.stages)
@@ -282,6 +294,120 @@ def test_registered_seed_one_first_transition_has_non_negative_curtailment() -> 
     assert event.residual is not None
     assert event.residual.observed_curtailed_kw == 0.0
     assert not controller.has_pending_transition
+
+
+def test_commitment_aware_support_preserves_registered_seed_zero_cold_start() -> None:
+    pytest.importorskip("scipy")
+    env = PlantEnvV2(
+        episode=EpisodeConfigV2(
+            horizon_h=72.0,
+            delivery_rate_kg_h=35.0,
+        )
+    )
+    env.reset(seed=0)
+    controller = ServiceMPCControllerV1()
+
+    # The first two requests do not target the electrolyser and must therefore
+    # remain identical to the frozen 3796eb5 plans/actions.
+    frozen_prefix = (
+        (
+            "782220137621a4578abac42ebd36800b028d22f6aea25f86e2c8dbe93b6d08de",
+            Action(
+                battery_share=0.0,
+                electrolyser_share=0.0,
+                dac_share=0.0,
+                methanator_share=1.0,
+                battery_support_kw=0.0,
+            ),
+        ),
+        (
+            "ea115d2fbb37894c46684c88c8bc8a8dc3fa6a4ace2962fe4521610f8f5c15d4",
+            Action(
+                battery_share=0.0,
+                electrolyser_share=0.0,
+                dac_share=0.4336130390869113,
+                methanator_share=0.5663869609130887,
+                battery_support_kw=0.0,
+            ),
+        ),
+    )
+    for plan_sha256, frozen_action in frozen_prefix:
+        decision = _compute(env, controller)
+        event = controller.decision_events[-1]
+        assert isinstance(event, MPCDecisionEvidenceV1)
+        assert event.plan_sha256 == plan_sha256
+        assert event.action.battery_support_authority_kw == 0.0
+        assert decision.action == frozen_action
+        env.step_action(decision.action)
+        controller.observe_transition(env.controller_observation)
+
+    decision = _compute(env, controller)
+    event = controller.decision_events[-1]
+    assert isinstance(event, MPCDecisionEvidenceV1)
+    action = event.action
+
+    # These identities are from the pre-bridge artifact.  They prove the public
+    # boundary, forecast projection, MILP and selected plan did not change.
+    assert event.observation_sha256 == (
+        "3f9bbe6cc62ec3dfaaf486c20a818ee90bed95984ffe9e7bc9e4708f8dee5aac"
+    )
+    assert event.model_sha256 == (
+        "25c5505091125fd36d5b8a79d5691e843cfcf12063a6280bc14392ef2dd56355"
+    )
+    assert event.plan_sha256 == (
+        "36af91aee783fe89979a92f4fb0e62b2f0dd31c04b09467d5c4403378cd2054f"
+    )
+    assert action.electrolyser_target_kw == 600.0
+    assert action.planned_battery_support_kw == pytest.approx(68.15390458875038)
+    assert action.battery_support_authority_kw == 600.0
+    assert decision.action.electrolyser_share == 1.0
+    assert decision.action.battery_support_kw == 600.0
+
+    # The unchanged reserve guard can still remove the new authority and reports
+    # the intervention.  The actual episode uses its ordinary 15% reserve.
+    boundary = env.controller_observation.state.boundary
+    blocked = validate(
+        decision.action,
+        boundary,
+        constraints=Constraints(battery_min_soc=boundary.battery_soc),
+        config=env.config,
+        dispatch_solar_available_kw=env.simulator.next_dispatch_solar_kw(),
+    )
+    assert blocked.action.battery_support_kw == 0.0
+    assert any("reserve" in adjustment for adjustment in blocked.adjustments)
+
+    # Four held decisions cover the exact one-hour cold start.  Contingent
+    # authority fills only the minute-level uncovered gap, so the plant accepts
+    # the target without weakening the one-minute commitment kernel.
+    _, _, _, _, start_info = env.step_action(decision.action)
+    controller.observe_transition(env.controller_observation)
+    first_start_event = controller.decision_events[2]
+    assert isinstance(first_start_event, MPCDecisionEvidenceV1)
+    assert first_start_event.residual is not None
+    assert first_start_event.residual.observed_electrolyser_kw == pytest.approx(600.0)
+    interval_power = start_info["interval_power"]
+    assert isinstance(interval_power, dict)
+    guarded_kwh = interval_power["guarded_kwh"]
+    applied_kwh = interval_power["applied_kwh"]
+    assert isinstance(guarded_kwh, dict)
+    assert isinstance(applied_kwh, dict)
+    assert guarded_kwh["battery_support"] == pytest.approx(150.0)
+    assert 0.0 < applied_kwh["battery_support"] < guarded_kwh["battery_support"]
+    assert applied_kwh["electrolyser"] == pytest.approx(150.0)
+    for _ in range(3):
+        continued = _compute(env, controller)
+        continued_event = controller.decision_events[-1]
+        assert isinstance(continued_event, MPCDecisionEvidenceV1)
+        assert continued_event.action.battery_support_authority_kw == 600.0
+        env.step_action(continued.action)
+        controller.observe_transition(env.controller_observation)
+
+    snapshot = env.controller_observation.state.electrolyser_commitment
+    assert snapshot is not None
+    assert snapshot.mode == "running"
+    assert snapshot.cold_starts == 1
+    assert snapshot.aborted_starts == 0
+    assert snapshot.forced_stops == 0
 
 
 def test_next_compute_auto_reconciles_an_unobserved_pending_transition() -> None:

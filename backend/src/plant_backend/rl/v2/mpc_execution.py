@@ -25,7 +25,8 @@ from .mpc_schema import (
     require_sha256,
 )
 
-SERVICE_MPC_ACTION_DOMAIN = "service-mpc-requested-action-v1"
+SERVICE_MPC_ACTION_SCHEMA = "service-mpc-requested-action-v2"
+SERVICE_MPC_ACTION_DOMAIN = SERVICE_MPC_ACTION_SCHEMA
 SERVICE_MPC_APPLICATION_DOMAIN = "service-mpc-decision-application-v1"
 SERVICE_MPC_GUARDED_ACTION_DOMAIN = "service-mpc-guarded-action-v1"
 SERVICE_MPC_INTERVAL_POWER_DOMAIN = "service-mpc-interval-power-v1"
@@ -79,8 +80,8 @@ def public_forecast_issue_sha256(observation: ControllerObservationV2) -> str:
 
 
 @dataclass(frozen=True, slots=True)
-class MPCActionRealizationV1:
-    """First planned route encoded into the existing five-field action seam."""
+class MPCActionRealizationV2:
+    """First planned route plus separately evidenced contingent support authority."""
 
     plan_sha256: str
     forecast_solar_kw: float
@@ -88,7 +89,10 @@ class MPCActionRealizationV1:
     electrolyser_share: float
     dac_share: float
     methanator_share: float
-    battery_support_kw: float
+    planned_battery_support_kw: float
+    battery_support_authority_kw: float
+    battery_support_limit_kw: float
+    electrolyser_target_kw: float
 
     def __post_init__(self) -> None:
         require_sha256("plan_sha256", self.plan_sha256)
@@ -102,13 +106,44 @@ class MPCActionRealizationV1:
                 "methanator_share",
             )
         )
-        _finite("battery_support_kw", self.battery_support_kw, minimum=0.0)
+        expected_support = _finite(
+            "planned_battery_support_kw",
+            self.planned_battery_support_kw,
+            minimum=0.0,
+        )
+        authority = _finite(
+            "battery_support_authority_kw",
+            self.battery_support_authority_kw,
+            minimum=0.0,
+        )
+        support_limit = _finite(
+            "battery_support_limit_kw",
+            self.battery_support_limit_kw,
+            minimum=0.0,
+        )
+        target = _finite(
+            "electrolyser_target_kw", self.electrolyser_target_kw, minimum=0.0
+        )
         if sum(shares) > 1.0:
             raise ValueError(
                 "service-MPC requested action oversubscribes the solar bus"
             )
         if self.forecast_solar_kw == 0.0 and any(value != 0.0 for value in shares):
             raise ValueError("a dark MPC interval must use zero solar shares")
+        if expected_support > support_limit + MODEL_BALANCE_TOLERANCE:
+            raise ValueError("planned battery support exceeds the active support limit")
+        if expected_support > target + MODEL_BALANCE_TOLERANCE:
+            raise ValueError("planned battery support exceeds the electrolyser target")
+        expected_authority = 0.0 if target == 0.0 else min(target, support_limit)
+        if not math.isclose(
+            authority,
+            expected_authority,
+            rel_tol=0.0,
+            abs_tol=MODEL_BALANCE_TOLERANCE,
+        ):
+            raise ValueError(
+                "battery support authority does not match the commitment-aware rule"
+            )
 
     @property
     def action(self) -> Action:
@@ -117,11 +152,12 @@ class MPCActionRealizationV1:
             electrolyser_share=self.electrolyser_share,
             dac_share=self.dac_share,
             methanator_share=self.methanator_share,
-            battery_support_kw=self.battery_support_kw,
+            battery_support_kw=self.battery_support_authority_kw,
         )
 
     def body(self) -> dict[str, Any]:
         return {
+            "schema": SERVICE_MPC_ACTION_SCHEMA,
             "plan_sha256": self.plan_sha256,
             "forecast_solar_kw": float(self.forecast_solar_kw),
             "action": self.action.to_dict(),
@@ -137,8 +173,21 @@ class MPCActionRealizationV1:
             ),
             "realization": (
                 "first planned solar-route kW divided by first reconstructed "
-                "interval PV; binary64 simplex residue closed downward"
+                "interval PV; binary64 simplex residue closed downward; planned "
+                "battery discharge retained separately from contingent authority"
             ),
+            "actuation_bridge": {
+                "planned_battery_support_kw": float(self.planned_battery_support_kw),
+                "battery_support_authority_kw": float(
+                    self.battery_support_authority_kw
+                ),
+                "battery_support_limit_kw": float(self.battery_support_limit_kw),
+                "electrolyser_target_kw": float(self.electrolyser_target_kw),
+                "authority_rule": (
+                    "zero when electrolyser target is zero; otherwise "
+                    "min(electrolyser target, active support limit)"
+                ),
+            },
         }
 
     @property
@@ -149,11 +198,18 @@ class MPCActionRealizationV1:
         return {**self.body(), "sha256": self.sha256}
 
 
-def realize_first_mpc_action(plan: MPCPlanV1) -> MPCActionRealizationV1:
-    """Encode only the first valid plan interval without sanitizer repair."""
+def realize_first_mpc_action(
+    plan: MPCPlanV1,
+    *,
+    battery_support_limit_kw: float,
+) -> MPCActionRealizationV2:
+    """Encode the first plan while separating expected flow from support authority."""
 
     if not isinstance(plan, MPCPlanV1):
         raise TypeError("plan must be MPCPlanV1")
+    support_limit = _finite(
+        "battery_support_limit_kw", battery_support_limit_kw, minimum=0.0
+    )
     first = plan.steps[0]
     denominator = first.forecast_solar_kw
     routes = (
@@ -192,14 +248,23 @@ def realize_first_mpc_action(plan: MPCPlanV1) -> MPCActionRealizationV1:
                 raise ServiceMPCPlanError(
                     f"service-MPC {name} share does not realize its first route"
                 )
-    realization = MPCActionRealizationV1(
+    electrolyser_target = (
+        first.electrolyser_startup_kw + first.electrolyser_productive_kw
+    )
+    support_authority = (
+        0.0 if electrolyser_target == 0.0 else min(electrolyser_target, support_limit)
+    )
+    realization = MPCActionRealizationV2(
         plan_sha256=plan.sha256,
         forecast_solar_kw=denominator,
         battery_share=shares[0],
         electrolyser_share=shares[1],
         dac_share=shares[2],
         methanator_share=shares[3],
-        battery_support_kw=first.battery_support_kw,
+        planned_battery_support_kw=first.battery_support_kw,
+        battery_support_authority_kw=support_authority,
+        battery_support_limit_kw=support_limit,
+        electrolyser_target_kw=electrolyser_target,
     )
     if Action.sanitised(realization.action) != realization.action:
         raise ServiceMPCPlanError(
@@ -484,7 +549,7 @@ class MPCDecisionEvidenceV1:
     terminal_ch4_equivalent_kg: float
     secondary_utility: float
     first_step: MPCPlanStepV1
-    action: MPCActionRealizationV1
+    action: MPCActionRealizationV2
     notes: tuple[str, ...]
     decision_elapsed_ns: int
     residual: MPCFirstIntervalResidualV1 | None = None
@@ -538,8 +603,8 @@ class MPCDecisionEvidenceV1:
         _finite("secondary_utility", self.secondary_utility)
         if not isinstance(self.first_step, MPCPlanStepV1) or self.first_step.index != 0:
             raise ValueError("decision evidence requires plan interval zero")
-        if not isinstance(self.action, MPCActionRealizationV1):
-            raise TypeError("decision action must be MPCActionRealizationV1")
+        if not isinstance(self.action, MPCActionRealizationV2):
+            raise TypeError("decision action must be MPCActionRealizationV2")
         if self.action.plan_sha256 != self.plan_sha256:
             raise ValueError("decision action and plan identities differ")
         if not math.isclose(
@@ -1212,13 +1277,14 @@ def build_mpc_run_evidence(
 
 
 __all__ = [
-    "MPCActionRealizationV1",
+    "MPCActionRealizationV2",
     "MPCDecisionApplicationV1",
     "MPCDecisionEventV2",
     "MPCDecisionEvidenceV1",
     "MPCDecisionFailureV2",
     "MPCFirstIntervalResidualV1",
     "SERVICE_MPC_FAILURE_SCHEMA",
+    "SERVICE_MPC_ACTION_SCHEMA",
     "SERVICE_MPC_RUN_EVIDENCE_FORMAT",
     "build_mpc_run_evidence",
     "capture_mpc_application",

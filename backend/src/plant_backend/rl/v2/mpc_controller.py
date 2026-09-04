@@ -17,6 +17,7 @@ from .mpc_execution import (
     MPCDecisionEventV2,
     MPCDecisionEvidenceV1,
     MPCDecisionFailureV2,
+    SERVICE_MPC_ACTION_SCHEMA,
     SERVICE_MPC_FAILURE_SCHEMA,
     SERVICE_MPC_RUN_EVIDENCE_FORMAT,
     public_forecast_issue_sha256,
@@ -99,6 +100,11 @@ class ServiceMPCControllerV1:
                 "attempted solve stage"
             ),
             "failure_policy": "raise typed error; no controller-internal fallback",
+            "action_realization_schema": SERVICE_MPC_ACTION_SCHEMA,
+            "support_semantics": (
+                "MILP expected discharge and contingent real-time support authority "
+                "are separately evidenced; the safety guard controls applied support"
+            ),
             "decision_evidence_schema": "service-mpc-decision-evidence-v1",
             "decision_failure_schema": SERVICE_MPC_FAILURE_SCHEMA,
             "run_evidence_format": SERVICE_MPC_RUN_EVIDENCE_FORMAT,
@@ -378,7 +384,10 @@ class ServiceMPCControllerV1:
             plan = solved_plan
 
             phase = "action_realization"
-            action = realize_first_mpc_action(solved_plan)
+            action = realize_first_mpc_action(
+                solved_plan,
+                battery_support_limit_kw=constraints.support_limit_kw(config),
+            )
             notes = (
                 f"Service MPC decision {self._decision_count}: "
                 f"{horizon} x {self.settings.interval_s:g}s intervals; "
@@ -391,7 +400,8 @@ class ServiceMPCControllerV1:
                 f"electrolyser={solved_plan.steps[0].electrolyser_startup_kw + solved_plan.steps[0].electrolyser_productive_kw:.2f}, "
                 f"DAC={solved_plan.steps[0].solar_to_dac_kw:.2f}, "
                 f"methanator={solved_plan.steps[0].solar_to_methanator_kw:.2f}, "
-                f"support={solved_plan.steps[0].battery_support_kw:.2f}",
+                f"planned support={solved_plan.steps[0].battery_support_kw:.2f}, "
+                f"support authority={action.battery_support_authority_kw:.2f}",
             )
 
             phase = "evidence_construction"

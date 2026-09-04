@@ -38,6 +38,7 @@ from .metrics import EpisodeMetricsV2
 from .mpc_controller import ServiceMPCControllerV1
 from .mpc_execution import (
     SERVICE_MPC_ACTION_DOMAIN,
+    SERVICE_MPC_ACTION_SCHEMA,
     SERVICE_MPC_APPLICATION_DOMAIN,
     SERVICE_MPC_DECISION_DOMAIN,
     SERVICE_MPC_FAILURE_DOMAIN,
@@ -559,6 +560,8 @@ def _validate_success_event(
         SERVICE_MPC_ACTION_DOMAIN,
         event.get("action"),
     )
+    if action.get("schema") != SERVICE_MPC_ACTION_SCHEMA:
+        raise ValueError(f"service-MPC event {index} action schema is invalid")
     action_values = _mapping(
         f"service-MPC event {index} action values", action.get("action")
     )
@@ -591,6 +594,85 @@ def _validate_success_event(
         action_values["battery_support_kw"],
         minimum=0.0,
     )
+    bridge = _mapping(
+        f"service-MPC event {index} actuation bridge",
+        action.get("actuation_bridge"),
+    )
+    bridge_fields = {
+        "planned_battery_support_kw",
+        "battery_support_authority_kw",
+        "battery_support_limit_kw",
+        "electrolyser_target_kw",
+        "authority_rule",
+    }
+    if set(bridge) != bridge_fields:
+        raise ValueError(f"service-MPC event {index} actuation bridge is invalid")
+    planned_support = _finite(
+        f"service-MPC event {index} planned battery support",
+        bridge["planned_battery_support_kw"],
+        minimum=0.0,
+    )
+    authority = _finite(
+        f"service-MPC event {index} battery support authority",
+        bridge["battery_support_authority_kw"],
+        minimum=0.0,
+    )
+    support_limit = _finite(
+        f"service-MPC event {index} battery support limit",
+        bridge["battery_support_limit_kw"],
+        minimum=0.0,
+    )
+    target = _finite(
+        f"service-MPC event {index} electrolyser target",
+        bridge["electrolyser_target_kw"],
+        minimum=0.0,
+    )
+    expected_authority = 0.0 if target == 0.0 else min(target, support_limit)
+    if (
+        bridge["authority_rule"] != "zero when electrolyser target is zero; otherwise "
+        "min(electrolyser target, active support limit)"
+        or authority != action_values["battery_support_kw"]
+        or not math.isclose(
+            authority,
+            expected_authority,
+            rel_tol=0.0,
+            abs_tol=1e-7,
+        )
+        or planned_support > support_limit + 1e-7
+        or planned_support > target + 1e-7
+    ):
+        raise ValueError(f"service-MPC event {index} actuation bridge is invalid")
+    first_step = _mapping(
+        f"service-MPC event {index} first step", event.get("first_step")
+    )
+    first_planned_support = _finite(
+        f"service-MPC event {index} first-step battery support",
+        first_step.get("battery_support_kw"),
+        minimum=0.0,
+    )
+    first_target = _finite(
+        f"service-MPC event {index} first-step startup power",
+        first_step.get("electrolyser_startup_kw"),
+        minimum=0.0,
+    ) + _finite(
+        f"service-MPC event {index} first-step productive power",
+        first_step.get("electrolyser_productive_kw"),
+        minimum=0.0,
+    )
+    if not math.isclose(
+        planned_support,
+        first_planned_support,
+        rel_tol=0.0,
+        abs_tol=1e-7,
+    ) or not math.isclose(
+        target,
+        first_target,
+        rel_tol=0.0,
+        abs_tol=1e-7,
+    ):
+        raise ValueError(
+            f"service-MPC event {index} actuation bridge is not plan-bound"
+        )
     if trace_action is not None:
         for key in action_fields:
             if action_values.get(key) != trace_action[key]:

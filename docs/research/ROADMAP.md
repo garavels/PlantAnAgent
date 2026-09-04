@@ -54,8 +54,10 @@ equipment consequences.
   against A0, meets only 20/72 commitments, and aborts 204 of 206 physical starts. The
   optimizer schedules a 15-minute expected battery flow, but the plant action interprets
   that field as a contingent top-up ceiling and enforces commitment at one-minute
-  resolution. The next work is therefore a versioned commitment-aware actuation bridge,
-  not weight tuning, RL training, or additional environment complexity.
+  resolution. The versioned commitment-aware bridge is now implemented and passes the
+  complete 1,011-test repository gate: planned discharge remains model evidence, bounded
+  support authority is separately hash-bound, and the unchanged guard remains final. The
+  one frozen rate-35/seed-0 mechanism probe is next; no outcome has yet been opened.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.
 
@@ -167,7 +169,8 @@ controller families, Stage C must separate planned battery energy, real-time top
 authority, and applied discharge. A bounded bridge repair will test that hypothesis on the
 already contaminated development cells. Failure of that bridge is the trigger to replace
 the share-only supervisory command with absolute process setpoints and a deterministic
-inner-loop dispatcher.
+inner-loop dispatcher. The bridge implementation and its non-overwriting one-shot runner
+are complete; interpretation remains pending the single preregistered development probe.
 
 ## Stage D — Progressive operational realism
 

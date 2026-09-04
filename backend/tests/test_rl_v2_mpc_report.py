@@ -30,6 +30,7 @@ from plant_backend.rl.v2.metrics import EpisodeMetricsV2
 from plant_backend.rl.v2.mpc_controller import ServiceMPCControllerV1
 from plant_backend.rl.v2.mpc_execution import (
     SERVICE_MPC_ACTION_DOMAIN,
+    SERVICE_MPC_ACTION_SCHEMA,
     SERVICE_MPC_APPLICATION_DOMAIN,
     SERVICE_MPC_DECISION_DOMAIN,
     SERVICE_MPC_FAILURE_DOMAIN,
@@ -232,11 +233,22 @@ def _mpc_run_evidence() -> dict[str, Any]:
         action = _digest(
             SERVICE_MPC_ACTION_DOMAIN,
             {
+                "schema": SERVICE_MPC_ACTION_SCHEMA,
                 "plan_sha256": plan_sha,
                 "forecast_solar_kw": 0.0,
                 "action": idle,
                 "simplex_sum": 0.0,
                 "realization": "synthetic outcome-free report fixture",
+                "actuation_bridge": {
+                    "planned_battery_support_kw": 0.0,
+                    "battery_support_authority_kw": 0.0,
+                    "battery_support_limit_kw": 2_500.0,
+                    "electrolyser_target_kw": 0.0,
+                    "authority_rule": (
+                        "zero when electrolyser target is zero; otherwise "
+                        "min(electrolyser target, active support limit)"
+                    ),
+                },
             },
         )
         residual = _digest(
@@ -269,7 +281,11 @@ def _mpc_run_evidence() -> dict[str, Any]:
                 "terminal_ch4_equivalent_kg": 0.0,
                 "secondary_utility": 0.0,
             },
-            "first_step": {},
+            "first_step": {
+                "battery_support_kw": 0.0,
+                "electrolyser_startup_kw": 0.0,
+                "electrolyser_productive_kw": 0.0,
+            },
             "action": action,
             "notes": ["synthetic outcome-free report fixture"],
             "decision_elapsed_ns": 300,

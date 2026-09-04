@@ -86,7 +86,9 @@ fallback behavior.
 - [`CAUSAL_SERVICE_MPC_ACTUATION_BRIDGE_PROTOCOL.md`](CAUSAL_SERVICE_MPC_ACTUATION_BRIDGE_PROTOCOL.md)
   freezes the expected-flow versus contingent-authority hypothesis, permitted bridge-only
   repair, executable obligations, single-cell mechanism probe, and decision rule before
-  implementation.
+  implementation. The versioned realization, fail-closed audit runner, and complete
+  regression gate are now implemented; the one authorized outcome remains external and
+  unopened until the implementation is committed on a clean revision.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

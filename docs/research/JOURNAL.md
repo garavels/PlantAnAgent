@@ -3911,3 +3911,76 @@ latency, and delivered-product direction are reported separately. A mechanism fa
 triggers an explicit absolute-setpoint/inner-dispatcher design rather than another
 share-interface patch. No objective tuning, PPO, HEPA/NLP change, or added environment
 complexity is permitted in this package.
+
+## 2026-09-04 — Commitment-aware actuation bridge implemented; probe remains unopened
+
+The permitted controller-to-plant change is now implemented without modifying the MILP,
+forecast construction, objective, solver settings, safety guard, component sizing, plant
+physics, commitment kernel, reward, episode, or seed handling. The first-action schema has
+advanced from `service-mpc-requested-action-v1` to
+`service-mpc-requested-action-v2`. Each successful decision now retains four distinct,
+hash-bound quantities: the MILP's planned battery discharge, the active support limit, the
+planned startup-plus-productive electrolyser target, and the contingent support authority.
+The authority is exactly zero for a zero target and otherwise exactly the lesser of target
+and active support limit. Only that authority enters the existing five-field plant action;
+the safety guard can still reduce or remove it, and the simulator still withdraws only the
+minute-level shortfall actually present.
+
+The controller descriptor declares the new realization schema and semantics. Its evidence
+constructor rejects support above the planned target or active cap and rejects any authority
+that does not follow the frozen rule. The matrix reporter now rejects a legacy-schema
+substitution, an incomplete bridge payload, a rule violation, a low-level action mismatch,
+or a bridge whose planned flow/target does not match first-step plan evidence. This versions
+the actuator meaning without relabelling the historical `3796eb5` artifact.
+
+The executable mechanism probe is deliberately narrower than the generic evaluator. The new
+`mpc_bridge_probe.py` runner permits only the 72-hour rate-35/seed-0 cell and the current
+service-MPC controller. Its contract has digest
+`83ad83b07f57e43fb9af25bf80b07c6cb33b149fdb3e82d2321a9003e63b321f`
+and binds the frozen protocol raw digest
+`653b118a5d0003e0cb5a37a8076a0f9d765c8eaa7db9a9b759616bf501f981c0`,
+the prior report/cell identities, exact manifest and exogenous episode, controller settings,
+action schema, expected 288 decisions and 576 solver stages, and the no-same-revision-retry
+rule. It requires a complete clean source identity before and after evaluation, rechecks the
+lock and worktree immediately before and after publication, writes canonical JSON only to a
+new absolute path outside Git, flushes and atomically hard-links without overwrite, reopens
+the exact bytes, and publishes both an internal domain digest and raw-file SHA-256.
+
+The probe independently reports B1--B6. Its bridge audit checks run, decision, action,
+residual, request, guarded-action, interval-power, and application digests and bindings. For
+each decision it binds planned support and target back to the first plan interval, recomputes
+the authority rule, matches authority across controller evidence, requested-action trace,
+and evaluator application, and verifies that guarded support never exceeds authorized
+capacity and applied support never exceeds guarded support. It retains planned,
+authority-capacity, guarded, and applied kWh separately. Execution failure leaves B2--B6
+explicitly `not_evaluated`; otherwise the mechanism, safety, directional delivery,
+accounting, and latency gates remain independent.
+
+Outcome-free regressions exercise the exact contaminated boundary. The first two inactive
+seed-0 requests reproduce the frozen `3796eb5` plan identities and low-level actions exactly.
+At decision two, observation
+`3f9bbe6cc62ec3dfaaf486c20a818ee90bed95984ffe9e7bc9e4708f8dee5aac`,
+model `25c5505091125fd36d5b8a79d5691e843cfcf12063a6280bc14392ef2dd56355`,
+and plan `36af91aee783fe89979a92f4fb0e62b2f0dd31c04b09467d5c4403378cd2054f`
+remain unchanged. That plan retains 68.15390458875038 kW expected support but exposes
+600 kW contingent authority for the 600 kW startup target. The unchanged reserve guard can
+remove that authority and reports why. With the ordinary reserve, the held one-hour startup
+receives 600 kW in its first interval while consuming less support energy than the 150 kWh
+authority capacity, then reaches `running` after the four held decisions and records one cold
+start with zero aborts or forced stops. Synthetic adversarial tests also reject legacy
+schema, wrong authority, an unfunded plan, over-application, malformed stage completion, and
+unequal accounting-ledger lengths.
+
+The controller/report/probe focused surface passes **45 tests**. The complete repository
+passes **1,011 tests with 2 skips** in 31.39 seconds; the sole warning is the unchanged
+Starlette/httpx test-client deprecation. Black formatting, Python compilation, Git
+whitespace validation, and strict isolated type checking of the four changed production
+modules pass. An initial strict invocation omitted the workspace package path and therefore
+reported missing `plant_sim` imports plus pre-existing transitive annotation diagnostics;
+the repository-path, isolated-import invocation passed with no issue in the changed modules.
+
+No 72-hour bridge rollout, performance outcome, new holdout, PPO training, or environment
+change has been opened. The next action is to commit this complete implementation and journal
+on a clean revision, confirm the frozen protocol and executable tree are unchanged, and run
+the single authorized mechanism probe once. While it runs, the process will wait silently
+and generate no progress narration or speculative analysis.
