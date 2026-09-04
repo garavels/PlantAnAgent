@@ -3635,3 +3635,66 @@ comparison has been opened. The next action is to commit this reporting freeze, 
 complete gate from that clean revision, and only then execute the six cells sequentially in
 their registered order. While a cell is running, the research process will wait silently;
 it will not spend model tokens narrating or polling the solve.
+
+## 2026-09-04 — First registered service-MPC matrix fails execution gate
+
+The reporting freeze was committed as `59e377c`. That exact clean revision then repeated
+the complete authorization gate: **986 passed, 2 skipped**, all 12 relevant Python files
+Black-clean, strict type checks clean for the metric/runner/report production modules and
+runner/report tests, compilation clean, dependency lock clean, and no tracked or untracked
+source change. Only then was a new external directory created and the six cells executed in
+separate processes, sequentially and without source edits. Long-running cells were waited
+on silently, per the requested resource discipline.
+
+The first registered matrix is a valid **G1 failure**, not a controller-performance result.
+All six cell artifacts were written and admitted in order from the same source, worktree,
+lock, and runtime. All twelve A0/A2 arms completed. All six M arms failed without fallback:
+
+- 35/0 completed 114 decisions (28.5 hours), then HiGHS returned an optimal secondary
+  solution whose independent audit found a `5e-7` bound violation;
+- 42/0 completed 90 decisions (22.5 hours), then the same boundary rejected a `1e-6`
+  bound violation; and
+- 35/1, 35/2, 42/1, and 42/2 each applied one decision, then transition reconciliation
+  rejected `observed_curtailed_kw` as negative.
+
+The two longer cells retained every successful decision/application and the failed solve
+stage; the four early failures retained their requested action, partial metrics, pending
+transition, and failed evidence state. Across every record the fallback count is zero. The
+frozen postprocessor reported 12/18 successful arms and 0/6 complete MPC rollouts, failed
+G1, set the aggregate to `null`, and marked G2--G7 `not_evaluated`. It did not compute a
+surviving-subset statistic. The external report has raw SHA-256
+`4c509fda07965ab92bfbf78a403822cf34b6e3dc4a492d6592f37ed924d379f2` and internal
+digest `22fadb2da9c72baf7f61ddc9fa2373c18b317cb494462dd12c126823df1a0961`.
+Every cell's raw hash, size, failure, provenance, and custody location is recorded in
+`results/v2_service_mpc_matrix_59e377c.md`.
+
+The four early failures were reproduced after the matrix using only one decision and the
+already-retained all-to-methanator request. In the registered uv runtime, the public
+interval accumulator observed `-1.894780628693601e-15 kW` for seeds 1 and
+`-9.473903143468004e-16 kW` for seeds 2, independent of rate. The methanator converts an
+offered kW value to kg and back; binary64 round-trip error can return a power one ULP above
+the offer, which the allocator exposed as a tiny negative spill. The episode reward metric
+already clamps its independently computed curtailment delta at zero, but public interval
+telemetry accumulated the raw negative simulator field. The residual schema correctly
+requires a physical non-negative observation; the defect is the inconsistent source
+invariant, not the check.
+
+The later solve failures expose a distinct scale contract. The adapter's absolute audit
+tolerance is `1e-7`, but the installed HiGHS MIP solve accepted lower-bound excursions of
+`5e-7` and `1e-6` while row residuals remained below `1e-11`. These values are physically
+negligible but greater than the declared independent threshold. The repair must therefore
+make solver feasibility settings explicit and hash-bound, and align independent acceptance
+with that declared numerical contract; it must not special-case these seeds or relax the
+delivery objective after observing performance.
+
+Finally, opening the failed compact report showed that failed-run evidence retained its
+entire event/application ledger instead of only validated ledger hashes. That did not alter
+admission or gate results but made the report 2,983,662 bytes, contrary to the addendum's
+compactness claim. This first report remains immutable. The next implementation revision
+will independently validate partial failure ledgers and compact them, while the raw ledgers
+remain in their hash-bound cell artifacts.
+
+The immediate next phase is numerical-contract repair plus outcome-independent regression
+fixtures. After a new clean gate, a separately labelled replication matrix may test whether
+M can finally complete; the failed `59e377c` matrix will remain the first registered result
+and cannot be replaced.

@@ -71,6 +71,10 @@ fallback behavior.
   freezes schema-7 battery-throughput instrumentation, six-cell admission, exact
   planner cross-binding, no-subset aggregation, and executable interpretations of
   all seven development gates before any registered outcome is opened.
+- [`results/v2_service_mpc_matrix_59e377c.md`](results/v2_service_mpc_matrix_59e377c.md)
+  records the first registered six-cell result: a G1 engineering failure caused by
+  numerical curtailment and solver-residual contracts, with no eligible performance
+  aggregate and complete external artifact hashes.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.
