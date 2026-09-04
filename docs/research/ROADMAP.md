@@ -205,8 +205,10 @@ deficit attribution, energy totals, and deterministic evidence-graph identities.
 The one-shot mechanism runner is now implemented without a tuning surface: it binds rate 35,
 seed 0, the exact exogenous episode, protocol and lock digests, clean source identity,
 non-overwriting external publication, and S1--S8. The implementation audit maps all twelve
-outcome-free gates to tests; only the final committed-clean verification remains before the
-single mechanism cell may be authorized.
+outcome-free gates to tests. All gates now pass at clean implementation revision `a968a343`,
+which is authorized for one registered mechanism execution. The outcome remains unopened;
+the next action is to prerecord its exact external destination and run that one cell without
+same-revision retry or concurrent tuning work.
 
 ## Stage D — Progressive operational realism
 

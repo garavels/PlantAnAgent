@@ -1,6 +1,7 @@
 # Absolute-setpoint MPC implementation admission audit
 
-Status: **candidate implementation complete; final clean-revision verification pending**
+Status: **authorized for exactly one registered mechanism execution from implementation
+revision `a968a343f50e5724ea74b75cc3debd1509fc1d80`; no outcome opened**
 
 Date: **2026-09-04**
 
@@ -32,7 +33,7 @@ publication, and after publication.
 
 | Gate | Executable evidence | Audit assessment |
 |---|---|---|
-| 1. Historical action compatibility | `test_historical_action_doors_do_not_emit_setpoint_fields`; `test_v1_and_v2_are_explicit_coexisting_contracts`; `test_v2_passes_the_gymnasium_contract_checker`; complete regression suite | Implemented; final clean run pending. |
+| 1. Historical action compatibility | `test_historical_action_doors_do_not_emit_setpoint_fields`; `test_v1_and_v2_are_explicit_coexisting_contracts`; `test_v2_passes_the_gymnasium_contract_checker`; complete regression suite | Pass. |
 | 2. Setpoint schema rejection | `test_setpoint_schema_rejects_invalid_or_unbound_commands`; `test_realization_rejects_identity_and_legacy_stage_substitution` | Implemented; negative, non-finite, over-envelope, policy, and identity substitutions are rejected. |
 | 3. Dispatcher operating regimes | `test_surplus_dispatch_tracks_targets_without_duplicate_support`; `test_deficit_dispatch_uses_support_only_for_the_target_shortfall`; `test_unsupported_loads_share_scarcity_proportionally`; `test_reserve_bound_shortfall_is_explicit_and_never_overoffered`; `test_night_dispatch_can_reach_the_stack_target_from_reserve`; `test_derated_operator_envelope_is_respected_by_target_and_support`; `test_offline_stack_is_attributed_to_the_unchanged_guard`; `test_dispatch_grid_preserves_every_frozen_invariant` | Implemented across day/night, surplus/deficit, reserve, offline, derated, and invariant-grid fixtures. |
 | 4. Four-minute 600 kW cold start | `test_four_fluctuating_minutes_hold_a_600_kw_cold_start_target` | Implemented with support equal only to the contemporaneous shortfall. |
@@ -43,7 +44,7 @@ publication, and after publication.
 | 9. Three-boundary equivalence | `test_first_three_frozen_boundaries_have_exact_structural_equivalence` under clarification 001 | Implemented: all 24 identities reproduce; projections, normalized models, and complete plan semantics are exact. |
 | 10. Solver canonicalization controls | `test_feasible_raw_co2_state_survives_an_invalid_scaled_bound_projection`; `test_feasible_gated_support_noise_still_selects_the_projected_vector`; `test_materially_invalid_raw_vector_remains_rejected`; `test_projection_that_breaks_a_stage_lock_selects_the_raw_vector`; `test_historical_settings_retain_the_strict_projection_failure_contract` | Implemented without loosening solver or physical tolerances. |
 | 11. Substitution rejection | `test_minute_dispatch_evidence_rejects_policy_and_reachability_substitution`; `test_minute_and_interval_evidence_reject_substitution_and_chain_breaks`; `test_decision_evidence_rejects_identity_stage_and_closure_substitution`; `test_run_builder_rejects_public_chain_and_latency_substitution`; `test_outer_and_graph_digest_substitution_fail_closed`; `test_artifact_report_digest_rejects_substitution` | Implemented from command through published run artifact. |
-| 12. Clean-revision quality gate | Focused tests, complete tests, Black, compilation, strict targeted MyPy, lock digest, `git diff --check`, and clean Git status | Pending the final committed-revision verification recorded below. |
+| 12. Clean-revision quality gate | Focused tests, complete tests, Black, compilation, strict targeted MyPy, lock digest, `git diff --check`, and clean Git status | Pass at `a968a343f50e5724ea74b75cc3debd1509fc1d80`. |
 
 ## One-shot outcome contract
 
@@ -70,9 +71,10 @@ under an explicitly unvalidated failure field. The runner never substitutes a fa
 
 ## Authorization rule
 
-This candidate becomes authorized for **one** execution only after every gate in the table
-above, including gate 12, passes from a committed clean revision. Authorization does not
-permit a same-revision retry. This is a governance constraint rather than a claim of global
+Every gate in the table above, including gate 12, passed from committed clean implementation
+revision `a968a343f50e5724ea74b75cc3debd1509fc1d80`. That exact source revision is authorized
+for **one** execution. Authorization does not permit a same-revision retry. This is a
+governance constraint rather than a claim of global
 CLI enforcement: an operator could select another external directory that a stateless
 process cannot discover. The first artifact's exact destination must therefore be recorded
 at authorization, and that result must be retained whether it passes, fails during
@@ -84,4 +86,27 @@ to the frozen protocol rather than being optimized after inspection.
 
 ## Final clean-revision verification
 
-Pending. No 72-hour setpoint trajectory has been opened.
+The following checks were run after commit from a clean
+`a968a343f50e5724ea74b75cc3debd1509fc1d80` worktree:
+
+- focused runner, run-evidence, controller, execution, dispatcher, and solver suites:
+  **79 passed in 9.13 s**;
+- complete repository suite: **1,086 passed, 2 skipped in 40.78 s**;
+- Black check of the new production and test modules: pass;
+- Python compilation of both modules: pass;
+- isolated strict MyPy of the production runner: pass;
+- `git diff --check`: pass;
+- Git status: clean;
+- dependency lock SHA-256:
+  `080d96275581ebbec1b2c27b354ea54e3e66419bfaadb034896da1fd22b228dd`;
+- frozen protocol, clarification, lock, and one-shot contract identity test: pass.
+
+The only full-suite warning is the unchanged Starlette/httpx `TestClient` deprecation. The
+Highs diagnostic lines printed after solver tests are upstream solver logging and did not
+change any test result.
+
+The audit result is **admit exactly one registered mechanism cell**. To preserve the exact
+source identity while retaining this later documentation commit, execution should use a
+fresh clean worktree pinned to `a968a343f50e5724ea74b75cc3debd1509fc1d80`, with the
+preregistered destination outside that worktree. No 72-hour setpoint trajectory has yet been
+opened.

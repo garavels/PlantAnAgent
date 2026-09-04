@@ -4493,3 +4493,26 @@ document now maps all twelve outcome-free gates to named executable tests. Final
 types, focused regression, full regression, and clean-revision checks remain pending. No
 72-hour setpoint outcome, performance metric, holdout, training, simulator change, or tuning
 was opened in this slice.
+
+## 2026-09-04 — Setpoint mechanism implementation gate admits one exact revision
+
+The runner and admission mapping were committed as
+`a968a343f50e5724ea74b75cc3debd1509fc1d80`. The worktree was clean immediately after the
+commit. From that exact revision, the six focused runner/run/controller/execution/dispatcher/
+solver modules passed **79 tests in 9.13 seconds**. The complete repository then passed
+**1,086 tests with 2 skips in 40.78 seconds**. The only warning remains the pre-existing
+Starlette/httpx `TestClient` deprecation; post-test Highs lines are upstream solver logging.
+
+Black reported both new modules unchanged. Python compilation passed. Isolated strict MyPy
+reported no issue in the production runner. Git whitespace validation passed. The lock
+remained `080d96275581ebbec1b2c27b354ea54e3e66419bfaadb034896da1fd22b228dd`, and the
+protocol/clarification/lock/one-shot-contract identity test passed. The implementation audit
+therefore marks all twelve outcome-free gates as passed and admits exactly one registered
+rate-35/seed-0 72-hour mechanism cell from `a968a343`.
+
+No cell was started during admission. The exact executable source will be preserved through
+a fresh clean worktree pinned to `a968a343`, so this later documentation record does not
+silently alter the evaluated revision. The external destination must be preregistered before
+execution. S1 failure will suppress S2--S8; any complete result will be retained without a
+same-revision retry. No performance conclusion, multi-seed extension, RL training, HEPA
+work, realism change, controller tuning, or commercial claim is authorized yet.

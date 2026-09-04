@@ -107,7 +107,8 @@ fallback behavior.
   minute counts, target-deficit attribution, support authority, energy aggregates, and
   separate controller/solver/dispatcher latencies. A fixed one-shot runner now binds the
   exact cell, protocols, dependency lock, source revision, non-overwriting publication, and
-  S1--S8 decision rule. Any full rollout remains pending the final clean-revision audit.
+  S1--S8 decision rule. All twelve outcome-free gates pass at clean implementation revision
+  `a968a343`; exactly one registered mechanism run is admitted but remains unopened.
 - [`CAUSAL_SERVICE_MPC_SETPOINT_DISPATCH_CLARIFICATION_001.md`](CAUSAL_SERVICE_MPC_SETPOINT_DISPATCH_CLARIFICATION_001.md)
   preserves the original protocol while replacing its impossible byte-identical cross-version
   model/plan requirement with a frozen three-boundary structural-equivalence test. It binds
@@ -116,7 +117,8 @@ fallback behavior.
   provenance.
 - [`CAUSAL_SERVICE_MPC_SETPOINT_DISPATCH_ADMISSION.md`](CAUSAL_SERVICE_MPC_SETPOINT_DISPATCH_ADMISSION.md)
   maps every outcome-free implementation gate to executable evidence and freezes the
-  one-shot runner's clean-source, failure-retention, publication, and S1--S8 contracts.
+  one-shot runner's clean-source, failure-retention, publication, and S1--S8 contracts. It
+  records the exact clean revision and verification evidence authorized for one execution.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.
