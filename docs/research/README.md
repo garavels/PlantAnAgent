@@ -87,8 +87,11 @@ fallback behavior.
   freezes the expected-flow versus contingent-authority hypothesis, permitted bridge-only
   repair, executable obligations, single-cell mechanism probe, and decision rule before
   implementation. The versioned realization, fail-closed audit runner, and complete
-  regression gate are now implemented; the one authorized outcome remains external and
-  unopened until the implementation is committed on a clean revision.
+  regression gate were completed before its one authorized outcome was opened.
+- [`results/v2_service_mpc_actuation_bridge_probe_709e477.md`](results/v2_service_mpc_actuation_bridge_probe_709e477.md)
+  records the probe's B1 canonicalization failure, the 223-decision startup-recovery prefix,
+  the separately labelled target-fidelity failure, and the decision to replace the held
+  share/additive-support seam with absolute setpoints and a deterministic inner dispatcher.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

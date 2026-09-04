@@ -3984,3 +3984,80 @@ change has been opened. The next action is to commit this complete implementatio
 on a clean revision, confirm the frozen protocol and executable tree are unchanged, and run
 the single authorized mechanism probe once. While it runs, the process will wait silently
 and generate no progress narration or speculative analysis.
+
+## 2026-09-04 — One-shot bridge probe fails execution and rejects the share seam
+
+The complete implementation was committed as `709e477`. The worktree was clean, the frozen
+protocol still had raw digest
+`653b118a5d0003e0cb5a37a8076a0f9d765c8eaa7db9a9b759616bf501f981c0`,
+and the unchanged lock had digest
+`080d96275581ebbec1b2c27b354ea54e3e66419bfaadb034896da1fd22b228dd`.
+The one authorized rate-35/seed-0 probe then ran once in a fresh process. No source changed
+during execution, no fallback was used, and no progress reasoning or narration was produced
+while it ran.
+
+The probe is a valid B1 failure. It completed 223 of 288 decisions and 446 successful solver
+stages before the secondary solve at decision 223 stopped. B2--B6 are `not_evaluated` exactly
+as preregistered. The canonical 6,686,495-byte external artifact is at
+`/private/tmp/plantanagent-mpc-bridge.gUi8kC/probe.json`; its raw SHA-256 is
+`e5fac6425a92ffc511827f12cf47936b8a776cf879e99c8b019ddcc5aa2f4458`
+and its internal report digest is
+`e49c7866ddd9a56e71b0f9061aaa8d90d634a14b6b44e5fae6aa4a513ba72aa2`.
+The source identity
+`c63e8224e6585db5c252febecbaa9fa1ef0ae8464322de5231282d2265b9adfe`
+was complete, clean, and unchanged at both boundaries. The revision will not be rerun.
+
+The terminal failure is not solver infeasibility. HiGHS returned optimal status and the
+independent raw-vector audit passed. Subsequent bound canonicalization independently
+projected a near-zero CO2 state, after which the exact audit found a
+`3.49581e-05 kg` residual in `co2_balance[1]`. The physical prefix ends with
+`3.495807901682279e-05 kg` CO2. Because the state variable has a 6,000 kg finite upper
+bound, the bound-scaled zero projection window is `0.0006001 kg`; projection therefore
+changed a feasible coupled state without preserving its equality. The correct future
+repair is conditional, feasibility-preserving canonicalization or retention of the already
+audited raw vector—not a looser material-balance tolerance.
+
+The incomplete trajectory cannot satisfy a complete-episode gate, but it sharply confirms
+one part of the causal diagnosis. Through 55.75 hours it meets all nine settled commitments,
+delivers all 1,890 requested kilograms, records three cold and five hot starts, accumulates
+85,500 seconds of productive operation, and has zero aborts or forced stops. Minimum SOC is
+15%, terminal-prefix SOC is 27.62%, and there are no shutdown or out-of-range decisions.
+The old controller's full episode delivered only 647.7138 kg and recorded 41 aborts and 41
+forced stops. Extra authority therefore removes the startup starvation mechanism.
+
+It does not realize the optimizer's target. The frozen bridge audit correctly reports zero
+digest/accounting violations across all 223 comparable decisions, but its separately
+retained values reveal 28.499648 kWh planned battery discharge, 42,722.660301 kWh authority
+capacity, 23,911.025270 kWh guarded capacity, and 14,410.008667 kWh physically applied
+support. Applied support is 505.62 times planned support. The unchanged safety layer bounds
+the plant and accounts for 1,218 interventions over 850 corrected physics steps, but it
+cannot infer or restore the optimizer's intended target.
+
+A post-outcome audit was therefore run against the already retained successful ledger and is
+explicitly not promoted into B2--B6. Among 109 positive-target decisions, only 22 track
+within `1e-7 kW`; 81 overshoot and six undershoot. Mean target error is +717.568 kW, its
+range is -309.380 to +1,520.782 kW, planned electrolyser energy is 44,360.845 kWh, applied
+energy is 63,914.561 kWh, and absolute target error integrates to 20,227.057 kWh. Net
+over-application is 19,553.716 kWh.
+
+The underlying interface behavior is now unambiguous. `battery_support_kw` is additive to
+the routed solar power and may also cancel a simultaneous battery-charge request by moving
+that solar directly to the stack. It is not a target-aware authority from which the plant
+draws only `target - instantaneous routed solar`. Setting authority equal to target can
+therefore apply approximately the target twice. The original B5 definition proves ledger
+closure and applied-at-most-guarded authority, but it did not predeclare a maximum
+planned-to-applied energy difference or target error. That gate will not be changed
+retroactively; the missing fidelity condition is a result and becomes mandatory in the next
+protocol.
+
+The bridge is rejected as a viable long-term supervisory seam. This is not represented as a
+failure of unevaluated B2--B6; it is a separately labelled conclusion against the probe's
+stated purpose of deciding whether the share interface can express the first MPC target.
+Repairing canonicalization merely to rerun the same semantically invalid bridge would be
+misdirected. The next work package will instead freeze an absolute-process-setpoint command
+and deterministic one-minute dispatcher. The slow optimizer will declare target power and
+priority; the inner loop will observe the current bus, use solar first, draw only the target
+shortfall from the battery, remain below the existing guard, and bind plan, target, guarded
+minute command, and actual power in evidence. Solver canonicalization will be repaired as a
+separate disclosed prerequisite. Full details and artifact identities are retained in
+`results/v2_service_mpc_actuation_bridge_probe_709e477.md`.
