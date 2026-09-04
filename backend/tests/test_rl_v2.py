@@ -39,11 +39,13 @@ from plant_backend.rl.v2.weather import WEATHER_GENERATOR_VERSION
 
 SHORT = EpisodeConfigV2(horizon_h=2.0, delivery_period_h=1.0)
 
-# Frozen at clean weather-alpha revision e0a0ada before equipment commitment
-# dynamics were introduced.  Future compatibility-off modes must reproduce
-# the controller-visible and physical trace exactly, not merely approximately.
+# Originally frozen at clean weather-alpha revision e0a0ada before equipment
+# commitment dynamics were introduced. Advanced once after the registered
+# service-MPC matrix exposed a methanator kW -> kg -> kW one-ULP energy creation.
+# The audited old/new traces differ in nine telemetry scalars only, with maximum
+# absolute delta 2.842170943040401e-14; the old digest is retained in the journal.
 WEATHER_ALPHA_COMPATIBILITY_SHA256 = (
-    "5858920bf829d5c5bc1c755552ec22943e8c8338b0f67b5c7ce67c34b02324e6"
+    "be16187347bf80825f191f392da595c5d7f6619ad617ceb830829e423135fcab"
 )
 
 

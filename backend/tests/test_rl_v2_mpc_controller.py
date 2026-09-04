@@ -262,6 +262,28 @@ def test_one_interval_execution_closes_the_first_plan_against_public_truth() -> 
     assert not controller.has_pending_transition
 
 
+def test_registered_seed_one_first_transition_has_non_negative_curtailment() -> None:
+    pytest.importorskip("scipy")
+    env = PlantEnvV2(
+        episode=EpisodeConfigV2(
+            horizon_h=72.0,
+            delivery_rate_kg_h=35.0,
+        )
+    )
+    env.reset(seed=1)
+    controller = ServiceMPCControllerV1()
+
+    decision = _compute(env, controller)
+    env.step_action(decision.action)
+    controller.observe_transition(env.controller_observation)
+
+    event = controller.decision_events[0]
+    assert isinstance(event, MPCDecisionEvidenceV1)
+    assert event.residual is not None
+    assert event.residual.observed_curtailed_kw == 0.0
+    assert not controller.has_pending_transition
+
+
 def test_next_compute_auto_reconciles_an_unobserved_pending_transition() -> None:
     env, controller = _reset_pair()
     first = _compute(env, controller)
