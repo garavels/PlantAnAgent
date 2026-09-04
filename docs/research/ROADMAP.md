@@ -107,7 +107,12 @@ equipment consequences.
   controller-neutral commands, and rich MPC setpoints now all receive the same economic
   overlay, while the inherited legacy-share method fails before state movement. The six-hour
   rate-35/seed-0 H-versus-M task-expression cell and E1--E6 decision rule are frozen in
-  `ECONOMIC_MECHANISM_SMOKE_PROTOCOL.md`; neither trajectory has been opened.
+  `ECONOMIC_MECHANISM_SMOKE_PROTOCOL.md`. The single admitted execution now passes E1--E5:
+  both arms safely deliver 210 kg with zero unmet demand, and M is descriptively 382.532 EUR
+  higher. Avoided methane-endowment liability contributes +543.016 EUR, partially offset by
+  -161.846 EUR of extra battery/electrolyser reserves. This proves one-cell task expression;
+  because the terminal liability dominates, multi-seed, horizon, and coefficient robustness
+  remain mandatory before training or controller claims.
 - The remaining software integration for learned four-target policies is now explicit and
   implemented behind a separate V2 path. Strict training configuration constructs either the
   57/4 physical ablation or 62/4 economic task; checkpoint admission binds field order,

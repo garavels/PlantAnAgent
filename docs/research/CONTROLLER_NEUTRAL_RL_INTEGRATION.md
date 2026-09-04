@@ -144,8 +144,10 @@ phase.
 
 ## Next decision
 
-The already frozen six-hour heuristic/MPC mechanism smoke remains the immediate task-expression
-check. If its safety, service-comparability, economic-separation, and accounting gates pass, the
-next experiment is a separately frozen multi-seed heuristic/MPC development tournament. RL
-training starts only if that tournament demonstrates meaningful, non-saturated decision
-headroom. Integration readiness must not be confused with evidence that learning is useful.
+The frozen six-hour heuristic/MPC mechanism smoke subsequently passed its safety,
+service-comparability, economic-separation, and accounting gates at revision `a46aabf`; see
+`results/v2_economic_mechanism_smoke_a46aabf.md`. The next experiment is a separately frozen
+multi-seed heuristic/MPC development tournament with terminal-liability and horizon robustness
+checks. RL training starts only if that tournament demonstrates meaningful, non-saturated
+decision headroom. Integration readiness and one-cell task expression must not be confused with
+evidence that learning is useful.

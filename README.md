@@ -728,6 +728,14 @@ experiment, not evidence that RL outperforms the heuristic or MPC. See
 [`docs/research/CONTROLLER_NEUTRAL_RL_INTEGRATION.md`](docs/research/CONTROLLER_NEUTRAL_RL_INTEGRATION.md)
 for the exact admission and claim boundary.
 
+The first preregistered economic task-expression cell has since passed: heuristic and service
+MPC both safely delivered 210 kg with zero unmet demand, while their auditable operating values
+differed by 382.532 EUR because terminal inventory, cycling, and equipment exposure differed.
+This establishes that the task can break a saturated delivery tie on one development episode;
+it does not establish general controller or commercial superiority. The next gate is a frozen
+multi-seed, multi-regime robustness tournament before substantive RL training. See
+[`docs/research/results/v2_economic_mechanism_smoke_a46aabf.md`](docs/research/results/v2_economic_mechanism_smoke_a46aabf.md).
+
 ---
 
 ## V7: the historical RL foundation

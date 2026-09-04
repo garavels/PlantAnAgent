@@ -5000,3 +5000,60 @@ heuristic/MPC economic mechanism cell. If E1--E5 pass, a separately preregistere
 tournament should establish whether meaningful non-saturated control headroom exists. Only
 then is a bounded RL baseline scientifically justified; otherwise more environment realism is
 required before compute is spent on learning.
+
+## 2026-09-04 — Registered economic task-expression cell passed
+
+The single preregistered six-hour H-versus-M mechanism cell was opened only after the runner
+and controller-neutral RL integration were committed and the worktree was clean at
+`a46aabf9cd3d8ee7387055c07b1c689e2d53f74f`. The protocol hash remained
+`41c0ce9a1d49bcbfca34d88c0fb20b7fc7eb0ab91d15ed405aded512135cd795`, the dependency
+lock remained `080d96275581ebbec1b2c27b354ea54e3e66419bfaadb034896da1fd22b228dd`,
+and the exclusive external destination did not exist.
+
+The first shell invocation through `uv run --frozen` failed before Python initialized because
+the sandbox could not write the global uv cache. It created no output, reset no environment,
+and opened no controller trajectory. With source, protocol, lock, and destination unchanged,
+the already-installed project `.venv` launched the committed runner. That was the sole
+controller execution. H ran first and M second as registered; the paired cell completed in
+5.514 seconds without source movement or retry.
+
+All frozen gates passed. E1 retained 24/24 decisions and 360/360 physical minutes for each arm,
+normal termination, and no failure. E2 retained 24 interval executions and 360 minute
+applications per arm with zero shutdown, out-of-range decisions, or forced stops. M additionally
+closed 48/48 solver stages, used no fallback, and reported zero evidence-chain, accounting,
+authority, or reachable-tracking violation. Seven plant-refusal/rerouting minutes were fully
+attributed. E3 passed because both arms delivered exactly 210 kg and missed zero. E5 recomputed
+all interval/episode, component, terminal-liability, and paired-identity equalities.
+
+E4 established the intended task-expression mechanism. H's net operating value was
+`-556.3149208402143 EUR`; M's was `-173.7826353839970 EUR`, a descriptive M-minus-H difference
+of `+382.5322854562173 EUR` at identical service. M accepted 73.924 kWh more solar and 1,251.861
+kWh less process energy, but incurred 1,446.648 kWh more battery throughput and 4.425 more
+electrolyser-equivalent hours. H ended 135.754 kg CH4-equivalent below its starting endowment;
+M ended with no deficit, a full battery, and 337.967 kg H2. H ended with 511.960 kg CH4 and no
+H2. The task is therefore distinguishing intertemporal inventory and operating behavior rather
+than awarding another delivery tie.
+
+The exact value decomposition prevents a vague winner story. Service contributed 840 EUR to
+both arms. Relative to H, M gained 543.016 EUR by avoiding methane-endowment liability and
+1.362 EUR in solar opportunity cost, but paid 82.196 EUR more battery reserve and 79.650 EUR
+more electrolyser-life reserve. The liability term alone is 142% of the net difference. Both
+arms have negative absolute values under the alpha ledger. The result proves one-cell task
+discrimination, not controller superiority, commercial value, or calibration.
+
+Independent post-run verification reopened the 4,635,756-byte artifact, reproduced raw SHA-256
+`10711d88d7c22c5601ff4abd4282349d468a4e35c8019229a06445cb95637454` and report SHA-256
+`acca646c7b2705bd278d022fd687d34303ba9b9acef5a0ae56d3b8d9503b684b`, recomputed the
+heuristic evidence digest, passed the deep MPC run verifier with evidence-graph SHA-256
+`8623359f02d7fe2ca375b59cff89bb97b0a927575387dbf8607720eae1e0197e`, and reproduced
+E1--E6 exactly from detached arm payloads. The source gate contains identical clean revision and
+worktree identities before and after the run.
+
+The passed mechanism gate authorizes a separately frozen economic development tournament, not
+an unbounded RL run. Seed 0 is now inspected and cannot become holdout evidence. The next
+protocol must declare fresh seeds, at least two demand regimes, paired tail/worst-case metrics,
+longer or cyclic endpoint checks, and coefficient ablations that isolate the dominant methane
+liability from tariff, battery, and electrolyser terms. A substantive PPO baseline is justified
+only if that tournament shows consistent, service-comparable residual headroom that is not an
+artifact of one synthetic terminal coefficient. The complete result and artifact custody are
+recorded in `results/v2_economic_mechanism_smoke_a46aabf.md`.

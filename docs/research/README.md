@@ -108,7 +108,7 @@ fallback behavior.
   separate controller/solver/dispatcher latencies. A fixed one-shot runner now binds the
   exact cell, protocols, dependency lock, source revision, non-overwriting publication, and
   S1--S8 decision rule. All twelve outcome-free gates pass at clean implementation revision
-  `a968a343`; exactly one registered mechanism run is admitted but remains unopened.
+  `a968a343`; its subsequently opened single mechanism run is recorded separately below.
 - [`CAUSAL_SERVICE_MPC_SETPOINT_DISPATCH_CLARIFICATION_001.md`](CAUSAL_SERVICE_MPC_SETPOINT_DISPATCH_CLARIFICATION_001.md)
   preserves the original protocol while replacing its impossible byte-identical cross-version
   model/plan requirement with a frozen three-boundary structural-equivalence test. It binds
@@ -149,8 +149,12 @@ fallback behavior.
   information asymmetry, execution order, accounting checks, no-retry rule, and E1--E6
   interpretation boundary before either controller trajectory is opened. Its one-shot runner
   now validates both reset identities before the first action, retains typed generic/rich
-  execution evidence and failures, applies E1--E6, and publishes only to a new external file;
-  the registered trajectory remains unopened.
+  execution evidence and failures, applies E1--E6, and publishes only to a new external file.
+- [`results/v2_economic_mechanism_smoke_a46aabf.md`](results/v2_economic_mechanism_smoke_a46aabf.md)
+  records the single admitted result. E1--E5 pass: both arms safely deliver 210 kg with zero
+  unmet demand, while M is descriptively 382.532 EUR higher because avoided terminal methane
+  liability more than offsets additional cycling and electrolyser exposure. This establishes
+  one-cell task expression, not controller or commercial superiority.
 - [`CONTROLLER_NEUTRAL_RL_INTEGRATION.md`](CONTROLLER_NEUTRAL_RL_INTEGRATION.md)
   defines the remaining RL wiring gate: strict four-target training configuration, exact
   full-task checkpoint compatibility, artifact hashing, checkpoint-bound inference evidence,
