@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 from types import SimpleNamespace
+from typing import Any, NoReturn
 
 import pytest
 
@@ -97,6 +98,31 @@ def test_selected_steps_preserve_plan_schema_and_terminal_reserve(
         assert step.warmup is False or step.running is False
 
 
+def test_solution_canonicalization_projects_scaled_noise_to_a_declared_bound(
+    tiny_model: ServiceMPCModelV1,
+) -> None:
+    support_index = tiny_model.group("battery_support_kw")[0]
+    raw = list(tiny_model.variable_lower)
+    raw[support_index] = 3.9e-5
+
+    projected = mpc_solver._canonical_solution(
+        tiny_model,
+        raw,
+        absolute_tolerance=SETTINGS.solver_mip_feasibility_tolerance,
+        relative_tolerance=SETTINGS.solver_mip_feasibility_tolerance,
+    )
+
+    assert projected[support_index] == 0.0
+    raw[support_index] = 1.0
+    retained = mpc_solver._canonical_solution(
+        tiny_model,
+        raw,
+        absolute_tolerance=SETTINGS.solver_mip_feasibility_tolerance,
+        relative_tolerance=SETTINGS.solver_mip_feasibility_tolerance,
+    )
+    assert retained[support_index] == 1.0
+
+
 def test_solver_rejects_a_settings_identity_change_before_runtime_load(
     tiny_model: ServiceMPCModelV1,
     monkeypatch: pytest.MonkeyPatch,
@@ -139,7 +165,7 @@ def test_missing_optional_runtime_raises_without_a_fallback(
 ) -> None:
     original_import = mpc_solver.importlib.import_module
 
-    def selective_import(name: str):
+    def selective_import(name: str) -> Any:
         if name == "scipy":
             raise ImportError("deliberately unavailable")
         return original_import(name)
@@ -283,6 +309,42 @@ def test_time_limit_status_is_retained_without_a_solution_or_fallback(
     assert evidence.solution_sha256 is None
 
 
+def test_solver_passes_the_hash_bound_highs_feasibility_contract(
+    tiny_model: ServiceMPCModelV1,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    pytest.importorskip("scipy")
+    runtime = mpc_solver._load_scipy_runtime()
+    observed_options: dict[str, object] = {}
+
+    def stop_after_capture(**kwargs: object) -> object:
+        options = kwargs.get("options")
+        assert isinstance(options, dict)
+        observed_options.update(options)
+        return SimpleNamespace(
+            status=1,
+            success=False,
+            message="captured declared solver options",
+            x=None,
+            fun=None,
+            mip_dual_bound=None,
+            mip_gap=None,
+            mip_node_count=0,
+        )
+
+    monkeypatch.setattr(
+        mpc_solver,
+        "_load_scipy_runtime",
+        lambda: replace(runtime, milp=stop_after_capture),
+    )
+    with pytest.raises(ServiceMPCSolveError, match="status 1"):
+        solve_service_mpc_model(tiny_model, settings=SETTINGS)
+
+    assert observed_options["mip_feasibility_tolerance"] == (
+        SETTINGS.solver_mip_feasibility_tolerance
+    )
+
+
 def test_nonfinite_status_zero_vector_is_retained_as_validation_failure(
     tiny_model: ServiceMPCModelV1,
     monkeypatch: pytest.MonkeyPatch,
@@ -371,7 +433,7 @@ def test_plan_extraction_failure_retains_both_successful_stages(
 ) -> None:
     pytest.importorskip("scipy")
 
-    def reject_plan(*_: object, **__: object):
+    def reject_plan(*_: object, **__: object) -> NoReturn:
         raise ServiceMPCPlanError("deliberate extraction rejection")
 
     monkeypatch.setattr(mpc_solver, "_extract_plan", reject_plan)

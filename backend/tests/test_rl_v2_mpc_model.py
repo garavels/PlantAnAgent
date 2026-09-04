@@ -537,6 +537,91 @@ def test_solution_audit_recomputes_bounds_rows_and_integrality() -> None:
     assert outside.max_bound_violation == pytest.approx(1.0)
 
 
+def test_solution_audit_scales_cancelling_physical_rows_explicitly() -> None:
+    model = ServiceMPCModelV1(
+        model_version=SERVICE_MPC_MODEL_VERSION,
+        settings_sha256="a" * 64,
+        forecast_sha256="b" * 64,
+        interval_s=900.0,
+        horizon_intervals=1,
+        deliveries=(),
+        variable_names=("productive_kw", "running"),
+        variable_lower=(0.0, 0.0),
+        variable_upper=(1_200.0, 1.0),
+        integrality=(0, 1),
+        primary_objective=(0.0, 0.0),
+        secondary_objective=(0.0, 0.0),
+        groups=(
+            MPCVariableGroupV1(name="productive_kw", indices=(0,)),
+            MPCVariableGroupV1(name="running", indices=(1,)),
+        ),
+        rows=(
+            MPCSparseRowV1(
+                name="productive_minimum",
+                lower=0.0,
+                upper=None,
+                coefficients=((0, 1.0), (1, -1_200.0)),
+            ),
+        ),
+        metadata_json=canonical_json({}),
+    )
+    solution = (1_200.0 - 1.6e-5, 1.0)
+
+    absolute_only = model.audit_solution(solution, tolerance=1e-7)
+    scaled = model.audit_solution(
+        solution,
+        tolerance=1e-7,
+        relative_tolerance=1e-7,
+    )
+
+    assert absolute_only.valid is False
+    assert absolute_only.max_row_violation == pytest.approx(1.6e-5)
+    assert scaled.valid is True
+    assert scaled.max_row_violation == absolute_only.max_row_violation
+
+
+def test_solution_audit_retains_coefficient_scale_at_binary_zero() -> None:
+    model = ServiceMPCModelV1(
+        model_version=SERVICE_MPC_MODEL_VERSION,
+        settings_sha256="a" * 64,
+        forecast_sha256="b" * 64,
+        interval_s=900.0,
+        horizon_intervals=1,
+        deliveries=(),
+        variable_names=("productive_kw", "running"),
+        variable_lower=(0.0, 0.0),
+        variable_upper=(1_200.0, 1.0),
+        integrality=(0, 1),
+        primary_objective=(0.0, 0.0),
+        secondary_objective=(0.0, 0.0),
+        groups=(
+            MPCVariableGroupV1(name="productive_kw", indices=(0,)),
+            MPCVariableGroupV1(name="running", indices=(1,)),
+        ),
+        rows=(
+            MPCSparseRowV1(
+                name="productive_maximum",
+                lower=None,
+                upper=0.0,
+                coefficients=((0, 1.0), (1, -1_200.0)),
+            ),
+        ),
+        metadata_json=canonical_json({}),
+    )
+    solver_scaled_zero = (1.6e-5, 0.0)
+
+    absolute_only = model.audit_solution(solver_scaled_zero, tolerance=1e-7)
+    scaled = model.audit_solution(
+        solver_scaled_zero,
+        tolerance=1e-7,
+        relative_tolerance=1e-7,
+    )
+
+    assert absolute_only.valid is False
+    assert absolute_only.max_row_violation == pytest.approx(1.6e-5)
+    assert scaled.valid is True
+
+
 def test_delivery_lock_is_a_named_lower_bound_on_total_service(
     public_inputs: tuple[
         PlantEnvV2,

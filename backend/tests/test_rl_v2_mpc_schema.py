@@ -82,7 +82,22 @@ def test_default_settings_exactly_encode_the_frozen_protocol() -> None:
     assert payload["solver_options"] == {
         "presolve": True,
         "mip_rel_gap": 1e-6,
+        "mip_feasibility_tolerance": 1e-7,
         "time_limit": 2.0,
+    }
+    assert payload["independent_residual_audit"] == {
+        "absolute_tolerance": 1e-7,
+        "bound_and_row_relative_tolerance": 1e-7,
+        "row_scale": (
+            "max(1, finite bounds, " "sum(abs(coefficient) * max(1, abs(value))))"
+        ),
+        "bound_canonicalization": (
+            "nearest finite bound within absolute_tolerance + "
+            "relative_tolerance * max(1, abs(value), finite bounds)"
+        ),
+        "plan_step_balance": (
+            "absolute_tolerance + relative_tolerance * physical_power_scale"
+        ),
     }
     assert len(settings.sha256) == 64
     assert canonical_json(payload) == canonical_json(settings.to_dict())
@@ -99,6 +114,7 @@ def test_settings_identity_changes_with_every_tuning_surface() -> None:
         "energy_reconstruction_tolerance": 2e-12,
         "solver_presolve": False,
         "solver_mip_rel_gap": 2e-6,
+        "solver_mip_feasibility_tolerance": 2e-7,
         "solver_time_limit_s": 3.0,
         "minimum_fill_weight": 101.0,
         "terminal_ch4_equivalent_weight": 11.0,
@@ -119,6 +135,14 @@ def test_settings_identity_changes_with_every_tuning_surface() -> None:
         ({"planning_horizon_h": 0.1}, "whole optimization intervals"),
         ({"terminal_battery_soc_target": 1.1}, "must be <= 1"),
         ({"delivery_lock_tolerance_kg": 0.0}, "tolerances must be positive"),
+        (
+            {"solver_mip_feasibility_tolerance": 1e-11},
+            "must be >= 1e-10",
+        ),
+        (
+            {"solver_mip_feasibility_tolerance": 2e-6},
+            "must be <= 1e-06",
+        ),
         ({"solver_time_limit_s": 0.0}, "must be positive"),
         ({"minimum_fill_weight": 0.0}, "must be positive"),
     ],
@@ -189,6 +213,28 @@ def test_plan_step_validates_buses_and_battery_direction() -> None:
         replace(step, electrolyser_productive_kw=4.0)
     with pytest.raises(ValueError, match="charge and discharge"):
         replace(step, battery_support_kw=1.0, electrolyser_productive_kw=4.0)
+
+
+def test_plan_step_accepts_only_power_scaled_numerical_leakage() -> None:
+    step = _step()
+    numerical_leakage_kw = 5e-7
+
+    reconstructed = replace(
+        step,
+        battery_support_kw=numerical_leakage_kw,
+        electrolyser_productive_kw=(
+            step.electrolyser_productive_kw + numerical_leakage_kw
+        ),
+    )
+
+    assert reconstructed.battery_charging is True
+    assert reconstructed.battery_support_kw == numerical_leakage_kw
+    with pytest.raises(ValueError, match="charge and discharge"):
+        replace(
+            step,
+            battery_support_kw=1e-3,
+            electrolyser_productive_kw=step.electrolyser_productive_kw + 1e-3,
+        )
 
 
 def test_plan_binds_stages_steps_and_delivery_totals() -> None:

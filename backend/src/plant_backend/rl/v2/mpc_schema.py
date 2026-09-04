@@ -77,6 +77,14 @@ def _positive_integer(name: str, value: object) -> int:
     return int(value)
 
 
+def _within_model_balance(error: float, *scale_values: float) -> bool:
+    """Apply the explicit absolute-plus-relative physical residual contract."""
+
+    scale = max(1.0, *(abs(value) for value in scale_values))
+    allowed = MODEL_BALANCE_TOLERANCE + MODEL_BALANCE_TOLERANCE * scale
+    return abs(error) <= allowed
+
+
 @dataclass(frozen=True, slots=True)
 class ServiceMPCSettingsV1:
     """Complete predeclared tuning and solver surface for service MPC V1."""
@@ -89,6 +97,7 @@ class ServiceMPCSettingsV1:
     energy_reconstruction_tolerance: float = 1e-12
     solver_presolve: bool = True
     solver_mip_rel_gap: float = 1e-6
+    solver_mip_feasibility_tolerance: float = 1e-7
     solver_time_limit_s: float = 2.0
     minimum_fill_weight: float = 100.0
     terminal_ch4_equivalent_weight: float = 10.0
@@ -142,6 +151,12 @@ class ServiceMPCSettingsV1:
         if not isinstance(self.solver_presolve, bool):
             raise TypeError("solver_presolve must be a bool")
         _finite("solver_mip_rel_gap", self.solver_mip_rel_gap, minimum=0.0, maximum=1.0)
+        _finite(
+            "solver_mip_feasibility_tolerance",
+            self.solver_mip_feasibility_tolerance,
+            minimum=1e-10,
+            maximum=1e-6,
+        )
         time_limit = _finite(
             "solver_time_limit_s", self.solver_time_limit_s, minimum=0.0
         )
@@ -188,7 +203,27 @@ class ServiceMPCSettingsV1:
             "solver_options": {
                 "presolve": self.solver_presolve,
                 "mip_rel_gap": float(self.solver_mip_rel_gap),
+                "mip_feasibility_tolerance": float(
+                    self.solver_mip_feasibility_tolerance
+                ),
                 "time_limit": float(self.solver_time_limit_s),
+            },
+            "independent_residual_audit": {
+                "absolute_tolerance": float(self.solver_mip_feasibility_tolerance),
+                "bound_and_row_relative_tolerance": float(
+                    self.solver_mip_feasibility_tolerance
+                ),
+                "row_scale": (
+                    "max(1, finite bounds, "
+                    "sum(abs(coefficient) * max(1, abs(value))))"
+                ),
+                "bound_canonicalization": (
+                    "nearest finite bound within absolute_tolerance + "
+                    "relative_tolerance * max(1, abs(value), finite bounds)"
+                ),
+                "plan_step_balance": (
+                    "absolute_tolerance + relative_tolerance * physical_power_scale"
+                ),
             },
             "secondary_objective_weights": {
                 "minimum_commitment_fill": float(self.minimum_fill_weight),
@@ -409,21 +444,36 @@ class MPCPlanStepV1:
                 self.solar_curtailed_kw,
             )
         )
-        if not math.isclose(
+        if not _within_model_balance(
+            solar_routed - self.forecast_solar_kw,
             solar_routed,
             self.forecast_solar_kw,
-            rel_tol=0.0,
-            abs_tol=MODEL_BALANCE_TOLERANCE,
         ):
             raise ValueError("MPC plan-step solar bus does not balance")
-        if not math.isclose(
-            self.solar_to_electrolyser_kw + self.battery_support_kw,
-            self.electrolyser_startup_kw + self.electrolyser_productive_kw,
-            rel_tol=0.0,
-            abs_tol=MODEL_BALANCE_TOLERANCE,
+        electrolyser_input = self.solar_to_electrolyser_kw + self.battery_support_kw
+        electrolyser_use = (
+            self.electrolyser_startup_kw + self.electrolyser_productive_kw
+        )
+        if not _within_model_balance(
+            electrolyser_input - electrolyser_use,
+            electrolyser_input,
+            electrolyser_use,
         ):
             raise ValueError("MPC plan-step electrolyser bus does not balance")
-        if self.battery_charging and self.battery_support_kw > MODEL_BALANCE_TOLERANCE:
+        interval_power_scale = max(
+            self.forecast_solar_kw,
+            self.solar_to_battery_kw,
+            self.solar_to_electrolyser_kw,
+            self.solar_to_dac_kw,
+            self.solar_to_methanator_kw,
+            self.battery_support_kw,
+            self.electrolyser_startup_kw,
+            self.electrolyser_productive_kw,
+        )
+        if self.battery_charging and not _within_model_balance(
+            self.battery_support_kw,
+            interval_power_scale,
+        ):
             raise ValueError("MPC plan-step cannot charge and discharge simultaneously")
 
     def to_dict(self) -> dict[str, Any]:

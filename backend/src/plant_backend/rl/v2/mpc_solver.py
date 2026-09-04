@@ -15,6 +15,7 @@ import time
 from dataclasses import dataclass
 from numbers import Integral, Real
 from typing import Any, NoReturn, Sequence
+import warnings
 
 from .mpc_model import MPCSparseRowV1, ServiceMPCModelV1, delivery_lock_row
 from .mpc_schema import (
@@ -224,7 +225,7 @@ def _solver_constraint(
     )
 
 
-def _canonical_solution(
+def _solution_vector(
     model: ServiceMPCModelV1,
     raw_solution: object,
 ) -> tuple[float, ...]:
@@ -234,23 +235,40 @@ def _canonical_solution(
         raise ServiceMPCPlanError("solver solution is not a finite vector") from exc
     if len(raw_values) != model.variable_count:
         raise ServiceMPCPlanError("solver solution length does not match the model")
+    return tuple(
+        _finite(f"solver solution[{index}]", raw)
+        for index, raw in enumerate(raw_values)
+    )
 
+
+def _canonical_solution(
+    model: ServiceMPCModelV1,
+    raw_solution: object,
+    *,
+    absolute_tolerance: float,
+    relative_tolerance: float,
+) -> tuple[float, ...]:
+    raw_values = _solution_vector(model, raw_solution)
     values: list[float] = []
-    for index, (raw, lower, upper, integer) in enumerate(
-        zip(
-            raw_values,
-            model.variable_lower,
-            model.variable_upper,
-            model.integrality,
-            strict=True,
-        )
+    for value, lower, upper, integer in zip(
+        raw_values,
+        model.variable_lower,
+        model.variable_upper,
+        model.integrality,
+        strict=True,
     ):
-        value = _finite(f"solver solution[{index}]", raw)
-        if abs(value - lower) <= MODEL_BALANCE_TOLERANCE:
-            value = lower
-        elif abs(value - upper) <= MODEL_BALANCE_TOLERANCE:
-            value = upper
-        if integer and abs(value - round(value)) <= MODEL_BALANCE_TOLERANCE:
+        finite_bounds = tuple(item for item in (lower, upper) if math.isfinite(item))
+        scale = max(1.0, abs(value), *(abs(item) for item in finite_bounds))
+        bound_tolerance = absolute_tolerance + relative_tolerance * scale
+        nearby_bounds = tuple(
+            item for item in finite_bounds if abs(value - item) <= bound_tolerance
+        )
+        if nearby_bounds:
+            # Project solver-feasible boundary noise onto the nearest declared
+            # bound before hashing or extracting a physical plan.  This avoids
+            # leaking coefficient-scaled epsilon power through an off binary.
+            value = min(nearby_bounds, key=lambda item: (abs(value - item), item))
+        if integer and abs(value - round(value)) <= absolute_tolerance:
             value = float(round(value))
         if value == 0.0:
             value = 0.0  # Canonicalize negative zero in solution identities.
@@ -359,21 +377,36 @@ def _solve_stage(
     result: object | None = None
     try:
         constraint = _solver_constraint(runtime, model, extra_rows)
-        result = runtime.milp(
-            c=runtime.numpy.asarray(tuple(objective), dtype=float),
-            integrality=runtime.numpy.asarray(model.integrality, dtype=int),
-            bounds=runtime.bounds(
-                runtime.numpy.asarray(model.variable_lower, dtype=float),
-                runtime.numpy.asarray(model.variable_upper, dtype=float),
-            ),
-            constraints=constraint,
-            options={
-                "disp": False,
-                "presolve": settings.solver_presolve,
-                "mip_rel_gap": settings.solver_mip_rel_gap,
-                "time_limit": settings.solver_time_limit_s,
-            },
-        )
+        with warnings.catch_warnings():
+            # SciPy deliberately forwards unknown options to HiGHS. This is a
+            # documented HiGHS MIP option, but not yet in SciPy's allow-list.
+            warnings.filterwarnings(
+                "ignore",
+                message=(
+                    r"Unrecognized options detected: "
+                    r"\{'mip_feasibility_tolerance'\}\. These will be passed "
+                    r"to HiGHS verbatim\."
+                ),
+                category=RuntimeWarning,
+            )
+            result = runtime.milp(
+                c=runtime.numpy.asarray(tuple(objective), dtype=float),
+                integrality=runtime.numpy.asarray(model.integrality, dtype=int),
+                bounds=runtime.bounds(
+                    runtime.numpy.asarray(model.variable_lower, dtype=float),
+                    runtime.numpy.asarray(model.variable_upper, dtype=float),
+                ),
+                constraints=constraint,
+                options={
+                    "disp": False,
+                    "presolve": settings.solver_presolve,
+                    "mip_rel_gap": settings.solver_mip_rel_gap,
+                    "mip_feasibility_tolerance": (
+                        settings.solver_mip_feasibility_tolerance
+                    ),
+                    "time_limit": settings.solver_time_limit_s,
+                },
+            )
     except Exception as exc:
         elapsed_ns = time.perf_counter_ns() - started_ns
         message = _bounded_message(
@@ -435,8 +468,33 @@ def _solve_stage(
             raise ServiceMPCPlanError(
                 f"service-MPC {stage} returned status zero without a solution"
             )
-        solution = _canonical_solution(model, raw_solution)
-        audit = model.audit_solution(solution, extra_rows=extra_rows)
+        raw_solution_values = _solution_vector(model, raw_solution)
+        raw_audit = model.audit_solution(
+            raw_solution_values,
+            tolerance=settings.solver_mip_feasibility_tolerance,
+            relative_tolerance=settings.solver_mip_feasibility_tolerance,
+            extra_rows=extra_rows,
+        )
+        if not raw_audit.valid:
+            raise ServiceMPCPlanError(
+                f"service-MPC {stage} raw solution failed independent residual "
+                f"audit: bounds={raw_audit.max_bound_violation:.6g}, "
+                f"rows={raw_audit.max_row_violation:.6g}, "
+                f"integrality={raw_audit.max_integrality_violation:.6g}, "
+                f"worst_row={raw_audit.worst_row!r}"
+            )
+        solution = _canonical_solution(
+            model,
+            raw_solution_values,
+            absolute_tolerance=settings.solver_mip_feasibility_tolerance,
+            relative_tolerance=settings.solver_mip_feasibility_tolerance,
+        )
+        audit = model.audit_solution(
+            solution,
+            tolerance=settings.solver_mip_feasibility_tolerance,
+            relative_tolerance=settings.solver_mip_feasibility_tolerance,
+            extra_rows=extra_rows,
+        )
         if not audit.valid:
             raise ServiceMPCPlanError(
                 f"service-MPC {stage} solution failed independent residual audit: "

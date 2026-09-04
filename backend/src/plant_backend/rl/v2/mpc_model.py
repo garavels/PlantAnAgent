@@ -374,13 +374,19 @@ class ServiceMPCModelV1:
         solution: Sequence[float],
         *,
         tolerance: float = MODEL_BALANCE_TOLERANCE,
+        relative_tolerance: float = 0.0,
         extra_rows: Sequence[MPCSparseRowV1] = (),
     ) -> MPCSolutionAuditV1:
-        """Recompute every bound, integrality condition, and sparse row."""
+        """Recompute bounds, integrality, and rows with explicit scaling."""
 
         tolerance_value = _finite("solution tolerance", tolerance, minimum=0.0)
         if tolerance_value <= 0.0:
             raise ValueError("solution tolerance must be positive")
+        relative_tolerance_value = _finite(
+            "solution relative tolerance",
+            relative_tolerance,
+            minimum=0.0,
+        )
         values = tuple(solution)
         if len(values) != self.variable_count:
             raise ValueError("solution length does not match model variables")
@@ -389,6 +395,7 @@ class ServiceMPCModelV1:
         )
         bound_violation = 0.0
         integrality_violation = 0.0
+        bounds_valid = True
         for value, lower, upper, integer in zip(
             checked,
             self.variable_lower,
@@ -396,10 +403,14 @@ class ServiceMPCModelV1:
             self.integrality,
             strict=True,
         ):
-            bound_violation = max(
-                bound_violation,
-                max(0.0, lower - value),
-                max(0.0, value - upper),
+            violation = max(0.0, lower - value, value - upper)
+            bound_violation = max(bound_violation, violation)
+            finite_bounds = tuple(
+                abs(item) for item in (lower, upper) if math.isfinite(item)
+            )
+            scale = max(1.0, abs(value), *finite_bounds)
+            bounds_valid = bounds_valid and violation <= (
+                tolerance_value + relative_tolerance_value * scale
             )
             if integer:
                 integrality_violation = max(
@@ -411,14 +422,16 @@ class ServiceMPCModelV1:
             raise ValueError("solution-audit row names must be unique")
         row_violation = 0.0
         worst_row: str | None = None
+        rows_valid = True
         for row in rows:
             if not isinstance(row, MPCSparseRowV1):
                 raise TypeError("extra solution-audit rows must be MPCSparseRowV1")
             if row.coefficients[-1][0] >= self.variable_count:
                 raise ValueError("solution-audit row references an invalid variable")
-            activity = math.fsum(
+            terms = tuple(
                 coefficient * checked[index] for index, coefficient in row.coefficients
             )
+            activity = math.fsum(terms)
             violation = max(
                 0.0 if row.lower is None else row.lower - activity,
                 0.0 if row.upper is None else activity - row.upper,
@@ -426,11 +439,27 @@ class ServiceMPCModelV1:
             if violation > row_violation:
                 row_violation = violation
                 worst_row = row.name
-        valid = (
-            bound_violation <= tolerance_value
-            and row_violation <= tolerance_value
-            and integrality_violation <= tolerance_value
-        )
+            finite_bounds = tuple(
+                abs(item) for item in (row.lower, row.upper) if item is not None
+            )
+            # A solver scales a sparse row by its coefficients even when the
+            # corresponding variables are numerically zero.  Retaining that
+            # coefficient scale is essential for mixed binary/continuous rows:
+            # ``power <= rated_power * running`` can otherwise make harmless
+            # unscaled post-solve noise look like a physical violation when
+            # ``running == 0``.
+            scale = max(
+                1.0,
+                math.fsum(
+                    abs(coefficient) * max(1.0, abs(checked[index]))
+                    for index, coefficient in row.coefficients
+                ),
+                *finite_bounds,
+            )
+            rows_valid = rows_valid and violation <= (
+                tolerance_value + relative_tolerance_value * scale
+            )
+        valid = bounds_valid and rows_valid and integrality_violation <= tolerance_value
         return MPCSolutionAuditV1(
             valid=valid,
             max_bound_violation=bound_violation,
