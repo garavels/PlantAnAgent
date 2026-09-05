@@ -176,8 +176,14 @@ equipment consequences.
   H/M24/E-beta/PPO runner, hard cycle/safety/service eligibility, exhaustive minute truth, exact
   regenerated DAC-outage attribution, and a detached semantic verifier. Its complete Python gate
   passes 1,535 tests with 4 optional skips, alongside scoped typing/static and frontend gates; no
-  trained beta controller result has been opened. A learner that treats cycle cost as a constraint
-  and an outcome-blind data split are the next prerequisites.
+  trained beta controller result has been opened. The prospective constrained-RL protocol is now
+  frozen without opening an environment: four resource-specific settlement costs, PI-Lagrangian
+  PPO as the primary learner, matched integral-only/scalar controls, a deterministic training
+  allocator, five optimizer seeds, 32 development seeds, 32 sealed held-out seeds, pairwise
+  E-beta eligibility, and hierarchical uncertainty. Implementation and fixture-only validation
+  are the next prerequisites. Bounded fixture-domain optimizer smokes are authorized for that
+  gate; registered training and development/held-out resets remain closed until it is committed
+  cleanly.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.
 

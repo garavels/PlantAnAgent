@@ -794,7 +794,11 @@ service differed; it is not a performance result. No trained beta checkpoint or 
 is claimed here. See
 [`docs/research/CYCLIC_MARKET_BETA_CONTROLLER_BUILD.md`](docs/research/CYCLIC_MARKET_BETA_CONTROLLER_BUILD.md)
 for the complete information policy, eligibility gates, verifier scope, integration-smoke finding,
-and next research steps.
+and next research steps. The outcome-blind constrained-learning algorithm, episode allocator,
+finite training budget, development selection, and sealed held-out rules are frozen separately in
+[`docs/research/CONSTRAINED_RL_BETA_PROTOCOL.md`](docs/research/CONSTRAINED_RL_BETA_PROTOCOL.md);
+that protocol authorizes only bounded fixture-domain optimizer smokes, not the registered
+training campaign or any development/held-out reset.
 
 The existing control-room `/api/controller/rl` path remains the historical one-minute 30/5 V1
 runtime. It intentionally rejects these 15-minute four-target checkpoints: deploying them live

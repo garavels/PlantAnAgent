@@ -6012,3 +6012,128 @@ separate cycle-cost signal, and retain ordinary scalar PPO as an ablation. Only 
 and economic coefficient uncertainty are frozen should development training begin; the held-out
 comparison must then be opened once. HEPA and natural-language supervision remain separate future
 factorial layers and are not credited to this controller integration.
+
+## 2026-09-05 — Outcome-blind constrained-RL protocol frozen before implementation
+
+No beta environment was reset, no training dependency was invoked, and no learned-controller
+outcome was inspected in this increment. The work started from the now-clean controller-neutral
+beta release and addressed the next scientific dependency identified there: ordinary PPO can
+observe the cycle margins, but its optimizer never consumes the separate cycle-constraint signal.
+Observing a constraint is not the same as optimizing or satisfying it.
+
+The code audit located the exact authoritative signal. At every 24-hour boundary,
+`CycleSettlementV1` retains battery, H2, CO2, and CH4 targets, actual values, deficits, tolerances,
+feasibility, and the sum of four normalized non-negative violations. `PlantCyclicMarketEnvV2Beta`
+places that settlement under `cycle_constraint.settled_this_step`, leaves it absent at all other
+transitions, and deliberately keeps it out of the EUR reward. The cumulative-cost field is only an
+episode summary; using it as a transition cost would charge every past failure repeatedly. Stock
+SB3 PPO ignores both fields. Its current vector factory also uses the training seed as the first
+environment seed and then permits implicit auto-reset draws, so it cannot yet prove which episodes
+were consumed or keep optimizer and episode randomness independent.
+
+The review also found that the released beta runner is the wrong final statistical surface even
+though its execution evidence remains useful. It requires all four H/M24/E-beta/PPO arms to be
+cycle-feasible before any value is aggregated. H and M24 intentionally lack the complete market
+and return objective, so either can legitimately fail a cycle and thereby suppress the primary
+learned-policy versus E-beta comparison. The held-out campaign will retain those ablations but use
+pairwise admission for its primary estimand: learned policy and E-beta must both complete, remain
+safe, satisfy every return, and provide comparable service. H and M24 cannot disappear, but they
+will not be allowed to veto that named pair.
+
+Primary literature was reviewed before choosing the algorithm. PID Lagrangian methods were
+introduced to damp the oscillation and overshoot of ordinary multiplier ascent while retaining a
+PPO-family implementation; the newer nu-PI work provides a possible later multiplier refinement.
+CPO and FOCOPS remain useful cross-family references, but introducing second-order or another
+policy optimizer before validating the first cost-aware rollout path would confound controller
+architecture with optimizer replacement. Research on zero-violation RL also warns that a zero
+cost limit does not cause empirical violations to disappear automatically, especially with a
+sparse cost. The protocol therefore distinguishes expected-cost training from exact simulator
+admission and explicitly forbids calling the learner itself a hard-safety mechanism.
+
+`CONSTRAINED_RL_BETA_PROTOCOL.md` now freezes the primary learner as
+`plant-beta-ppo-pi-lagrangian-v1`. It retains the unchanged EUR reward, adds one separate four-head
+cost critic, one independent non-negative multiplier per resource, undiscounted cost returns, and
+PI multiplier control with derivative gain fixed to zero. Plain integral-only PPO-Lagrangian and
+ordinary scalar PPO are mandatory matched controls. All share the existing 135/4 task, policy and
+reward-critic architecture, PPO hyperparameters, synchronous four-environment rollout, stochastic
+training actions, deterministic evaluation, and common dispatcher/guard/simulator authority.
+
+The canonical transition contract is four-dimensional rather than only the existing scalar sum.
+At a settlement, each resource cost is the excess deficit beyond tolerance divided by the larger
+of one or its target; otherwise it is zero. Training divides each boundary value by the seven
+cycles per episode, so the undiscounted episode sum is mean per-cycle normalized violation. Four
+zero budgets preserve the fact that no resource may compensate for another. Cost GAE uses gamma
+one and lambda 0.95. The PI update uses `K_P=0.25`, `K_I=0.01`, no derivative term, 0.95
+proportional smoothing, initial multipliers one, and independent projection to `[0,100]`. Actor
+advantages use the declared `(reward - weighted costs) / (1 + multiplier sum)` rescaling. These
+numbers are hypotheses fixed before outcomes, not tuned plant constants.
+
+All episode seeds below one million are now conservatively treated as development-contaminated.
+Training owns the range beginning at 1,000,000; development is exactly 2,000,000--2,000,031;
+held-out is exactly 3,000,000--3,000,031; and new implementation fixtures are restricted to the
+9,000,000 range. Merely recording a seed does not authorize its environment construction. The
+training allocator maps each vector index and local episode ordinal to a deterministic explicit
+training seed, records every reset and manifest, and must restore exact cursors. Optimizer/network
+seeds are separately frozen as 101, 211, 307, 401, and 503. This makes all algorithm families see
+the same ordered episode stream without conflating it with policy initialization.
+
+Each of the three families receives exactly 1,048,576 decisions per optimizer seed: 128 complete
+8,192-transition rollouts and no early stopping or outcome-dependent extension. Only the final
+checkpoint is eligible, closing checkpoint-time selection. The registered core budget is therefore
+15,728,640 decisions across fifteen runs. A run is consumed after its first gradient update; it
+cannot be retried, extended, or replaced on the same revision after failure. Checkpoints must bind
+the algorithm, four cost channels and critics, multiplier history, allocator and reset ledger,
+optimizer seed, task/source/dependency identities, and artifact bytes while remaining loadable for
+ordinary deterministic PPO inference.
+
+Before development, fixture-only tests must prove terminal cost capture, vector auto-reset
+behavior, hand-computable reward/cost GAE, channel isolation, PI versus integral-only equivalence,
+scalar-gradient independence, allocator/resume identity, checkpoint substitution failure, and a
+genuine tiny train-save-load-resume-inference path. No development seed is available to make those
+tests pass. Only after a clean implementation commit may all fifteen final policies be evaluated
+on the 32 development seeds.
+
+A policy is development-admissible only if every development episode verifies, completes, remains
+hard-safe, has no forced stop or invalid command, satisfies all four returns at all seven cycle
+boundaries, and matches E-beta service. Family champions are selected lexicographically by paired
+value IQM, lower-20% CVaR, median, positive fraction, inference p99, then lower optimizer seed. At
+least four of five PI policies plus a positive-IQM/non-negative-tail PI champion are required before
+held-out opening. Failure is retained as a negative development result; it does not consume or
+quietly replace a held-out seed.
+
+The held-out protocol lists 32 exact seeds but keeps their manifests and outcomes sealed. Its
+future campaign must retain H, M24, E-beta, all five PI policies, all five integral-only policies,
+and all five scalar policies, sharing baseline evidence rather than rerunning it for each pair.
+Uncertainty uses a 10,000-replicate paired bootstrap at frozen seed 20260905 and a hierarchical
+policy-seed/episode-seed bootstrap for family claims. The success rule requires complete verified
+primary pairs, zero learned hard-safety/forced-stop/invalid events, every return, exact service,
+a positive lower 95% IQM-delta bound, at least 24/32 positive deltas, non-negative lower-tail CVaR,
+p99 inference below 100 ms, and positive held-out median value for at least four of five PI seeds.
+
+Even that gate would establish only a synthetic-beta controller result under declared economic
+assumptions. The protocol carries forward the existing algebraic coefficient sensitivities and
+requires every ranking reversal. Site savings, ROI, field safety, commission value, and deployment
+remain gated on calibration or defensible uncertainty bounds, hardware-in-the-loop operation, and
+site replay. HEPA and natural language remain later factorial predictive and supervisory layers;
+neither is credited to this controller result.
+
+An independent pre-freeze adversarial review then found four blocking ambiguities and several
+outcome-relevant omissions before any code or protected reset. The protocol had accidentally
+forbidden the bounded optimizer smoke required by its own implementation gate; policy admission
+did not require the E-beta side of every pair to pass the same execution/safety/cycle gates; the
+registered no-resume rule conflicted with the fixture resume test; and advantage normalization and
+multiplier-update ordering were not exact. All were corrected before commit. Only fixture-domain
+optimizer smokes are authorized, every primary statistic now requires a complete 32-pair vector,
+and resume is explicitly a fixture-tested capability disabled for all 15 registered runs.
+
+The same review froze shared actor/reward initialization independently from cost-network RNG,
+sample-standard-deviation advantage normalization with epsilon `1e-8`, and the exact sequence
+collect/return/multiplier-update/current-rollout optimization. It also fixed the registered
+allocator endpoint: each environment receives 262,144 decisions, completes 390 episodes, and ends
+64 decisions into episode ordinal 390, consuming exactly seeds 1,000,000--1,001,563 across the four
+workers. Economic sensitivity is now explicitly policy-minus-E-beta and scales methane endowment
+liability without conflating unmet-delivery penalty. PI/scalar family contrasts use matched
+optimizer seeds, failed policies remain in the denominator, outage strata are cycle-level, and
+latency cannot select a development champion. The remaining statistical implementation and host
+measurement contract must be hash-bound before the first development reset. No outcome was opened
+while making these corrections.

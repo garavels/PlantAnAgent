@@ -244,6 +244,15 @@ fallback behavior.
   performance result. Its complete repository, static, CLI-import, and frontend gates pass.
   Constrained RL, a prospective split, registered training, coefficient uncertainty, and held-out
   evaluation remain subsequent scientific gates.
+- [`CONSTRAINED_RL_BETA_PROTOCOL.md`](CONSTRAINED_RL_BETA_PROTOCOL.md) freezes those next
+  scientific gates before implementation or outcomes. It selects a four-cost-critic
+  PPO PI-Lagrangian primary learner, matched integral-only and scalar-PPO controls, explicit
+  per-resource settlement costs, deterministic split-aware episode allocation, five optimizer
+  seeds, a finite final-checkpoint-only budget, pairwise E-beta eligibility, 32 development and
+  32 sealed held-out episode seeds, hierarchical uncertainty, and a one-shot success rule. All
+  prior seeds are conservatively treated as development-contaminated. Only bounded fixture-domain
+  optimizer smokes are authorized; registered training and every development/held-out reset remain
+  closed.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.
