@@ -291,7 +291,13 @@ fallback behavior.
   JSON bytes, versions the report, and permits only one new clean-revision attempt after all gates.
   Its implementation shares the unchanged training-config serializer across the expected and
   metadata copies, rejects semantic/structural changes adversarially, and keeps V3 production
-  evidence separate from synthetic V2 fixtures. No new capacity cell has run.
+  evidence separate from synthetic V2 fixtures.
+- [`results/v2_constrained_rl_capacity_4f505b8.md`](results/v2_constrained_rl_capacity_4f505b8.md)
+  records the sole Repair-002 attempt and its detached verification. All three fixture cells and
+  production checkpoint admissions passed. On the recorded M4 Pro host the frozen 15-policy
+  campaign projects to 62.49 sequential hours at 1.00x, with 78.10/93.71-hour mechanical planning
+  scenarios, 174.35 MiB of projected logical checkpoint data, and 1.17 GiB recommended free space. It
+  opens no registered seed or controller-performance outcome.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

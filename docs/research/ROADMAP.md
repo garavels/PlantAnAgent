@@ -195,10 +195,13 @@ equipment consequences.
   in-memory configuration. That V2 report is retained without a projection or retry. Repair 002 is
   implemented to compare the complete metadata configuration through the unchanged training-config
   JSON byte representation while retaining all independent file, metadata, evidence, and policy
-  checks. V3 production/V2 synthetic schemas bind its frozen digest; one new clean-revision attempt
-  remains gated on the complete release suite. This is still no evidence of controller superiority.
-  Registered training and development/held-out resets remain closed pending explicit authorization
-  after a valid capacity estimate.
+  checks. The exact clean revision `4f505b8` passed 1,832 Python tests plus static and frontend
+  gates, then used its only permitted attempt. All three V3 cells and detached checkpoint admissions
+  passed. The frozen 15-policy campaign projects to 62.49 sequential hours on the recorded M4 Pro
+  host, with 78.10/93.71-hour mechanical planning scenarios and 1.17 GiB recommended checkpoint
+  free space. The capacity prerequisite is therefore closed, but this is still no evidence of
+  controller superiority. Registered training and development/held-out resets remain closed
+  pending explicit authorization.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.
 

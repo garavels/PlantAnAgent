@@ -810,15 +810,19 @@ The V2 capacity evidence path now also separates synthetic test issuance from th
 production runner/verifier and binds an exact pre-run-only deterministic identity. The sole
 Repair-001 attempt at `27a47d0` then completed all three child trainers but failed their parent-side
 admission because JSON-loaded lists were compared directly with tuple-valued in-memory task
-configuration. It produced no capacity projection and cannot be retried. Repair 002 now compares
-the complete metadata copy through the same JSON byte serializer while retaining the exact config-
-file byte check and every later artifact/evidence check. Production evidence advances to schema V3
-and synthetic evidence to its distinct V2 schema. No new capacity attempt, registered training run,
-or controller result is claimed here.
+configuration. It produced no capacity projection and cannot be retried. Repair 002 compares the
+complete metadata copy through the same JSON byte serializer while retaining the exact config-file
+byte check and every later artifact/evidence check. Its sole clean-revision attempt at `4f505b8`
+passed all three production checkpoint admissions and detached verification. On the recorded M4
+Pro host, the frozen 15-policy sequential campaign projects to 62.49 hours at 1.00x, 78.10 hours at
+1.25x, and 93.71 hours at 1.50x, with 174.35 MiB of projected logical checkpoint data and 1.17 GiB
+recommended free space. These are fixture-derived capacity scenarios, not confidence intervals,
+registered training, controller evidence, or a performance claim.
 See the retained [`V1 failure`](docs/research/results/v2_constrained_rl_capacity_fab4a55.md),
 [`V2 failure`](docs/research/results/v2_constrained_rl_capacity_27a47d0.md), frozen
 [`Repair 001`](docs/research/CONSTRAINED_RL_CAPACITY_REPAIR_001.md), and frozen
-[`Repair 002`](docs/research/CONSTRAINED_RL_CAPACITY_REPAIR_002.md).
+[`Repair 002`](docs/research/CONSTRAINED_RL_CAPACITY_REPAIR_002.md), plus the authenticated
+[`V3 capacity result`](docs/research/results/v2_constrained_rl_capacity_4f505b8.md).
 
 The existing control-room `/api/controller/rl` path remains the historical one-minute 30/5 V1
 runtime. It intentionally rejects these 15-minute four-target checkpoints: deploying them live

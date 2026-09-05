@@ -6629,3 +6629,91 @@ The Repair-002 implementation is not yet capacity evidence. It must be committed
 and pass the complete Python repository plus frontend release gates on that exact revision before
 the one permitted V3 attempt can begin. While that future three-cell attempt runs, no parallel work
 or token-consuming analysis will occur.
+
+## 2026-09-05 — Repair-002 V3 capacity attempt passed and campaign budget authenticated
+
+Repair 002 was committed as clean revision
+`4f505b89c36dbb5542fd255e469e3c729791cee2`. The staged diff contained only the capacity module,
+its tests, and four status documents; an independent final read-only review found no actionable
+P0/P1/P2 issue. Immediately before the commit, the capacity suite passed 69 tests in 1.01 seconds,
+the capacity/constrained selection passed 101 tests in 3.68 seconds, and Black, compilation, scoped
+strict typing, and Git whitespace checks passed. The frozen Repair-002 document still matched raw
+SHA-256 `1809e88942a0d075409e80c12219a1352bb2abfe4210a73580446e2a82012b06`.
+
+On the exact committed tree, the complete repository passed **1,832 tests in 415.48 seconds** with
+only the existing Starlette/httpx warning and trailing HiGHS diagnostics. The frontend TypeScript/
+Vite production build and `oxlint` passed; Vite retained only the existing large 3D chunk advisory.
+The tracked and untracked worktree was empty after those gates.
+
+The pre-execution custody check confirmed that the new external root
+`/private/tmp/plantanagent-beta-rl-capacity-4f505b8` did not exist, no repository record referenced
+`4f505b8` as an earlier attempt, no capacity/training/controller-benchmark/test process was running,
+and `OMP_NUM_THREADS`, `MKL_NUM_THREADS`, `OPENBLAS_NUM_THREADS`, `VECLIB_MAXIMUM_THREADS`, and
+`NUMEXPR_NUM_THREADS` were all absent. The host had 9,286,464 KiB free on the target filesystem,
+well above the frozen checkpoint allowance. The Make invocation supplied both required exclusivity
+and first-attempt assertions. All other agents were stopped or complete before execution. During
+the attempt, no parallel repository work, edit, test, subagent task, or other experiment ran; the
+root agent only polled the parent process for completion.
+
+The only attempt at `4f505b8` completed once. All three children exited zero, their checkpoint
+directories passed the complete production admission path, and the runner issued and immediately
+verified a V3 report. A separate same-host Make invocation then reopened the report, recaptured the
+runtime and host, re-admitted all checkpoint artifacts, recalculated the evidence and projections,
+and returned the same completed status. The authenticated identities are:
+
+- raw `report.json` SHA-256:
+  `3b9074824c6e81733e18653fd87e0a470e51c478183ed1a0a656f3589c4851fa`;
+- report-domain SHA-256:
+  `78b6c1f067d88aa43b672e42dd94c41d37ff9444e3963a2ebcb47f85933d9c3e`;
+- deterministic pre-run evidence SHA-256:
+  `4676d4862b3d783be2d4990034bbcde31be66ef7a8d591331b007ace6651b27c`;
+- runtime-provenance SHA-256:
+  `970041ae08346527aa9e5fd31743fdf7be4d82ac805c96d6152bdb3881974a5d`; and
+- production schema/domain: `plant-beta-constrained-rl-capacity-report-v3`.
+
+The bound host was an Apple M4 Pro with 12 physical/logical cores and 24 GiB memory, using eight
+Torch intra-op and twelve inter-op threads. The runtime was CPython 3.12.7, NumPy 2.5.2,
+Gymnasium 1.3.0, Stable-Baselines3 2.9.0, Torch 2.13.0, and SciPy 1.18.1, with exact lock,
+dependency-entrypoint, simulator-source, worktree-content, and worktree-status identities.
+
+Each cell proved 8,192 controller transitions, 122,880 physical minute steps, one rollout, 320
+optimizer steps, 16 fixture allocator entries, and one final checkpoint:
+
+| Family | Wall s | Rollout s | Fixed overhead s | Controller transitions/s | Checkpoint logical bytes |
+|---|---:|---:|---:|---:|---:|
+| PI-Lagrangian | 129.550079666 | 117.208728250 | 12.341351416 | 69.892405816 | 1,245,824 |
+| integral-only | 130.401020125 | 117.977248541 | 12.423771584 | 69.437116913 | 1,245,805 |
+| scalar PPO | 128.532934000 | 116.023039708 | 12.509894292 | 70.606665888 | 578,575 |
+
+All three stderr records are empty. None of the three stdout logs was opened; their byte counts and
+digests remain bound in the report. No observed reward, settlement-cost, action, multiplier, loss,
+policy-behavior, market, outage, inventory, safety, service, cycle-return, or controller-ranking
+value was operator-inspected or published.
+
+The frozen registered arithmetic is 15 policies, 1,920 rollouts, 15,728,640 controller transitions,
+235,929,600 physical minute steps, 614,400 minibatch optimizer steps, and 23,460 reset manifests.
+The authenticated sequential wall projections on this host are:
+
+| Rollout factor | Nanoseconds | Hours | Days |
+|---:|---:|---:|---:|
+| 1.00x | 224,960,145,645,820 | 62.4889 | 2.6037 |
+| 1.25x | 281,153,588,285,660 | 78.0982 | 3.2541 |
+| 1.50x | 337,347,030,925,500 | 93.7075 | 3.9045 |
+
+The structural checkpoint allowance totals 182,818,220 bytes (174.35 MiB) and the frozen rule
+recommends 1,256,560,044 bytes (1.17 GiB) free for checkpoint growth. The duration multipliers are
+mechanical planning scenarios, not confidence intervals, guarantees, or parallel speed claims;
+the storage calculation deliberately ignores ZIP compression and is a structural allowance rather
+than a prediction of exact ZIP encoding. Per-family timing differences are operational capacity
+measurements, not a statistical comparison of algorithms. No timing or checkpoint from either
+failed capacity attempt enters the V3 projection.
+
+The report's only admissible result claim is: “On the recorded host and clean source revision,
+three fixture-domain, registered-shaped first rollouts imply the reported sequential capacity
+scenarios. No registered seed or controller-performance outcome was opened.” As a protocol-process
+decision rather than an experimental claim, this valid report closes the infrastructure measurement
+required before requesting registered execution. No registered optimizer seed, development/
+held-out reset, policy selection, controller comparison, or controller-performance outcome was
+opened. The detailed result is retained in `results/v2_constrained_rl_capacity_4f505b8.md`. The
+next step is an authorization packet for the already frozen 15-policy protocol; registered
+execution remains closed until explicit approval.
