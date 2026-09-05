@@ -260,6 +260,17 @@ fallback behavior.
   custody evidence, and mechanically projects the wall-clock and disk budget of the fixed
   15-policy campaign. It opens no registered, development, held-out, or controller-performance
   outcome.
+- [`results/v2_constrained_rl_capacity_fab4a55.md`](results/v2_constrained_rl_capacity_fab4a55.md)
+  retains the first capacity attempt as a verified engineering failure. All three fixture cells
+  reached the same post-optimization rollout-cost aggregation invariant, so no checkpoint,
+  projection, or result claim survived. It records exact report/log identities, forbids reuse of
+  the failed timings, and discloses that one outcome-bearing fixture stdout log was inadvertently
+  opened during diagnosis.
+- [`CONSTRAINED_RL_CAPACITY_REPAIR_001.md`](CONSTRAINED_RL_CAPACITY_REPAIR_001.md) freezes the sole
+  permitted repair before source changes: preserve both independently accumulated cost totals,
+  validate them at the existing cumulative tolerance, canonicalize rollout evidence as raw total
+  divided once by seven, leave every optimizer/environment setting unchanged, version and bind the
+  repaired report, and permit only one new clean-revision attempt.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

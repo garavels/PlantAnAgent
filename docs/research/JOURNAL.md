@@ -6369,3 +6369,58 @@ separately as `4e0a169`; the next action is to commit the runner, tests, operato
 entry, and journal as one auditable pre-outcome release, confirm a clean revision, then execute once
 into a new external root after the two operator attestations are true.
 While those three fixture cells run, no polling or unrelated token-consuming work is warranted.
+
+## 2026-09-05 — First capacity attempt retained as a three-cell engineering failure
+
+The implementation release was committed as `fab4a55` after the 1,789-test gate, and the worktree
+was confirmed clean. The external destination
+`/private/tmp/plantanagent-beta-rl-capacity-fab4a55` did not exist; no prior real capacity attempt
+existed at that source revision; and no other repository benchmark had been intentionally launched.
+An initial Make invocation was blocked before the Python runner or output root existed because the
+restricted execution sandbox could not access uv's existing cache. It consumed no cell. The same
+command was then admitted with the required cache access and executed once with explicit
+exclusivity and first-attempt assertions.
+
+The runner retained all three frozen fixture cells and published a canonical self-verified failed
+report. Its raw file SHA-256 is
+`9b1bd155d70d8356dadc4a1faa86f9bb721c163af4f5e51004a3509362a97134`, report-domain SHA-256 is
+`f3d2ab32dbb86c7c4268d3b114e2ee44aff5d29b02f2c4e4e725e162acd20895`, timing-free evidence SHA-256
+is `dd41dac90b9fffae63b639d27fe07d31baf225ec8a0025d3a40e8dfd81d4491d`, and runtime-provenance
+SHA-256 is `0f6fd3b9ba8dc5c0a40f37034a480cd44557f03ee8b099acc8971d90bdd5ffab`.
+The report status is `failed`; result claim and campaign projection are both null.
+
+PI-Lagrangian ran for 127.084657500 wall seconds, integral-only for 133.561394000 seconds, and
+scalar PPO for 130.659857167 seconds. Each child exited with status two, retained its distinct
+stdout hash, and retained the same 71-byte stderr hash
+`af0b82782468004843c654611226c87347c7daa5051fc3aaf9ad73ab9098d00c`. No checkpoint was
+published. The failed timings are diagnostic only and cannot be extrapolated under the frozen
+protocol. Same-host verification with the original host-observation privileges reproduced the
+report identity and failed status. A restricted verifier correctly refused host equality because
+the sandbox could not observe the CPU brand or physical-core count available to the admitted run.
+
+The categorical report deliberately omitted the raw error text, so the first stderr log was opened
+to diagnose the common failure: checkpoint-state construction rejected `rollout cost scaling is
+incoherent`. The first stdout log was then opened and unexpectedly contained SB3's ordinary
+rollout table, including fixture reward and cost-related summaries. That inspection breached the
+operator side of the capacity protocol's no-outcome boundary. No value is reproduced, analyzed,
+compared, or used to tune the learner; the other two stdout logs were not opened. All affected
+episodes are fixture seeds 9,880,000--9,880,015 and permanently ineligible for registered evidence,
+but the breach is recorded explicitly rather than hidden.
+
+Static diagnosis found a family-neutral evidence-representation defect. Every transition already
+binds exact `training_cost = raw_cost / 7`. The rollout collector independently sums raw values and
+the already-divided values; the checkpoint verifier then compared the two aggregate arithmetic
+paths at absolute tolerance `1e-15`. Binary64 addition is not associative, and 84 settlement
+records can create several ULPs of harmless representation drift. The optimizer rollout completed,
+but checkpoint serialization failed before any artifact became admissible. Scalar PPO encountered
+the same invariant because it retains cost evidence for audit while excluding that evidence from
+its gradients.
+
+`CONSTRAINED_RL_CAPACITY_REPAIR_001.md` now freezes the repair before code. The collector must keep
+both independent totals, require consistency at `rtol=atol=1e-12`, and canonicalize only the
+rollout-ledger representation as raw total divided once by seven. Per-transition buffers, GAE,
+completed-episode multiplier inputs, model parameters, PPO settings, algorithms, seeds, environment,
+and campaign remain unchanged. A pure 84-contribution floating-point witness, material-mismatch
+failure, channel isolation, complete focused/full regression gates, repaired protocol hash binding,
+and a report/domain schema version bump are mandatory. Revision `fab4a55` cannot be retried. Only
+one new attempt on the future clean repair revision may produce a capacity projection.
