@@ -253,6 +253,13 @@ fallback behavior.
   prior seeds are conservatively treated as development-contaminated. Only bounded fixture-domain
   optimizer smokes are authorized; registered training and every development/held-out reset remain
   closed.
+- [`CONSTRAINED_RL_CAPACITY_PROTOCOL.md`](CONSTRAINED_RL_CAPACITY_PROTOCOL.md) freezes the
+  fixture-only infrastructure measurement required before requesting registered training. It
+  permits exactly one sequential 8,192-transition cell for each constrained learner family,
+  binds explicit exclusivity and first-attempt attestations, reports only timing/storage and
+  custody evidence, and mechanically projects the wall-clock and disk budget of the fixed
+  15-policy campaign. It opens no registered, development, held-out, or controller-performance
+  outcome.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

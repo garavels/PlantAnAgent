@@ -6272,3 +6272,100 @@ next environment increment should then add one separately ablatable commercial m
 degradation/maintenance state, forecast error, or a shared balance-of-plant bottleneck. HEPA and
 natural-language supervision remain downstream factorial layers and receive no value credit until
 the controller task itself demonstrates a meaningful, reproducible operating tradeoff.
+
+## 2026-09-05 — Fixture-only constrained-RL capacity runner implemented and audited
+
+No capacity cell, protected seed, registered optimizer update, development reset, held-out reset,
+or controller outcome was opened in this increment. The work implemented the outcome-blind
+infrastructure measurement required before the registered 15-policy campaign can be responsibly
+scheduled. The capacity measurement remains a one-shot execution gate after this implementation is
+committed and the source tree is clean; the tests below use dependency-injected filesystem fixtures
+and do not train a policy.
+
+`CONSTRAINED_RL_CAPACITY_PROTOCOL.md` first froze exactly three fresh sequential processes in PI,
+integral-only, and scalar order. Every process uses optimizer seed 101, fixture base 9,880,000, the
+unchanged default beta task and `PPOConfig`, four synchronous environments, one complete
+8,192-transition rollout, 320 minibatch optimizer steps, 16 allocator records, final-only saving,
+and no resume. The report is forbidden from publishing rewards, costs, actions, multipliers,
+losses, policy outputs, market regimes, outages, inventories, or any controller ranking. It may
+support only a host-specific timing/storage projection and cannot qualify its fixture checkpoints
+for registered evaluation.
+
+The new `training/capacity_benchmark.py` implements that contract as a production runner and a
+detached verifier. Before output creation it reopens the protocol through a stable regular-file
+reader, matches its frozen SHA-256, requires clean beta runtime provenance, records source,
+dependency, interpreter, simulator, CPU, memory, Torch-thread, BLAS/OpenMP, platform, and monotonic
+clock identity, and requires separate operator attestations for exclusivity and first-attempt
+custody. The public execute and verify APIs expose no injectable measurement hooks; private seams
+exist only for deterministic adversarial tests. Output must be a new absolute directory outside
+the repository, and the three production-training child commands execute sequentially with no
+retry or selection path.
+
+Each cell retains exclusively published stdout and stderr bytes while the report contains only
+their paths, sizes, and hashes. Successful output is reopened through the production policy loader
+and load-issued checkpoint attestation. Admission checks the exact external and internal training
+config bytes, algorithm, optimizer seed, task contract, 8,192-transition cut, fixture-only and
+registered-ineligible flags, absence of a resume parent, runtime provenance, one rollout, 320
+optimizer steps, allocator mode/split/base, and the exact set of seeds 9,880,000--9,880,015. It
+inventories exactly `policy.zip`, `metadata.json`, and `training_config.json`, including logical and
+allocated bytes and file SHA-256 values, and measures the maximum canonical rollout and allocator
+entry sizes needed by the structural storage allowance.
+
+End-to-end wall time uses the parent monotonic nanosecond clock around the complete child; the
+rollout ledger separately supplies collection-plus-optimization time. Fixed overhead is the
+non-negative difference. Per-family projections use one fixed overhead plus 128 rollout terms for
+each registered policy and five policies per family. Sensitivity factors 1.00, 1.25, and 1.50 apply
+only to the 128-rollout term. Storage adds the frozen conservative allowance for 127 future rollout
+entries and 1,548 future allocator entries before calculating five-policy family totals and the
+greater of two-times projected storage or projected storage plus one GiB. A failed cell removes the
+campaign projection and result claim but does not prevent the remaining frozen attempts from being
+retained.
+
+The runner publishes one exclusive, fsynced, canonical `report.json`. Its full domain digest binds
+every field. A separate timing-free identity now binds the protocol, clean runtime, host, formula
+contract, cell order, exact config and output layout, logs, checkpoint identities, failure class,
+and campaign arithmetic. Verification checks the outer digest before expensive checkpoint loading,
+requires exact schemas and arithmetic, rejects duplicate or non-finite JSON, rejects path escape
+and every intermediate or final symlink, rehashes all referenced regular files, independently
+recaptures both runtime and host identity, and re-admits every successful checkpoint rather than
+trusting report booleans.
+
+The first independent adversarial review found substantive pre-execution defects: public test hooks
+could forge host/timing fields; the report asserted no retry without a corresponding operator
+attestation; intermediate symlinks were followed; Mac architecture text could be guessed as a CPU
+brand; the internal checkpoint config was inventoried but not compared; signal return codes could
+not self-verify; timeout output was lost; arbitrary exception text could leak an outcome; the
+sensitivity formula rounded before rather than after multiplying 128 rollouts; formula constants
+and the one-hour timeout were not bound; and the timing-free identity omitted material artifact
+evidence. All were corrected before any capacity execution. Failure messages are now categorical
+and sanitized, unrestricted diagnostics remain only in hash-identified files, signed return codes
+are valid, partial timeout streams are retained, intermediate path components are inspected without
+following symlinks, host identity is immediately recaptured, and public production functions fix
+their real clock/process/admission implementations.
+
+Because the one-hour timeout and explicit first-attempt assertion can affect whether the one-shot
+measurement succeeds, the protocol was amended outcome-blind before execution. It now freezes an
+exact 3,600-second child timeout, treats timeout as a retained non-retriable failure, requires both
+operator attestations, requires immediate host recapture, and specifies exact rational sensitivity
+rounding. Its new raw SHA-256 is
+`223947ccd8fb0b8c909ea89ee4019818081f4bf2f884301019450551f7b18b88`.
+
+The dedicated capacity suite passes 29 tests in 0.55 seconds. It covers all three exact configs,
+formula binding and integer arithmetic, synthetic sequential success and reconstruction, public API
+closure, both operator assertions, dirty-runtime refusal, external/new output custody, internal
+config substitution, self-consistent report tampering, early outer-digest rejection, current-host
+substitution, intermediate/final symlinks, ambiguous/noncanonical JSON, negative signal exits,
+timeout partial streams, checkpoint-admission failure, failure-message redaction, and absence of
+controller-outcome fields. The expanded learner/checkpoint/provenance regression gate passes 185
+tests in 207.97 seconds. Black, Python compilation, strict source MyPy, scoped test MyPy, Makefile
+command expansion, and Git whitespace checks pass. The complete Python repository gate then passes
+**1,789 tests in 408.41 seconds**, with only the existing Starlette/httpx deprecation warning.
+Frontend TypeScript/Vite production build and `oxlint` also pass; the existing greater-than-500-kB
+`Plant3DPage` advisory remains. A second production-compatibility audit found no remaining P0/P1
+defect and confirmed byte-level compatibility with the real trainer and checkpoint lifecycle.
+
+The implementation is not itself capacity evidence. The protocol clarification is committed
+separately as `4e0a169`; the next action is to commit the runner, tests, operator commands, index
+entry, and journal as one auditable pre-outcome release, confirm a clean revision, then execute once
+into a new external root after the two operator attestations are true.
+While those three fixture cells run, no polling or unrelated token-consuming work is warranted.

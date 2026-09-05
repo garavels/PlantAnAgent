@@ -1,4 +1,4 @@
-.PHONY: help setup dev backend frontend sim test eval foresight-eval rl-eval rl-ceiling v2-eval v2-weather-eval v2-controller-eval v2-planner v2-mpc v2-mpc-report v2-mpc-setpoint v2-economic-smoke v2-economic-robustness v2-economic-robustness-verify v2-full-day-horizon-repair v2-full-day-horizon-repair-verify v2-train-dry v2-train v2-rl-eval v2-controller-benchmark v2-beta-controller-benchmark v2-beta-controller-benchmark-verify train-dry train \
+.PHONY: help setup dev backend frontend sim test eval foresight-eval rl-eval rl-ceiling v2-eval v2-weather-eval v2-controller-eval v2-planner v2-mpc v2-mpc-report v2-mpc-setpoint v2-economic-smoke v2-economic-robustness v2-economic-robustness-verify v2-full-day-horizon-repair v2-full-day-horizon-repair-verify v2-train-dry v2-train v2-rl-eval v2-controller-benchmark v2-beta-controller-benchmark v2-beta-controller-benchmark-verify v2-beta-rl-capacity v2-beta-rl-capacity-verify train-dry train \
 	hepa-collect hepa-pretrain-dry hepa-pretrain hepa-finetune-dry hepa-finetune \
 	hepa-eval build clean
 
@@ -137,6 +137,19 @@ v2-beta-controller-benchmark-verify: ## deeply verify one beta controller report
 	$(if $(REPORT),,$(error REPORT=/absolute/path/to/report.json is required))
 	uv run --frozen --group optimisation \
 		python -m plant_backend.rl.v2.beta_controller_benchmark_verifier $(REPORT)
+
+v2-beta-rl-capacity: ## run the three frozen fixture-only RL capacity cells
+	$(if $(OUTPUT),,$(error OUTPUT=/absolute/new/directory/outside/repository is required))
+	$(if $(filter yes,$(ASSERT_EXCLUSIVE)),,$(error ASSERT_EXCLUSIVE=yes is required after checking no benchmark is running))
+	$(if $(filter yes,$(ASSERT_FIRST_ATTEMPT)),,$(error ASSERT_FIRST_ATTEMPT=yes is required after checking this revision has no prior attempt))
+	uv run --frozen --group train \
+		python -m plant_backend.rl.v2.training.capacity_benchmark run $(OUTPUT) \
+		--assert-exclusive --assert-first-attempt
+
+v2-beta-rl-capacity-verify: ## verify one fixture-only RL capacity report
+	$(if $(REPORT),,$(error REPORT=/absolute/path/to/report.json is required))
+	uv run --frozen --group train \
+		python -m plant_backend.rl.v2.training.capacity_benchmark verify $(REPORT)
 
 train-dry:        ## build the RL environment and print the training plan; trains nothing
 	uv run python -m plant_backend.rl.training.train --dry-run
