@@ -5317,3 +5317,52 @@ expression, calibrated operational pressure comes before RL. Only a passing, sep
 verified repair can authorize a separately frozen bounded PPO baseline, tariff-aware economic
 MPC, and cyclic Environment V2 beta design. No M24 protected action, policy training, held-out
 evaluation, or controller/commercial claim was opened by this protocol freeze.
+
+## 2026-09-05 — Horizon-repair pre-code audit found and froze evidence clarifications
+
+Three independent read-only reviews mapped the frozen horizon probe onto the implemented
+controller, run ledger, old artifacts, and verifier before new code was written. They did not
+reset an environment or open an M24 action. The review found two literal protocol ambiguities
+and one verification weakness that had to be resolved before implementation could be admitted.
+
+First, F4's prose says later delivery targets are labelled “inferred,” but
+`MPCDeliveryTargetV1` accepts the exact canonical value `inferred_recurring`. The implemented
+target inference already yields boundaries 24, 48, 72, and 96 with source sequence `announced`,
+`inferred_recurring`, `inferred_recurring`, `inferred_recurring`. Changing the schema would be
+a second intervention, so clarification 001 binds the prose to the existing exact value.
+
+Second, existing MPC run evidence stores public-observation, forecast, and projection hashes
+but not the complete public issue or projection bodies. Existing economic arm execution also
+retains scalar rewards and episode totals but discards each interval's delivery and economic-
+component row. The M24 runner must now capture a full first-boundary public observation, public
+issue, 96-interval projection, and complete ordered interval economic ledger before and during
+the new trajectory. All are separately hashed, cross-bound to event zero or its public
+transition, and excluded from controller inputs beyond what the existing MPC already receives.
+
+Third, `verify_mpc_setpoint_run_digests` correctly checks the supplied outer and evidence-graph
+hashes but does not deserialize each nested event and rebuild the semantic run summary. A
+coherently rehashed nested mutation could therefore evade that routine alone. The new admission
+now requires a detached typed codec that reconstructs every target, solve stage, selected plan
+step, setpoint, dispatch, guarded action, commitment state, minute application, execution, and
+residual; requires exact typed round trips; and rebuilds counts, energy, attribution, chains,
+latencies, and identities through `build_mpc_setpoint_run_evidence`. This stronger check must
+verify the old M6 references as well as M24.
+
+The audit also inspected what can truthfully be recovered from the immutable reference bytes.
+M6 contains its complete boundary records and residuals, so its settlement deliveries and
+post-settlement inventories are reconstructable. H retains only boundary/application hashes,
+reward scalars, and episode aggregate metrics; it does not retain intermediate boundary bodies,
+per-settlement delivery rows, or per-interval economic components. Rerunning H would violate the
+frozen reference rule. The clarification therefore requires explicit `not_retained` and
+missingness for those H fields, `not_applicable` for MPC-only H fields, and keeps F5/F7 on the
+available H aggregate service/economic evidence. No threshold or denominator changes.
+
+These interpretations are frozen in
+`FULL_DAY_HORIZON_REPAIR_CLARIFICATION_001.md`, raw SHA-256
+`8dc341b142a41214b7845b0f5debab29b7f23751ff8f7cd71ab68ac30f6b7ce3`. It also defines exact
+citations for report, cell, embedded H, embedded M6, and new M24 identities; requires strict
+canonical JSON, duplicate-key, symlink, regular-entry, and path-custody checks; and recognizes
+the reference report's expected `complete_gate_failed` research result as structurally valid
+evidence. The original protocol bytes, M24 intervention, F1--F8 gates, contaminated matrix, and
+claim boundary remain unchanged. No protected reset, solve, rollout, or policy training was
+performed.

@@ -139,7 +139,11 @@ equipment consequences.
   If horizon-only repair fails, the next protocol must add explicit deliverable-CH4 adequacy
   across renewable outages and/or change the energy-supply architecture. If it restores
   service but the task remains coefficient-dependent, calibrated operational pressure comes
-  before PPO. No protected M24 action has run.
+  before PPO. A pre-code audit found that the old H artifact never retained intermediate tank
+  states and that the existing detached MPC checker does not reconstruct nested event
+  semantics. Clarification 001 now requires explicit legacy missingness, a complete M24 first-
+  forecast/interval ledger, and a typed rebuild verifier for both old M6 and new M24 evidence.
+  No protected M24 action has run.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.
 

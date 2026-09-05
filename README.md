@@ -753,7 +753,9 @@ make v2-economic-robustness-verify REPORT=/absolute/external/directory/report.js
 See [`docs/research/results/v2_economic_robustness_7b1b656.md`](docs/research/results/v2_economic_robustness_7b1b656.md)
 for the complete gate result, mechanism diagnosis, coefficient sensitivity, artifact identities,
 and next architecture decision. The frozen follow-up is
-[`docs/research/FULL_DAY_HORIZON_REPAIR_PROTOCOL.md`](docs/research/FULL_DAY_HORIZON_REPAIR_PROTOCOL.md).
+[`docs/research/FULL_DAY_HORIZON_REPAIR_PROTOCOL.md`](docs/research/FULL_DAY_HORIZON_REPAIR_PROTOCOL.md),
+with its pre-code evidence clarification in
+[`docs/research/FULL_DAY_HORIZON_REPAIR_CLARIFICATION_001.md`](docs/research/FULL_DAY_HORIZON_REPAIR_CLARIFICATION_001.md).
 
 ---
 

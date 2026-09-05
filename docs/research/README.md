@@ -182,6 +182,12 @@ fallback behavior.
   horizon fidelity, fourth-commitment recovery, service repair, mechanism closure, and
   equal-service economic expression before the repair is accepted. No M24 outcome has been
   opened under this protocol.
+- [`FULL_DAY_HORIZON_REPAIR_CLARIFICATION_001.md`](FULL_DAY_HORIZON_REPAIR_CLARIFICATION_001.md)
+  preserves that protocol while resolving pre-code evidence ambiguities: the canonical
+  `inferred_recurring` target label, a new complete first-boundary forecast audit, interval-
+  level M24 economic evidence, explicit `not_retained` legacy-H fields, precise embedded-arm
+  citations, and typed detached semantic verification for both M6 and M24. It changes no
+  intervention, gate, or outcome boundary.
 - [`CONTROLLER_NEUTRAL_RL_INTEGRATION.md`](CONTROLLER_NEUTRAL_RL_INTEGRATION.md)
   defines the completed RL wiring gate: strict four-target training configuration, exact
   full-task checkpoint compatibility, artifact hashing, checkpoint-bound inference evidence,
