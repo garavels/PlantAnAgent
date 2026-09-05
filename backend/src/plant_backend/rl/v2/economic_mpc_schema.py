@@ -451,7 +451,7 @@ class EconomicMPCDecisionEvidenceV1:
             raise ValueError("tariff_id must be non-empty")
         if not isinstance(self.targets, ProcessSetpointTargetsV1):
             raise TypeError("targets must be ProcessSetpointTargetsV1")
-        if not isinstance(self.plan, EconomicMPCPlanV1):
+        if type(self.plan) is not EconomicMPCPlanV1:
             raise TypeError("plan must be EconomicMPCPlanV1")
         if self.plan.sha256 != self.plan_sha256:
             raise ValueError("decision plan digest differs from its typed plan")
@@ -508,7 +508,7 @@ class EconomicMPCDecisionV1:
     command: ProcessSetpointCommandV1
 
     def __post_init__(self) -> None:
-        if not isinstance(self.evidence, EconomicMPCDecisionEvidenceV1):
+        if type(self.evidence) is not EconomicMPCDecisionEvidenceV1:
             raise TypeError("evidence must be EconomicMPCDecisionEvidenceV1")
         if not isinstance(self.command, ProcessSetpointCommandV1):
             raise TypeError("command must be ProcessSetpointCommandV1")

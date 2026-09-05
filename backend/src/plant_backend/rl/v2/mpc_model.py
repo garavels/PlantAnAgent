@@ -614,18 +614,39 @@ def infer_delivery_targets(
     return tuple(targets)
 
 
-def _require_nominal_health(observation: ControllerObservationV2) -> None:
+def _require_supported_health(
+    observation: ControllerObservationV2,
+    *,
+    causal_current_dac_health: bool,
+) -> bool:
+    """Validate public health and return whether DAC is currently offline.
+
+    The frozen service-MPC path remains nominal-only.  A separately identified
+    receding-horizon controller may opt into the causal rule that an observed DAC
+    outage disables only the current planning interval and nominal availability is
+    assumed thereafter.  No future fault schedule or recovery time enters the model.
+    """
+
+    if not isinstance(causal_current_dac_health, bool):
+        raise TypeError("causal_current_dac_health must be a bool")
     health = observation.state.boundary.health
+    dac_offline = False
     for component in ("battery", "electrolyser", "dac", "methanator"):
         item = health.get(component)
         if item is None:
             raise ServiceMPCInputError(f"missing public health for {component}")
-        if item.offline or not math.isclose(
+        degraded = not math.isclose(
             float(item.degradation), 0.0, rel_tol=0.0, abs_tol=1e-12
+        )
+        if degraded or (
+            item.offline and not (component == "dac" and causal_current_dac_health)
         ):
             raise ServiceMPCInputError(
                 f"service MPC V1 does not model degraded/offline {component}"
             )
+        if component == "dac":
+            dac_offline = bool(item.offline)
+    return dac_offline
 
 
 def _validate_commitment(
@@ -781,6 +802,7 @@ def build_service_mpc_model(
     config: PlantConfig,
     commitment_profile: ElectrolyserCommitmentProfile | None,
     horizon_intervals: int,
+    causal_current_dac_health: bool = False,
 ) -> ServiceMPCModelV1:
     """Build the frozen finite service-MPC model from public inputs only."""
 
@@ -845,7 +867,10 @@ def build_service_mpc_model(
     ):
         raise ServiceMPCInputError("MPC interval must contain whole physics steps")
 
-    _require_nominal_health(observation)
+    dac_currently_offline = _require_supported_health(
+        observation,
+        causal_current_dac_health=causal_current_dac_health,
+    )
     snapshot, profile = _validate_commitment(
         observation.state.electrolyser_commitment, commitment_profile
     )
@@ -1013,6 +1038,10 @@ def build_service_mpc_model(
 
     variables = _VariableBuilder()
     max_solar = tuple(float(value) for value in forecast_kw)
+    dac_cap_by_interval = tuple(
+        0.0 if dac_currently_offline and index == 0 else dac_cap
+        for index in range(horizon)
+    )
     solar_battery = variables.add_group("solar_to_battery_kw", horizon, upper=max_solar)
     solar_electrolyser = variables.add_group(
         "solar_to_electrolyser_kw", horizon, upper=max_solar
@@ -1037,7 +1066,9 @@ def build_service_mpc_model(
         "h2_produced_kg", horizon, upper=electrolyser_cap * h2_rate
     )
     co2_produced = variables.add_group(
-        "co2_captured_kg", horizon, upper=dac_cap * co2_rate
+        "co2_captured_kg",
+        horizon,
+        upper=tuple(value * co2_rate for value in dac_cap_by_interval),
     )
     ch4_produced = variables.add_group(
         "ch4_produced_kg", horizon, upper=methanator_cap * ch4_rate
@@ -1192,7 +1223,11 @@ def build_service_mpc_model(
             {ch4_produced[time]: 1.0, solar_methanator[time]: -ch4_rate},
             0.0,
         )
-        rows.add(f"dac_cap[{time}]", {solar_dac[time]: 1.0}, upper=dac_cap)
+        rows.add(
+            f"dac_cap[{time}]",
+            {solar_dac[time]: 1.0},
+            upper=dac_cap_by_interval[time],
+        )
         rows.add(
             f"methanator_cap[{time}]",
             {solar_methanator[time]: 1.0},
@@ -1382,6 +1417,15 @@ def build_service_mpc_model(
             "maximum_ch4_equivalent_inventory_kg": equivalent_capacity,
         },
     }
+    if causal_current_dac_health:
+        metadata["causal_current_dac_health"] = {
+            "observed_offline": dac_currently_offline,
+            "dac_cap_kw_by_interval": list(dac_cap_by_interval),
+            "rule": (
+                "observed offline disables interval zero; later intervals assume "
+                "nominal recovery without consulting a future fault schedule"
+            ),
+        }
     return ServiceMPCModelV1(
         model_version=SERVICE_MPC_MODEL_VERSION,
         settings_sha256=settings.sha256,

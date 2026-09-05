@@ -5,11 +5,12 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 from numbers import Real
-from typing import Any, Sequence
+from typing import Any, Protocol, Sequence, runtime_checkable
 
 from plant_sim import ElectrolyserCommitmentProfile, PlantConfig
 
 from ...controllers.base import Constraints
+from .control import ControllerObservationV2
 from .economics import EconomicAssumptionsV1, EconomicControllerObservationV1
 from .mpc_forecast import MPCForecastTrajectoryV1
 from .mpc_model import (
@@ -401,6 +402,76 @@ class EconomicMPCModelV1:
         )
 
 
+@runtime_checkable
+class EconomicMPCModelProtocol(Protocol):
+    """Structural contract consumed by the shared two-stage economic solver.
+
+    Separately versioned tasks may add hard rows and their own model identity while
+    reusing the numerical solver.  The protocol deliberately contains no tariff
+    field, so a causal market model need not masquerade as the alpha tariff model.
+    """
+
+    @property
+    def physical_model(self) -> ServiceMPCModelV1: ...
+
+    @property
+    def settings_sha256(self) -> str: ...
+
+    @property
+    def assumptions_sha256(self) -> str: ...
+
+    @property
+    def economic_objective(self) -> tuple[float, ...]: ...
+
+    @property
+    def interval_s(self) -> float: ...
+
+    @property
+    def horizon_intervals(self) -> int: ...
+
+    @property
+    def forecast_sha256(self) -> str: ...
+
+    @property
+    def deliveries(self) -> tuple[MPCDeliveryTargetV1, ...]: ...
+
+    @property
+    def variable_lower(self) -> tuple[float, ...]: ...
+
+    @property
+    def variable_upper(self) -> tuple[float, ...]: ...
+
+    @property
+    def integrality(self) -> tuple[int, ...]: ...
+
+    @property
+    def primary_objective(self) -> tuple[float, ...]: ...
+
+    @property
+    def rows(self) -> tuple[MPCSparseRowV1, ...]: ...
+
+    @property
+    def variable_count(self) -> int: ...
+
+    @property
+    def sha256(self) -> str: ...
+
+    def group(self, name: str) -> tuple[int, ...]: ...
+
+    def audit_solution(
+        self,
+        solution: Sequence[float],
+        *,
+        tolerance: float = MODEL_BALANCE_TOLERANCE,
+        extra_rows: Sequence[MPCSparseRowV1] = (),
+    ) -> MPCSolutionAuditV1: ...
+
+    def predicted_cost_components(
+        self,
+        solution: Sequence[float],
+    ) -> tuple[tuple[str, float], ...]: ...
+
+
 def build_economic_mpc_model(
     observation: EconomicControllerObservationV1,
     forecast: MPCForecastTrajectoryV1,
@@ -418,11 +489,64 @@ def build_economic_mpc_model(
 
     if not isinstance(observation, EconomicControllerObservationV1):
         raise TypeError("observation must be EconomicControllerObservationV1")
+    if type(settings) is not EconomicMPCSettingsV1:
+        raise TypeError("settings must be EconomicMPCSettingsV1")
+    if not isinstance(assumptions, EconomicAssumptionsV1):
+        raise TypeError("assumptions must be EconomicAssumptionsV1")
+    prices = _economic_prices(
+        observation,
+        assumptions,
+        interval_s=settings.interval_s,
+        horizon=horizon_intervals,
+    )
+    return _build_economic_mpc_model_from_prices(
+        observation.plant,
+        forecast,
+        settings=settings,
+        assumptions=assumptions,
+        constraints=constraints,
+        config=config,
+        commitment_profile=commitment_profile,
+        horizon_intervals=horizon_intervals,
+        initial_ch4_equivalent_kg=initial_ch4_equivalent_kg,
+        initial_battery_energy_kwh=initial_battery_energy_kwh,
+        interval_prices_eur_per_mwh=prices,
+        price_source_id=assumptions.tariff.id,
+    )
+
+
+def _build_economic_mpc_model_from_prices(
+    observation: ControllerObservationV2,
+    forecast: MPCForecastTrajectoryV1,
+    *,
+    settings: EconomicMPCSettingsV1,
+    assumptions: EconomicAssumptionsV1,
+    constraints: Constraints,
+    config: PlantConfig,
+    commitment_profile: ElectrolyserCommitmentProfile | None,
+    horizon_intervals: int,
+    initial_ch4_equivalent_kg: float,
+    initial_battery_energy_kwh: float,
+    interval_prices_eur_per_mwh: Sequence[float],
+    price_source_id: str,
+    causal_current_dac_health: bool = False,
+) -> EconomicMPCModelV1:
+    """Build the proven economic model from an explicitly supplied public price path.
+
+    The alpha builder above remains responsible for validating its full tariff.  This
+    lower-level seam lets separately identified environments supply their own causal
+    public price issue without pretending that it is the alpha tariff.
+    """
+
+    if not isinstance(observation, ControllerObservationV2):
+        raise TypeError("observation must be ControllerObservationV2")
     if not isinstance(settings, EconomicMPCSettingsV1):
         raise TypeError("settings must be EconomicMPCSettingsV1")
     if not isinstance(assumptions, EconomicAssumptionsV1):
         raise TypeError("assumptions must be EconomicAssumptionsV1")
     assumptions.validate()
+    if not isinstance(price_source_id, str) or not price_source_id.strip():
+        raise ValueError("price_source_id must be non-empty")
     initial_ch4 = _finite(
         "initial_ch4_equivalent_kg", initial_ch4_equivalent_kg, minimum=0.0
     )
@@ -430,20 +554,21 @@ def build_economic_mpc_model(
         "initial_battery_energy_kwh", initial_battery_energy_kwh, minimum=0.0
     )
     physical = build_service_mpc_model(
-        observation.plant,
+        observation,
         forecast,
         settings=settings.physical_settings,
         constraints=constraints,
         config=config,
         commitment_profile=commitment_profile,
         horizon_intervals=horizon_intervals,
+        causal_current_dac_health=causal_current_dac_health,
     )
-    prices = _economic_prices(
-        observation,
-        assumptions,
-        interval_s=settings.interval_s,
-        horizon=physical.horizon_intervals,
+    prices = tuple(
+        _finite(f"interval price[{index}]", value)
+        for index, value in enumerate(interval_prices_eur_per_mwh)
     )
+    if len(prices) != physical.horizon_intervals:
+        raise ValueError("interval prices must cover the model horizon")
     first_hinge = physical.variable_count
     methane_hinge = first_hinge
     battery_hinge = first_hinge + 1
@@ -544,7 +669,7 @@ def build_economic_mpc_model(
         physical_model=physical,
         settings_sha256=settings.sha256,
         assumptions_sha256=assumptions.sha256,
-        tariff_id=assumptions.tariff.id,
+        tariff_id=price_source_id,
         interval_prices_eur_per_mwh=prices,
         initial_ch4_equivalent_kg=initial_ch4,
         initial_battery_energy_kwh=initial_battery,
@@ -556,7 +681,7 @@ def build_economic_mpc_model(
 
 
 def economic_delivery_lock_row(
-    model: EconomicMPCModelV1,
+    model: EconomicMPCModelProtocol,
     *,
     delivered_optimum_kg: float,
     tolerance_kg: float,
@@ -575,6 +700,7 @@ def economic_delivery_lock_row(
 
 __all__ = [
     "ECONOMIC_MPC_MODEL_DOMAIN",
+    "EconomicMPCModelProtocol",
     "EconomicMPCModelV1",
     "build_economic_mpc_model",
     "economic_delivery_lock_row",

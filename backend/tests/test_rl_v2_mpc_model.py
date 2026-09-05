@@ -475,6 +475,54 @@ def test_model_rejects_inputs_outside_its_declared_validity_domain(
         _build(public_inputs, config=zero_efficiency)
 
 
+def test_beta_causal_dac_health_disables_only_the_observed_interval(
+    public_inputs: tuple[
+        PlantEnvV2,
+        ControllerObservationV2,
+        MPCForecastTrajectoryV1,
+    ],
+) -> None:
+    env, observation, forecast = public_inputs
+    health = dict(observation.state.boundary.health)
+    health["dac"] = ComponentHealth(status="offline", offline=True)
+    offline = _replace_boundary(observation, health=health)
+
+    with pytest.raises(ServiceMPCInputError, match="degraded/offline dac"):
+        _build(public_inputs, observation=offline)
+
+    model = build_service_mpc_model(
+        offline,
+        forecast,
+        settings=SETTINGS,
+        constraints=env.constraints,
+        config=env.config,
+        commitment_profile=env.episode_config.electrolyser_commitment,
+        horizon_intervals=4,
+        causal_current_dac_health=True,
+    )
+
+    dac_rows = tuple(row for row in model.rows if row.name.startswith("dac_cap["))
+    captured = model.group("co2_captured_kg")
+    nominal_dac_cap = env.constraints.dac_limit_kw(env.config)
+    assert dac_rows[0].upper == 0.0
+    assert all(row.upper == nominal_dac_cap for row in dac_rows[1:])
+    assert model.variable_upper[captured[0]] == 0.0
+    assert all(model.variable_upper[index] > 0.0 for index in captured[1:])
+    assert model.metadata()["causal_current_dac_health"] == {
+        "observed_offline": True,
+        "dac_cap_kw_by_interval": [
+            0.0,
+            nominal_dac_cap,
+            nominal_dac_cap,
+            nominal_dac_cap,
+        ],
+        "rule": (
+            "observed offline disables interval zero; later intervals assume "
+            "nominal recovery without consulting a future fault schedule"
+        ),
+    }
+
+
 def test_no_remaining_delivery_fixes_minimum_fill_without_private_inference(
     public_inputs: tuple[
         PlantEnvV2,

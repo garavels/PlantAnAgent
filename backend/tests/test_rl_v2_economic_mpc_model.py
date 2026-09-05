@@ -6,6 +6,7 @@ from dataclasses import replace
 
 import pytest
 
+from plant_backend.rl.v2.beta_mpc_schema import BetaMPCSettingsV1
 from plant_backend.rl.v2.config import EpisodeConfigV2
 from plant_backend.rl.v2.economic_env import PlantEconomicSetpointEnvV2
 from plant_backend.rl.v2.economic_mpc_model import build_economic_mpc_model
@@ -118,6 +119,25 @@ def test_builder_recomputes_summary_from_full_declared_tariff() -> None:
             corrupted,
             projection,
             settings=SETTINGS,
+            assumptions=env.economic_assumptions,
+            constraints=env.constraints,
+            config=env.config,
+            commitment_profile=env.episode_config.electrolyser_commitment,
+            horizon_intervals=4,
+            initial_ch4_equivalent_kg=boundary.ch4_level_kg,
+            initial_battery_energy_kwh=boundary.battery_energy_kwh,
+        )
+
+
+def test_alpha_builder_rejects_beta_settings_identity() -> None:
+    env, observation, projection = _inputs()
+    boundary = observation.plant.state.boundary
+
+    with pytest.raises(TypeError, match="settings must be EconomicMPCSettingsV1"):
+        build_economic_mpc_model(
+            observation,
+            projection,
+            settings=BetaMPCSettingsV1(),
             assumptions=env.economic_assumptions,
             constraints=env.constraints,
             config=env.config,

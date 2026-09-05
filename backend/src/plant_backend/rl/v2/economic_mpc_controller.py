@@ -61,7 +61,7 @@ class TariffAwareEconomicMPCControllerV1:
         chosen_assumptions = (
             EconomicAssumptionsV1() if assumptions is None else assumptions
         )
-        if not isinstance(chosen_settings, EconomicMPCSettingsV1):
+        if type(chosen_settings) is not EconomicMPCSettingsV1:
             raise TypeError("settings must be EconomicMPCSettingsV1")
         if not isinstance(chosen_assumptions, EconomicAssumptionsV1):
             raise TypeError("assumptions must be EconomicAssumptionsV1")

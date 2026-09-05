@@ -26,6 +26,19 @@ from .beta_disturbances import (
     generate_disturbance_episode,
 )
 from .beta_env import PlantCyclicMarketEnvV2Beta, describe_beta_checkpoint_contract
+from .beta_mpc_controller import CyclicMarketEconomicMPCControllerV1
+from .beta_mpc_model import BetaMPCModelV1, build_beta_mpc_model
+from .beta_mpc_schema import (
+    BetaMPCCycleReturnV1,
+    BetaMPCDecisionEvidenceV1,
+    BetaMPCDecisionV1,
+    BetaMPCPlanV1,
+    BetaMPCPriceProjectionV1,
+    BetaMPCResourceReturnV1,
+    BetaMPCSettingsV1,
+    project_beta_mpc_prices,
+)
+from .beta_mpc_solver import solve_beta_mpc_model
 from .boundary import ControlStateV2, IntervalSummaryV2
 from .control import ControllerObservationV2, ControllerV2, DeliveryObservation
 from .controllers import (
@@ -146,6 +159,14 @@ __all__ = [
     "ENVIRONMENT_CONTRACT_DIGEST",
     "ENVIRONMENT_ID",
     "BaselineEvaluation",
+    "BetaMPCCycleReturnV1",
+    "BetaMPCDecisionEvidenceV1",
+    "BetaMPCDecisionV1",
+    "BetaMPCModelV1",
+    "BetaMPCPlanV1",
+    "BetaMPCPriceProjectionV1",
+    "BetaMPCResourceReturnV1",
+    "BetaMPCSettingsV1",
     "CausalControllerEvaluationV2",
     "ControlStateV2",
     "ControllerObservationV2",
@@ -156,6 +177,7 @@ __all__ = [
     "CycleReferenceV1",
     "CycleSettlementV1",
     "CyclicMarketControllerObservationV1",
+    "CyclicMarketEconomicMPCControllerV1",
     "CyclicMarketTaskConfigV1",
     "CyclicReturnConfigV1",
     "DeliveryAwareControllerV2",
@@ -231,6 +253,7 @@ __all__ = [
     "ch4_equivalent_inventory_kg",
     "compute_economic_reward",
     "build_economic_mpc_model",
+    "build_beta_mpc_model",
     "describe",
     "describe_beta_checkpoint_contract",
     "dispatch_mpc_setpoints",
@@ -243,6 +266,8 @@ __all__ = [
     "resolve_process_setpoint_envelope",
     "record_process_setpoint_application",
     "policy_contract_for_environment",
+    "project_beta_mpc_prices",
     "sample_episode",
     "solve_economic_mpc_model",
+    "solve_beta_mpc_model",
 ]

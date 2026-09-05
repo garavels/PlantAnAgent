@@ -6,6 +6,7 @@ from dataclasses import replace
 
 import pytest
 
+from plant_backend.rl.v2.beta_mpc_schema import BetaMPCSettingsV1
 from plant_backend.rl.v2.config import EpisodeConfigV2
 from plant_backend.rl.v2.economic_env import PlantEconomicSetpointEnvV2
 from plant_backend.rl.v2.economic_mpc_controller import (
@@ -34,6 +35,11 @@ def _pair():  # type: ignore[no-untyped-def]
         env.economic_assumptions,
     )
     return env, controller
+
+
+def test_alpha_controller_rejects_beta_settings_identity() -> None:
+    with pytest.raises(TypeError, match="settings must be EconomicMPCSettingsV1"):
+        TariffAwareEconomicMPCControllerV1(BetaMPCSettingsV1())
 
 
 def test_controller_issues_an_executable_controller_neutral_command() -> None:

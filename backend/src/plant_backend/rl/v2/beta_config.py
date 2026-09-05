@@ -28,6 +28,7 @@ CYCLIC_RETURN_SCHEMA = "cyclic-resource-return-v1"
 CYCLE_REFERENCE_SCHEMA = "cycle-opening-reference-v1"
 CYCLE_SETTLEMENT_SCHEMA = "cycle-resource-settlement-v1"
 RESOURCE_NAMES = ("battery", "h2", "co2", "ch4")
+CYCLE_FEASIBILITY_EPSILON = 1e-12
 
 
 def canonical_sha256(value: object) -> str:
@@ -269,7 +270,8 @@ class CycleSettlementV1:
             ):
                 raise ValueError("cycle deficit does not match target and actual")
         expected_feasible = all(
-            expected_deficits[name] <= float(self.tolerances[name]) + 1e-12
+            expected_deficits[name]
+            <= float(self.tolerances[name]) + CYCLE_FEASIBILITY_EPSILON
             for name in RESOURCE_NAMES
         )
         if not isinstance(self.feasible, bool) or self.feasible != expected_feasible:
@@ -304,7 +306,8 @@ class CycleSettlementV1:
             "ch4": config.ch4_tolerance_kg,
         }
         feasible = all(
-            deficits[name] <= tolerances[name] + 1e-12 for name in RESOURCE_NAMES
+            deficits[name] <= tolerances[name] + CYCLE_FEASIBILITY_EPSILON
+            for name in RESOURCE_NAMES
         )
         return cls(
             cycle_index=cycle_index,
@@ -343,6 +346,7 @@ class CycleSettlementV1:
 
 
 __all__ = [
+    "CYCLE_FEASIBILITY_EPSILON",
     "CYCLE_REFERENCE_SCHEMA",
     "CYCLE_SETTLEMENT_SCHEMA",
     "CYCLIC_MARKET_TASK_SCHEMA",
