@@ -1,4 +1,4 @@
-.PHONY: help setup dev backend frontend sim test eval foresight-eval rl-eval rl-ceiling v2-eval v2-weather-eval v2-controller-eval v2-planner v2-mpc v2-mpc-report v2-mpc-setpoint v2-economic-smoke v2-economic-robustness v2-economic-robustness-verify v2-train-dry v2-train v2-rl-eval train-dry train \
+.PHONY: help setup dev backend frontend sim test eval foresight-eval rl-eval rl-ceiling v2-eval v2-weather-eval v2-controller-eval v2-planner v2-mpc v2-mpc-report v2-mpc-setpoint v2-economic-smoke v2-economic-robustness v2-economic-robustness-verify v2-full-day-horizon-repair v2-full-day-horizon-repair-verify v2-train-dry v2-train v2-rl-eval train-dry train \
 	hepa-collect hepa-pretrain-dry hepa-pretrain hepa-finetune-dry hepa-finetune \
 	hepa-eval build clean
 
@@ -90,6 +90,17 @@ v2-economic-robustness: ## run the frozen 20-cell task-robustness tournament
 v2-economic-robustness-verify: ## deeply verify a robustness report and all cell artifacts
 	$(if $(REPORT),,$(error REPORT=/absolute/path/to/report.json is required))
 	uv run --frozen python -m plant_backend.rl.v2.economic_robustness_experiment \
+		verify $(REPORT)
+
+v2-full-day-horizon-repair: ## run the frozen ten-cell M24 horizon-only probe
+	$(if $(REFERENCE_REPORT),,$(error REFERENCE_REPORT=/absolute/path/to/historical/report.json is required))
+	$(if $(OUTPUT),,$(error OUTPUT=/absolute/new/directory/outside/repository is required))
+	uv run --frozen python -m plant_backend.rl.v2.full_day_horizon_repair_experiment \
+		run $(REFERENCE_REPORT) $(OUTPUT)
+
+v2-full-day-horizon-repair-verify: ## deeply verify an M24 report and both evidence directories
+	$(if $(REPORT),,$(error REPORT=/absolute/path/to/report.json is required))
+	uv run --frozen python -m plant_backend.rl.v2.full_day_horizon_repair_experiment \
 		verify $(REPORT)
 
 v2-train-dry:     ## identify the controller-neutral RL task; trains nothing
