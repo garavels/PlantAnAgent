@@ -43,6 +43,12 @@ their timing is not a statistical algorithm comparison. There is one attempt per
 cell and committed source revision. A failed or slower cell is retained. There is
 no replacement seed or outcome-dependent repetition.
 
+Each child receives an exact 3,600-second wall-clock timeout. A timeout is a
+retained failed attempt, including any partial captured standard output and error;
+it is never authorization to retry the cell. Before execution, the operator must
+separately attest both that no other repository benchmark is intentionally running
+and that the current committed revision has no prior capacity attempt.
+
 Each cell uses the production controller-neutral training entry point with:
 
 ```text
@@ -88,12 +94,15 @@ Before creating the output root, the runner must:
 4. record CPU brand where available, architecture, logical and physical CPU count
    where available, physical memory where available, Torch intra/inter-op threads,
    and the declared BLAS/OpenMP thread environment; and
-5. bind an operator assertion that the three cells are sequential and no other
-   repository benchmark is intentionally running.
+5. bind operator assertions that the three cells are sequential, no other
+   repository benchmark is intentionally running, and the committed revision has
+   no prior capacity attempt.
 
 The runner re-captures clean provenance after every child process and after report
 publication. Any source, lock, dependency, or runtime change fails the measurement.
 Host fields that cannot be portably observed are recorded as `null`, never guessed.
+The immediate verifier independently re-captures the host identity and requires an
+exact match with the recorded parent-process identity.
 
 ## Per-cell measurements and admission
 
@@ -137,6 +146,10 @@ and three families. For each successful cell:
 one-policy point estimate = measured fixed overhead + 128 * measured rollout time
 family point estimate     = 5 * one-policy point estimate
 ```
+
+For the integer-nanosecond sensitivity scenarios, the rollout term is calculated
+as `ceil(factor * 128 * measured rollout nanoseconds)` using exact rational factors
+`1/1`, `5/4`, and `3/2`; rounding is applied once after multiplying by 128.
 
 The sequential campaign point estimate is the sum of the three family estimates.
 Because one fixture rollout cannot measure long-run thermal throttling or later
@@ -198,4 +211,3 @@ The result may support only this statement:
 > On the recorded host and clean source revision, three fixture-domain,
 > registered-shaped first rollouts imply the reported sequential capacity scenarios.
 > No registered seed or controller-performance outcome was opened.
-
