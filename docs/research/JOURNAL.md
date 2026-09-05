@@ -6096,7 +6096,9 @@ on the 32 development seeds.
 A policy is development-admissible only if every development episode verifies, completes, remains
 hard-safe, has no forced stop or invalid command, satisfies all four returns at all seven cycle
 boundaries, and matches E-beta service. Family champions are selected lexicographically by paired
-value IQM, lower-20% CVaR, median, positive fraction, inference p99, then lower optimizer seed. At
+value IQM, lower-20% CVaR, median, positive fraction, then lower optimizer seed. Inference
+latency is reported against its independent deployment gate but is not a development-selection
+variable. At
 least four of five PI policies plus a positive-IQM/non-negative-tail PI champion are required before
 held-out opening. Failure is retained as a negative development result; it does not consume or
 quietly replace a held-out seed.
