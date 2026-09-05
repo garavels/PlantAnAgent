@@ -18,6 +18,7 @@ from plant_backend.rl.v2.beta_mpc_schema import (
 )
 from plant_backend.rl.v2.beta_mpc_solver import solve_beta_mpc_model
 from plant_backend.rl.v2.config import EpisodeConfigV2
+from plant_backend.rl.v2.economic_mpc_model import economic_delivery_lock_row
 from plant_backend.rl.v2.economic_mpc_schema import EconomicMPCPlanError
 from plant_backend.rl.v2.economic_mpc_solver import (
     _economic_mpc_plan_values_from_solve_result,
@@ -27,6 +28,7 @@ from plant_backend.rl.v2.economic_mpc_solver import (
 from plant_backend.rl.v2.economics import ch4_equivalent_inventory_kg
 from plant_backend.rl.v2.market import MarketConfigV1
 from plant_backend.rl.v2.mpc_forecast import project_issued_mean_solar
+from plant_backend.rl.v2.mpc_schema import domain_sha256
 
 
 def _model() -> tuple[PlantCyclicMarketEnvV2Beta, BetaMPCSettingsV1, BetaMPCModelV1]:
@@ -110,6 +112,26 @@ def test_beta_solver_publishes_beta_domain_and_feasible_terminal_returns() -> No
             requirement.required_minimum - 1e-6
         )
     assert all(stage.success for stage in plan.stages)
+    assert len(plan.selected_solution_vector) == model.variable_count
+    lock = economic_delivery_lock_row(
+        model,
+        delivered_optimum_kg=plan.primary_delivered_optimum_kg,
+        tolerance_kg=plan.delivery_lock_tolerance_kg,
+    )
+    assert model.audit_solution(
+        plan.selected_solution_vector,
+        tolerance=2.0 * settings.solver_mip_feasibility_tolerance,
+        extra_rows=(lock,),
+    ).valid
+    assert plan.stages[1].solution_sha256 == domain_sha256(
+        BETA_MPC_SOLUTION_DOMAIN,
+        {
+            "model_sha256": model.sha256,
+            "stage": "economic_cost_minimization",
+            "extra_rows": [lock.to_dict()],
+            "values": list(plan.selected_solution_vector),
+        },
+    )
     assert BETA_MPC_SOLUTION_DOMAIN == "cyclic-market-beta-mpc-solution-vector-v1"
 
 

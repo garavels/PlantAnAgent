@@ -75,6 +75,7 @@ def solve_beta_mpc_model(
             cycle_observation_sha256=model.cycle_observation_sha256,
             beta_task_sha256=model.beta_task_sha256,
             cycle_return=model.cycle_return,
+            selected_solution_vector=solved.economic_solution,
         )
     except (EconomicMPCPlanError, TypeError, ValueError) as exc:
         raise BetaMPCPlanError(

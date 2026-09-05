@@ -265,6 +265,7 @@ def test_beta_plan_and_decision_evidence_republish_without_alpha_identity() -> N
         cycle_observation_sha256="6" * 64,
         beta_task_sha256="7" * 64,
         cycle_return=cycle_return,
+        selected_solution_vector=(0.0,),
     )
     targets = ProcessSetpointTargetsV1(
         electrolyser_target_kw=0.0,
@@ -296,6 +297,12 @@ def test_beta_plan_and_decision_evidence_republish_without_alpha_identity() -> N
     assert serialized["plan"]["controller_id"] == BETA_MPC_CONTROLLER_ID
     assert serialized["plan"]["model_version"] == BETA_MPC_MODEL_VERSION
     assert serialized["plan"]["price_projection"]["sha256"] == price.sha256
+    assert serialized["plan"]["selected_solution_vector"] == [0.0]
+
+    with pytest.raises(ValueError, match="non-empty immutable tuple"):
+        replace(plan, selected_solution_vector=())
+    with pytest.raises(ValueError, match="must be finite"):
+        replace(plan, selected_solution_vector=(float("nan"),))
 
     retimed_stages = tuple(
         replace(stage, elapsed_ns=stage.elapsed_ns + 10_000) for stage in plan.stages

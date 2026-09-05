@@ -417,6 +417,7 @@ class BetaMPCPlanV1(EconomicMPCPlanV1):
     cycle_observation_sha256: str
     beta_task_sha256: str
     cycle_return: BetaMPCCycleReturnV1
+    selected_solution_vector: tuple[float, ...]
 
     def __post_init__(self) -> None:
         EconomicMPCPlanV1.__post_init__(self)
@@ -430,6 +431,15 @@ class BetaMPCPlanV1(EconomicMPCPlanV1):
             require_sha256(name, getattr(self, name))
         if not isinstance(self.cycle_return, BetaMPCCycleReturnV1):
             raise TypeError("cycle_return must be BetaMPCCycleReturnV1")
+        if (
+            not isinstance(self.selected_solution_vector, tuple)
+            or not self.selected_solution_vector
+        ):
+            raise ValueError(
+                "selected_solution_vector must be a non-empty immutable tuple"
+            )
+        for index, value in enumerate(self.selected_solution_vector):
+            _finite(f"selected_solution_vector[{index}]", value)
         if self.price_projection.market_issue_sha256 != self.market_issue_sha256:
             raise ValueError("plan price projection is bound to another market issue")
         if self.price_projection.horizon_intervals != self.horizon_intervals:
@@ -465,6 +475,13 @@ class BetaMPCPlanV1(EconomicMPCPlanV1):
                 "cycle_observation_sha256": self.cycle_observation_sha256,
                 "beta_task_sha256": self.beta_task_sha256,
                 "cycle_return": self.cycle_return.to_dict(),
+                # Retain the exact canonical stage-two vector, including
+                # solver-degenerate auxiliary variables.  A detached verifier
+                # cannot reconstruct its raw digest from the reduced physical
+                # plan alone.
+                "selected_solution_vector": [
+                    float(value) for value in self.selected_solution_vector
+                ],
                 "predicted_cycle_boundary": {
                     "battery_kwh": float(self.steps[-1].battery_energy_end_kwh),
                     "h2_kg": float(self.steps[-1].h2_end_kg),

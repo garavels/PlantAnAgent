@@ -1,4 +1,4 @@
-.PHONY: help setup dev backend frontend sim test eval foresight-eval rl-eval rl-ceiling v2-eval v2-weather-eval v2-controller-eval v2-planner v2-mpc v2-mpc-report v2-mpc-setpoint v2-economic-smoke v2-economic-robustness v2-economic-robustness-verify v2-full-day-horizon-repair v2-full-day-horizon-repair-verify v2-train-dry v2-train v2-rl-eval v2-controller-benchmark train-dry train \
+.PHONY: help setup dev backend frontend sim test eval foresight-eval rl-eval rl-ceiling v2-eval v2-weather-eval v2-controller-eval v2-planner v2-mpc v2-mpc-report v2-mpc-setpoint v2-economic-smoke v2-economic-robustness v2-economic-robustness-verify v2-full-day-horizon-repair v2-full-day-horizon-repair-verify v2-train-dry v2-train v2-rl-eval v2-controller-benchmark v2-beta-controller-benchmark v2-beta-controller-benchmark-verify train-dry train \
 	hepa-collect hepa-pretrain-dry hepa-pretrain hepa-finetune-dry hepa-finetune \
 	hepa-eval build clean
 
@@ -124,6 +124,19 @@ v2-controller-benchmark: ## compare H, M24, economic MPC, and trained PPO (exclu
 		python -m plant_backend.rl.v2.controller_benchmark \
 		--checkpoint $(CHECKPOINT) --seed-start $(or $(SEED_START),0) \
 		--count $(or $(SEEDS),1) --json $(OUTPUT)
+
+v2-beta-controller-benchmark: ## compare H, M24, beta economic MPC, and trained PPO
+	$(if $(CHECKPOINT),,$(error CHECKPOINT=<trained-beta-checkpoint-directory> is required))
+	$(if $(OUTPUT),,$(error OUTPUT=/absolute/new/report.json is required))
+	uv run --frozen --group train --group optimisation \
+		python -m plant_backend.rl.v2.beta_controller_benchmark \
+		--checkpoint $(CHECKPOINT) --seed-start $(or $(SEED_START),0) \
+		--count $(or $(SEEDS),1) --json $(OUTPUT)
+
+v2-beta-controller-benchmark-verify: ## deeply verify one beta controller report
+	$(if $(REPORT),,$(error REPORT=/absolute/path/to/report.json is required))
+	uv run --frozen --group optimisation \
+		python -m plant_backend.rl.v2.beta_controller_benchmark_verifier $(REPORT)
 
 train-dry:        ## build the RL environment and print the training plan; trains nothing
 	uv run python -m plant_backend.rl.training.train --dry-run

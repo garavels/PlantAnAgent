@@ -117,6 +117,15 @@ def test_normalized_action_is_bound_to_one_complete_common_execution() -> None:
     assert env.last_process_setpoint_execution is not None
     assert env.last_process_setpoint_execution.sha256 == execution["sha256"]
     assert env.last_setpoint_execution is None
+    truth_states = env.last_minute_truth_states
+    assert truth_states is not None
+    assert len(truth_states) == 16
+    assert [state.step for state in truth_states] == list(range(16))
+    assert (
+        min(state.battery_soc for state in truth_states)
+        == info["metrics"]["min_battery_soc"]
+    )
+    assert "minute_truth_states" not in info
 
     attributions = [
         item["plant"]["battery_charge_attribution"]

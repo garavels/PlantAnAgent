@@ -72,7 +72,7 @@ from .weather import PublicForecastIssueV2
 class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
     """Delivery service under uncertain solar and stateful equipment dynamics."""
 
-    metadata = {"render_modes": []}
+    metadata: dict[str, Any] = {"render_modes": []}
 
     def __init__(
         self,
@@ -127,6 +127,10 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
         self._last_process_setpoint_execution: (
             ProcessSetpointIntervalExecutionV1 | None
         ) = None
+        # Full minute truth is deliberately kept out of the frozen common
+        # execution schema.  Evidence-grade research runners may retain this
+        # read-only trace under their own versioned report contract.
+        self._last_minute_truth_states: tuple[PlantState, ...] | None = None
 
     def reset(
         self,
@@ -140,13 +144,12 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
         ):
             raise ValueError("seed must be a non-negative integer or None")
         super().reset(seed=seed)
-        episode_seed = (
-            int(seed)
-            if seed is not None
-            else int(
+        if seed is None:
+            episode_seed = int(
                 self.np_random.integers(0, np.iinfo(np.uint32).max, dtype=np.uint32)
             )
-        )
+        else:
+            episode_seed = int(seed)
         drawn = self._sample_episode(episode_seed)
         self._episode = drawn
         self.episode_physics_steps = drawn.physics_steps
@@ -178,6 +181,7 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
         self.decisions_taken = 0
         self._last_setpoint_execution = None
         self._last_process_setpoint_execution = None
+        self._last_minute_truth_states = None
         self.control_state = ControlStateV2(
             boundary=self.telemetry,
             electrolyser_commitment=self.simulator.electrolyser_commitment,
@@ -356,6 +360,7 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
             raise RuntimeError("episode is already terminated; call reset()")
         self._last_setpoint_execution = None
         self._last_process_setpoint_execution = None
+        self._last_minute_truth_states = None
 
         before = self.simulator.state
         commitment_before = self.simulator.electrolyser_commitment
@@ -372,6 +377,7 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
         setpoint_applications: list[MPCMinuteApplicationV1] = []
         process_applications: list[ProcessSetpointMinuteApplicationV1] = []
         dispatcher_elapsed_ns: list[int] = []
+        minute_truth_states: list[PlantState] = [deepcopy(self.telemetry)]
 
         for ordinal in range(inner_steps):
             step_before = self.telemetry
@@ -440,6 +446,7 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
                 adjustments.extend(validated.adjustments)
             after_step = self.simulator.step(validated.action)
             next_boundary = self.telemetry
+            minute_truth_states.append(deepcopy(next_boundary))
             interval_telemetry.record(next_boundary, dt_h=self.config.dt_h)
             power.record(
                 requested_action,
@@ -617,6 +624,8 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
             self._last_process_setpoint_execution = process_execution
             info["process_setpoint_execution"] = process_execution.to_dict()
             info["dispatcher_elapsed_ns"] = dispatcher_elapsed_ns
+        if setpoints is not None or process_command is not None:
+            self._last_minute_truth_states = tuple(minute_truth_states)
         # The contract horizon is part of the finite-horizon MDP and pays a
         # one-time inventory salvage value. It is therefore a true termination,
         # not an external time-limit truncation that an RL library may bootstrap.
@@ -776,6 +785,12 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
         """Latest common-command execution record, absent on other action paths."""
 
         return self._last_process_setpoint_execution
+
+    @property
+    def last_minute_truth_states(self) -> tuple[PlantState, ...] | None:
+        """Detached minute states for versioned evidence runners, never Gym info."""
+
+        return deepcopy(self._last_minute_truth_states)
 
 
 __all__ = ["PlantEnvV2"]
