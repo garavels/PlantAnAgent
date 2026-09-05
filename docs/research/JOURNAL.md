@@ -5606,3 +5606,108 @@ human-governance layers, not substitutions for the physical controller.
 The exact mandatory boundary remains: contaminated development mechanism only; no RL,
 controller-superiority, calibrated-economic, held-out, site, commercial, savings, commission, or
 generalization claim.
+
+## 2026-09-05 — Controller-neutral four-arm build completed
+
+The immediate objective was narrowed to finishing the controller-neutral RL integration as a
+real executable build, not another architecture review. No PPO training, protected seed,
+research-scale rollout, HEPA fit, or language-layer experiment ran during this increment. Work
+was split into independent economic-MPC and benchmark tracks, followed by a separate read-only
+integration audit. The starting controller/RL/MPC regression set passed 89 tests with 2 optional
+training-runtime skips before implementation.
+
+Commit `656d66862634827945585e6d5e469b18f80ee693` adds the missing tariff-aware economic
+comparator. It is a separately versioned controller, not the existing service MPC under a new
+label. The model composes the validated service MILP and appends two non-negative terminal
+deficit hinges: methane-equivalent endowment and battery-energy endowment. Surplus receives no
+credit. Solve stage one maximizes feasible delivered methane. Solve stage two locks that service
+optimum within the declared numerical tolerance and minimizes a EUR objective comprising the
+positive-price opportunity cost of accepted solar, bus-side battery charge/support throughput,
+modeled electrolyser running and cold-start reserve, and the two terminal liabilities. The
+controller verifies that the observation's five tariff summaries agree with its complete
+checkpoint-bound day-ahead tariff, projects only the current public issued-mean forecast, emits
+the same `ProcessSetpointCommandV1` used by H and PPO, and propagates solver/validation failure
+without fallback.
+
+The new economic evidence contracts cross-bind observation, forecast projection, settings,
+assumptions, sparse model, plan, first-step targets, and issued command identities. Plan
+construction independently checks typed/contiguous delivery and step sequences, both sides of
+the service optimum, the sum of step delivery, request caps, and reconstruction of the stage-two
+objective from named cost components. The optimizer does not claim exact minute-scale wear:
+low-load classification, ramping, hot starts, aborted starts, forced stops, forecast error,
+guard intervention, and nonlinear plant response remain realized simulator measurements and are
+declared model mismatch.
+
+The independent audit found a genuine numerical boundary defect before completion. A supported
+24-hour task at 100 kg/h and seed 905 solved optimally in HiGHS, but its raw vector contained
+`-4.55e-13` kW at a non-negative startup-power bound. The original canonicalizer could snap
+valid small interior values because the tolerance scaled with a large upper bound; when that
+disturbed a coupled row, it returned the complete raw vector, and the strict physical plan schema
+rejected the negative epsilon. The repair now projects only actual lower/upper violations within
+the absolute solver tolerance, rounds admissible binary noise, independently audits the complete
+canonical vector with the bounded projection budget, and fails closed instead of leaking a raw
+out-of-domain command. Reported solver objectives are checked against the raw vector while plan
+cost evidence is recomputed from the audited canonical vector. The exact 24-hour case is now a
+permanent regression and issues a non-negative controller-neutral command.
+
+Commit `317b094402e025af887a8b7a57945164d63bcbbc` adds the unified evaluator. Each seed is
+instantiated as four independent copies of the checkpoint-recovered economic task. Reset
+preflight compares physical episode, economic episode, assumptions, manifest, and checkpoint
+contract identities before an arm moves. It constructs H, canonical rolling M24, the production
+economic MPC, and the checkpoint-bound deterministic PPO adapter, then runs every arm through
+its own safety guard, one-minute simulator, settlement path, and realized EUR ledger. H, E, and
+PPO retain every typed decision, common command, interval ledger, and minute application. M24
+retains its richer closed transition/evidence graph. Controller and dispatcher latency remain in
+the raw report. A failed arm is never replaced, every failure remains visible, typed economic
+solver stages survive the error boundary, and a cell enters numeric aggregation only if all four
+arms complete.
+
+The production qualification cannot be obtained with a fixed-action fixture, injected economic
+controller, or noncanonical M24 tuning. It requires a trained Stable-Baselines3 PPO checkpoint,
+reopens and validates the checkpoint/task contract and embedded Gym spaces before movement, and
+requires clean committed source. Reports retain the full Git revision, worktree-status digest,
+`uv.lock` digest, Python/numerical runtime versions, checkpoint metadata bytes, policy artifact
+digest, and task identities. Deterministic evidence excludes wall-clock timing and checkpoint
+filesystem location; relocating identical checkpoint bytes now reproduces the same evidence
+identity. The maintained command requests both the `train` and `optimisation` dependency groups,
+accepts at most 32 unique non-negative seeds, and publishes only to an absolute new destination
+outside the source repository without overwriting an owner artifact.
+
+Outcome-free coverage now includes real one-decision and four-decision four-arm runs, common
+manifest equality, complete minute evidence, rolling economic-controller state, fixed-policy
+qualification refusal, custom-arm/tuning refusal, zero-movement preflight failure, typed solver
+failure retention, no-fallback incomplete-pair exclusion, seed bounds, exclusive/absolute CLI
+publication, timing-independent identity, checkpoint-relocation identity, strict economic-plan
+cross-binding, and the high-demand numerical regression. Verification at the completed source
+state was:
+
+| gate | result |
+|---|---:|
+| new economic MPC + four-arm tests | 19 passed |
+| adjacent V2 RL/economic/MPC regression | 121 passed, 2 skipped |
+| complete Python repository | 1,391 passed, 4 skipped |
+| strict typing, five new production modules | passed |
+| Black, compileall, Git whitespace | passed |
+| frontend production build | passed |
+
+The complete repository run emitted the existing Starlette/httpx deprecation warning and the
+known trailing HiGHS diagnostic text; neither is introduced behavior. The optional SB3 stack is
+not hydrated in the ordinary local environment, so the four skipped tests remain intentional.
+An attempted grouped CLI dependency check could not download a transitive `mpmath` wheel because
+network access was unavailable; the already installed runtime still imported the CLI, and the
+maintained grouped command is syntactically verified. No checkpoint or result was fabricated to
+hide that external dependency state.
+
+This closes the software dependency requested for controller-neutral evaluation. It does not
+open a controller result: no research-scale PPO checkpoint exists in repository custody, and the
+colleague's artifact was not supplied to this run. It also does not make the current alpha task a
+commercial benchmark. E sees the complete static public tariff schedule while alpha PPO sees
+five tariff summary fields, and deterministic M24 already solves service. The next scientific
+increment is therefore to admit the colleague checkpoint for a bounded, explicitly development-
+only four-arm run, calibrate or uncertainty-bound the economic coefficients, then freeze a
+prospective multi-policy-seed protocol and detached semantic verifier. Environment V2 beta must
+subsequently introduce cyclic multi-day operation, common versioned forecast information,
+forecast revisions and correlated errors, demand/logistics uncertainty, sensor imperfections,
+degradation/faults, and constrained backup energy. HEPA remains a separately ablated predictive
+representation/safety layer, and natural language remains an operator-governance interface; they
+must not be credited with controller value until factorial evidence isolates their contribution.

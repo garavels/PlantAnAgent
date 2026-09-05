@@ -734,6 +734,30 @@ MPC. See
 [`docs/research/CONTROLLER_NEUTRAL_RL_INTEGRATION.md`](docs/research/CONTROLLER_NEUTRAL_RL_INTEGRATION.md)
 for the exact admission and claim boundary.
 
+The complete controller-neutral comparison path is now implemented as well. For each admitted
+economic-task seed it constructs four independent but identity-matched twins, preflights every
+controller before movement, and then executes **H**, rolling **M24**, tariff-aware economic
+**MPC**, and deterministic **PPO** through the same guarded one-minute physical application
+path. The economic MPC is a real two-stage optimizer: it first preserves the best feasible
+delivery service, then minimizes the declared tariff, battery-throughput, modeled wear, and
+non-rewarding terminal-deficit costs. Failed arms remain failed outcomes; there is no substitute
+policy or heuristic fallback, and incomplete four-way cells do not enter numeric aggregation.
+Qualified runs require clean committed source, canonical M24/E arms, and a trained SB3 policy;
+the report binds the source revision, dependency lock, numerical runtimes, and checkpoint bytes.
+
+```bash
+make v2-controller-benchmark \
+  CHECKPOINT=/absolute/path/to/trained/checkpoint \
+  SEED_START=100 SEEDS=3 \
+  OUTPUT=/absolute/path/to/new-report.json
+```
+
+The repository does not contain a research-scale PPO checkpoint, so this is a finished
+evaluation build rather than a controller-performance result. The full boundary, including the
+economic optimizer's model mismatch and the current unequal tariff representation, is recorded
+in
+[`docs/research/CONTROLLER_NEUTRAL_BENCHMARK_BUILD.md`](docs/research/CONTROLLER_NEUTRAL_BENCHMARK_BUILD.md).
+
 The existing control-room `/api/controller/rl` path remains the historical one-minute 30/5 V1
 runtime. It intentionally rejects these 15-minute four-target checkpoints: deploying them live
 requires a V2 runtime with the same forecast, commitment, tariff, and held-setpoint semantics,

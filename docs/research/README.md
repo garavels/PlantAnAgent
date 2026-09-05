@@ -214,6 +214,14 @@ fallback behavior.
   execution through the common command door for both 57/4 and 62/4 tasks. It authorizes only
   disposable trainer wiring smokes, not a performance-bearing training run or controller claim,
   and records why live V2 orchestration is a separate product-runtime milestone.
+- [`CONTROLLER_NEUTRAL_BENCHMARK_BUILD.md`](CONTROLLER_NEUTRAL_BENCHMARK_BUILD.md)
+  records the completed four-arm evaluation build: independently reset H, rolling M24,
+  tariff-aware economic MPC, and checkpoint-bound PPO arms; common guarded physical execution;
+  a lexicographic service-then-EUR optimizer; failure retention; complete-pair aggregation; and
+  timing- and checkpoint-location-independent deterministic evidence. Qualified runs also bind
+  clean committed source, the dependency lock, numerical runtimes, and canonical arm identities.
+  It records a software boundary only because no research-scale PPO artifact or new controller
+  outcome is stored here.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

@@ -149,6 +149,15 @@ equipment consequences.
   The next bounded step is therefore a preregistered PPO baseline plus tariff-aware economic MPC,
   coefficient calibration/uncertainty, and design of cyclic stochastic Environment V2 beta—not
   a controller or commercial victory claim.
+- The controller-neutral comparison software is now complete. A single admitted economic-task
+  runner preflights identity-matched copies for H, rolling M24, a real tariff-aware economic MPC,
+  and deterministic PPO, then retains common-command, guarded minute execution, economic-ledger,
+  failure, and latency evidence without fallback. Numeric summaries use complete four-way pairs
+  only. This closes the implementation dependency for the next development comparison; it does
+  not open that outcome because the colleague's trained checkpoint is not present in repository
+  custody. The economic MPC's full public tariff projection is also explicitly richer than the
+  alpha PPO's five tariff-summary fields, so equal-information tariff generalization remains a
+  beta-environment requirement.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.
 
