@@ -728,29 +728,29 @@ experiment, not evidence that RL outperforms the heuristic or MPC. See
 [`docs/research/CONTROLLER_NEUTRAL_RL_INTEGRATION.md`](docs/research/CONTROLLER_NEUTRAL_RL_INTEGRATION.md)
 for the exact admission and claim boundary.
 
-The first preregistered economic task-expression cell has since passed: heuristic and service
-MPC both safely delivered 210 kg with zero unmet demand, while their auditable operating values
-differed by 382.532 EUR because terminal inventory, cycling, and equipment exposure differed.
-This establishes that the task can break a saturated delivery tie on one development episode;
-it does not establish general controller or commercial superiority. The next gate is a frozen
-multi-seed, multi-regime robustness tournament before substantive RL training. See
+The first preregistered economic task-expression cell passed: heuristic and service MPC both
+safely delivered 210 kg with zero unmet demand, while their auditable operating values differed
+by 382.532 EUR because terminal inventory, cycling, and equipment exposure differed. This
+established one-cell discrimination, not general controller or commercial superiority. See
 [`docs/research/results/v2_economic_mechanism_smoke_a46aabf.md`](docs/research/results/v2_economic_mechanism_smoke_a46aabf.md).
 
-That tournament is now preregistered and its outcome-blind runner/verifier is implemented. It
-will execute 20 sequential H/M cells across 6/24-hour horizons, 35/42 kg/h demand, and fresh
-development seeds 20--24. Each cell is published and deeply verified before the compact matrix
-report; failures remain visible and wall-clock latency is excluded from deterministic outcome
-hashes. No protected seed has yet been reset. After a clean implementation commit, the admitted
-commands are:
+The subsequent preregistered 20-cell robustness tournament is now complete. All 40 trajectories
+and 36,000 physical minutes pass execution, identity, accounting, safety, and authority gates.
+Both six-hour strata remain service-comparable in 5/5 cells, but both 24-hour strata are
+comparable in 0/5: the six-hour-lookahead MPC fulfills the first two commitments, partially
+fulfills the third, and delivers zero at the fourth while retaining a near-full battery and
+stranded H2/CO2. The task is therefore **not admitted for substantive RL training**. The next
+increment must repair full-day service planning and product-form terminal adequacy under a new
+protocol, not tune a policy against a known horizon defect. The retained report can be verified
+with:
 
 ```bash
-make v2-economic-robustness OUTPUT=/absolute/new/external/directory
 make v2-economic-robustness-verify REPORT=/absolute/external/directory/report.json
 ```
 
-See
-[`docs/research/ECONOMIC_ROBUSTNESS_TOURNAMENT_ADMISSION.md`](docs/research/ECONOMIC_ROBUSTNESS_TOURNAMENT_ADMISSION.md)
-for the execution and claim boundary.
+See [`docs/research/results/v2_economic_robustness_7b1b656.md`](docs/research/results/v2_economic_robustness_7b1b656.md)
+for the complete gate result, mechanism diagnosis, coefficient sensitivity, artifact identities,
+and next architecture decision.
 
 ---
 

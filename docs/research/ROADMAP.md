@@ -122,17 +122,17 @@ equipment consequences.
   loading and runtime behavior remain unchanged. Tiny fixed-policy fixtures and one disposable
   two-transition train/four-transition resume/load/evaluate smoke have run. No research-scale
   four-target policy, comparative RL performance outcome, or selection result exists.
-- The next task-readiness decision is preregistered in
-  `ECONOMIC_ROBUSTNESS_TOURNAMENT_PROTOCOL.md` before any seed 20--24 trajectory is opened.
-  Twenty paired cells cross 6/24-hour horizons and 35/42 kg/h demand. The go/no-go rule requires
-  repeated equal-service value separation in every stratum, including after removing methane
-  endowment liability, plus full-day safety and accounting. A pass admits only bounded
-  development PPO and a tariff-aware economic MPC implementation under new protocols; a failure
-  sends the objective or horizon back for repair. The hash-bound sequential runner and deep
-  whole-directory verifier are now implemented outcome-free. They publish each cell before
-  proceeding, retain failed cells without a surviving-subset substitute, separate timing from
-  deterministic outcome identity, and recompute every R1--R8 input. Protected seeds remain
-  unopened until this implementation is committed cleanly.
+- The registered economic robustness tournament is complete with an execution-valid negative
+  task-readiness result. R1--R3 pass across all 20 cells and 40 trajectories. Both six-hour
+  strata achieve comparable service and material separation in 5/5 cells, but both 24-hour
+  strata achieve comparable service in 0/5, so R4--R7 fail. Every full-day M run completes its
+  first two commitments, only partially completes the third, and delivers zero at the fourth
+  while retaining 7.1--8.0 MWh battery energy and stranded H2/CO2. The mechanism is the frozen
+  six-hour lookahead plus methane-equivalent terminal value: it cannot distinguish deliverable
+  CH4 from feedstock that cannot be converted during the sunless final window. Seeds 20--24 are
+  now development-only. The alpha task is not admitted for substantive RL training; the next
+  work package must preregister a full-day, product-form-aware, service-constrained benchmark
+  before any policy training or economic-controller claim.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.
 

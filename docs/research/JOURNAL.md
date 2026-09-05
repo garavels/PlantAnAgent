@@ -5188,3 +5188,86 @@ rates 35/42 kg/h, seeds 20--24, H then M, sequentially. The first execution is f
 of gate outcome. A failed controller or cell remains evidence; no alternate directory, retry,
 seed, coefficient, controller edit, or parallel cell is authorized. At registration time no
 seed 20--24 environment had been constructed or reset and no tournament outcome had been opened.
+
+## 2026-09-05 — Economic robustness tournament completed; full-day task gate rejected
+
+The exact registered execution was launched once from the clean detached
+`7b1b656964dcac4a25c6f5d4d89fed8abf4d4e0e` worktree with its detached `backend/src` and
+`simulator/src` ahead of the installed runtime. It wrote only to the predeclared external
+directory. The process was allowed to run without partial artifact inspection or concurrent
+analysis. It completed the 20 sequential H/M cells in 288.832 seconds and returned the expected
+nonzero gate-failure status only after writing and self-verifying the complete report. A second
+deep whole-directory verification from the same exact detached source reproduced the report,
+cell ordering, raw/full/deterministic identities, and R1--R8 observations. No cell was rerun.
+
+The completed artifact set contains 20 cell JSON files plus `report.json`, occupying 220,620
+KiB on disk. The raw report SHA-256 is
+`26c9ab4a85693dab05d93f7a1b65e86564c74bfe667ee54813901a466d1e0755`; its domain report
+identity is `e0fe451861cda01f0a788adafed9bf2767f778d0141d7c76147b6eb0f3831f7f`, and its timing-free
+deterministic evidence identity is
+`cff97bfc678f0b7ca47c516f3f7a80e39434aae83a6597576b1539eba5110b96`. The source gate records
+identical clean worktree identity
+`eb34c2f8415f865ca6626a5e37e276441f3401e6d2c8cfdda3d4a13b82c5bbd6` before and after the
+run. Seeds 20--24 are now inspected development evidence and can never be reused as held-out or
+formal validation seeds.
+
+R1, R2, and R3 pass. All 40 arms reach their exact termination, decision, minute, settlement,
+and evidence counts. Every MPC transition and both solve stages close without fallback. Paired
+manifests, source, components, interval drivers, reward traces, endowment liabilities, and
+artifact graphs verify. All arms have zero shutdown, out-of-range decisions, and forced stops;
+M additionally has zero accounting-chain, target-overshoot, reachable-tracking,
+support-authority, or unattributed-deficit violations. The largest M decision latency is
+557.907 ms, largest solver-stage latency 307.866 ms, and largest dispatcher latency 0.594 ms,
+so the failure is not a timeout or execution-integrity artifact.
+
+R4 fails exactly at the horizon boundary. Both six-hour strata are service-comparable in 5/5
+cells; both 24-hour strata are comparable in 0/5. Consequently R5 and R6 also fail in the
+full-day strata because their definitions require equal service, and R7 fails because six-hour
+success cannot substitute for full-day robustness. This chained result must not be paraphrased
+as absence of economic or physical separation: the full-day arms differ strongly, but their
+value difference is confounded by product delivery.
+
+At six hours, H and M both deliver exactly 210 kg at rate 35 and 252 kg at rate 42 in all fresh
+seeds. Default M-minus-H net value is negative in all ten cells: mean -149.833 EUR at rate 35
+and -133.001 EUR at rate 42. Removing methane liability makes those means -228.949 and
+-223.751 EUR. This reverses the earlier seed-0 direction and shows that its +382.532 EUR M
+advantage was not stable across development weather/inventory draws. The new H direction is
+not itself commercially stable: removing declared wear changes mean M-minus-H value to +87.259
+and +100.694 EUR, while the service-plus-solar view yields +8.144 and +9.944 EUR. Doubling
+methane liability flips two of five cells in each stratum to M. R8 therefore confirms that
+uncalibrated synthetic coefficients still control the six-hour ranking.
+
+At 24 hours, H averages 100.00% fill at rate 35 and 97.97% at rate 42; M averages only 73.66%
+and 70.82%. Mean M-minus-H delivered mass is -221.262 and -273.686 kg. Mean raw net differences
+are -4,557.844 and -5,447.800 EUR, but they are not eligible operating-cost comparisons:
+M-minus-H unmet penalties alone contribute -4,425.239 and -5,473.728 EUR, with lower service
+value contributing another -885.048 and -1,094.746 EUR. Favorable methane-liability changes
+partly offset the service loss. Removing that term widens the gaps to -5,427.167 and
+-6,686.385 EUR.
+
+The retained decision graphs make the full-day mechanism deterministic and interpretable. In
+every M arm the first two six-hour commitments are essentially complete, the third is partial,
+and the fourth is zero. Immediately after the third settlement every M arm has zero CH4 but
+still holds 7.122--8.000 MWh battery energy, 177.575--470.290 kg H2, and
+976.664--2,543.948 kg CO2. The frozen planning horizon is six hours, exactly one commitment
+period, so the model sees only the next obligation. Its terminal tie-breaker values CH4 and
+convertible H2/CO2 as one methane-equivalent quantity. The authoritative action model permits
+battery support only for the electrolyser; DAC and methanator require contemporaneous solar.
+The locally optimal plan therefore retains convertible feedstock rather than producing enough
+deliverable CH4 before sunset, then cannot convert it during the dark final window.
+
+This is an informative negative result rather than evidence that Environment V2 remains
+trivially solved. Extending the episode from one to four settlements reveals intertemporal
+inventory and renewable-window pressure. It is also not evidence that H is intrinsically
+superior to optimization or RL: H and M have different logic and information, M was deliberately
+frozen with the short horizon, and the economic coefficients are synthetic.
+
+The protocol decision is now enforced: do not begin substantive PPO training and do not tune
+MPC weights on the opened matrix. The next versioned work package must protect service
+lexicographically, span the next renewable window and all intervening commitments, distinguish
+deliverable methane from feedstock requiring future conversion, and retain the common setpoint,
+dispatcher, guard, and evidence path. Any repair may use seeds 20--24 only as contaminated
+development cases. Formal evaluation will require new seeds plus unseen weather, demand,
+tariff, plant, and equipment regimes. The complete tables, interpretation, claim boundary, and
+artifact custody are recorded in
+`results/v2_economic_robustness_7b1b656.md`.

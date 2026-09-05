@@ -160,8 +160,7 @@ fallback behavior.
   development seeds 20--24. R1--R8 require complete paired evidence, safety, accounting,
   repeated service-comparable separation, full-day survival, and nonterminal expression after
   removing methane liability. Its sequential, clean-source, exclusive-output runner and deep
-  verifier are now implemented and tested without resetting a protected seed. No fresh
-  trajectory has been opened.
+  verifier were implemented before the registered execution.
 - [`ECONOMIC_ROBUSTNESS_TOURNAMENT_ADMISSION.md`](ECONOMIC_ROBUSTNESS_TOURNAMENT_ADMISSION.md)
   maps the frozen matrix to the implementation and outcome-free evidence: paired reset-before-
   action admission, settings identities, immediate per-cell publication, failure retention,
@@ -170,8 +169,14 @@ fallback behavior.
 - [`ECONOMIC_ROBUSTNESS_TOURNAMENT_REGISTRATION.md`](ECONOMIC_ROBUSTNESS_TOURNAMENT_REGISTRATION.md)
   fixes the clean executable revision, detached worktree, external output directory, complete
   matrix, and one-execution/no-retry custody rule before any protected reset or outcome.
+- [`results/v2_economic_robustness_7b1b656.md`](results/v2_economic_robustness_7b1b656.md)
+  records the complete execution-valid negative result. R1--R3 pass across 20/20 cells and
+  40/40 trajectories; both six-hour strata are service-comparable in 5/5 cells, while both
+  24-hour strata are comparable in 0/5. The retained evidence localizes the failure to a
+  six-hour planning horizon and methane-equivalent terminal value that strand H2/CO2 before a
+  sunless fourth commitment. The alpha task is not admitted for substantive RL training.
 - [`CONTROLLER_NEUTRAL_RL_INTEGRATION.md`](CONTROLLER_NEUTRAL_RL_INTEGRATION.md)
-  defines the remaining RL wiring gate: strict four-target training configuration, exact
+  defines the completed RL wiring gate: strict four-target training configuration, exact
   full-task checkpoint compatibility, artifact hashing, checkpoint-bound inference evidence,
   and paired heuristic/policy execution through the common command door. It authorizes only a
   disposable trainer wiring smoke, not a performance-bearing training run or controller claim.
