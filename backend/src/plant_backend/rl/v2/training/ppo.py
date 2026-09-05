@@ -18,7 +18,16 @@ from ..policy_setpoint_controller import (
     policy_contract_for_environment,
 )
 from ..setpoint_env import PlantSetpointEnvV2
-from .config import ControllerNeutralTrainingConfigV1
+from .config import (
+    BETA_FIXTURE_RUN_KIND,
+    BETA_REGISTERED_RUN_KIND,
+    ControllerNeutralTrainingConfigV1,
+)
+from .episode_allocator import (
+    EpisodeAllocatorModeV1,
+    EpisodeSeedAllocatorV1,
+    EpisodeSeedSplitV1,
+)
 
 
 CONFIG_FILE = "training_config.json"
@@ -97,15 +106,90 @@ def policy_contract(
         environment.close()
 
 
-def build_vec_env(config: ControllerNeutralTrainingConfigV1) -> Any:
-    """Create independently seeded synchronous environments for reproducible PPO."""
+def build_episode_allocator(
+    config: ControllerNeutralTrainingConfigV1,
+) -> EpisodeSeedAllocatorV1:
+    """Construct fresh episode custody for an admitted beta-RL run.
+
+    Restored fixture custody is deliberately not accepted here: it must first be
+    admitted against checkpoint metadata and is then supplied explicitly to
+    :func:`build_vec_env`.
+    """
+
+    config.validate()
+    run = config.beta_rl
+    if run is None:
+        raise ValueError("episode custody is available only for a beta RL run")
+    if config.resume_from is not None:
+        raise ValueError(
+            "a resumed beta RL run requires checkpoint-admitted episode custody"
+        )
+    if run.run_kind == BETA_REGISTERED_RUN_KIND:
+        return EpisodeSeedAllocatorV1.registered()
+    if run.run_kind != BETA_FIXTURE_RUN_KIND:  # pragma: no cover - config validates
+        raise ValueError("beta RL run kind is not supported")
+    return EpisodeSeedAllocatorV1.fixture(
+        base_seed=run.episode_seed_base,
+        episode_decisions=config.episode.decision_steps(config.plant),
+    )
+
+
+def _validate_episode_allocator(
+    config: ControllerNeutralTrainingConfigV1,
+    allocator: EpisodeSeedAllocatorV1,
+) -> None:
+    run = config.beta_rl
+    if run is None:
+        raise ValueError("an episode allocator cannot be attached to a legacy PPO run")
+    expected_mode = (
+        EpisodeAllocatorModeV1.REGISTERED
+        if run.run_kind == BETA_REGISTERED_RUN_KIND
+        else EpisodeAllocatorModeV1.FIXTURE
+    )
+    expected_split = (
+        EpisodeSeedSplitV1.TRAINING
+        if run.run_kind == BETA_REGISTERED_RUN_KIND
+        else EpisodeSeedSplitV1.FIXTURE
+    )
+    expected_decisions = config.episode.decision_steps(config.plant)
+    if allocator.mode is not expected_mode or allocator.split is not expected_split:
+        raise ValueError("episode allocator mode or seed split differs from the run")
+    if allocator.base_seed != run.episode_seed_base:
+        raise ValueError("episode allocator base seed differs from the run")
+    if allocator.episode_decisions != expected_decisions:
+        raise ValueError("episode allocator horizon differs from the beta task")
+
+
+def build_vec_env(
+    config: ControllerNeutralTrainingConfigV1,
+    *,
+    episode_allocator: EpisodeSeedAllocatorV1 | None = None,
+) -> Any:
+    """Create synchronous environments with the run's exact seed semantics."""
 
     from stable_baselines3.common.monitor import Monitor
     from stable_baselines3.common.vec_env import DummyVecEnv
 
+    config.validate()
+    if config.beta_rl is None:
+        if episode_allocator is not None:
+            raise ValueError("legacy PPO cannot receive a beta episode allocator")
+    else:
+        if episode_allocator is None:
+            episode_allocator = build_episode_allocator(config)
+        _validate_episode_allocator(config, episode_allocator)
+
     def factory(index: int) -> Callable[[], Any]:
         def build() -> Any:
-            environment: Any = Monitor(make_env(config, index=index))
+            raw_environment: Any = make_env(config, index=index)
+            if episode_allocator is not None:
+                return Monitor(
+                    episode_allocator.wrap(
+                        raw_environment,
+                        environment_index=index,
+                    )
+                )
+            environment: Any = Monitor(raw_environment)
             environment.reset(seed=config.seed + index)
             return environment
 
@@ -419,6 +503,7 @@ __all__ = [
     "RESUME_PARENT_SCHEMA",
     "ResumeCheckpointIdentityV1",
     "admit_resume",
+    "build_episode_allocator",
     "build_model",
     "build_vec_env",
     "make_env",

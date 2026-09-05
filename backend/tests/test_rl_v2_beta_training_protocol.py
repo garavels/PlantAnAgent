@@ -18,6 +18,16 @@ from plant_backend.rl.v2.training.config import (
     BetaRLTrainingRunV1,
     ControllerNeutralTrainingConfigV1,
 )
+from plant_backend.rl.v2.training.episode_allocator import (
+    EpisodeAllocatorModeV1,
+    EpisodeSeedAllocatorV1,
+    EpisodeSeedSplitV1,
+    find_seed_allocator,
+)
+from plant_backend.rl.v2.training.ppo import (
+    build_episode_allocator,
+    build_vec_env,
+)
 
 
 def _beta_config(
@@ -124,3 +134,50 @@ def test_beta_rl_contract_rejects_unknown_nested_fields() -> None:
         BetaRLTrainingRunV1.from_dict({"algorithm": "unknown", "seed_fishing": True})
     with pytest.raises(ValueError, match="three frozen core families"):
         BetaRLTrainingRunV1.from_dict({"algorithm": "PPO-ish"})
+
+
+def test_fixture_vector_environment_uses_allocator_owned_episode_seeds(
+    tmp_path: Path,
+) -> None:
+    config = _beta_config(
+        tmp_path,
+        run=BetaRLTrainingRunV1(episode_seed_base=9_100_000),
+    ).validate()
+    vector = build_vec_env(config)
+    try:
+        observations = vector.reset()
+        allocator = find_seed_allocator(vector)
+
+        assert observations.shape == (4, beta_spaces.OBSERVATION_SIZE)
+        assert allocator.mode is EpisodeAllocatorModeV1.FIXTURE
+        assert allocator.split is EpisodeSeedSplitV1.FIXTURE
+        assert [entry.episode_seed for entry in allocator.ledger] == [
+            9_100_000,
+            9_100_001,
+            9_100_002,
+            9_100_003,
+        ]
+        assert all(entry.ignored_framework_seed is None for entry in allocator.ledger)
+        assert config.seed not in {entry.episode_seed for entry in allocator.ledger}
+    finally:
+        vector.close()
+
+
+def test_vector_environment_rejects_foreign_or_unadmitted_custody(
+    tmp_path: Path,
+) -> None:
+    config = _beta_config(
+        tmp_path,
+        run=BetaRLTrainingRunV1(episode_seed_base=9_100_000),
+    ).validate()
+    foreign = EpisodeSeedAllocatorV1.fixture(
+        base_seed=9_200_000,
+        episode_decisions=config.episode.decision_steps(config.plant),
+    )
+
+    with pytest.raises(ValueError, match="base seed differs"):
+        build_vec_env(config, episode_allocator=foreign)
+    with pytest.raises(ValueError, match="checkpoint-admitted episode custody"):
+        build_episode_allocator(
+            replace(config, resume_from=str(tmp_path / "parent")).validate()
+        )
