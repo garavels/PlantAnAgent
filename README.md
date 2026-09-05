@@ -800,6 +800,20 @@ finite training budget, development selection, and sealed held-out rules are fro
 that protocol authorizes only bounded fixture-domain optimizer smokes, not the registered
 training campaign or any development/held-out reset.
 
+The first fixture-only campaign-capacity attempt is retained as an engineering failure rather than
+silently retried. All three learner families completed optimization, but checkpoint construction
+exposed a family-neutral binary64 aggregation defect between independently summed raw and already-
+normalized rollout costs. The frozen repair canonicalizes only rollout evidence as raw total divided
+once by seven, checks the independent arithmetic path at the declared tolerance, and leaves every
+transition, optimizer input, multiplier update, model setting, seed, and task contract unchanged.
+The V2 capacity evidence path now also separates synthetic test issuance from the non-injectable
+production runner/verifier and binds an exact pre-run-only deterministic identity. No repaired
+capacity attempt, registered training run, or controller result is claimed here. See the retained
+[`failed result`](docs/research/results/v2_constrained_rl_capacity_fab4a55.md), frozen
+[`repair`](docs/research/CONSTRAINED_RL_CAPACITY_REPAIR_001.md), and its evidence-boundary
+[`clarification 001`](docs/research/CONSTRAINED_RL_CAPACITY_REPAIR_CLARIFICATION_001.md) and
+host-identity [`clarification 002`](docs/research/CONSTRAINED_RL_CAPACITY_REPAIR_CLARIFICATION_002.md).
+
 The existing control-room `/api/controller/rl` path remains the historical one-minute 30/5 V1
 runtime. It intentionally rejects these 15-minute four-target checkpoints: deploying them live
 requires a V2 runtime with the same forecast, commitment, tariff, and held-setpoint semantics,

@@ -185,10 +185,14 @@ equipment consequences.
   families share the real 135/4 beta task; exact optimizer/rollout/allocator state is attested on
   load; fixture resume is receipt-bound; and qualified evaluation rejects fixture artifacts. The
   clean full-repository gate passes 1,760 Python tests plus scoped typing/static and frontend
-  checks. This is an outcome-free software result, not evidence of controller superiority. The
-  next bounded prerequisite is a fixture-only throughput/artifact-size estimate for the frozen
-  15-policy campaign. Registered training and development/held-out resets remain closed pending
-  explicit authorization after that estimate.
+  checks. The first fixture-only throughput attempt subsequently retained three post-optimization
+  failures caused by non-associative binary64 rollout-evidence aggregation, not by policy learning;
+  it produced no checkpoints or campaign projection and may not be retried. Repair 001 now
+  canonicalizes only the stored rollout-cost evidence, preserves the independent arithmetic check,
+  and version-separates fixed production evidence from permanently ineligible synthetic tests. A
+  single repaired capacity attempt remains gated on a clean committed release. This is still no
+  evidence of controller superiority. Registered training and development/held-out resets remain
+  closed pending explicit authorization after a valid capacity estimate.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.
 

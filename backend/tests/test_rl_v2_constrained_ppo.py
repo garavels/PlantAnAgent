@@ -41,6 +41,8 @@ from plant_backend.rl.v2.training.constrained_ppo import (
     PILagrangeControllerV1,
     PILagrangeStateV1,
     RolloutLedgerV1,
+    _canonical_rollout_cost_totals,
+    _record_rollout_cost_diagnostics,
     actor_reward_parameter_sha256,
     combine_advantages,
     compute_vector_gae,
@@ -51,6 +53,93 @@ from plant_backend.rl.v2.training.constrained_ppo import (
 
 
 FIXTURE_SEED = 9_000_101
+
+
+def test_rollout_cost_totals_canonicalize_binary64_aggregation_drift() -> None:
+    raw = np.zeros(4, dtype=np.float64)
+    independently_divided = np.zeros(4, dtype=np.float64)
+    contribution = np.asarray((3.7, 0.0, 1.1, 0.0), dtype=np.float64)
+    for _ in range(84):
+        raw += contribution
+        independently_divided += contribution / BETA_EPISODE_CYCLE_COUNT
+
+    canonical_before = raw / BETA_EPISODE_CYCLE_COUNT
+    assert not np.allclose(
+        independently_divided,
+        canonical_before,
+        rtol=0.0,
+        atol=1e-15,
+    )
+
+    retained_raw, canonical_training = _canonical_rollout_cost_totals(
+        raw,
+        independently_divided,
+    )
+    assert retained_raw == tuple(float(value) for value in raw)
+    assert canonical_training == tuple(
+        value / BETA_EPISODE_CYCLE_COUNT for value in retained_raw
+    )
+    assert canonical_training[1] == 0.0
+    assert canonical_training[3] == 0.0
+
+
+def test_rollout_cost_totals_reject_material_mismatch_and_invalid_channels() -> None:
+    raw = (0.0, 7.0, 14.0, 21.0)
+    retained_raw, canonical_training = _canonical_rollout_cost_totals(
+        raw,
+        (0.0, 1.0 + 5e-13, 2.0, 3.0),
+    )
+    assert retained_raw == raw
+    assert canonical_training == (0.0, 1.0, 2.0, 3.0)
+
+    with pytest.raises(ValueError, match="differs materially"):
+        _canonical_rollout_cost_totals(raw, (0.0, 1.001, 2.0, 3.0))
+    with pytest.raises(ValueError, match="non-negative"):
+        _canonical_rollout_cost_totals((0.0, -1.0, 0.0, 0.0), (0.0,) * 4)
+    with pytest.raises(ValueError, match="finite"):
+        _canonical_rollout_cost_totals(raw, (0.0, float("nan"), 2.0, 3.0))
+
+
+def test_rollout_cost_diagnostics_log_raw_and_canonical_vectors() -> None:
+    raw = np.zeros(4, dtype=np.float64)
+    independently_divided = np.zeros(4, dtype=np.float64)
+    contribution = np.asarray((3.7, 0.0, 1.1, 0.0), dtype=np.float64)
+    for _ in range(84):
+        raw += contribution
+        independently_divided += contribution / BETA_EPISODE_CYCLE_COUNT
+    retained_raw, canonical_training = _canonical_rollout_cost_totals(
+        raw,
+        independently_divided,
+    )
+
+    class DiagnosticLogger:
+        def __init__(self) -> None:
+            self.values: dict[str, float] = {}
+
+        def record(self, key: str, value: float) -> None:
+            self.values[key] = value
+
+    logger = DiagnosticLogger()
+    _record_rollout_cost_diagnostics(logger, retained_raw, canonical_training)
+
+    assert logger.values == {
+        **{
+            f"constraint/raw_rollout_cost_{resource}": retained_raw[index]
+            for index, resource in enumerate(RESOURCE_ORDER)
+        },
+        **{
+            f"constraint/rollout_cost_{resource}": canonical_training[index]
+            for index, resource in enumerate(RESOURCE_ORDER)
+        },
+    }
+    assert logger.values["constraint/raw_rollout_cost_battery"] / 7 == (
+        logger.values["constraint/rollout_cost_battery"]
+    )
+    assert logger.values["constraint/rollout_cost_battery"] != (
+        independently_divided[0]
+    )
+    assert logger.values["constraint/raw_rollout_cost_h2"] == 0.0
+    assert logger.values["constraint/rollout_cost_h2"] == 0.0
 
 
 def _resign_constraint_payload(data: dict[str, Any], payload: dict[str, Any]) -> None:

@@ -6424,3 +6424,88 @@ and campaign remain unchanged. A pure 84-contribution floating-point witness, ma
 failure, channel isolation, complete focused/full regression gates, repaired protocol hash binding,
 and a report/domain schema version bump are mandatory. Revision `fab4a55` cannot be retried. Only
 one new attempt on the future clean repair revision may produce a capacity projection.
+
+## 2026-09-05 — Capacity Repair 001 implemented without reopening an outcome
+
+No real 8,192-transition capacity cell, registered optimizer step, development reset, held-out
+reset, controller comparison, HEPA fit, or natural-language evaluation ran in this increment. The
+failed `fab4a55` artifacts remain immutable, their timings remain ineligible for projection, and
+the two unopened fixture stdout logs remain unopened. This increment implements the sole numerical
+repair authorized by `CONSTRAINED_RL_CAPACITY_REPAIR_001.md` and the evidence boundaries frozen in
+clarifications 001 and 002. A repaired capacity execution remains forbidden until this work is
+committed, the worktree is clean, and the complete repository/static/frontend release gates pass
+on that committed revision.
+
+The learner continues to extract and independently accumulate both transition representations:
+raw four-resource settlement cost and the existing transition cost divided by seven cycles. At
+rollout finalization, a new pure canonicalizer validates that both four-vectors are finite and
+non-negative, computes the stored training vector exactly once as elementwise raw total divided by
+seven in binary64, and requires the independently accumulated divided path to agree at frozen
+`rtol=atol=1e-12`. The pending rollout and final ledger now store the raw total and that canonical
+vector. Checkpoint verification reconstructs the same elementwise division and requires exact
+tuple equality. Diagnostic logging publishes both `constraint/raw_rollout_cost_{resource}` and the
+canonical `constraint/rollout_cost_{resource}`. The float32 rollout buffer, reward and cost GAE,
+completed-episode multiplier input, PI/I updates, scalar-family gradient isolation, network,
+optimizer, PPO settings, transition count, batch order, seeds, and environment are unchanged.
+
+The adversarial numerical witness uses 84 repetitions of `(3.7, 0.0, 1.1, 0.0)`. It proves that
+independently summing values already divided by seven differs from summing raw values and dividing
+once by more than `1e-15`, while the canonical ledger relation is exact and the two zero channels
+remain zero. Separate tests reject materially inconsistent independent totals, negative entries,
+NaN, and infinity, and assert the exact raw/canonical logger values without cross-channel leakage.
+
+Independent audit of the first implementation found two evidence-system issues that did not alter
+the learner but had to be closed before one-shot re-execution. First, private dependency-injected
+helpers could be composed into a production-shaped report and generic verifier path. Clarification
+001 froze the correction before those source changes. The production `report.json` is now built
+only inside the public fixed-dependency execution entry point; production execution and
+verification accept no process, clock, host, runtime, or checkpoint hook. Hook-bearing execution
+can issue only a separate `synthetic-report.json`, synthetic schema/domain/execution class, null
+capacity claim, and null campaign projection. Production verification rejects synthetic schema at
+envelope load before runtime, host, or checkpoint access. Checkpoint admission is also split:
+shared code only parses inert paths/configurations; production admission invokes the fixed real
+loader and refuses synthetic identity, while the hook-bearing admission helper first requires the
+synthetic schema and execution class.
+
+Second, the earlier deterministic digest included post-run cells and therefore timing-transitive
+artifact fields, even though it was described as timing-free, while the host thread environment
+accepted arbitrary strings. The V2 deterministic identity is now an exact allowlist containing
+only the bound protocol/repair chain, claim boundary, clean runtime digest, non-clock host capacity,
+operator assertions, frozen cell contract, planned algorithm order and seeds, normalized config-
+template digest, and campaign arithmetic. Status, exit/failure, wall/user/system CPU time, stdout,
+stderr, absolute-root-dependent config bytes, checkpoint presence/hashes/sizes/ledger maxima,
+measurements, and projections remain bound by the full report digest but cannot enter the pre-run
+identity. Adversarial tests mutate every one of those direct and transitive classes and require the
+deterministic digest to remain fixed while the full digest changes; protocol, runtime, non-clock
+host, contract, algorithm order, optimizer seed, fixture seed, assertions, and arithmetic changes
+must alter it. Two distinct external roots must share the deterministic digest while retaining
+different full/config digests.
+
+Clarification 002 freezes the host-thread representation as either JSON null or an integer parsed
+from a canonical positive ASCII base-10 string in `1..2,147,483,647`. Whitespace, signs, zero,
+leading zeros, non-ASCII digits, lists, annotations, timestamp-like text, outcome-like text, and
+overflow fail before creation of the output root. Verification applies the same integer/null
+schema and independently recaptures it. The runner records the operator-selected environment but
+does not inject or rewrite thread variables in child processes. Failure evidence is likewise
+closed: reports contain only one of `training_timeout`, `training_nonzero_exit`,
+`training_launch_error`, or `checkpoint_admission_error` with fixed phase/message pairs. Arbitrary
+exception classes and messages remain absent from canonical evidence.
+
+The frozen raw document digests now bound by the report protocol identity are:
+
+- Repair 001: `55a14887379c48232abc75913950a02de83db3cd5e9144f9ecf323a0a26d5c53`;
+- Clarification 001: `2175c56d85ceb2b363b85316a9e90d437f1249d00a869d86e99676525e22beda`;
+- Clarification 002: `f4db393d54d48aa5deca69b5b1c220bccd94b5fd87bac4fc6b4b40416feca8ea`.
+
+The final focused learner/capacity suite passes **89 tests in 12.97 seconds**. The authoritative
+locked-environment learner, capacity, checkpoint, production-integration, production-integrity,
+training-protocol, runtime-provenance, and strict-config gate passes **285 tests in 209.70
+seconds**. An initial system-Python invocation passed 270 tests but could not run 15
+distribution-provenance-dependent cases because source-path imports do not install `plant-sim`
+package metadata; the same complete selection passed through the locked `uv` environment above.
+Black, Python compilation, and Git whitespace checks pass for all four changed Python files.
+Strict scoped MyPy passes the capacity module directly and the constrained learner with only its
+three pre-existing redundant-cast diagnostics disabled; cache writes and imported legacy modules
+are disabled to avoid the already documented host-MyPy serializer defect. Two independent
+read-only reviews report no remaining P0/P1 evidence-boundary issue. The full repository and
+frontend gates remain the next clean-revision admission checks, not a result claimed by this entry.

@@ -271,6 +271,15 @@ fallback behavior.
   validate them at the existing cumulative tolerance, canonicalize rollout evidence as raw total
   divided once by seven, leave every optimizer/environment setting unchanged, version and bind the
   repaired report, and permit only one new clean-revision attempt.
+- [`CONSTRAINED_RL_CAPACITY_REPAIR_CLARIFICATION_001.md`](CONSTRAINED_RL_CAPACITY_REPAIR_CLARIFICATION_001.md)
+  freezes the repaired evidence-issuance boundary. Dependency-injected executions are permanently
+  synthetic, cannot publish `report.json` or a capacity projection, and cannot enter the fixed
+  production verifier. It also limits the timing-free digest to the exact pre-run identity while
+  the complete report digest retains every observed timing, artifact, and outcome.
+- [`CONSTRAINED_RL_CAPACITY_REPAIR_CLARIFICATION_002.md`](CONSTRAINED_RL_CAPACITY_REPAIR_CLARIFICATION_002.md)
+  closes the remaining host-identity ambiguity. Thread-count environment settings are represented
+  only as absent or canonical positive integers in `1..2,147,483,647`; free text and noncanonical
+  forms fail before output creation and cannot become outcome-bearing deterministic identity.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

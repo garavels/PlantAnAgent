@@ -77,6 +77,8 @@ COST_NETWORK_SEED_OFFSET = 10_000_000
 BETA_EPISODE_CYCLE_COUNT = 7
 BETA_DECISIONS_PER_CYCLE = 96
 BETA_DECISIONS_PER_EPISODE = BETA_EPISODE_CYCLE_COUNT * BETA_DECISIONS_PER_CYCLE
+ROLLOUT_COST_AGGREGATION_RTOL = 1e-12
+ROLLOUT_COST_AGGREGATION_ATOL = 1e-12
 _CONSTRAINT_STATE_PAYLOAD_FIELDS = frozenset(
     {
         "schema",
@@ -137,6 +139,66 @@ def _float_vector4(
         parser(f"{name}[{index}]", value) for index, value in enumerate(values)
     )
     return cast(FloatVector4, normalized)
+
+
+def _canonical_rollout_cost_totals(
+    raw_total: object,
+    independently_accumulated_training_total: object,
+) -> tuple[FloatVector4, FloatVector4]:
+    """Validate both arithmetic paths and return one canonical ledger encoding.
+
+    Every transition already binds ``training_cost = raw_cost / 7`` exactly.
+    Summing the divided binary64 values is not bitwise equivalent to dividing
+    their independently summed raw values after a long rollout.  The former is
+    retained as a consistency witness; the latter is the sole serialized
+    rollout-level representation.
+    """
+
+    raw_values = raw_total.tolist() if isinstance(raw_total, np.ndarray) else raw_total
+    training_values = (
+        independently_accumulated_training_total.tolist()
+        if isinstance(independently_accumulated_training_total, np.ndarray)
+        else independently_accumulated_training_total
+    )
+    raw = _float_vector4("rollout raw cost total", raw_values, non_negative=True)
+    observed_training = _float_vector4(
+        "independently accumulated rollout training cost total",
+        training_values,
+        non_negative=True,
+    )
+    canonical_training = cast(
+        FloatVector4,
+        tuple(value / BETA_EPISODE_CYCLE_COUNT for value in raw),
+    )
+    if not np.allclose(
+        np.asarray(observed_training, dtype=np.float64),
+        np.asarray(canonical_training, dtype=np.float64),
+        rtol=ROLLOUT_COST_AGGREGATION_RTOL,
+        atol=ROLLOUT_COST_AGGREGATION_ATOL,
+    ):
+        raise ValueError(
+            "independently accumulated rollout training cost differs materially "
+            "from raw cost / episode cycles"
+        )
+    return raw, canonical_training
+
+
+def _record_rollout_cost_diagnostics(
+    logger: Any,
+    raw_rollout_cost: FloatVector4,
+    canonical_training_rollout_cost: FloatVector4,
+) -> None:
+    """Record both arithmetic representations without touching optimizer state."""
+
+    for index, resource in enumerate(RESOURCE_ORDER):
+        logger.record(
+            f"constraint/raw_rollout_cost_{resource}",
+            raw_rollout_cost[index],
+        )
+        logger.record(
+            f"constraint/rollout_cost_{resource}",
+            canonical_training_rollout_cost[index],
+        )
 
 
 def _bool_vector4(name: str, values: object) -> BoolVector4:
@@ -3354,25 +3416,28 @@ if TYPE_CHECKING or _TRAINING_IMPORT_ERROR is None:
                     ),
                 )
             )
+            raw_rollout_cost, canonical_training_rollout_cost = (
+                _canonical_rollout_cost_totals(raw_total, training_total)
+            )
             self._pending_rollout = _PendingRolloutV1(
                 started_at=started_at,
                 transition_count=n_steps * env.num_envs,
                 completed=tuple(completed),
                 complete_cycle_count=complete_cycle_count,
                 reward_return=reward_return,
-                raw_cost=cast(FloatVector4, tuple(float(x) for x in raw_total)),
-                training_cost=cast(
-                    FloatVector4, tuple(float(x) for x in training_total)
-                ),
+                raw_cost=raw_rollout_cost,
+                training_cost=canonical_training_rollout_cost,
                 mean_completed_episode_cost=mean_completed,
             )
             for index, resource in enumerate(RESOURCE_ORDER):
                 self.logger.record(
                     f"constraint/multiplier_{resource}", state.multipliers[index]
                 )
-                self.logger.record(
-                    f"constraint/rollout_cost_{resource}", training_total[index]
-                )
+            _record_rollout_cost_diagnostics(
+                self.logger,
+                raw_rollout_cost,
+                canonical_training_rollout_cost,
+            )
             self.logger.record("constraint/completed_episodes", len(completed))
             self.logger.record("constraint/complete_cycles", complete_cycle_count)
             callback.update_locals(locals())
@@ -4234,12 +4299,13 @@ if TYPE_CHECKING or _TRAINING_IMPORT_ERROR is None:
                     expected_completed == 0
                 ):
                     raise ValueError("rollout completed-cost mean is incoherent")
-                if not np.allclose(
-                    np.asarray(ledger.training_cost),
-                    np.asarray(ledger.raw_cost) / BETA_EPISODE_CYCLE_COUNT,
-                    rtol=0.0,
-                    atol=1e-15,
-                ):
+                expected_ledger_training_cost = cast(
+                    FloatVector4,
+                    tuple(
+                        value / BETA_EPISODE_CYCLE_COUNT for value in ledger.raw_cost
+                    ),
+                )
+                if ledger.training_cost != expected_ledger_training_cost:
                     raise ValueError("rollout cost scaling is incoherent")
                 cumulative_ledger_raw += np.asarray(ledger.raw_cost, dtype=np.float64)
                 cumulative_ledger_training += np.asarray(

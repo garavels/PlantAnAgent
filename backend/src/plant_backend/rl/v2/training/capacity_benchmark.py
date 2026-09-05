@@ -2,7 +2,8 @@
 
 This module measures infrastructure, never controller quality.  It runs exactly
 one registered-shaped fixture rollout for each frozen learner family in fresh,
-sequential child processes.  The report intentionally contains no reward, cost,
+sequential child processes.  Static reward, cost, tariff, and market parameters
+remain bound as task identity; the report contains no *observed* reward, cost,
 action, multiplier, loss, market, outage, inventory, or policy-output value.
 """
 
@@ -10,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 from collections.abc import Callable, Mapping, Sequence
+from dataclasses import dataclass
 import hashlib
 import json
 import math
@@ -57,12 +59,45 @@ CAPACITY_PROTOCOL_PATH = "docs/research/CONSTRAINED_RL_CAPACITY_PROTOCOL.md"
 CAPACITY_PROTOCOL_SHA256 = (
     "223947ccd8fb0b8c909ea89ee4019818081f4bf2f884301019450551f7b18b88"
 )
-CAPACITY_REPORT_SCHEMA = "plant-beta-constrained-rl-capacity-report-v1"
+CAPACITY_REPAIR_ID = "plant-beta-constrained-rl-capacity-repair-001"
+CAPACITY_REPAIR_PATH = "docs/research/CONSTRAINED_RL_CAPACITY_REPAIR_001.md"
+CAPACITY_REPAIR_SHA256 = (
+    "55a14887379c48232abc75913950a02de83db3cd5e9144f9ecf323a0a26d5c53"
+)
+CAPACITY_REPAIR_CLARIFICATION_ID = (
+    "plant-beta-constrained-rl-capacity-repair-clarification-001"
+)
+CAPACITY_REPAIR_CLARIFICATION_PATH = (
+    "docs/research/CONSTRAINED_RL_CAPACITY_REPAIR_CLARIFICATION_001.md"
+)
+CAPACITY_REPAIR_CLARIFICATION_SHA256 = (
+    "2175c56d85ceb2b363b85316a9e90d437f1249d00a869d86e99676525e22beda"
+)
+CAPACITY_REPAIR_CLARIFICATION_002_ID = (
+    "plant-beta-constrained-rl-capacity-repair-clarification-002"
+)
+CAPACITY_REPAIR_CLARIFICATION_002_PATH = (
+    "docs/research/CONSTRAINED_RL_CAPACITY_REPAIR_CLARIFICATION_002.md"
+)
+CAPACITY_REPAIR_CLARIFICATION_002_SHA256 = (
+    "f4db393d54d48aa5deca69b5b1c220bccd94b5fd87bac4fc6b4b40416feca8ea"
+)
+CAPACITY_REPORT_SCHEMA = "plant-beta-constrained-rl-capacity-report-v2"
 CAPACITY_REPORT_DOMAIN = CAPACITY_REPORT_SCHEMA
 CAPACITY_DETERMINISTIC_DOMAIN = (
-    "plant-beta-constrained-rl-capacity-deterministic-evidence-v1"
+    "plant-beta-constrained-rl-capacity-deterministic-evidence-v2"
+)
+CAPACITY_SYNTHETIC_REPORT_SCHEMA = (
+    "plant-beta-constrained-rl-capacity-synthetic-report-v1"
+)
+CAPACITY_SYNTHETIC_REPORT_DOMAIN = CAPACITY_SYNTHETIC_REPORT_SCHEMA
+CAPACITY_SYNTHETIC_DETERMINISTIC_DOMAIN = (
+    "plant-beta-constrained-rl-capacity-synthetic-deterministic-evidence-v1"
 )
 CAPACITY_CLAIM = "fixture-capacity-only; no controller-performance evidence"
+CAPACITY_SYNTHETIC_CLAIM = (
+    "synthetic-test-only; no capacity or controller-performance evidence"
+)
 CAPACITY_RESULT_CLAIM = (
     "On the recorded host and clean source revision, three fixture-domain, "
     "registered-shaped first rollouts imply the reported sequential capacity "
@@ -116,6 +151,8 @@ REGISTERED_CAMPAIGN_ARITHMETIC = {
 }
 CAPACITY_CHILD_TIMEOUT_S = 3_600
 CAPACITY_REPORT_FILENAME = "report.json"
+CAPACITY_SYNTHETIC_REPORT_FILENAME = "synthetic-report.json"
+CAPACITY_SYNTHETIC_EXECUTION_CLASS = "synthetic-test-only"
 CAPACITY_CHECKPOINT_FILES = (
     checkpoints.POLICY_FILE,
     checkpoints.METADATA_FILE,
@@ -128,6 +165,7 @@ CAPACITY_THREAD_ENVIRONMENT = (
     "VECLIB_MAXIMUM_THREADS",
     "NUMEXPR_NUM_THREADS",
 )
+CAPACITY_MAX_THREAD_COUNT = 2_147_483_647
 
 _REPORT_FIELDS = frozenset(
     {
@@ -147,6 +185,7 @@ _REPORT_FIELDS = frozenset(
         "sha256",
     }
 )
+_SYNTHETIC_REPORT_FIELDS = _REPORT_FIELDS | frozenset({"execution_class"})
 _CELL_FIELDS = frozenset(
     {
         "order",
@@ -232,7 +271,7 @@ _OPERATOR_ASSERTION_FIELDS = frozenset(
         "attempts_not_retried_or_selected",
     }
 )
-_FAILURE_FIELDS = frozenset({"phase", "exception_type", "message"})
+_FAILURE_FIELDS = frozenset({"phase", "category", "message"})
 _CAMPAIGN_PROJECTION_FIELDS = frozenset(
     {
         "sequential_wall_ns_by_factor",
@@ -242,6 +281,25 @@ _CAMPAIGN_PROJECTION_FIELDS = frozenset(
         "storage_is_a_structural_planning_allowance_not_zip_prediction",
     }
 )
+
+_FAILURE_CONTRACT = {
+    "training_timeout": (
+        "training_process",
+        "training process timed out; retained output is identified only by digest",
+    ),
+    "training_nonzero_exit": (
+        "training_process",
+        "training process failed; retained output is identified only by digest",
+    ),
+    "training_launch_error": (
+        "training_process",
+        "training process could not be launched; no exception detail is reported",
+    ),
+    "checkpoint_admission_error": (
+        "checkpoint_admission",
+        "checkpoint admission failed; no controller outcome is reported",
+    ),
+}
 
 
 class CapacityBenchmarkError(RuntimeError):
@@ -325,21 +383,15 @@ def _relative_path(name: str, value: object) -> str:
     return value
 
 
-def _failure(phase: str, reason: BaseException) -> dict[str, str]:
-    messages = {
-        "training_process": (
-            "training process failed; retained output is identified only by digest"
-        ),
-        "checkpoint_admission": (
-            "checkpoint admission failed; no controller outcome is reported"
-        ),
-    }
-    if phase not in messages:
-        raise ValueError("capacity failure phase is not recognized")
+def _failure(category: str) -> dict[str, str]:
+    try:
+        phase, message = _FAILURE_CONTRACT[category]
+    except KeyError as reason:
+        raise ValueError("capacity failure category is not recognized") from reason
     return {
         "phase": phase,
-        "exception_type": type(reason).__name__,
-        "message": messages[phase],
+        "category": category,
+        "message": message,
     }
 
 
@@ -454,17 +506,58 @@ def _publish_json_exclusive(target: Path, payload: Mapping[str, Any]) -> str:
     )
 
 
-def _protocol_identity(repository: Path) -> dict[str, str]:
+def _protocol_identity(repository: Path) -> dict[str, Any]:
     protocol = repository / CAPACITY_PROTOCOL_PATH
     digest = hashlib.sha256(_read_regular_bytes(protocol)).hexdigest()
     if digest != CAPACITY_PROTOCOL_SHA256:
         raise CapacityBenchmarkError(
             "capacity protocol content differs from frozen SHA-256"
         )
+    repair = repository / CAPACITY_REPAIR_PATH
+    repair_digest = hashlib.sha256(_read_regular_bytes(repair)).hexdigest()
+    if repair_digest != CAPACITY_REPAIR_SHA256:
+        raise CapacityBenchmarkError(
+            "capacity repair protocol content differs from frozen SHA-256"
+        )
+    clarification = repository / CAPACITY_REPAIR_CLARIFICATION_PATH
+    clarification_digest = hashlib.sha256(
+        _read_regular_bytes(clarification)
+    ).hexdigest()
+    if clarification_digest != CAPACITY_REPAIR_CLARIFICATION_SHA256:
+        raise CapacityBenchmarkError(
+            "capacity repair clarification content differs from frozen SHA-256"
+        )
+    clarification_002 = repository / CAPACITY_REPAIR_CLARIFICATION_002_PATH
+    clarification_002_digest = hashlib.sha256(
+        _read_regular_bytes(clarification_002)
+    ).hexdigest()
+    if clarification_002_digest != CAPACITY_REPAIR_CLARIFICATION_002_SHA256:
+        raise CapacityBenchmarkError(
+            "capacity repair clarification 002 content differs from frozen SHA-256"
+        )
     return {
         "id": CAPACITY_PROTOCOL_ID,
         "path": CAPACITY_PROTOCOL_PATH,
         "raw_file_sha256": digest,
+        "repairs": [
+            {
+                "id": CAPACITY_REPAIR_ID,
+                "path": CAPACITY_REPAIR_PATH,
+                "raw_file_sha256": repair_digest,
+                "clarifications": [
+                    {
+                        "id": CAPACITY_REPAIR_CLARIFICATION_ID,
+                        "path": CAPACITY_REPAIR_CLARIFICATION_PATH,
+                        "raw_file_sha256": clarification_digest,
+                    },
+                    {
+                        "id": CAPACITY_REPAIR_CLARIFICATION_002_ID,
+                        "path": CAPACITY_REPAIR_CLARIFICATION_002_PATH,
+                        "raw_file_sha256": clarification_002_digest,
+                    },
+                ],
+            }
+        ],
     }
 
 
@@ -642,6 +735,21 @@ def _optional_positive_int(value: str | None) -> int | None:
     return parsed if parsed > 0 else None
 
 
+def _canonical_thread_count(name: str, value: str | None) -> int | None:
+    if value is None:
+        return None
+    if not value or not value.isascii() or not value.isdigit() or value.startswith("0"):
+        raise CapacityBenchmarkError(
+            f"host thread setting {name} must be a canonical positive integer"
+        )
+    parsed = int(value)
+    if parsed < 1 or parsed > CAPACITY_MAX_THREAD_COUNT or str(parsed) != value:
+        raise CapacityBenchmarkError(
+            f"host thread setting {name} is outside the canonical range"
+        )
+    return parsed
+
+
 def _physical_memory_bytes() -> int | None:
     darwin = _optional_positive_int(_sysctl_value("hw.memsize"))
     if darwin is not None:
@@ -675,7 +783,8 @@ def _host_identity() -> dict[str, Any]:
         "torch_intraop_threads": int(torch.get_num_threads()),
         "torch_interop_threads": int(torch.get_num_interop_threads()),
         "thread_environment": {
-            name: os.environ.get(name) for name in CAPACITY_THREAD_ENVIRONMENT
+            name: _canonical_thread_count(name, os.environ.get(name))
+            for name in CAPACITY_THREAD_ENVIRONMENT
         },
         "clock": {
             "name": "time.perf_counter_ns",
@@ -1134,7 +1243,7 @@ def _execute_cell(
         )
     except subprocess.TimeoutExpired as reason:
         exit_code = None
-        failure = _failure("training_process", reason)
+        failure = _failure("training_timeout")
         for supplied, destination in (
             (reason.stdout, "stdout"),
             (reason.stderr, "stderr"),
@@ -1149,9 +1258,9 @@ def _execute_cell(
                 stdout = raw
             else:
                 stderr = raw
-    except Exception as reason:
+    except Exception:
         exit_code = None
-        failure = _failure("training_process", reason)
+        failure = _failure("training_launch_error")
     finished_ns = clock_ns()
     wall_ns = finished_ns - started_ns
     if wall_ns <= 0:
@@ -1164,10 +1273,7 @@ def _execute_cell(
     measurement: dict[str, Any] | None = None
     projection: dict[str, Any] | None = None
     if failure is None and exit_code != 0:
-        failure = _failure(
-            "training_process",
-            ChildProcessError(f"training child exited with status {exit_code}"),
-        )
+        failure = _failure("training_nonzero_exit")
     if failure is None:
         try:
             checkpoint = output / "checkpoint"
@@ -1181,8 +1287,8 @@ def _execute_cell(
                 raise CapacityBenchmarkError("admitted optimizer-step count differs")
             measurement = _build_measurement(wall_ns, rollout_ns)
             projection = _build_projection(measurement, checkpoint_record)
-        except Exception as reason:
-            failure = _failure("checkpoint_admission", reason)
+        except Exception:
+            failure = _failure("checkpoint_admission_error")
             checkpoint_record = None
             measurement = None
             projection = None
@@ -1215,90 +1321,86 @@ def _deterministic_evidence(
     runtime: BetaTrainingRuntimeProvenanceV1,
     host: Mapping[str, Any],
     cell_contract: Mapping[str, Any],
-    cells: Sequence[Mapping[str, Any]],
+    claim_boundary: str = CAPACITY_CLAIM,
 ) -> dict[str, Any]:
+    """Return only the frozen pre-run measurement identity.
+
+    Post-run cells are intentionally absent.  The full report digest owns all
+    timing, logs, artifacts, outcomes, sizes, failures, and projections.
+    """
+
+    normalized_host = _verify_host(host)
+    normalized_host.pop("clock")
+    template_sha256 = _sha256(
+        "capacity normalized training template sha256",
+        cell_contract.get("training_config_template_sha256"),
+    )
     return {
         "protocol": dict(protocol),
-        "claim_boundary": CAPACITY_CLAIM,
+        "claim_boundary": claim_boundary,
         "runtime_provenance_sha256": runtime.sha256,
-        "host": dict(host),
+        "host_capacity": normalized_host,
+        "operator_assertions": _operator_assertions(),
         "cell_contract": dict(cell_contract),
-        "cells": [
+        "planned_cells": [
             {
-                "order": cell["order"],
-                "algorithm": cell["algorithm"],
-                "optimizer_seed": cell["optimizer_seed"],
-                "fixture_episode_seed_base": cell["fixture_episode_seed_base"],
-                "config_path": cell["config_path"],
-                "config_sha256": cell["config_sha256"],
-                "output_path": cell["output_path"],
-                "status": cell["status"],
-                "exit_code": cell["exit_code"],
-                "stdout": cell["stdout"],
-                "stderr": cell["stderr"],
-                "checkpoint": cell["checkpoint"],
-                "failure": cell["failure"],
+                "order": order,
+                "algorithm": algorithm,
+                "optimizer_seed": CAPACITY_OPTIMIZER_SEED,
+                "fixture_episode_seed_base": CAPACITY_FIXTURE_EPISODE_SEED_BASE,
+                "normalized_training_config_template_sha256": template_sha256,
             }
-            for cell in cells
+            for order, algorithm in enumerate(CAPACITY_ALGORITHM_ORDER, start=1)
         ],
-        "campaign_arithmetic": REGISTERED_CAMPAIGN_ARITHMETIC,
-    }
-
-
-def _build_report(
-    *,
-    protocol: Mapping[str, Any],
-    runtime: BetaTrainingRuntimeProvenanceV1,
-    host: Mapping[str, Any],
-    cells: Sequence[Mapping[str, Any]],
-) -> dict[str, Any]:
-    contract = _cell_contract()
-    projection = _campaign_projection(cells)
-    status = "completed" if projection is not None else "failed"
-    body: dict[str, Any] = {
-        "schema": CAPACITY_REPORT_SCHEMA,
-        "protocol": dict(protocol),
-        "claim_boundary": CAPACITY_CLAIM,
-        "result_claim": CAPACITY_RESULT_CLAIM if status == "completed" else None,
-        "status": status,
-        "operator_assertions": {
-            "cells_executed_sequentially": True,
-            "no_other_repository_benchmark_intentionally_running": True,
-            "attempts_not_retried_or_selected": True,
-        },
-        "runtime_provenance": runtime.to_dict(),
-        "host": dict(host),
-        "cell_contract": contract,
-        "cells": [dict(cell) for cell in cells],
         "campaign_arithmetic": dict(REGISTERED_CAMPAIGN_ARITHMETIC),
-        "campaign_projection": projection,
-        "deterministic_evidence_sha256": domain_sha256(
-            CAPACITY_DETERMINISTIC_DOMAIN,
-            _deterministic_evidence(
-                protocol=protocol,
-                runtime=runtime,
-                host=host,
-                cell_contract=contract,
-                cells=cells,
-            ),
-        ),
     }
-    body["sha256"] = domain_sha256(CAPACITY_REPORT_DOMAIN, body)
-    return body
 
 
-def _execute_capacity_benchmark(
+def _operator_assertions() -> dict[str, bool]:
+    return {
+        "cells_executed_sequentially": True,
+        "no_other_repository_benchmark_intentionally_running": True,
+        "attempts_not_retried_or_selected": True,
+    }
+
+
+@dataclass(frozen=True)
+class _CapacityRunData:
+    """Collected cell data with no report-issuance authority."""
+
+    root: Path
+    protocol: Mapping[str, Any]
+    runtime: BetaTrainingRuntimeProvenanceV1
+    host: Mapping[str, Any]
+    cells: tuple[Mapping[str, Any], ...]
+
+
+@dataclass(frozen=True)
+class _SyntheticCapacityRunTrace:
+    """A dependency-injected trace that is permanently synthetic."""
+
+    data: _CapacityRunData
+
+
+@dataclass(frozen=True)
+class _ProductionCapacityRunTrace:
+    """A trace created only through fixed production dependencies."""
+
+    data: _CapacityRunData
+
+
+def _collect_capacity_cells(
     output: Path | str,
     *,
     assert_exclusive: bool,
     assert_first_attempt: bool,
-    _process_runner: ProcessRunner = _default_process_runner,
-    _checkpoint_admitter: CheckpointAdmitter = _admit_checkpoint,
-    _runtime_capture: RuntimeCapture = _clean_runtime_capture,
-    _host_capture: Callable[[], Mapping[str, Any]] = _host_identity,
-    _clock_ns: Callable[[], int] = time.perf_counter_ns,
-) -> dict[str, Any]:
-    """Internal executor with explicit seams for deterministic adversarial tests."""
+    process_runner: ProcessRunner,
+    checkpoint_admitter: CheckpointAdmitter,
+    runtime_capture: RuntimeCapture,
+    host_capture: Callable[[], Mapping[str, Any]],
+    clock_ns: Callable[[], int],
+) -> _CapacityRunData:
+    """Collect cells through explicit dependencies without issuing a report."""
 
     if assert_exclusive is not True:
         raise ValueError(
@@ -1312,10 +1414,10 @@ def _execute_capacity_benchmark(
         )
     repository = _repository_root().resolve(strict=True)
     protocol = _protocol_identity(repository)
-    runtime = _runtime_capture()
+    runtime = runtime_capture()
     if not runtime.worktree_clean:
         raise CapacityBenchmarkError("capacity benchmark requires a clean worktree")
-    host = _verify_host(_host_capture())
+    host = _verify_host(host_capture())
     root = _new_external_root(Path(output).expanduser(), repository)
     cells: list[dict[str, Any]] = []
     for order, algorithm in enumerate(CAPACITY_ALGORITHM_ORDER, start=1):
@@ -1325,27 +1427,135 @@ def _execute_capacity_benchmark(
             order=order,
             algorithm=algorithm,
             runtime=runtime,
-            process_runner=_process_runner,
-            checkpoint_admitter=_checkpoint_admitter,
-            clock_ns=_clock_ns,
+            process_runner=process_runner,
+            checkpoint_admitter=checkpoint_admitter,
+            clock_ns=clock_ns,
         )
         cells.append(cell)
-        verify_runtime_unchanged(runtime, _runtime_capture())
-    report = _build_report(
+        verify_runtime_unchanged(runtime, runtime_capture())
+    return _CapacityRunData(
+        root=root,
         protocol=protocol,
         runtime=runtime,
         host=host,
-        cells=cells,
+        cells=tuple(cells),
     )
-    report_path = root / CAPACITY_REPORT_FILENAME
+
+
+def _run_synthetic_capacity_cells(
+    output: Path | str,
+    *,
+    assert_exclusive: bool,
+    assert_first_attempt: bool,
+    process_runner: ProcessRunner,
+    checkpoint_admitter: CheckpointAdmitter,
+    runtime_capture: RuntimeCapture,
+    host_capture: Callable[[], Mapping[str, Any]],
+    clock_ns: Callable[[], int],
+) -> _SyntheticCapacityRunTrace:
+    return _SyntheticCapacityRunTrace(
+        data=_collect_capacity_cells(
+            output,
+            assert_exclusive=assert_exclusive,
+            assert_first_attempt=assert_first_attempt,
+            process_runner=process_runner,
+            checkpoint_admitter=checkpoint_admitter,
+            runtime_capture=runtime_capture,
+            host_capture=host_capture,
+            clock_ns=clock_ns,
+        )
+    )
+
+
+def _run_production_capacity_cells(
+    output: Path | str,
+    *,
+    assert_exclusive: bool,
+    assert_first_attempt: bool,
+) -> _ProductionCapacityRunTrace:
+    return _ProductionCapacityRunTrace(
+        data=_collect_capacity_cells(
+            output,
+            assert_exclusive=assert_exclusive,
+            assert_first_attempt=assert_first_attempt,
+            process_runner=_default_process_runner,
+            checkpoint_admitter=_admit_checkpoint,
+            runtime_capture=_clean_runtime_capture,
+            host_capture=_host_identity,
+            clock_ns=time.perf_counter_ns,
+        )
+    )
+
+
+def _build_synthetic_report(trace: _SyntheticCapacityRunTrace) -> dict[str, Any]:
+    """Build explicitly ineligible evidence from a synthetic trace only."""
+
+    data = trace.data
+    contract = _cell_contract()
+    status = "completed" if _campaign_projection(data.cells) is not None else "failed"
+    body = {
+        "schema": CAPACITY_SYNTHETIC_REPORT_SCHEMA,
+        "protocol": dict(data.protocol),
+        "claim_boundary": CAPACITY_SYNTHETIC_CLAIM,
+        "status": status,
+        "operator_assertions": _operator_assertions(),
+        "runtime_provenance": data.runtime.to_dict(),
+        "host": dict(data.host),
+        "cell_contract": contract,
+        "cells": [dict(cell) for cell in data.cells],
+        "campaign_arithmetic": dict(REGISTERED_CAMPAIGN_ARITHMETIC),
+        "deterministic_evidence_sha256": domain_sha256(
+            CAPACITY_SYNTHETIC_DETERMINISTIC_DOMAIN,
+            _deterministic_evidence(
+                protocol=data.protocol,
+                runtime=data.runtime,
+                host=data.host,
+                cell_contract=contract,
+                claim_boundary=CAPACITY_SYNTHETIC_CLAIM,
+            ),
+        ),
+        "execution_class": CAPACITY_SYNTHETIC_EXECUTION_CLASS,
+        "result_claim": None,
+        "campaign_projection": None,
+    }
+    body["sha256"] = domain_sha256(CAPACITY_SYNTHETIC_REPORT_DOMAIN, body)
+    return body
+
+
+def _execute_synthetic_capacity_benchmark(
+    output: Path | str,
+    *,
+    assert_exclusive: bool,
+    assert_first_attempt: bool,
+    process_runner: ProcessRunner,
+    checkpoint_admitter: CheckpointAdmitter,
+    runtime_capture: RuntimeCapture,
+    host_capture: Callable[[], Mapping[str, Any]],
+    clock_ns: Callable[[], int],
+) -> dict[str, Any]:
+    """Serialize an explicitly synthetic, production-ineligible test report."""
+
+    trace = _run_synthetic_capacity_cells(
+        output,
+        assert_exclusive=assert_exclusive,
+        assert_first_attempt=assert_first_attempt,
+        process_runner=process_runner,
+        checkpoint_admitter=checkpoint_admitter,
+        runtime_capture=runtime_capture,
+        host_capture=host_capture,
+        clock_ns=clock_ns,
+    )
+    report = _build_synthetic_report(trace)
+    data = trace.data
+    report_path = data.root / CAPACITY_SYNTHETIC_REPORT_FILENAME
     raw_file_sha256 = _publish_json_exclusive(report_path, report)
-    _verify_capacity_report(
+    _verify_synthetic_capacity_report(
         report_path,
-        _runtime_capture=_runtime_capture,
-        _checkpoint_admitter=_checkpoint_admitter,
-        _host_capture=_host_capture,
+        runtime_capture=runtime_capture,
+        checkpoint_admitter=checkpoint_admitter,
+        host_capture=host_capture,
     )
-    verify_runtime_unchanged(runtime, _runtime_capture())
+    verify_runtime_unchanged(data.runtime, runtime_capture())
     return {
         "report": str(report_path),
         "raw_file_sha256": raw_file_sha256,
@@ -1360,18 +1570,51 @@ def execute_capacity_benchmark(
     assert_exclusive: bool,
     assert_first_attempt: bool,
 ) -> dict[str, Any]:
-    """Execute the production capacity cells without injectable measurement hooks."""
+    """Execute and issue production evidence through fixed concrete dependencies."""
 
-    return _execute_capacity_benchmark(
+    trace = _run_production_capacity_cells(
         output,
         assert_exclusive=assert_exclusive,
         assert_first_attempt=assert_first_attempt,
-        _process_runner=_default_process_runner,
-        _checkpoint_admitter=_admit_checkpoint,
-        _runtime_capture=_clean_runtime_capture,
-        _host_capture=_host_identity,
-        _clock_ns=time.perf_counter_ns,
     )
+    data = trace.data
+    contract = _cell_contract()
+    projection = _campaign_projection(data.cells)
+    status = "completed" if projection is not None else "failed"
+    report = {
+        "schema": CAPACITY_REPORT_SCHEMA,
+        "protocol": dict(data.protocol),
+        "claim_boundary": CAPACITY_CLAIM,
+        "status": status,
+        "operator_assertions": _operator_assertions(),
+        "runtime_provenance": data.runtime.to_dict(),
+        "host": dict(data.host),
+        "cell_contract": contract,
+        "cells": [dict(cell) for cell in data.cells],
+        "campaign_arithmetic": dict(REGISTERED_CAMPAIGN_ARITHMETIC),
+        "deterministic_evidence_sha256": domain_sha256(
+            CAPACITY_DETERMINISTIC_DOMAIN,
+            _deterministic_evidence(
+                protocol=data.protocol,
+                runtime=data.runtime,
+                host=data.host,
+                cell_contract=contract,
+            ),
+        ),
+        "result_claim": (CAPACITY_RESULT_CLAIM if projection is not None else None),
+        "campaign_projection": projection,
+    }
+    report["sha256"] = domain_sha256(CAPACITY_REPORT_DOMAIN, report)
+    report_path = data.root / CAPACITY_REPORT_FILENAME
+    raw_file_sha256 = _publish_json_exclusive(report_path, report)
+    _verify_capacity_report(report_path)
+    verify_runtime_unchanged(data.runtime, _clean_runtime_capture())
+    return {
+        "report": str(report_path),
+        "raw_file_sha256": raw_file_sha256,
+        "report_sha256": report["sha256"],
+        "status": report["status"],
+    }
 
 
 def _verify_host(value: object) -> dict[str, Any]:
@@ -1398,8 +1641,12 @@ def _verify_host(value: object) -> dict[str, Any]:
     if set(thread_environment) != set(CAPACITY_THREAD_ENVIRONMENT):
         raise CapacityBenchmarkError("host thread-environment fields differ")
     for name, setting in thread_environment.items():
-        if setting is not None and not isinstance(setting, str):
-            raise TypeError(f"thread environment {name} must be null or a string")
+        if setting is not None:
+            parsed = _integer(f"thread environment {name}", setting, minimum=1)
+            if parsed > CAPACITY_MAX_THREAD_COUNT:
+                raise ValueError(
+                    f"thread environment {name} exceeds the canonical range"
+                )
     clock = dict(_mapping("capacity clock", host["clock"]))
     _exact_keys("capacity clock", clock, _CLOCK_FIELDS)
     if clock["name"] != "time.perf_counter_ns":
@@ -1492,23 +1739,13 @@ def _verify_checkpoint_record(root: Path, value: object) -> dict[str, Any]:
 def _verify_failure(value: object) -> dict[str, str]:
     failure = dict(_mapping("capacity failure", value))
     _exact_keys("capacity failure", failure, _FAILURE_FIELDS)
-    phase = failure["phase"]
-    if phase not in {"training_process", "checkpoint_admission"}:
-        raise CapacityBenchmarkError("capacity failure phase differs")
-    exception_type = failure["exception_type"]
-    message = failure["message"]
-    if not isinstance(exception_type, str) or not exception_type.isidentifier():
-        raise ValueError("capacity failure exception type is invalid")
-    if (
-        not isinstance(message, str)
-        or message != _failure(phase, RuntimeError())["message"]
-    ):
-        raise CapacityBenchmarkError("capacity failure message is not sanitized")
-    return {
-        "phase": phase,
-        "exception_type": exception_type,
-        "message": message,
-    }
+    category = failure["category"]
+    if not isinstance(category, str) or category not in _FAILURE_CONTRACT:
+        raise CapacityBenchmarkError("capacity failure category differs")
+    expected = _failure(category)
+    if failure != expected:
+        raise CapacityBenchmarkError("capacity failure record is not canonical")
+    return expected
 
 
 def _verify_measurement(value: object) -> dict[str, Any]:
@@ -1605,50 +1842,90 @@ def _verify_campaign_projection(value: object) -> dict[str, Any]:
     return projection
 
 
-def _verify_capacity_report(
+@dataclass(frozen=True)
+class _ReportEnvelope:
+    path: Path
+    root: Path
+    report: dict[str, Any]
+    supplied_sha256: str
+
+
+@dataclass(frozen=True)
+class _ReportContext:
+    protocol: dict[str, Any]
+    runtime: BetaTrainingRuntimeProvenanceV1
+    host: dict[str, Any]
+    contract: dict[str, Any]
+
+
+CheckpointAdmission = tuple[dict[str, Any], int, int]
+
+
+@dataclass(frozen=True)
+class _CheckpointAdmissionInput:
+    """A parsed completed-cell checkpoint reference with no admission authority."""
+
+    order: int
+    checkpoint: Path
+    config: ControllerNeutralTrainingConfigV1
+
+
+def _load_report_envelope(
     report_path: Path | str,
     *,
-    _runtime_capture: RuntimeCapture = _clean_runtime_capture,
-    _checkpoint_admitter: CheckpointAdmitter = _admit_checkpoint,
-    _host_capture: Callable[[], Mapping[str, Any]] = _host_identity,
-) -> dict[str, Any]:
-    """Internal verifier with explicit seams for deterministic adversarial tests."""
+    expected_filename: str,
+    expected_schema: str,
+    expected_fields: frozenset[str],
+    report_domain: str,
+) -> _ReportEnvelope:
+    """Load and authenticate an envelope before any external recapture/admission."""
 
     path = Path(report_path).expanduser()
-    if path.name != CAPACITY_REPORT_FILENAME:
-        raise ValueError(f"capacity report must be named {CAPACITY_REPORT_FILENAME}")
+    if path.name != expected_filename:
+        raise ValueError(f"capacity report must be named {expected_filename}")
     root = path.parent.resolve(strict=True)
     path = _resolve_report_path(root, path.name, expect_file=True)
     report = _load_canonical_json(path)
-    _exact_keys("capacity report", report, _REPORT_FIELDS)
-    if report["schema"] != CAPACITY_REPORT_SCHEMA:
+    if report.get("schema") != expected_schema:
         raise CapacityBenchmarkError("capacity report schema differs")
+    _exact_keys("capacity report", report, expected_fields)
     supplied_sha256 = _sha256("capacity report sha256", report["sha256"])
     body = dict(report)
     body.pop("sha256")
-    if supplied_sha256 != domain_sha256(CAPACITY_REPORT_DOMAIN, body):
+    if supplied_sha256 != domain_sha256(report_domain, body):
         raise CapacityBenchmarkError("capacity report digest differs")
+    return _ReportEnvelope(
+        path=path,
+        root=root,
+        report=report,
+        supplied_sha256=supplied_sha256,
+    )
+
+
+def _verify_report_context(
+    envelope: _ReportEnvelope,
+    *,
+    claim_boundary: str,
+) -> _ReportContext:
+    """Verify report-declared pre-run context without external hooks."""
+
+    report = envelope.report
     repository = _repository_root().resolve(strict=True)
-    if root.is_relative_to(repository):
+    if envelope.root.is_relative_to(repository):
         raise CapacityBenchmarkError("capacity report root must be external")
     protocol = _protocol_identity(repository)
     if dict(_mapping("capacity protocol", report["protocol"])) != protocol:
         raise CapacityBenchmarkError("capacity report protocol differs")
-    if report["claim_boundary"] != CAPACITY_CLAIM:
+    if report["claim_boundary"] != claim_boundary:
         raise CapacityBenchmarkError("capacity report claim boundary differs")
     assertions = dict(_mapping("operator assertions", report["operator_assertions"]))
     _exact_keys("operator assertions", assertions, _OPERATOR_ASSERTION_FIELDS)
-    if any(value is not True for value in assertions.values()):
-        raise CapacityBenchmarkError("capacity operator assertions are not all true")
+    if assertions != _operator_assertions():
+        raise CapacityBenchmarkError("capacity operator assertions differ")
     runtime = BetaTrainingRuntimeProvenanceV1.from_dict(report["runtime_provenance"])
     if not runtime.worktree_clean:
         raise CapacityBenchmarkError("capacity report runtime must be clean")
-    current_runtime = _runtime_capture()
-    verify_runtime_unchanged(runtime, current_runtime)
     host = _verify_host(report["host"])
-    current_host = _verify_host(_host_capture())
-    if host != current_host:
-        raise CapacityBenchmarkError("capacity report host differs from current host")
     contract = dict(_mapping("capacity cell contract", report["cell_contract"]))
     if contract != _cell_contract():
         raise CapacityBenchmarkError("capacity cell contract differs")
@@ -1656,7 +1933,98 @@ def _verify_capacity_report(
         REGISTERED_CAMPAIGN_ARITHMETIC
     ):
         raise CapacityBenchmarkError("registered campaign arithmetic differs")
+    return _ReportContext(
+        protocol=protocol,
+        runtime=runtime,
+        host=host,
+        contract=contract,
+    )
 
+
+def _checkpoint_admission_inputs(
+    envelope: _ReportEnvelope,
+) -> tuple[_CheckpointAdmissionInput, ...]:
+    """Parse completed checkpoint references without opening any checkpoint."""
+
+    raw_cells = _sequence("capacity cells", envelope.report["cells"])
+    if len(raw_cells) != len(CAPACITY_ALGORITHM_ORDER):
+        raise CapacityBenchmarkError("capacity report must contain exactly three cells")
+    inputs: list[_CheckpointAdmissionInput] = []
+    for order, (algorithm, raw_cell) in enumerate(
+        zip(CAPACITY_ALGORITHM_ORDER, raw_cells, strict=True), start=1
+    ):
+        cell = _mapping(f"capacity cell {order}", raw_cell)
+        if cell.get("status") != "completed":
+            continue
+        layout = _cell_layout(order, algorithm)
+        output = envelope.root.joinpath(*PurePosixPath(layout["output"]).parts)
+        checkpoint = envelope.root.joinpath(*PurePosixPath(layout["checkpoint"]).parts)
+        config = _cell_config(output, algorithm)
+        inputs.append(
+            _CheckpointAdmissionInput(
+                order=order,
+                checkpoint=checkpoint,
+                config=config,
+            )
+        )
+    return tuple(inputs)
+
+
+def _collect_production_checkpoint_admissions(
+    envelope: _ReportEnvelope,
+    context: _ReportContext,
+) -> dict[int, CheckpointAdmission]:
+    """Admit only production-report checkpoints through the fixed real loader."""
+
+    if envelope.report.get("schema") != CAPACITY_REPORT_SCHEMA:
+        raise CapacityBenchmarkError(
+            "production checkpoint admission requires the production report schema"
+        )
+    return {
+        item.order: _admit_checkpoint(
+            envelope.root,
+            item.checkpoint,
+            item.config,
+            context.runtime,
+        )
+        for item in _checkpoint_admission_inputs(envelope)
+    }
+
+
+def _collect_synthetic_checkpoint_admissions(
+    envelope: _ReportEnvelope,
+    context: _ReportContext,
+    checkpoint_admitter: CheckpointAdmitter,
+) -> dict[int, CheckpointAdmission]:
+    """Admit only explicitly synthetic checkpoints through a supplied test seam."""
+
+    if (
+        envelope.report.get("schema") != CAPACITY_SYNTHETIC_REPORT_SCHEMA
+        or envelope.report.get("execution_class") != CAPACITY_SYNTHETIC_EXECUTION_CLASS
+    ):
+        raise CapacityBenchmarkError(
+            "synthetic checkpoint admission requires synthetic report identity"
+        )
+    return {
+        item.order: checkpoint_admitter(
+            envelope.root,
+            item.checkpoint,
+            item.config,
+            context.runtime,
+        )
+        for item in _checkpoint_admission_inputs(envelope)
+    }
+
+
+def _verify_report_cells(
+    envelope: _ReportEnvelope,
+    context: _ReportContext,
+    admissions: Mapping[int, CheckpointAdmission],
+) -> list[dict[str, Any]]:
+    """Verify files and arithmetic against already observed checkpoint admissions."""
+
+    report = envelope.report
+    root = envelope.root
     raw_cells = _sequence("capacity cells", report["cells"])
     if len(raw_cells) != len(CAPACITY_ALGORITHM_ORDER):
         raise CapacityBenchmarkError("capacity report must contain exactly three cells")
@@ -1699,7 +2067,6 @@ def _verify_capacity_report(
             raise CapacityBenchmarkError(
                 "capacity cell config differs from frozen config"
             )
-        config = expected_config
         _verify_log_record(root, cell["stdout"])
         _verify_log_record(root, cell["stderr"])
         wall_ns = _integer("cell wall elapsed ns", cell["wall_elapsed_ns"], minimum=1)
@@ -1716,15 +2083,14 @@ def _verify_capacity_report(
             checkpoint_record = _verify_checkpoint_record(root, cell["checkpoint"])
             if checkpoint_record["path"] != layout["checkpoint"]:
                 raise CapacityBenchmarkError("capacity checkpoint path differs")
-            checkpoint = _resolve_report_path(
-                root, checkpoint_record["path"], expect_file=False
-            )
-            independently_admitted, rollout_ns, optimizer_steps = _checkpoint_admitter(
-                root,
-                checkpoint,
-                config,
-                runtime,
-            )
+            try:
+                independently_admitted, rollout_ns, optimizer_steps = admissions[
+                    expected_order
+                ]
+            except KeyError as reason:
+                raise CapacityBenchmarkError(
+                    "completed checkpoint was not independently admitted"
+                ) from reason
             if independently_admitted != checkpoint_record:
                 raise CapacityBenchmarkError("checkpoint changed after capacity report")
             if optimizer_steps != CAPACITY_OPTIMIZER_STEPS:
@@ -1738,6 +2104,10 @@ def _verify_capacity_report(
                     "capacity cell projection arithmetic differs"
                 )
         elif cell["status"] == "failed":
+            if expected_order in admissions:
+                raise CapacityBenchmarkError(
+                    "failed capacity cell has a checkpoint admission"
+                )
             if (
                 cell["checkpoint"] is not None
                 or cell["measurement"] is not None
@@ -1748,24 +2118,37 @@ def _verify_capacity_report(
                     "failed capacity cell retained a projection"
                 )
             failure = _verify_failure(cell["failure"])
-            if cell["exit_code"] is not None:
+            category = failure["category"]
+            if category == "training_nonzero_exit":
                 exit_code = _signed_integer("failed child exit code", cell["exit_code"])
-                if failure["phase"] == "training_process" and exit_code == 0:
+                if exit_code == 0:
                     raise CapacityBenchmarkError(
                         "failed training process cannot have zero exit status"
                     )
-            elif failure["phase"] == "checkpoint_admission":
+            elif category in {"training_timeout", "training_launch_error"}:
+                if cell["exit_code"] is not None:
+                    raise CapacityBenchmarkError(
+                        "failed launch or timeout must not report an exit status"
+                    )
+            elif category == "checkpoint_admission_error":
+                if cell["exit_code"] != 0:
+                    raise CapacityBenchmarkError(
+                        "checkpoint admission requires child exit status zero"
+                    )
+            else:  # pragma: no cover - _verify_failure closes the vocabulary
                 raise CapacityBenchmarkError(
-                    "checkpoint admission failure requires a successful child exit"
-                )
-            if failure["phase"] == "checkpoint_admission" and cell["exit_code"] != 0:
-                raise CapacityBenchmarkError(
-                    "checkpoint admission requires child exit status zero"
+                    "capacity failure category is not recognized"
                 )
         else:
             raise CapacityBenchmarkError("capacity cell status is invalid")
         cells.append(cell)
+    return cells
 
+
+def _verify_production_result(
+    report: Mapping[str, Any],
+    cells: Sequence[Mapping[str, Any]],
+) -> dict[str, Any] | None:
     expected_projection = _campaign_projection(cells)
     if expected_projection is None:
         if (
@@ -1776,47 +2159,144 @@ def _verify_capacity_report(
             raise CapacityBenchmarkError(
                 "failed capacity report exposes a result claim"
             )
-    else:
-        if (
-            report["status"] != "completed"
-            or report["result_claim"] != CAPACITY_RESULT_CLAIM
-        ):
-            raise CapacityBenchmarkError("completed capacity report claim differs")
-        projection = _verify_campaign_projection(report["campaign_projection"])
-        if projection != expected_projection:
-            raise CapacityBenchmarkError("campaign projection arithmetic differs")
+        return None
+    if (
+        report["status"] != "completed"
+        or report["result_claim"] != CAPACITY_RESULT_CLAIM
+    ):
+        raise CapacityBenchmarkError("completed capacity report claim differs")
+    projection = _verify_campaign_projection(report["campaign_projection"])
+    if projection != expected_projection:
+        raise CapacityBenchmarkError("campaign projection arithmetic differs")
+    return projection
 
+
+def _verify_synthetic_result(
+    report: Mapping[str, Any],
+    cells: Sequence[Mapping[str, Any]],
+) -> None:
+    expected_projection = _campaign_projection(cells)
+    expected_status = "completed" if expected_projection is not None else "failed"
+    if (
+        report["status"] != expected_status
+        or report["result_claim"] is not None
+        or report["campaign_projection"] is not None
+    ):
+        raise CapacityBenchmarkError("synthetic report exposes a production result")
+
+
+def _verify_deterministic_evidence(
+    report: Mapping[str, Any],
+    context: _ReportContext,
+    *,
+    claim_boundary: str,
+    deterministic_domain: str,
+) -> None:
     deterministic = _deterministic_evidence(
-        protocol=protocol,
-        runtime=runtime,
-        host=host,
-        cell_contract=contract,
-        cells=cells,
+        protocol=context.protocol,
+        runtime=context.runtime,
+        host=context.host,
+        cell_contract=context.contract,
+        claim_boundary=claim_boundary,
     )
     if _sha256(
         "capacity deterministic evidence sha256",
         report["deterministic_evidence_sha256"],
-    ) != domain_sha256(CAPACITY_DETERMINISTIC_DOMAIN, deterministic):
+    ) != domain_sha256(deterministic_domain, deterministic):
         raise CapacityBenchmarkError("capacity deterministic evidence digest differs")
-    verify_runtime_unchanged(runtime, _runtime_capture())
+
+
+def _verification_result(
+    envelope: _ReportEnvelope,
+) -> dict[str, Any]:
     return {
-        "report": str(path),
-        "raw_file_sha256": hashlib.sha256(_read_regular_bytes(path)).hexdigest(),
-        "report_sha256": supplied_sha256,
-        "status": report["status"],
-        "campaign_projection": report["campaign_projection"],
+        "report": str(envelope.path),
+        "raw_file_sha256": hashlib.sha256(
+            _read_regular_bytes(envelope.path)
+        ).hexdigest(),
+        "report_sha256": envelope.supplied_sha256,
+        "status": envelope.report["status"],
+        "campaign_projection": envelope.report["campaign_projection"],
     }
+
+
+def _verify_capacity_report(report_path: Path | str) -> dict[str, Any]:
+    """Verify production evidence through fixed concrete dependencies."""
+
+    envelope = _load_report_envelope(
+        report_path,
+        expected_filename=CAPACITY_REPORT_FILENAME,
+        expected_schema=CAPACITY_REPORT_SCHEMA,
+        expected_fields=_REPORT_FIELDS,
+        report_domain=CAPACITY_REPORT_DOMAIN,
+    )
+    context = _verify_report_context(envelope, claim_boundary=CAPACITY_CLAIM)
+    current_runtime = _clean_runtime_capture()
+    verify_runtime_unchanged(context.runtime, current_runtime)
+    current_host = _verify_host(_host_identity())
+    if context.host != current_host:
+        raise CapacityBenchmarkError("capacity report host differs from current host")
+    admissions = _collect_production_checkpoint_admissions(envelope, context)
+    cells = _verify_report_cells(envelope, context, admissions)
+    _verify_production_result(envelope.report, cells)
+    _verify_deterministic_evidence(
+        envelope.report,
+        context,
+        claim_boundary=CAPACITY_CLAIM,
+        deterministic_domain=CAPACITY_DETERMINISTIC_DOMAIN,
+    )
+    verify_runtime_unchanged(context.runtime, _clean_runtime_capture())
+    return _verification_result(envelope)
+
+
+def _verify_synthetic_capacity_report(
+    report_path: Path | str,
+    *,
+    runtime_capture: RuntimeCapture,
+    checkpoint_admitter: CheckpointAdmitter,
+    host_capture: Callable[[], Mapping[str, Any]],
+) -> dict[str, Any]:
+    """Verify only explicitly synthetic, production-ineligible test evidence."""
+
+    envelope = _load_report_envelope(
+        report_path,
+        expected_filename=CAPACITY_SYNTHETIC_REPORT_FILENAME,
+        expected_schema=CAPACITY_SYNTHETIC_REPORT_SCHEMA,
+        expected_fields=_SYNTHETIC_REPORT_FIELDS,
+        report_domain=CAPACITY_SYNTHETIC_REPORT_DOMAIN,
+    )
+    if envelope.report["execution_class"] != CAPACITY_SYNTHETIC_EXECUTION_CLASS:
+        raise CapacityBenchmarkError("synthetic execution class differs")
+    context = _verify_report_context(
+        envelope,
+        claim_boundary=CAPACITY_SYNTHETIC_CLAIM,
+    )
+    current_runtime = runtime_capture()
+    verify_runtime_unchanged(context.runtime, current_runtime)
+    current_host = _verify_host(host_capture())
+    if context.host != current_host:
+        raise CapacityBenchmarkError("capacity report host differs from current host")
+    admissions = _collect_synthetic_checkpoint_admissions(
+        envelope,
+        context,
+        checkpoint_admitter,
+    )
+    cells = _verify_report_cells(envelope, context, admissions)
+    _verify_synthetic_result(envelope.report, cells)
+    _verify_deterministic_evidence(
+        envelope.report,
+        context,
+        claim_boundary=CAPACITY_SYNTHETIC_CLAIM,
+        deterministic_domain=CAPACITY_SYNTHETIC_DETERMINISTIC_DOMAIN,
+    )
+    verify_runtime_unchanged(context.runtime, runtime_capture())
+    return _verification_result(envelope)
 
 
 def verify_capacity_report(report_path: Path | str) -> dict[str, Any]:
     """Reopen a capacity report through the non-injectable production verifier."""
 
-    return _verify_capacity_report(
-        report_path,
-        _runtime_capture=_clean_runtime_capture,
-        _checkpoint_admitter=_admit_checkpoint,
-        _host_capture=_host_identity,
-    )
+    return _verify_capacity_report(report_path)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -1879,6 +2359,12 @@ __all__ = [
     "CAPACITY_OPTIMIZER_SEED",
     "CAPACITY_PROTOCOL_ID",
     "CAPACITY_PROTOCOL_SHA256",
+    "CAPACITY_REPAIR_CLARIFICATION_ID",
+    "CAPACITY_REPAIR_CLARIFICATION_002_ID",
+    "CAPACITY_REPAIR_CLARIFICATION_002_SHA256",
+    "CAPACITY_REPAIR_CLARIFICATION_SHA256",
+    "CAPACITY_REPAIR_ID",
+    "CAPACITY_REPAIR_SHA256",
     "CAPACITY_REPORT_SCHEMA",
     "CapacityBenchmarkError",
     "build_parser",
