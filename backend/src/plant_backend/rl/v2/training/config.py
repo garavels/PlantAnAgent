@@ -186,7 +186,29 @@ def _constraints_from_dict(raw: object | None) -> Constraints:
         values,
         {item.name for item in fields(Constraints)},
     )
-    return Constraints().merged(values)
+    normalized: dict[str, float | None] = {}
+    for key, value in values.items():
+        optional = key != "battery_min_soc"
+        if value is None:
+            if not optional:
+                raise TypeError(
+                    "constraint settings.battery_min_soc must be a real number"
+                )
+            normalized[key] = None
+            continue
+        if isinstance(value, bool) or not isinstance(value, Real):
+            suffix = " or null" if optional else ""
+            raise TypeError(f"constraint settings.{key} must be a real number{suffix}")
+        try:
+            number = float(value)
+        except OverflowError as reason:
+            raise ValueError(f"constraint settings.{key} must be finite") from reason
+        if not math.isfinite(number):
+            raise ValueError(f"constraint settings.{key} must be finite")
+        normalized[key] = number
+    # Keep the runtime envelope's existing range checks and merge semantics. The
+    # training boundary is stricter only about which JSON values may reach it.
+    return Constraints().merged(normalized)
 
 
 def _reward_from_dict(raw: object | None) -> RewardWeightsV2:
@@ -359,6 +381,7 @@ class ControllerNeutralTrainingConfigV1:
             if not isinstance(value, expected):
                 raise TypeError(f"{name} must be {expected.__name__}")
         self.episode.validate(self.plant)
+        _constraints_from_dict(self.constraints.to_dict())
         self.diagnostic_reward.validate()
         self.economic_assumptions.validate()
         _validate_ppo(self.ppo, n_envs=self.n_envs)

@@ -65,6 +65,7 @@ def resolve(arguments: argparse.Namespace) -> ControllerNeutralTrainingConfigV1:
 def _checkpoint_callback(
     config: ControllerNeutralTrainingConfigV1,
     output: Path,
+    resume_parent: ppo.ResumeCheckpointIdentityV1 | None,
 ) -> Any:
     from stable_baselines3.common.callbacks import BaseCallback
 
@@ -91,6 +92,7 @@ def _checkpoint_callback(
                 config,
                 output / "intermediate" / f"step-{self.num_timesteps:012d}",
                 total_timesteps=self.num_timesteps,
+                resume_parent=resume_parent,
             )
             while self.next_checkpoint <= self.num_timesteps:
                 self.next_checkpoint += config.checkpoint_every
@@ -107,14 +109,19 @@ def train(config: ControllerNeutralTrainingConfigV1) -> Path:
         raise ValueError(
             f"training output already exists at {output}; choose a new run directory"
         )
+    resume_parent = ppo.admit_resume(config)
     environment = ppo.build_vec_env(config)
     try:
-        model = ppo.build_model(config, environment)
+        model = ppo.build_model(
+            config,
+            environment,
+            resume_parent=resume_parent,
+        )
         # Dependency, environment, and resume admission all complete before the
         # run directory is claimed. A missing optional trainer must not leave an
         # empty path that looks like a failed experiment.
         output.mkdir(parents=True, exist_ok=False)
-        callback = _checkpoint_callback(config, output)
+        callback = _checkpoint_callback(config, output, resume_parent)
         model.learn(
             total_timesteps=config.total_timesteps,
             callback=callback,
@@ -125,6 +132,7 @@ def train(config: ControllerNeutralTrainingConfigV1) -> Path:
             config,
             output / "checkpoint",
             total_timesteps=int(model.num_timesteps),
+            resume_parent=resume_parent,
         )
     finally:
         environment.close()

@@ -5,14 +5,17 @@ from __future__ import annotations
 from dataclasses import replace
 import json
 from pathlib import Path
+import sys
+from types import ModuleType
 
+from gymnasium import spaces
 import numpy as np
 import pytest
 
 from plant_backend.controllers.base import Constraints
 from plant_backend.rl import checkpoints
 from plant_backend.rl.policies import LoadedPolicy, load_policy
-from plant_backend.rl.v2 import economic_spaces, setpoint_spaces
+from plant_backend.rl.v2 import economic_spaces, policy_evaluation, setpoint_spaces
 from plant_backend.rl.v2.config import EpisodeConfigV2
 from plant_backend.rl.v2.economics import DayAheadTariffV1, EconomicAssumptionsV1
 from plant_backend.rl.v2.mpc_schema import domain_sha256
@@ -28,7 +31,13 @@ from plant_backend.rl.v2.policy_setpoint_controller import (
 )
 from plant_backend.rl.training.config import PPOConfig
 from plant_backend.rl.v2.training.config import ControllerNeutralTrainingConfigV1
-from plant_backend.rl.v2.training.ppo import make_env, plan, save_checkpoint
+from plant_backend.rl.v2.training.ppo import (
+    admit_resume,
+    build_model,
+    make_env,
+    plan,
+    save_checkpoint,
+)
 from plant_backend.rl.v2.training.train import (
     main as training_main,
     train as train_policy,
@@ -67,6 +76,19 @@ def _fixed_checkpoint(
         [-1.0, -1.0, -1.0, -1.0],
         contract=contract,
     )
+
+
+class _FakeSB3Model:
+    """Small artifact writer with the concrete spaces a real SB3 model embeds."""
+
+    def __init__(self, config: ControllerNeutralTrainingConfigV1) -> None:
+        environment = make_env(config)
+        self.observation_space = environment.observation_space
+        self.action_space = environment.action_space
+        environment.close()
+
+    def save(self, path: Path) -> None:
+        path.write_bytes(b"stable policy bytes")
 
 
 def test_training_config_round_trips_every_task_identity(tmp_path: Path) -> None:
@@ -396,19 +418,14 @@ def test_saved_policy_artifact_is_hashed_and_tampering_is_rejected(
     tmp_path: Path,
 ) -> None:
     config = _config()
-
-    class FakeModel:
-        def save(self, path: Path) -> None:
-            path.write_bytes(b"stable policy bytes")
+    model = _FakeSB3Model(config)
 
     invalid_path = tmp_path / "invalid-checkpoint"
     with pytest.raises(ValueError, match="total_timesteps"):
-        save_checkpoint(FakeModel(), config, invalid_path, total_timesteps=-1)
+        save_checkpoint(model, config, invalid_path, total_timesteps=-1)
     assert not invalid_path.exists()
 
-    path = save_checkpoint(
-        FakeModel(), config, tmp_path / "checkpoint", total_timesteps=4
-    )
+    path = save_checkpoint(model, config, tmp_path / "checkpoint", total_timesteps=4)
     contract = policy_contract_for_environment(make_env(config))
     metadata = checkpoints.load_metadata(path, contract=contract)
     assert metadata.policy_artifact_sha256
@@ -418,6 +435,226 @@ def test_saved_policy_artifact_is_hashed_and_tampering_is_rejected(
         checkpoints.CorruptCheckpointError, match="content does not match"
     ):
         checkpoints.load_metadata(path, contract=contract)
+
+
+def test_checkpoint_save_refuses_model_internal_space_mismatch(
+    tmp_path: Path,
+) -> None:
+    config = _config()
+    model = _FakeSB3Model(config)
+    model.observation_space = spaces.Box(
+        low=-1.0,
+        high=1.0,
+        shape=(1,),
+        dtype=np.float32,
+    )
+    output = tmp_path / "mislabeled-checkpoint"
+
+    with pytest.raises(
+        checkpoints.IncompatibleCheckpointError,
+        match="observation shape",
+    ):
+        save_checkpoint(model, config, output, total_timesteps=4)
+
+    assert not output.exists()
+
+
+def test_checkpoint_load_refuses_artifact_internal_space_mismatch(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config = _config()
+    environment = make_env(config)
+    checkpoint = save_checkpoint(
+        _FakeSB3Model(config),
+        config,
+        tmp_path / "checkpoint-with-mislabeled-bytes",
+        total_timesteps=4,
+    )
+
+    class WrongSpaceModel:
+        observation_space = spaces.Box(
+            low=-1.0,
+            high=1.0,
+            shape=(1,),
+            dtype=np.float32,
+        )
+        action_space = environment.action_space
+
+        def predict(self, observation: np.ndarray, deterministic: bool) -> object:
+            del observation, deterministic
+            return np.zeros(4, dtype=np.float32), None
+
+    class FakePPO:
+        @classmethod
+        def load(cls, *_: object, **__: object) -> WrongSpaceModel:
+            return WrongSpaceModel()
+
+    fake_sb3 = ModuleType("stable_baselines3")
+    fake_sb3.PPO = FakePPO  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "stable_baselines3", fake_sb3)
+    contract = policy_contract_for_environment(environment)
+
+    with pytest.raises(
+        checkpoints.IncompatibleCheckpointError,
+        match="observation shape",
+    ):
+        load_policy(
+            checkpoint,
+            contract=contract,
+            environment=environment,
+        )
+    generically_loaded = load_policy(checkpoint, contract=contract)
+    arm_calls: list[str] = []
+
+    def moved(*_: object, **__: object) -> dict[str, object]:
+        arm_calls.append("moved")
+        raise AssertionError("an arm moved before embedded-space admission")
+
+    monkeypatch.setattr(policy_evaluation, "execute_heuristic_episode", moved)
+    monkeypatch.setattr(policy_evaluation, "execute_policy_episode", moved)
+    with pytest.raises(
+        checkpoints.IncompatibleCheckpointError,
+        match="observation shape",
+    ):
+        policy_evaluation.compare_policy_to_heuristic(
+            generically_loaded,
+            config,
+            seeds=[0],
+        )
+    assert arm_calls == []
+    environment.close()
+
+
+def test_resume_rejects_changed_embedded_ppo_settings_and_records_parent(
+    tmp_path: Path,
+) -> None:
+    parent_config = _config(output_dir=str(tmp_path / "parent-run"))
+    parent = save_checkpoint(
+        _FakeSB3Model(parent_config),
+        parent_config,
+        tmp_path / "parent-checkpoint",
+        total_timesteps=4,
+    )
+    resumed_config = replace(
+        parent_config,
+        output_dir=str(tmp_path / "resumed-run"),
+        resume_from=str(parent),
+    )
+
+    admitted = admit_resume(resumed_config)
+
+    assert admitted is not None
+    assert admitted.total_timesteps == 4
+    assert admitted.policy_artifact_sha256
+    child = save_checkpoint(
+        _FakeSB3Model(resumed_config),
+        resumed_config,
+        tmp_path / "resumed-checkpoint",
+        total_timesteps=8,
+        resume_parent=admitted,
+    )
+    resumed_environment = make_env(resumed_config)
+    lineage = checkpoints.load_metadata(
+        child,
+        contract=policy_contract_for_environment(resumed_environment),
+    ).extra["resume_parent"]
+    resumed_environment.close()
+    assert lineage == admitted.to_dict()
+
+    changed = replace(
+        resumed_config,
+        ppo=replace(resumed_config.ppo, gamma=0.9),
+    )
+    with pytest.raises(
+        checkpoints.IncompatibleCheckpointError,
+        match="gamma",
+    ):
+        admit_resume(changed)
+
+
+def test_resume_rejects_a_checkpoint_from_the_other_four_target_task(
+    tmp_path: Path,
+) -> None:
+    physical_config = _config(environment_id=setpoint_spaces.ENVIRONMENT_ID)
+    physical = save_checkpoint(
+        _FakeSB3Model(physical_config),
+        physical_config,
+        tmp_path / "physical-checkpoint",
+        total_timesteps=4,
+    )
+    economic_resume = replace(
+        _config(),
+        resume_from=str(physical),
+        output_dir=str(tmp_path / "economic-resume"),
+    )
+
+    with pytest.raises(checkpoints.IncompatibleCheckpointError):
+        admit_resume(economic_resume)
+
+
+def test_resume_helpers_independently_reject_a_substituted_parent_identity(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    config = _config()
+    first = save_checkpoint(
+        _FakeSB3Model(config),
+        config,
+        tmp_path / "first-parent",
+        total_timesteps=4,
+    )
+    second = save_checkpoint(
+        _FakeSB3Model(config),
+        config,
+        tmp_path / "second-parent",
+        total_timesteps=4,
+    )
+    first_resume = replace(
+        config,
+        output_dir=str(tmp_path / "first-child"),
+        resume_from=str(first),
+    )
+    second_resume = replace(
+        config,
+        output_dir=str(tmp_path / "second-child"),
+        resume_from=str(second),
+    )
+    substituted = admit_resume(second_resume)
+    assert substituted is not None
+    output = tmp_path / "substituted-child-checkpoint"
+
+    with pytest.raises(
+        checkpoints.CorruptCheckpointError,
+        match="differs from independent admission",
+    ):
+        save_checkpoint(
+            _FakeSB3Model(first_resume),
+            first_resume,
+            output,
+            total_timesteps=8,
+            resume_parent=substituted,
+        )
+
+    assert not output.exists()
+
+    class ForbiddenPPO:
+        @classmethod
+        def load(cls, *_: object, **__: object) -> object:
+            raise AssertionError("PPO.load ran with a substituted resume identity")
+
+    fake_sb3 = ModuleType("stable_baselines3")
+    fake_sb3.PPO = ForbiddenPPO  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "stable_baselines3", fake_sb3)
+    with pytest.raises(
+        checkpoints.CorruptCheckpointError,
+        match="differs from independent admission",
+    ):
+        build_model(
+            first_resume,
+            env=object(),
+            resume_parent=substituted,
+        )
 
 
 def test_training_setup_failure_does_not_claim_an_output_directory(
@@ -439,11 +676,22 @@ def test_training_setup_failure_does_not_claim_an_output_directory(
     assert not output.exists()
 
 
-def test_real_sb3_tiny_train_save_load_and_evaluate(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    "environment_id",
+    [setpoint_spaces.ENVIRONMENT_ID, economic_spaces.ENVIRONMENT_ID],
+)
+def test_real_sb3_tiny_train_save_load_and_evaluate(
+    tmp_path: Path,
+    environment_id: str,
+) -> None:
     pytest.importorskip("stable_baselines3")
+    task_name = (
+        "physical" if environment_id == setpoint_spaces.ENVIRONMENT_ID else "economic"
+    )
     config = _config(
+        environment_id=environment_id,
         total_timesteps=2,
-        output_dir=str(tmp_path / "real-sb3-smoke"),
+        output_dir=str(tmp_path / f"real-sb3-{task_name}-smoke"),
         ppo=replace(
             PPOConfig(),
             n_steps=2,
@@ -455,7 +703,7 @@ def test_real_sb3_tiny_train_save_load_and_evaluate(tmp_path: Path) -> None:
     checkpoint = train_policy(config)
     resumed_config = replace(
         config,
-        output_dir=str(tmp_path / "real-sb3-resume-smoke"),
+        output_dir=str(tmp_path / f"real-sb3-{task_name}-resume-smoke"),
         resume_from=str(checkpoint),
     )
     resumed_checkpoint = train_policy(resumed_config)
@@ -467,5 +715,6 @@ def test_real_sb3_tiny_train_save_load_and_evaluate(tmp_path: Path) -> None:
     assert loaded.metadata.trained is True
     assert loaded.metadata.total_timesteps == 4
     assert loaded.metadata.policy_artifact_sha256
+    assert loaded.metadata.extra["resume_parent"]["total_timesteps"] == 2
     assert result["smoke_test"] is False
     assert all(run["status"] == "complete" for run in result["runs"])

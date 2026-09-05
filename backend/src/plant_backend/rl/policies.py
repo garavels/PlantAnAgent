@@ -78,9 +78,17 @@ def load_policy(
     path: Path | str,
     *,
     contract: checkpoints.PolicyEnvironmentContract | None = None,
+    environment: object | None = None,
 ) -> LoadedPolicy:
-    """Load a checkpoint for inference, or raise `CheckpointError` saying why not."""
+    """Load a checkpoint for inference, or raise `CheckpointError` saying why not.
+
+    Supplying the admitted environment additionally checks the concrete Gym
+    spaces embedded in a real model artifact.  V2 callers always provide it;
+    legacy callers retain their historical metadata-only admission behavior.
+    """
     directory = Path(path)
+    if environment is not None and contract is None:
+        raise ValueError("an admitted environment requires an explicit policy contract")
     metadata = checkpoints.load_metadata(directory, contract=contract)
     if metadata.format == checkpoints.FORMAT_FIXED:
         action = metadata.extra.get("action")
@@ -106,6 +114,19 @@ def load_policy(
         raise checkpoints.CorruptCheckpointError(
             f"cannot load {artefact}: {reason}"
         ) from reason
+    if environment is not None:
+        observation_space = getattr(environment, "observation_space", None)
+        action_space = getattr(environment, "action_space", None)
+        if observation_space is None or action_space is None:
+            raise ValueError(
+                "the admitted environment must expose observation_space and action_space"
+            )
+        checkpoints.verify_policy_model_spaces(
+            model,
+            observation_space=observation_space,
+            action_space=action_space,
+            path=directory,
+        )
     return LoadedPolicy(SB3Policy(model), metadata, directory)
 
 

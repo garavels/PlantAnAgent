@@ -31,6 +31,7 @@ from numbers import Integral
 from pathlib import Path
 from typing import Any, Sequence
 
+import numpy as np
 import plant_sim
 
 from . import spaces
@@ -141,6 +142,71 @@ def legacy_policy_contract() -> PolicyEnvironmentContract:
         environment_id=spaces.ENVIRONMENT_ID,
         environment_contract_digest=spaces.ENVIRONMENT_CONTRACT_DIGEST,
     )
+
+
+def verify_policy_model_spaces(
+    model: object,
+    *,
+    observation_space: object,
+    action_space: object,
+    path: Path | str | None = None,
+) -> None:
+    """Refuse model bytes whose embedded Gym spaces contradict their task.
+
+    Checkpoint metadata binds the semantic contract, while Stable-Baselines3 also
+    serialises concrete observation and action spaces inside ``policy.zip``.  Both
+    descriptions must agree.  Otherwise a copied or mislabeled model can pass the
+    metadata gate and fail only on its first live inference.
+    """
+
+    where = f" ({Path(path)})" if path is not None else ""
+    for label, expected in (
+        ("observation", observation_space),
+        ("action", action_space),
+    ):
+        actual = getattr(model, f"{label}_space", None)
+        if actual is None:
+            raise CorruptCheckpointError(
+                f"policy artifact has no embedded {label} space{where}"
+            )
+        if type(actual) is not type(expected):
+            raise IncompatibleCheckpointError(
+                f"policy artifact {label} space type does not match the declared "
+                f"task{where}"
+            )
+        actual_shape = getattr(actual, "shape", None)
+        expected_shape = getattr(expected, "shape", None)
+        if actual_shape is None or tuple(actual_shape) != tuple(expected_shape or ()):
+            raise IncompatibleCheckpointError(
+                f"policy artifact {label} shape {actual_shape!r} does not match "
+                f"the declared task's {expected_shape!r}{where}"
+            )
+        try:
+            actual_dtype = np.dtype(getattr(actual, "dtype"))
+            expected_dtype = np.dtype(getattr(expected, "dtype"))
+        except (TypeError, ValueError) as reason:
+            raise CorruptCheckpointError(
+                f"policy artifact {label} dtype is malformed{where}: {reason}"
+            ) from reason
+        if actual_dtype != expected_dtype:
+            raise IncompatibleCheckpointError(
+                f"policy artifact {label} dtype {actual_dtype} does not match "
+                f"the declared task's {expected_dtype}{where}"
+            )
+        for bound in ("low", "high"):
+            expected_bound = getattr(expected, bound, None)
+            actual_bound = getattr(actual, bound, None)
+            if expected_bound is None:
+                continue
+            if actual_bound is None or not np.array_equal(
+                np.asarray(actual_bound),
+                np.asarray(expected_bound),
+                equal_nan=True,
+            ):
+                raise IncompatibleCheckpointError(
+                    f"policy artifact {label} {bound} bound does not match the "
+                    f"declared task{where}"
+                )
 
 
 @dataclass(frozen=True)
@@ -444,5 +510,6 @@ __all__ = [
     "metadata_path",
     "policy_path",
     "save_metadata",
+    "verify_policy_model_spaces",
     "write_fixed_checkpoint",
 ]

@@ -75,6 +75,49 @@ def _validated_seeds(seeds: Sequence[int]) -> tuple[int, ...]:
     return tuple(values)
 
 
+def _preflight_loaded_policy_task(
+    loaded: LoadedPolicy,
+    config: ControllerNeutralTrainingConfigV1,
+) -> LoadedPolicy:
+    """Refuse a checkpoint/task mismatch before either paired arm is reset.
+
+    A policy adapter also checks this contract when it is constructed, but the
+    paired evaluator deliberately runs the heuristic first.  Keeping the check
+    here prevents an incompatible policy from producing a half-evaluation in
+    which only the heuristic has moved through the episode.
+    """
+
+    if not isinstance(loaded, LoadedPolicy):
+        raise TypeError("loaded must be LoadedPolicy")
+    environment = make_env(config)
+    try:
+        contract = policy_contract_for_environment(environment)
+        loaded.metadata.check_compatible(path=loaded.path, contract=contract)
+        persisted = checkpoints.load_metadata(
+            loaded.path,
+            contract=contract,
+        )
+        if persisted != loaded.metadata:
+            raise checkpoints.CorruptCheckpointError(
+                f"checkpoint metadata changed after policy loading ({loaded.path})"
+            )
+        # Re-admit the persisted artifact with the concrete task environment.
+        # ``LoadedPolicy`` is also a public seam, so callers are not required to
+        # have used ``load_policy_for_task`` and its embedded-space check.
+        readmitted = load_policy(
+            loaded.path,
+            contract=contract,
+            environment=environment,
+        )
+        if readmitted.metadata != loaded.metadata:
+            raise checkpoints.CorruptCheckpointError(
+                f"checkpoint changed during evaluation admission ({loaded.path})"
+            )
+        return readmitted
+    finally:
+        environment.close()
+
+
 def _episode_result(
     *,
     controller: Mapping[str, Any],
@@ -284,6 +327,7 @@ def compare_policy_to_heuristic(
     """Pair both arms on exact exogenous episodes and report, never rank, outcomes."""
 
     seed_values = _validated_seeds(seeds)
+    loaded = _preflight_loaded_policy_task(loaded, config)
     runs: list[dict[str, Any]] = []
     for seed in seed_values:
         heuristic = execute_heuristic_episode(make_env(config), seed=seed)
@@ -341,7 +385,14 @@ def load_policy_for_task(
     config: ControllerNeutralTrainingConfigV1,
 ) -> LoadedPolicy:
     environment = make_env(config)
-    return load_policy(path, contract=policy_contract_for_environment(environment))
+    try:
+        return load_policy(
+            path,
+            contract=policy_contract_for_environment(environment),
+            environment=environment,
+        )
+    finally:
+        environment.close()
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -369,7 +420,12 @@ def main(argv: list[str] | None = None) -> int:
             config,
             seeds=range(arguments.seed_start, arguments.seed_start + arguments.count),
         )
-    except (checkpoints.CheckpointError, TypeError, ValueError) as reason:
+    except (
+        checkpoints.CheckpointError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ) as reason:
         print(f"controller-neutral evaluation refused: {reason}", file=sys.stderr)
         return 2
     summary = {
