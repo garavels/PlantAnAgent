@@ -5540,3 +5540,69 @@ destination
 It authorizes one sequential ten-cell M24 run only. No protected action or outcome had occurred
 when the registration was written, and no RL, controller-superiority, held-out, economic,
 commercial, commission, HEPA, or language-layer claim is opened by this software gate.
+
+## 2026-09-05 — Registered M24 run passed F1--F8 and repaired full-day service
+
+The one authorized protected execution ran sequentially from detached clean source
+`d18082594b7fea692c9fff146c54d9b0f2f31733` into the previously absent registered destination.
+It did not rerun H or M6. The runner first reopened and typed-rebuilt the complete immutable
+historical evidence directory, then exclusively published and immediately verified each of ten
+M24 cells, repeated source/reference admission, published `report.json`, and invoked the whole-
+directory verifier. A separate detached invocation subsequently repeated verification from the
+same exact revision. Both returned exit code zero; there was no retry or parameter change.
+
+The report status is `complete_all_gates_passed`. All ten cells terminated normally with exactly
+96 decisions, 1,440 one-minute physical applications, 192 successful solver stages, four
+settlements, closed transitions, and no fallback: 960 decisions, 14,400 physical minutes, and
+1,920 solver stages in total. Every first decision bound the unchanged public forecast issue to
+96 consecutive 15-minute intervals and exactly four delivery targets at boundaries 24, 48, 72,
+and 96. Settings differed from M6 only in the registered 6-to-24-hour planning horizon.
+
+Service repair is complete on these development cells. At 35 kg/h, M6 delivered a five-seed mean
+618.738 of 840 kg and left 221.262 kg unmet; M24 delivered 840 kg and met all four commitments in
+every seed. At 42 kg/h, M6 delivered 713.840 of 1,008 kg and left 294.160 kg unmet; M24 delivered
+1,008 kg and met all four in every seed. The fourth settlement delivered exactly 210 or 252 kg
+in all ten cells. Each post-third-settlement CH4 state covered the complete fourth request, and
+the production-aware final material balance closed against both residual and interval evidence.
+
+M24 matched H aggregate service in all five 35 kg/h cells and four of five 42 kg/h cells. In the
+remaining r42/s22 cell M24 safely exceeded H by 102.367 kg, so the frozen equal-service rule kept
+the cell visible but excluded it from F7. The eligible economic-expression rules passed 5/5 and
+4/5. This is task discrimination, not an economic winner: default M24-minus-H value averaged
++137.884 EUR at 35 kg/h and +125.973 EUR across eligible 42 kg/h cells, but removing the synthetic
+methane-endowment liability made every eligible difference negative, with means -171.095 EUR and
+-163.522 EUR. Doubling declared wear also made the mean difference negative at both rates. The
+reward coefficients must therefore be calibrated or uncertainty-bounded before policy selection.
+
+The physical contrasts explain the ranking sensitivity. Against equal-service H cells, M24 used
+about 4.3--4.4 MWh less accepted process energy but 2.4--2.5 MWh more battery throughput and about
+2.9 additional equivalent electrolyser operating hours, while reducing terminal methane-
+equivalent deficit by roughly 72--77 kg. Batteries still ended near 7.98 MWh. Thus the original
+failure was caused by temporal/product-form planning, not exhaustion of the stored-energy asset.
+
+All prohibited safety, accounting, chain, range, overshoot, tracking, support-authority,
+shutdown, forced-stop, and unattributed-deficit counts were zero. The common safety path remained
+active: cells contained 3--7 guard corrections and 23--46 plant refusals/target deficits, all
+independently attributed without loss of service. Worst M24 controller p99/max was
+965.081/965.081 ms and worst dispatcher p99/max was 0.587/2.955 ms, so F8 passed comfortably.
+
+The 11-file external artifact set occupies about 140 MB. Raw `report.json` SHA-256 is
+`44a11d071e3f4820757c2174c35119fe99aa4016a0cfdc73a2e6196e53c32974`; report-domain identity is
+`eb3a68232ddef74d96e391c4979ab7aa2c15238b1ca08a4a0a4162fc04a664c4`; deterministic evidence is
+`1d12982aed4f9e32f8868393a1b226525eb268023bdf77b7b286e3f872307c12`. The full gate table,
+seed-level service/economic values, physical mechanism, latency, cell byte hashes, limitations,
+and architecture decision are recorded in
+`results/v2_full_day_horizon_repair_d180825.md`.
+
+The task-readiness blocker is closed, but the benchmark is now harder: a horizon-aware model-based
+controller already solves deterministic service. The next experiment must ask whether the
+controller-neutral PPO path improves calibrated economic or risk outcomes under genuinely new
+weather, tariff, demand, inventory, and plant regimes, against H, M24, and a new tariff-aware
+economic MPC. In parallel, Environment V2 beta should add cyclic multi-day operation, forecast
+revision, correlated uncertainty, sensor imperfection, faults/degradation, constrained backup
+energy, and product logistics. HEPA and the language supervisor remain later perception and
+human-governance layers, not substitutions for the physical controller.
+
+The exact mandatory boundary remains: contaminated development mechanism only; no RL,
+controller-superiority, calibrated-economic, held-out, site, commercial, savings, commission, or
+generalization claim.

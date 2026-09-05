@@ -750,17 +750,17 @@ and 36,000 physical minutes pass execution, identity, accounting, safety, and au
 Both six-hour strata remain service-comparable in 5/5 cells, but both 24-hour strata are
 comparable in 0/5: the six-hour-lookahead MPC fulfills the first two commitments, partially
 fulfills the third, and delivers zero at the fourth while retaining a near-full battery and
-stranded H2/CO2. The task is therefore **not admitted for substantive RL training**. The first
-repair is now frozen as a single-variable mechanism probe: extend only the service MPC horizon
-from 6 to 24 hours on the already contaminated full-day cells, leaving its objective, the
-plant, the common command path, and the economic assumptions unchanged. No protected M24
-outcome has run. Its additive runner, typed detached verifier, interval/economic reconstruction,
-and adversarial suite are now admitted and the exact clean one-shot execution revision is
-registered. If horizon alone does not recover service, the next protocol must add explicit
-deliverable-product adequacy across renewable outages. The retained report can be verified with:
+stranded H2/CO2. That result did **not** admit substantive RL training. The first
+repair changed only the service MPC horizon from 6 to 24 hours on the already contaminated
+full-day cells, leaving its objective, plant, command path, and economics unchanged. That
+registered M24 probe is now complete: all ten trajectories met all four commitments and the full
+request, all F1--F8 evidence gates passed, and a second detached verification succeeded. This
+establishes the missing-lookahead mechanism on development evidence; it does not establish RL or
+commercial value. The retained reports can be verified with:
 
 ```bash
 make v2-economic-robustness-verify REPORT=/absolute/external/directory/report.json
+make v2-full-day-horizon-repair-verify REPORT=/absolute/m24/directory/report.json
 ```
 
 See [`docs/research/results/v2_economic_robustness_7b1b656.md`](docs/research/results/v2_economic_robustness_7b1b656.md)
@@ -772,7 +772,9 @@ with its pre-code evidence clarifications in
 [`clarification 002`](docs/research/FULL_DAY_HORIZON_REPAIR_CLARIFICATION_002.md). The outcome-free
 software gate and exact execution custody are recorded in the
 [`admission`](docs/research/FULL_DAY_HORIZON_REPAIR_ADMISSION.md) and
-[`registration`](docs/research/FULL_DAY_HORIZON_REPAIR_REGISTRATION.md).
+[`registration`](docs/research/FULL_DAY_HORIZON_REPAIR_REGISTRATION.md). The complete result,
+including the coefficient-sensitive economic direction and next benchmark decision, is
+[`v2_full_day_horizon_repair_d180825.md`](docs/research/results/v2_full_day_horizon_repair_d180825.md).
 
 ---
 

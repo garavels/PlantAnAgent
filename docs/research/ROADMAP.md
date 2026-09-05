@@ -138,25 +138,17 @@ equipment consequences.
   while retaining 7.1--8.0 MWh battery energy and stranded H2/CO2. The mechanism is the frozen
   six-hour lookahead plus methane-equivalent terminal value: it cannot distinguish deliverable
   CH4 from feedstock that cannot be converted during the sunless final window. Seeds 20--24 are
-  now development-only. The alpha task is not admitted for substantive RL training.
-- The next repair is now preregistered without opening an outcome. M24 changes only the causal
-  service MPC planning horizon from 6 to 24 hours on the ten contaminated full-day cells and
-  references the immutable H/M6 evidence rather than rerunning it. The probe asks whether all
-  four public commitments are enough to restore fourth-settlement and full-day service while
-  every objective weight, plant contract, command path, and economic assumption stays fixed.
-  If horizon-only repair fails, the next protocol must add explicit deliverable-CH4 adequacy
-  across renewable outages and/or change the energy-supply architecture. If it restores
-  service but the task remains coefficient-dependent, calibrated operational pressure comes
-  before PPO. A pre-code audit found that the old H artifact never retained intermediate tank
-  states and that the existing detached MPC checker does not reconstruct nested event
-  semantics. Clarification 001 now requires explicit legacy missingness, a complete M24 first-
-  forecast/interval ledger, and a typed rebuild verifier for both old M6 and new M24 evidence.
-  Clarification 002 additionally freezes exact tolerances, chained gate semantics, complete
-  missing-seed/extrema reporting, production-aware settlement closure, solver-version matching,
-  and rejection of any change to a pre-existing physical/controller/runtime file since the M6
-  source. The additive runner/verifier and its 96-test adversarial gate are now admitted, and an
-  exact clean revision plus unused external destination are registered for one sequential run.
-  No protected M24 action has run.
+  now development-only. At that gate, the alpha task was not admitted for substantive RL.
+- The horizon-only repair is complete. M24 changed only the causal service MPC planning horizon
+  from 6 to 24 hours, referenced immutable H/M6 evidence, and passed F1--F8 on all ten registered
+  development cells. It met all four commitments and the complete request in 10/10 cells, while
+  M6 left mean deficits of 221.262 kg and 294.160 kg. Event-zero, accounting, safety, authority,
+  final material balance, and sub-second controller latency all verified. Equal-service operating
+  behavior remains materially discriminative, but the default M24/H ranking reverses when the
+  synthetic methane-endowment liability is removed and often reverses when wear is doubled.
+  The next bounded step is therefore a preregistered PPO baseline plus tariff-aware economic MPC,
+  coefficient calibration/uncertainty, and design of cyclic stochastic Environment V2 beta—not
+  a controller or commercial victory claim.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.
 

@@ -174,14 +174,14 @@ fallback behavior.
   40/40 trajectories; both six-hour strata are service-comparable in 5/5 cells, while both
   24-hour strata are comparable in 0/5. The retained evidence localizes the failure to a
   six-hour planning horizon and methane-equivalent terminal value that strand H2/CO2 before a
-  sunless fourth commitment. The alpha task is not admitted for substantive RL training.
+  sunless fourth commitment. At that gate, the alpha task was not admitted for substantive RL.
 - [`FULL_DAY_HORIZON_REPAIR_PROTOCOL.md`](FULL_DAY_HORIZON_REPAIR_PROTOCOL.md)
   freezes the first causal repair probe after that result. It changes only the service MPC
   planning horizon from 6 to 24 hours on the ten contaminated full-day development cells,
   reuses the verified H/M6 artifacts without rerunning them, and requires complete evidence,
   horizon fidelity, fourth-commitment recovery, service repair, mechanism closure, and
-  equal-service economic expression before the repair is accepted. No M24 outcome has been
-  opened under this protocol.
+  equal-service economic expression before the repair is accepted. Its registered one-shot
+  execution is now complete and passed F1--F8.
 - [`FULL_DAY_HORIZON_REPAIR_CLARIFICATION_001.md`](FULL_DAY_HORIZON_REPAIR_CLARIFICATION_001.md)
   preserves that protocol while resolving pre-code evidence ambiguities: the canonical
   `inferred_recurring` target label, a new complete first-boundary forecast audit, interval-
@@ -202,6 +202,11 @@ fallback behavior.
   fixes the exact clean executable revision, detached worktree, immutable historical report,
   unused external destination, canonical ten-cell order, and one-execution/no-retry rule before
   the first M24 seed 20--24 reset.
+- [`results/v2_full_day_horizon_repair_d180825.md`](results/v2_full_day_horizon_repair_d180825.md)
+  records the verified positive mechanism result. M24 delivered the full four-commitment request
+  in all ten cells, reduced M6 mean unmet methane effectively to zero, passed the horizon,
+  accounting, safety, service, mechanism, economic-expression, and latency gates, and exposed a
+  coefficient-sensitive M24/H economic ranking that still requires calibration before PPO.
 - [`CONTROLLER_NEUTRAL_RL_INTEGRATION.md`](CONTROLLER_NEUTRAL_RL_INTEGRATION.md)
   defines the completed RL wiring gate: strict four-target training configuration, exact
   full-task checkpoint compatibility, artifact hashing, checkpoint-bound inference evidence,
