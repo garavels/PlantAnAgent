@@ -14,6 +14,7 @@ from .. import beta_spaces
 from ..beta_config import CyclicMarketTaskConfigV1
 from . import ppo
 from .config import (
+    BETA_REGISTERED_RUN_KIND,
     SUPPORTED_CONTROLLER_NEUTRAL_ENVIRONMENTS,
     ControllerNeutralTrainingConfigV1,
 )
@@ -50,6 +51,34 @@ def resolve(arguments: argparse.Namespace) -> ControllerNeutralTrainingConfigV1:
         if arguments.config
         else ControllerNeutralTrainingConfigV1()
     )
+    if (
+        config.beta_rl is not None
+        and config.beta_rl.run_kind == BETA_REGISTERED_RUN_KIND
+    ):
+        forbidden_overrides = tuple(
+            name
+            for name, value in (
+                ("seed", arguments.seed),
+                ("timesteps", arguments.timesteps),
+                ("resume", arguments.resume),
+                ("environment", arguments.environment),
+            )
+            if value is not None
+        )
+        if forbidden_overrides:
+            raise ValueError(
+                "registered beta RL permits only an output override; refused "
+                + ", ".join(forbidden_overrides)
+            )
+    if (
+        config.beta_rl is not None
+        and arguments.environment is not None
+        and arguments.environment != config.environment_id
+    ):
+        raise ValueError(
+            "a beta RL training contract cannot be relabelled through an "
+            "environment override"
+        )
     updates: dict[str, Any] = {}
     if arguments.output is not None:
         updates["output_dir"] = str(arguments.output)

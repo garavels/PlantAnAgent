@@ -29,6 +29,7 @@ from plant_backend.rl.v2.training.ppo import (
     build_vec_env,
     plan,
 )
+from plant_backend.rl.v2.training.train import build_parser, resolve
 
 
 def _beta_config(
@@ -47,6 +48,23 @@ def _beta_config(
         beta_rl=run or BetaRLTrainingRunV1(),
         ppo=replace(PPOConfig(), n_steps=2, batch_size=8, n_epochs=1),
     )
+
+
+def _registered_config(output: Path) -> ControllerNeutralTrainingConfigV1:
+    return ControllerNeutralTrainingConfigV1(
+        environment_id=beta_spaces.ENVIRONMENT_ID,
+        seed=503,
+        total_timesteps=1_048_576,
+        n_envs=4,
+        checkpoint_every=0,
+        output_dir=str(output),
+        beta_task=CyclicMarketTaskConfigV1(),
+        beta_rl=BetaRLTrainingRunV1(
+            algorithm=BETA_PI_LAGRANGIAN_ALGORITHM_ID,
+            run_kind=BETA_REGISTERED_RUN_KIND,
+            episode_seed_base=1_000_000,
+        ),
+    ).validate()
 
 
 @pytest.mark.parametrize(
@@ -102,21 +120,7 @@ def test_beta_rl_contract_rejects_cross_task_seed_and_compute_leakage(
 def test_registered_beta_rl_contract_is_exact_and_non_resumable(
     tmp_path: Path,
 ) -> None:
-    del tmp_path
-    registered = ControllerNeutralTrainingConfigV1(
-        environment_id=beta_spaces.ENVIRONMENT_ID,
-        seed=503,
-        total_timesteps=1_048_576,
-        n_envs=4,
-        checkpoint_every=0,
-        output_dir="/private/tmp/plant-beta-pi-503",
-        beta_task=CyclicMarketTaskConfigV1(),
-        beta_rl=BetaRLTrainingRunV1(
-            algorithm=BETA_PI_LAGRANGIAN_ALGORITHM_ID,
-            run_kind=BETA_REGISTERED_RUN_KIND,
-            episode_seed_base=1_000_000,
-        ),
-    ).validate()
+    registered = _registered_config(tmp_path / "plant-beta-pi-503")
 
     assert registered.total_timesteps == 1_048_576
     described = plan(registered)
@@ -134,6 +138,46 @@ def test_registered_beta_rl_contract_is_exact_and_non_resumable(
     repository_output = Path(__file__).resolve().parents[2] / "forbidden-run"
     with pytest.raises(ValueError, match="external to the repository"):
         replace(registered, output_dir=str(repository_output)).validate()
+
+
+def test_registered_cli_refuses_identity_overrides_but_allows_destination(
+    tmp_path: Path,
+) -> None:
+    config_path = _registered_config(tmp_path / "registered").write(
+        tmp_path / "registered.json"
+    )
+    parser = build_parser()
+
+    for override in (
+        ["--seed", "101"],
+        ["--timesteps", "8192"],
+        ["--resume", str(tmp_path / "parent")],
+        ["--environment", beta_spaces.ENVIRONMENT_ID],
+    ):
+        with pytest.raises(ValueError, match="only an output override"):
+            resolve(parser.parse_args(["--config", str(config_path), *override]))
+
+    destination = tmp_path / "registered-override"
+    resolved = resolve(
+        parser.parse_args(["--config", str(config_path), "--output", str(destination)])
+    )
+    assert resolved.output_dir == str(destination)
+
+
+def test_fixture_cli_cannot_relabel_beta_rl_as_an_alpha_task(tmp_path: Path) -> None:
+    config_path = _beta_config(tmp_path).write(tmp_path / "fixture.json")
+
+    with pytest.raises(ValueError, match="cannot be relabelled"):
+        resolve(
+            build_parser().parse_args(
+                [
+                    "--config",
+                    str(config_path),
+                    "--environment",
+                    economic_spaces.ENVIRONMENT_ID,
+                ]
+            )
+        )
 
 
 def test_beta_rl_contract_rejects_unknown_nested_fields() -> None:
