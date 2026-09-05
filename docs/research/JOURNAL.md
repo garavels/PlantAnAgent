@@ -5366,3 +5366,43 @@ the reference report's expected `complete_gate_failed` research result as struct
 evidence. The original protocol bytes, M24 intervention, F1--F8 gates, contaminated matrix, and
 claim boundary remain unchanged. No protected reset, solve, rollout, or policy training was
 performed.
+
+## 2026-09-05 — Numerical and cross-revision horizon-repair semantics frozen
+
+The completed protocol audit identified remaining ambiguities that could otherwise let outcome
+interpretation or an unrelated runtime edit enter the horizon comparison. They are now frozen
+in `FULL_DAY_HORIZON_REPAIR_CLARIFICATION_002.md`, raw SHA-256
+`e2ed43908242a228669859fb7111e4b4f24513d23f467daf60b8c9b1f7692966`, before implementation
+or any protected M24 action.
+
+The clarification makes fourth delivery material only above `1e-6 kg`, defines the inclusive
+M24/M6 no-regression inequalities, binds full service and H comparability at `1e-6 kg`, and
+defines 90% unmet repair as
+`mean(M24) <= 0.10 * mean(M6) + 1e-6 kg` with a materially positive M6 denominator. It fixes
+post-third adequacy at request minus `1e-6 kg` and records the production-aware final settlement
+identity: starting CH4 plus interval production minus post-settlement CH4 must equal retained
+delivery. The existing strict 1 EUR and raw-driver thresholds remain unchanged.
+
+F1--F7 are explicitly chained while their intrinsic observations remain visible; F8 retains an
+independent latency observation and exact claim text. Every per-rate series must include ordered
+seed values, expected/observed/missing counts, missing seed IDs, and all tied extrema. Sign counts
+apply only to paired contrasts. Global custody and gate counts may span rates, but comparative
+performance may not.
+
+Reference custody now means the root report plus all 20 cells, exactly 21 canonical regular
+nonsymlink entries. Only cells 11--20 enter M24 analysis. The identity-availability table
+distinguishes files, embedded H/M6 arms, deterministic citations, and evidence graphs, and
+clarifies that the final root raw hash is returned out of band because a report cannot contain
+its own byte hash. Compact derived old metrics are permitted; complete old arms are not copied.
+
+Most importantly, admission must diff the registered M24 execution source against historical
+revision `7b1b656964dcac4a25c6f5d4d89fed8abf4d4e0e` and reject any modified or deleted
+pre-existing simulator, controller, safety, or V2 runtime file. Newly added experiment/verifier
+modules are allowed only when they do not alter or enter the historical runtime path. Every M24
+stage must also report the historical SciPy 1.18.1 and HiGHS 1.12.0 versions. Event zero must
+match M6's public observation, public issue, and full projection identities; only
+`planning_horizon_h` may differ in the settings body.
+
+This second clarification changes no task, controller input, objective, plant, dispatcher,
+guard, matrix, threshold intent, or claim boundary. No environment was reset, no solver was
+called, and no controller outcome or policy training was opened.

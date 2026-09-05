@@ -754,8 +754,9 @@ See [`docs/research/results/v2_economic_robustness_7b1b656.md`](docs/research/re
 for the complete gate result, mechanism diagnosis, coefficient sensitivity, artifact identities,
 and next architecture decision. The frozen follow-up is
 [`docs/research/FULL_DAY_HORIZON_REPAIR_PROTOCOL.md`](docs/research/FULL_DAY_HORIZON_REPAIR_PROTOCOL.md),
-with its pre-code evidence clarification in
-[`docs/research/FULL_DAY_HORIZON_REPAIR_CLARIFICATION_001.md`](docs/research/FULL_DAY_HORIZON_REPAIR_CLARIFICATION_001.md).
+with its pre-code evidence clarifications in
+[`clarification 001`](docs/research/FULL_DAY_HORIZON_REPAIR_CLARIFICATION_001.md) and
+[`clarification 002`](docs/research/FULL_DAY_HORIZON_REPAIR_CLARIFICATION_002.md).
 
 ---
 

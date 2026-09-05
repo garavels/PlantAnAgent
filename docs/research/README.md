@@ -188,6 +188,11 @@ fallback behavior.
   level M24 economic evidence, explicit `not_retained` legacy-H fields, precise embedded-arm
   citations, and typed detached semantic verification for both M6 and M24. It changes no
   intervention, gate, or outcome boundary.
+- [`FULL_DAY_HORIZON_REPAIR_CLARIFICATION_002.md`](FULL_DAY_HORIZON_REPAIR_CLARIFICATION_002.md)
+  freezes exact numerical inequalities, chained-gate and missing-seed summaries, identity
+  availability, complete 21-file reference custody, production-aware fourth-delivery closure,
+  solver-runtime matching, and a cross-revision no-existing-runtime-edit rule. These close the
+  final pre-code ambiguities without changing the horizon-only hypothesis.
 - [`CONTROLLER_NEUTRAL_RL_INTEGRATION.md`](CONTROLLER_NEUTRAL_RL_INTEGRATION.md)
   defines the completed RL wiring gate: strict four-target training configuration, exact
   full-task checkpoint compatibility, artifact hashing, checkpoint-bound inference evidence,
