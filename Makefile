@@ -1,4 +1,4 @@
-.PHONY: help setup dev backend frontend sim test eval foresight-eval rl-eval rl-ceiling v2-eval v2-weather-eval v2-controller-eval v2-planner v2-mpc v2-mpc-report v2-mpc-setpoint v2-economic-smoke v2-economic-robustness v2-economic-robustness-verify v2-full-day-horizon-repair v2-full-day-horizon-repair-verify v2-train-dry v2-train v2-rl-eval train-dry train \
+.PHONY: help setup dev backend frontend sim test eval foresight-eval rl-eval rl-ceiling v2-eval v2-weather-eval v2-controller-eval v2-planner v2-mpc v2-mpc-report v2-mpc-setpoint v2-economic-smoke v2-economic-robustness v2-economic-robustness-verify v2-full-day-horizon-repair v2-full-day-horizon-repair-verify v2-train-dry v2-train v2-rl-eval v2-controller-benchmark train-dry train \
 	hepa-collect hepa-pretrain-dry hepa-pretrain hepa-finetune-dry hepa-finetune \
 	hepa-eval build clean
 
@@ -116,6 +116,14 @@ v2-rl-eval:       ## pair a compatible four-target checkpoint with the heuristic
 	uv run --frozen python -m plant_backend.rl.v2.policy_evaluation \
 		--checkpoint $(CHECKPOINT) --seed-start $(or $(SEED_START),0) \
 		--count $(or $(SEEDS),1) $(if $(JSON),--json $(JSON),)
+
+v2-controller-benchmark: ## compare H, M24, economic MPC, and trained PPO (exclusive OUTPUT required)
+	$(if $(CHECKPOINT),,$(error CHECKPOINT=<trained-checkpoint-directory> is required))
+	$(if $(OUTPUT),,$(error OUTPUT=/absolute/new/report.json is required))
+	uv run --frozen --group train --group optimisation \
+		python -m plant_backend.rl.v2.controller_benchmark \
+		--checkpoint $(CHECKPOINT) --seed-start $(or $(SEED_START),0) \
+		--count $(or $(SEEDS),1) --json $(OUTPUT)
 
 train-dry:        ## build the RL environment and print the training plan; trains nothing
 	uv run python -m plant_backend.rl.training.train --dry-run
