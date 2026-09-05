@@ -56,7 +56,10 @@ from .policy_setpoint_controller import (
 from .setpoint_command import process_setpoint_boundary_sha256
 from .setpoint_controllers import LegacyHeuristicSetpointControllerV1
 from .setpoint_execution import ProcessSetpointIntervalExecutionV1
-from .training.config import ControllerNeutralTrainingConfigV1
+from .training.config import (
+    BETA_REGISTERED_RUN_KIND,
+    ControllerNeutralTrainingConfigV1,
+)
 from .training.ppo import make_env
 
 
@@ -529,6 +532,12 @@ def _readmit_policy(
         raise checkpoints.CorruptCheckpointError(
             "trained checkpoint seed differs from checkpoint training_config"
         )
+    if require_trained_policy and (
+        config.beta_rl is None or config.beta_rl.run_kind != BETA_REGISTERED_RUN_KIND
+    ):
+        raise checkpoints.IncompatibleCheckpointError(
+            "a qualified beta benchmark requires a registered constrained-RL run"
+        )
     if loaded.metadata.plant_sim_version != str(plant_sim.__version__):
         raise checkpoints.IncompatibleCheckpointError(
             "checkpoint plant_sim version differs from the benchmark runtime"
@@ -541,6 +550,7 @@ def _readmit_policy(
             loaded.path,
             contract=contract,
             environment=environment,
+            require_registered_evaluation_eligibility=require_trained_policy,
         )
     finally:
         _close_environment(environment)
@@ -577,6 +587,7 @@ def load_beta_benchmark_policy(
             checkpoint,
             contract=policy_contract_for_environment(environment),
             environment=environment,
+            require_registered_evaluation_eligibility=True,
         )
     finally:
         _close_environment(environment)

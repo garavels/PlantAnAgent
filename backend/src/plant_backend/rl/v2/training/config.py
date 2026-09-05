@@ -608,6 +608,10 @@ class ControllerNeutralTrainingConfigV1:
             + self.n_envs
             - 1
         )
+        output = Path(self.output_dir).expanduser()
+        resolved_output = output.resolve()
+        repository = Path(__file__).resolve().parents[6]
+        repository_run_root = (repository / "runs").resolve()
 
         if self.beta_rl.run_kind == BETA_REGISTERED_RUN_KIND:
             if self.total_timesteps != BETA_REGISTERED_TOTAL_TIMESTEPS:
@@ -628,11 +632,9 @@ class ControllerNeutralTrainingConfigV1:
                 raise ValueError(
                     "registered beta RL allocator endpoint differs from the protocol"
                 )
-            output = Path(self.output_dir).expanduser()
             if not output.is_absolute():
                 raise ValueError("registered beta RL output_dir must be absolute")
-            repository = Path(__file__).resolve().parents[6]
-            if output.resolve().is_relative_to(repository):
+            if resolved_output.is_relative_to(repository):
                 raise ValueError(
                     "registered beta RL output_dir must be external to the repository"
                 )
@@ -644,6 +646,13 @@ class ControllerNeutralTrainingConfigV1:
             if final_episode_seed > BETA_FIXTURE_EPISODE_SEED_MAX:
                 raise ValueError(
                     "fixture beta RL allocator would leave the fixture seed domain"
+                )
+            if resolved_output.is_relative_to(
+                repository
+            ) and not resolved_output.is_relative_to(repository_run_root):
+                raise ValueError(
+                    "fixture beta RL output_dir inside the repository must be under "
+                    "the ignored runs/ artifact root"
                 )
 
     def to_dict(self) -> dict[str, Any]:

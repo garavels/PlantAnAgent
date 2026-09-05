@@ -140,6 +140,25 @@ def test_registered_beta_rl_contract_is_exact_and_non_resumable(
         replace(registered, output_dir=str(repository_output)).validate()
 
 
+def test_fixture_output_cannot_contaminate_its_own_source_provenance(
+    tmp_path: Path,
+) -> None:
+    fixture = _beta_config(tmp_path)
+    repository = Path(__file__).resolve().parents[2]
+
+    with pytest.raises(ValueError, match="ignored runs/ artifact root"):
+        replace(
+            fixture,
+            output_dir=str(repository / "unignored-fixture-run"),
+        ).validate()
+
+    admitted = replace(
+        fixture,
+        output_dir=str(repository / "runs" / "fixture-output-contract-test"),
+    ).validate()
+    assert Path(admitted.output_dir).is_relative_to(repository / "runs")
+
+
 def test_registered_cli_refuses_identity_overrides_but_allows_destination(
     tmp_path: Path,
 ) -> None:

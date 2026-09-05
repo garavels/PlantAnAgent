@@ -18,6 +18,8 @@ from .config import (
     SUPPORTED_CONTROLLER_NEUTRAL_ENVIRONMENTS,
     ControllerNeutralTrainingConfigV1,
 )
+from .runtime_provenance import capture as capture_runtime_provenance
+from .runtime_provenance import verify_unchanged as verify_runtime_unchanged
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -147,6 +149,64 @@ def train(config: ControllerNeutralTrainingConfigV1) -> Path:
         raise ValueError(
             f"training output already exists at {output}; choose a new run directory"
         )
+    if config.beta_rl is not None:
+        run = config.beta_rl
+        runtime_before = capture_runtime_provenance(
+            require_clean=run.run_kind == BETA_REGISTERED_RUN_KIND
+        )
+        resume_parent = ppo.admit_resume(
+            config,
+            runtime_provenance=runtime_before,
+        )
+        allocator = (
+            ppo.build_episode_allocator(config)
+            if resume_parent is None
+            else ppo.restore_beta_episode_allocator(config, resume_parent)
+        )
+        environment = ppo.build_vec_env(
+            config,
+            episode_allocator=allocator,
+        )
+        try:
+            # A restored fixture allocator can reconstruct physical state only
+            # at an exact episode boundary.  This reset is a no-ledger
+            # reattachment to the already-recorded current episode and the
+            # constrained core checks the resulting observation byte-for-byte.
+            runtime_observation = None if resume_parent is None else environment.reset()
+            model = ppo.build_model(
+                config,
+                environment,
+                resume_parent=resume_parent,
+                runtime_provenance=runtime_before,
+                runtime_observation=runtime_observation,
+            )
+            model.learn(
+                total_timesteps=config.total_timesteps,
+                callback=None,
+                reset_num_timesteps=resume_parent is None,
+            )
+            # Verify source and dependencies before making an output directory
+            # visible.  Registered provenance must remain clean; fixture runs
+            # retain an exact dirty-worktree identity when used during build QA.
+            runtime_after = capture_runtime_provenance(
+                require_clean=run.run_kind == BETA_REGISTERED_RUN_KIND
+            )
+            verify_runtime_unchanged(runtime_before, runtime_after)
+            # Exclusively claim the operator-selected run root after training
+            # and provenance validation.  This closes the initial exists-check
+            # race before checkpoint files are created beneath it.
+            output.mkdir(parents=True, exist_ok=False)
+            return ppo.save_checkpoint(
+                model,
+                config,
+                output / "checkpoint",
+                total_timesteps=int(model.num_timesteps),
+                resume_parent=resume_parent,
+                runtime_provenance=runtime_before,
+            )
+        finally:
+            environment.close()
+
     resume_parent = ppo.admit_resume(config)
     environment = ppo.build_vec_env(config)
     try:
@@ -197,7 +257,13 @@ def main(argv: list[str] | None = None) -> int:
             file=sys.stderr,
         )
         return 2
-    except (checkpoints.CheckpointError, OSError, RuntimeError, ValueError) as reason:
+    except (
+        checkpoints.CheckpointError,
+        OSError,
+        RuntimeError,
+        TypeError,
+        ValueError,
+    ) as reason:
         print(f"controller-neutral training failed: {reason}", file=sys.stderr)
         return 2
     print(f"checkpoint written to {checkpoint}")

@@ -29,7 +29,10 @@ from .policy_setpoint_controller import (
 )
 from .setpoint_controllers import LegacyHeuristicSetpointControllerV1
 from .setpoint_env import PlantSetpointEnvV2
-from .training.config import ControllerNeutralTrainingConfigV1
+from .training.config import (
+    BETA_REGISTERED_RUN_KIND,
+    ControllerNeutralTrainingConfigV1,
+)
 from .training.ppo import make_env
 
 
@@ -128,6 +131,10 @@ def _preflight_loaded_policy_task(
             loaded.path,
             contract=contract,
             environment=environment,
+            require_registered_evaluation_eligibility=(
+                config.beta_rl is not None
+                and config.beta_rl.run_kind == BETA_REGISTERED_RUN_KIND
+            ),
         )
         if readmitted.metadata != loaded.metadata:
             raise checkpoints.CorruptCheckpointError(
@@ -447,6 +454,10 @@ def load_policy_for_task(
             path,
             contract=policy_contract_for_environment(environment),
             environment=environment,
+            require_registered_evaluation_eligibility=(
+                config.beta_rl is not None
+                and config.beta_rl.run_kind == BETA_REGISTERED_RUN_KIND
+            ),
         )
     finally:
         environment.close()
