@@ -807,12 +807,16 @@ normalized rollout costs. The frozen repair canonicalizes only rollout evidence 
 once by seven, checks the independent arithmetic path at the declared tolerance, and leaves every
 transition, optimizer input, multiplier update, model setting, seed, and task contract unchanged.
 The V2 capacity evidence path now also separates synthetic test issuance from the non-injectable
-production runner/verifier and binds an exact pre-run-only deterministic identity. No repaired
-capacity attempt, registered training run, or controller result is claimed here. See the retained
-[`failed result`](docs/research/results/v2_constrained_rl_capacity_fab4a55.md), frozen
-[`repair`](docs/research/CONSTRAINED_RL_CAPACITY_REPAIR_001.md), and its evidence-boundary
-[`clarification 001`](docs/research/CONSTRAINED_RL_CAPACITY_REPAIR_CLARIFICATION_001.md) and
-host-identity [`clarification 002`](docs/research/CONSTRAINED_RL_CAPACITY_REPAIR_CLARIFICATION_002.md).
+production runner/verifier and binds an exact pre-run-only deterministic identity. The sole
+Repair-001 attempt at `27a47d0` then completed all three child trainers but failed their parent-side
+admission because JSON-loaded lists were compared directly with tuple-valued in-memory task
+configuration. It produced no capacity projection and cannot be retried. Repair 002 freezes a
+whole-object canonical-JSON comparison while retaining the exact config-file byte check and every
+later artifact/evidence check. No registered training run or controller result is claimed here.
+See the retained [`V1 failure`](docs/research/results/v2_constrained_rl_capacity_fab4a55.md),
+[`V2 failure`](docs/research/results/v2_constrained_rl_capacity_27a47d0.md), frozen
+[`Repair 001`](docs/research/CONSTRAINED_RL_CAPACITY_REPAIR_001.md), and frozen
+[`Repair 002`](docs/research/CONSTRAINED_RL_CAPACITY_REPAIR_002.md).
 
 The existing control-room `/api/controller/rl` path remains the historical one-minute 30/5 V1
 runtime. It intentionally rejects these 15-minute four-target checkpoints: deploying them live

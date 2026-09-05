@@ -280,6 +280,15 @@ fallback behavior.
   closes the remaining host-identity ambiguity. Thread-count environment settings are represented
   only as absent or canonical positive integers in `1..2,147,483,647`; free text and noncanonical
   forms fail before output creation and cannot become outcome-bearing deterministic identity.
+- [`results/v2_constrained_rl_capacity_27a47d0.md`](results/v2_constrained_rl_capacity_27a47d0.md)
+  retains the only Repair-001 attempt. All three children exited zero and serialized checkpoints,
+  but parent admission rejected JSON-list versus dataclass-tuple representations of the same static
+  configuration. The verified V2 report contains no admitted checkpoint, measurement, projection,
+  or claim; all stdout logs remain unopened and the revision cannot be retried.
+- [`CONSTRAINED_RL_CAPACITY_REPAIR_002.md`](CONSTRAINED_RL_CAPACITY_REPAIR_002.md) freezes the next
+  narrow repair before source changes. It retains exact standalone configuration bytes and every
+  later admission check, compares the complete metadata configuration using the same canonical
+  JSON bytes, versions the report, and permits only one new clean-revision attempt after all gates.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

@@ -189,10 +189,14 @@ equipment consequences.
   failures caused by non-associative binary64 rollout-evidence aggregation, not by policy learning;
   it produced no checkpoints or campaign projection and may not be retried. Repair 001 now
   canonicalizes only the stored rollout-cost evidence, preserves the independent arithmetic check,
-  and version-separates fixed production evidence from permanently ineligible synthetic tests. A
-  single repaired capacity attempt remains gated on a clean committed release. This is still no
-  evidence of controller superiority. Registered training and development/held-out resets remain
-  closed pending explicit authorization after a valid capacity estimate.
+  and version-separates fixed production evidence from permanently ineligible synthetic tests. Its
+  sole clean-revision attempt completed all three child trainers but rejected all three serialized
+  checkpoints because JSON-loaded configuration lists were compared directly with tuple-valued
+  in-memory configuration. That V2 report is retained without a projection or retry. Repair 002 is
+  frozen to compare the complete metadata configuration through the existing canonical JSON byte
+  representation while retaining all independent file, metadata, evidence, and policy checks. This
+  is still no evidence of controller superiority. Registered training and development/held-out
+  resets remain closed pending explicit authorization after a valid capacity estimate.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.
 

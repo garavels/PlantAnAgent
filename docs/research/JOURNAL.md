@@ -6509,3 +6509,63 @@ three pre-existing redundant-cast diagnostics disabled; cache writes and importe
 are disabled to avoid the already documented host-MyPy serializer defect. Two independent
 read-only reviews report no remaining P0/P1 evidence-boundary issue. The full repository and
 frontend gates remain the next clean-revision admission checks, not a result claimed by this entry.
+
+## 2026-09-05 — Repair-001 capacity attempt retained; metadata canonicalization failure frozen
+
+Repair 001 and both evidence clarifications were committed as clean revision
+`27a47d0604ffb9624a40683a610f2f8f4bb6c58a`. On that exact committed tree, the complete Python
+repository passed **1,820 tests in 416.74 seconds** with only the existing Starlette/httpx warning
+and known trailing HiGHS diagnostics. The focused 89-test and locked 285-test gates, strict scoped
+typing, Black, compilation, Git whitespace, frozen-document hashes, frontend production build, and
+frontend `oxlint` also passed. Vite retained only the existing large 3D chunk advisory.
+
+The worktree was then confirmed empty; the revision had no prior attempt; the new external root
+`/private/tmp/plantanagent-beta-rl-capacity-27a47d0` did not exist; no training, pytest, capacity,
+or other repository benchmark process was present; and all five bound thread environment variables
+were absent. The single authorized Repair-001 attempt ran with explicit exclusivity and
+first-attempt assertions. No other work or analysis ran concurrently.
+
+The attempt completed once and failed closed. Its raw report SHA-256 is
+`b7b4a9e3be62f62c7f82d55584ec5d29a7df57e8566051ace62c7f4699b31abc`, report-domain digest is
+`e34facf8760e25c74adc1aff4cb4e35e7327e36bed0f23f341e28982f9a0e1f6`, deterministic pre-run
+digest is `ef1344f59687d92f537985cbf61251f6a743e178f9ddd768a8965a7fc00a3c91`, and runtime digest is
+`085ac94fc9b6caf259f7d2c644844d96a25d6d1f4d2936f3d5f88bba1834211e`. Immediate and detached
+same-host production verification reproduced the authenticated failed status, null result claim,
+and null campaign projection.
+
+All three frozen children exited zero. PI-Lagrangian ran for 129.781126917 wall seconds,
+integral-only for 129.247395542 seconds, and scalar PPO for 128.619359792 seconds. Each published
+the exact three checkpoint files, but the parent retained the fixed
+`checkpoint_admission_error` category and therefore admitted no checkpoint, measurement, or
+projection. All stderr logs are empty. Unlike the preceding failure, none of the three stdout logs
+was opened; their bytes remain available only through report-bound size/hash records. These failed
+timings cannot enter a campaign estimate.
+
+Read-only diagnosis invoked the existing checkpoint admission function on each retained artifact
+without retraining or adding it to a report. Every family produced the same error: `checkpoint
+training config differs from capacity cell`. The exact `training_config.json` byte comparison
+immediately before that check had passed. A second diagnostic compared only the static
+`training_config` mapping and did not print or inspect checkpoint evidence, rewards, costs, actions,
+multipliers, losses, policy outputs, markets, outages, inventories, or rankings. The only unequal
+top-level keys were `episode` and `beta_task`: nested bounds, duration ranges, forecast windows, and
+anchors were tuples in `config.to_dict()` and lists after the metadata JSON round trip. Both sides
+produce the same canonical JSON bytes, but raw Python object equality distinguishes tuple and list.
+
+This is a family-neutral checkpoint-admission representation defect after successful child
+training and serialization, not a learner or controller failure. It was masked in the V1 attempt
+because the earlier rollout-cost invariant prevented checkpoint publication. The complete result,
+including report/log/config/unadmitted-artifact identities, is retained in
+`results/v2_constrained_rl_capacity_27a47d0.md`. Revision `27a47d0` and its output root are closed;
+there will be no same-revision retry, projection, partial checkpoint reuse, or controller claim.
+
+`CONSTRAINED_RL_CAPACITY_REPAIR_002.md` is now frozen before source changes. Its sole repair retains
+the exact standalone `training_config.json` byte check and compares the complete metadata mapping
+by serializing it with the same canonical JSON, UTF-8, and trailing newline as the expected config.
+It forbids field-specific coercion, subset comparison, ignored keys, or tolerance and leaves every
+subsequent metadata, runtime, task, evidence, artifact, rollout, allocator, optimizer, and policy
+load check unchanged. Tests must accept only the representation-equivalent tuple/list round trip
+and reject changed nested values, ordering, missing/extra keys, and non-finite values. The next
+production schema is V3 and synthetic schema is V2, both bound to the exact Repair-002 document
+hash `1809e88942a0d075409e80c12219a1352bb2abfe4210a73580446e2a82012b06`. Only after
+implementation, independent audit, a clean commit, and complete release gates may one new revision
+receive one new three-cell capacity attempt.
