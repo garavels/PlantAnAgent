@@ -41,6 +41,26 @@ SUPPORTED_CONTROLLER_NEUTRAL_ENVIRONMENTS = (
     beta_spaces.ENVIRONMENT_ID,
 )
 
+BETA_CONSTRAINED_RL_PROTOCOL_ID = "plant-beta-constrained-rl-protocol-v1"
+BETA_PI_LAGRANGIAN_ALGORITHM_ID = "plant-beta-ppo-pi-lagrangian-v1"
+BETA_I_LAGRANGIAN_ALGORITHM_ID = "plant-beta-ppo-i-lagrangian-v1"
+BETA_SCALAR_PPO_ALGORITHM_ID = "plant-beta-sb3-ppo-scalar-v1"
+BETA_CORE_ALGORITHM_IDS = (
+    BETA_PI_LAGRANGIAN_ALGORITHM_ID,
+    BETA_I_LAGRANGIAN_ALGORITHM_ID,
+    BETA_SCALAR_PPO_ALGORITHM_ID,
+)
+BETA_FIXTURE_RUN_KIND = "fixture"
+BETA_REGISTERED_RUN_KIND = "registered"
+BETA_RUN_KINDS = (BETA_FIXTURE_RUN_KIND, BETA_REGISTERED_RUN_KIND)
+BETA_OPTIMIZER_SEEDS = (101, 211, 307, 401, 503)
+BETA_REGISTERED_EPISODE_SEED_BASE = 1_000_000
+BETA_FIXTURE_EPISODE_SEED_MIN = 9_000_000
+BETA_FIXTURE_EPISODE_SEED_MAX = 9_999_999
+BETA_REGISTERED_TOTAL_TIMESTEPS = 1_048_576
+BETA_REGISTERED_ENV_COUNT = 4
+BETA_FIXTURE_MAX_COLLECTED_TIMESTEPS = 8_192
+
 
 def _object(name: str, value: object | None) -> dict[str, Any]:
     if value is None:
@@ -409,6 +429,69 @@ def _beta_task_to_training_dict(
     }
 
 
+@dataclass(frozen=True, slots=True)
+class BetaRLTrainingRunV1:
+    """Outcome-custody selector for one beta constrained-RL run.
+
+    Historical controller-neutral PPO configurations omit this record and keep
+    their existing seed behavior.  Its presence opts a beta run into either the
+    bounded fixture gate or the exact registered campaign.
+    """
+
+    protocol_id: str = BETA_CONSTRAINED_RL_PROTOCOL_ID
+    algorithm: str = BETA_PI_LAGRANGIAN_ALGORITHM_ID
+    run_kind: str = BETA_FIXTURE_RUN_KIND
+    episode_seed_base: int = BETA_FIXTURE_EPISODE_SEED_MIN
+
+    def validate(self) -> "BetaRLTrainingRunV1":
+        if self.protocol_id != BETA_CONSTRAINED_RL_PROTOCOL_ID:
+            raise ValueError(
+                "beta RL protocol identifier differs from the frozen protocol"
+            )
+        if self.algorithm not in BETA_CORE_ALGORITHM_IDS:
+            raise ValueError(
+                "beta RL algorithm is not one of the three frozen core families"
+            )
+        if self.run_kind not in BETA_RUN_KINDS:
+            raise ValueError("beta RL run_kind must be fixture or registered")
+        if isinstance(self.episode_seed_base, bool) or not isinstance(
+            self.episode_seed_base, int
+        ):
+            raise TypeError("beta RL episode_seed_base must be an integer")
+        if self.run_kind == BETA_REGISTERED_RUN_KIND:
+            if self.episode_seed_base != BETA_REGISTERED_EPISODE_SEED_BASE:
+                raise ValueError(
+                    "registered beta RL must start at episode seed 1,000,000"
+                )
+        elif not (
+            BETA_FIXTURE_EPISODE_SEED_MIN
+            <= self.episode_seed_base
+            <= BETA_FIXTURE_EPISODE_SEED_MAX
+        ):
+            raise ValueError(
+                "fixture beta RL episode seeds must remain in 9,000,000..9,999,999"
+            )
+        return self
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "protocol_id": self.protocol_id,
+            "algorithm": self.algorithm,
+            "run_kind": self.run_kind,
+            "episode_seed_base": self.episode_seed_base,
+        }
+
+    @classmethod
+    def from_dict(cls, raw: object | None) -> "BetaRLTrainingRunV1":
+        values = _object("beta RL training run", raw)
+        _reject_unknown(
+            "beta RL training run",
+            values,
+            {item.name for item in fields(cls)},
+        )
+        return replace(cls(), **values).validate()
+
+
 @dataclass(frozen=True)
 class ControllerNeutralTrainingConfigV1:
     """One reproducible PPO run against a four-target Environment V2 task."""
@@ -428,6 +511,7 @@ class ControllerNeutralTrainingConfigV1:
         default_factory=EconomicAssumptionsV1
     )
     beta_task: CyclicMarketTaskConfigV1 | None = None
+    beta_rl: BetaRLTrainingRunV1 | None = None
     ppo: PPOConfig = field(default_factory=PPOConfig)
     notes: str = ""
 
@@ -486,8 +570,81 @@ class ControllerNeutralTrainingConfigV1:
             )
         elif self.beta_task is not None:
             raise ValueError("beta_task is only valid for the cyclic-market beta")
+        if self.beta_rl is not None:
+            if not isinstance(self.beta_rl, BetaRLTrainingRunV1):
+                raise TypeError("beta_rl must be BetaRLTrainingRunV1 or None")
+            self.beta_rl.validate()
+            if self.environment_id != beta_spaces.ENVIRONMENT_ID:
+                raise ValueError("beta_rl is only valid for the cyclic-market beta")
         _validate_ppo(self.ppo, n_envs=self.n_envs)
+        if self.beta_rl is not None:
+            self._validate_beta_rl_run()
         return self
+
+    def _validate_beta_rl_run(self) -> None:
+        if self.beta_rl is None:  # pragma: no cover - private caller guards this
+            return
+        if self.n_envs != BETA_REGISTERED_ENV_COUNT:
+            raise ValueError(
+                "beta RL custody requires exactly four vector environments"
+            )
+        if self.seed not in BETA_OPTIMIZER_SEEDS:
+            raise ValueError(
+                "beta RL optimizer seed is not in the frozen five-seed set"
+            )
+        if self.checkpoint_every != 0:
+            raise ValueError("beta RL permits only a final eligible checkpoint")
+
+        rollout_size = self.ppo.n_steps * self.n_envs
+        collected_timesteps = (
+            math.ceil(self.total_timesteps / rollout_size) * rollout_size
+        )
+        decisions_per_environment = collected_timesteps // self.n_envs
+        episode_decisions = self.episode.decision_steps(self.plant)
+        reset_count_per_environment = decisions_per_environment // episode_decisions + 1
+        final_episode_seed = (
+            self.beta_rl.episode_seed_base
+            + self.n_envs * (reset_count_per_environment - 1)
+            + self.n_envs
+            - 1
+        )
+
+        if self.beta_rl.run_kind == BETA_REGISTERED_RUN_KIND:
+            if self.total_timesteps != BETA_REGISTERED_TOTAL_TIMESTEPS:
+                raise ValueError(
+                    "registered beta RL timestep budget must be exactly 1,048,576"
+                )
+            if self.resume_from is not None:
+                raise ValueError("registered beta RL forbids resume_from")
+            if self.ppo != PPOConfig():
+                raise ValueError(
+                    "registered beta RL PPO settings differ from the frozen defaults"
+                )
+            if episode_decisions != 672:
+                raise ValueError(
+                    "registered beta RL requires the frozen 672-decision episode"
+                )
+            if final_episode_seed != 1_001_563:
+                raise ValueError(
+                    "registered beta RL allocator endpoint differs from the protocol"
+                )
+            output = Path(self.output_dir).expanduser()
+            if not output.is_absolute():
+                raise ValueError("registered beta RL output_dir must be absolute")
+            repository = Path(__file__).resolve().parents[6]
+            if output.resolve().is_relative_to(repository):
+                raise ValueError(
+                    "registered beta RL output_dir must be external to the repository"
+                )
+        else:
+            if collected_timesteps > BETA_FIXTURE_MAX_COLLECTED_TIMESTEPS:
+                raise ValueError(
+                    "fixture beta RL is bounded to at most 8,192 collected decisions"
+                )
+            if final_episode_seed > BETA_FIXTURE_EPISODE_SEED_MAX:
+                raise ValueError(
+                    "fixture beta RL allocator would leave the fixture seed domain"
+                )
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -508,6 +665,7 @@ class ControllerNeutralTrainingConfigV1:
                 if self.beta_task is None
                 else _beta_task_to_training_dict(self.beta_task)
             ),
+            "beta_rl": None if self.beta_rl is None else self.beta_rl.to_dict(),
             "ppo": asdict(self.ppo),
             "notes": self.notes,
         }
@@ -531,6 +689,11 @@ class ControllerNeutralTrainingConfigV1:
             "economic_assumptions": _assumptions_from_dict,
             "beta_task": (
                 lambda value: None if value is None else _beta_task_from_dict(value)
+            ),
+            "beta_rl": (
+                lambda value: (
+                    None if value is None else BetaRLTrainingRunV1.from_dict(value)
+                )
             ),
             "ppo": _ppo_from_dict,
         }
@@ -562,6 +725,15 @@ class ControllerNeutralTrainingConfigV1:
 
 
 __all__ = [
+    "BETA_CONSTRAINED_RL_PROTOCOL_ID",
+    "BETA_CORE_ALGORITHM_IDS",
+    "BETA_FIXTURE_RUN_KIND",
+    "BETA_I_LAGRANGIAN_ALGORITHM_ID",
+    "BETA_OPTIMIZER_SEEDS",
+    "BETA_PI_LAGRANGIAN_ALGORITHM_ID",
+    "BETA_REGISTERED_RUN_KIND",
+    "BETA_SCALAR_PPO_ALGORITHM_ID",
+    "BetaRLTrainingRunV1",
     "SUPPORTED_CONTROLLER_NEUTRAL_ENVIRONMENTS",
     "ControllerNeutralTrainingConfigV1",
 ]
