@@ -5711,3 +5711,180 @@ forecast revisions and correlated errors, demand/logistics uncertainty, sensor i
 degradation/faults, and constrained backup energy. HEPA remains a separately ablated predictive
 representation/safety layer, and natural language remains an operator-governance interface; they
 must not be credited with controller value until factorial evidence isolates their contribution.
+
+## 2026-09-05 — Cyclic stochastic-market beta implemented without opening an outcome
+
+The next task was deliberately changed from running the finished alpha comparison software to
+removing the task ceiling that made the colleague's PPO/heuristic parity unsurprising. No long
+experiment was started. The implementation contract was frozen in
+`CYCLIC_MARKET_BETA_PROTOCOL.md` before any beta controller result: a separately identified task,
+unchanged alpha physical sampling, stochastic realized price plus one causal forecast vintage per
+decision, exact daily resource returns against one non-ratcheting reference, and finite private
+DAC outages. The contract explicitly separates scalar EUR value from hard cycle feasibility and
+forbids a protected comparison until a new outcome-blind split and finite policy-selection rule
+exist.
+
+The task choice followed the repository's own negative evidence. M24 already repairs deterministic
+full-day service, while the alpha economic ranking is sensitive to synthetic liabilities and gives
+the economic MPC a complete repeating tariff that PPO sees only as a small summary. A more useful
+task must make future information uncertain and revisable, prevent the controller from spending
+starting inventory once, and require recovery from unavailable process capacity. Literature on
+the Industrial Benchmark, safe constrained control, and coupled power-to-gas dynamics was used to
+justify those classes of difficulty, not to calibrate coefficients or claim field fidelity. The
+market and outage processes remain declared synthetic engineering stressors.
+
+Implementation was split into independent market and disturbance contracts, then composed locally
+with cycle state, Gym fields, economic accounting, policy admission, and training. This preserved
+clear ownership between latent exogenous data and controller-visible data.
+
+The new `market.py` generator uses the existing 24-hour tariff only as a civil-time baseline. A
+regime-dependent AR(1) residual supplies serial correlation and rare signed arrivals create
+decaying excursions. `calm`, `volatile`, and `scarcity` are immutable version-bound profiles;
+`mixed` privately samples one concrete profile. Every realized price is finite and clipped to the
+existing -300 to 300 EUR/MWh observation domain. The default issue generator uses 64 ensemble
+members, but that number and its innovation scale are task configuration rather than hidden
+constants.
+
+One `PublicPriceForecastIssueV1` is generated for every controller decision. It contains the
+current realized price and 24 ordered hourly bins of mean, p10, and p90, giving a fixed 73-field
+public vector. An issue conditions on current price and its own spawned forecast stream but never
+reads future realized truth. The explicit external-truth seam made this causal property directly
+testable: changing only later truth preserves the current issue byte-for-byte and changes a later
+issue after its new current price becomes available. Hourly means can be projected identically to
+any whole subdivision of an hour, including the 15-minute MPC grid. The public serializer omits
+selected regime, seed, stream state, future truth, and future vintages; the private audit serializer
+retains the generator version, exact profile, baseline, initial RNG identities, truth/forecast
+digests, and replay requirements.
+
+The new `beta_disturbances.py` generator builds only finite `dac_outage` faults supported by the
+existing simulator. Each exact 24-hour cycle owns an independent deterministic stream and may
+contain at most one outage. Defaults are enabled, probability 0.5 per cycle, and a one-to-four-hour
+duration range. Drawn onsets and durations are on the physics lattice. Extending an episode leaves
+existing cycle draws unchanged, and disabling the feature produces an exactly empty schedule.
+
+Disturbance integration exposed a subtle simulator-boundary issue during outcome-free review. The
+fault registry refreshes immediately before a dispatch while boundary telemetry describes the
+interval just completed. Allowing an outage to end exactly at the cycle boundary could therefore
+leave a stale offline indication at that boundary and suppress the next cycle's first behavior.
+The generator now requires one healthy physics dispatch before every cycle end. Generated faults
+are validated through normalized `FaultSpec` semantics and the simulator fault registry remains
+the authority. Only ordinary health and telemetry effects are public; schedule and stream data are
+private audit material.
+
+`beta_config.py` freezes exact 24-hour cycle geometry, four independent return fractions and
+tolerances, the opening-resource reference, and one immutable settlement record. The reference is
+read from authoritative simulator state at episode reset. Battery energy, H2, CO2, and saleable
+CH4 targets all default to 100% of that same reference. Each boundary reports target, actual,
+deficit, tolerance, feasibility, and a dimensionless violation cost. Targets never ratchet after a
+bad cycle, and resources are not collapsed into methane-equivalent inventory because process form
+and conversion time remain operationally important.
+
+The composed `PlantCyclicMarketEnvV2Beta` has the distinct environment ID
+`plant-env-v2-cyclic-market-beta-v1`. Its observation concatenates the unchanged 57-field physical
+vector, the exact 73-field public market issue, and five fields for cycle progress and signed
+battery/H2/CO2/CH4 return margins. The result is a declared finite 135-field space. Its action is
+the existing four normalized absolute process targets, so all commands continue through
+`ProcessSetpointCommandV1`, the common reserve-aware minute dispatcher, independent guard, and
+simulator.
+
+Two narrow protected seams were added to inherited environments. `PlantEnvV2._sample_episode`
+delegates to the historical alpha sampler by default; beta overrides it before simulator loading.
+`PlantEconomicSetpointEnvV2` now asks protected methods for the interval opportunity price and its
+public context; their default implementation is the unchanged alpha tariff. Beta supplies the
+current realized market price and exact current issue. This avoids duplicating the authoritative
+economic ledger while keeping alpha stream order and price behavior unchanged.
+
+Beta root children are fixed as inventories, weather, contracts, market, and disturbances. The
+first three retain the established alpha indices 0--2; beta takes only children 3 and 4. The audit
+manifest preserves the original physical exogenous digest under an explicit alpha name and adds a
+beta exogenous digest over physical, market, disturbance, and cycle identities. The checkpoint
+contract separately binds the 135/4 interface, generator versions and settings, economic
+assumptions, cycle semantics, stream allocation, disturbance visibility, and execution doors.
+Source revision and dependency-lock hashes remain an experiment-runner responsibility rather than
+being fabricated by the environment.
+
+The live observation at each beta decision is a typed
+`CyclicMarketControllerObservationV1`: physical state, the current market issue, cycle state,
+economic-assumption digest, and beta-task digest. Generic economic access returns this richer type
+rather than silently downgrading to the alpha deterministic-tariff view. An alpha-only economic
+MPC therefore fails its input contract if used directly against beta instead of receiving the
+wrong forecast or privileged price information.
+
+The strict controller-neutral PPO path now accepts beta only when a
+`CyclicMarketTaskConfigV1` is present and valid. JSON parsing rejects unknown cycle, market, and
+disturbance settings. Direct CLI selection binds the version-one default beta task when no beta
+configuration was loaded and removes stale beta settings when switching back to alpha. The normal
+environment factory constructs beta for training, and the policy contract binds its environment
+ID, field order, interface digest, and full checkpoint digest.
+At inference, the normalized policy adapter verifies the economic and beta-task identities,
+encodes exactly 57 + 73 + 5 fields, checks shape against checkpoint metadata, performs deterministic
+policy inference, and issues the same observation-bound four-target command as the two alpha tasks.
+Alpha/beta substitution is therefore rejected before relying on model output.
+
+The existing paired heuristic/policy evaluator now understands beta manifests and retains beta
+exogenous identity, economic accounting, every cycle settlement, aggregate feasibility, cumulative
+constraint cost, typed decisions, and minute physical executions. The heuristic remains the
+transparent physical baseline and does not consume the additional market/cycle fields; the policy
+receives exactly its checkpoint-declared vector. Failures are retained and no fallback controller
+is invented. A normally terminated beta trajectory that violates any 24-hour return constraint is
+now recorded with failed task status and a typed `CycleConstraintViolation`, while termination and
+completed-decision evidence remain intact. A future scientific runner must still enforce its
+preregistered complete-pair and eligibility rules rather than dropping failed arms.
+
+Outcome-free tests were added for deterministic and immutable market/disturbance replay, strict
+hash identity, caller seed preservation, public/private field separation, complete finite forecast
+shape, quantile ordering, causal future-truth invariance, later-vintage revision, hourly forecast
+projection, explicit/mixed regimes, serial correlation, empty outage ablation, horizon-prefix
+invariance, per-cycle outage cardinality, lattice alignment, finite lifecycle, and fail-closed
+configuration/geometry validation. Environment, checkpoint, policy, training, and alpha-regression
+coverage add 135/4 prefix parity, realized-price attribution, public/private manifest separation,
+exact two-cycle settlement, Gym/checkpoint common-door parity, bidirectional checkpoint rejection,
+and training-config reconstruction. No test fixture is being reinterpreted as a
+controller-performance result. The post-composition focused command covered the beta environment,
+controller-neutral matrix, policy integration, and strict training configuration; it completed
+with **105 passed and 2 skipped**. No training or performance-bearing rollout was part of that
+gate.
+
+The build now supports a real 135/4 beta PPO training and common-authority inference path, but it
+does not yet support a scientifically fair beta controller tournament. The existing tariff-aware
+economic MPC and H/M24/E/PPO runner are bound to the alpha economic task. The next production
+increment is a separately versioned beta economic MPC consuming only the current public issue and
+explicitly modelling the four return constraints. The current trainer is ordinary scalar-reward
+PPO: cycle margins are observable and settlement cost is retained, but the learner does not yet
+enforce that cost. A constrained-RL contract with a declared feasibility budget is therefore a
+separate next milestone, with standard PPO retained as an ablation. Four-arm runner/verifier
+support follows those controller contracts. Economic coefficients must then be calibrated or
+uncertainty-bounded, and the new train, development, and held-out regime/seed split plus finite
+training-seed/checkpoint-selection rule must be frozen without inspecting outcomes.
+
+No beta training, protected seed comparison, controller-superiority result, HEPA fit,
+language-supervisor experiment, site validation, savings estimate, ROI, or commission claim was
+opened. The implemented contribution is the harder causal experimental substrate: recurring
+renewable-powered operation under revised electricity value, resource sustainability, and
+unannounced process loss, with enough identity and evidence separation to test controller value
+later without repeating the alpha information asymmetry.
+
+Final hardening closed three additional software gaps before commit. Direct CLI selection of the
+beta now constructs and binds the complete default `CyclicMarketTaskConfigV1` rather than failing
+with a missing extension; switching back to an alpha task removes stale beta settings. Disturbance
+duration/grid compatibility is validated while the task and checkpoint contract are constructed,
+before reset or physical movement. Finally, a normally terminated policy episode that violates any
+24-hour resource return is recorded with failed task status and a typed
+`CycleConstraintViolation`; its normal termination, completed decisions, settlements, and cost are
+all retained, so the evaluator cannot call an infeasible trajectory successful or erase its
+physical execution.
+
+The real training CLI was then exercised in `--dry-run` mode against the beta identifier. It
+constructed the default 72-hour task, reported 135 observations, four actions, 672 decisions,
+10,080 physics steps, distinct beta and retained physical exogenous digests, and the beta-specific
+output directory. It explicitly printed `nothing was trained`; no optimizer or gradient step was
+started.
+
+The final release gate ran no training and no protected rollout. The complete Python repository
+finished with **1,461 passed and 4 skipped** in 64.98 seconds. The one warning is the existing
+Starlette/httpx deprecation; the known trailing HiGHS diagnostics also remain. Strict typing passed
+for the 11 touched/new production modules after excluding only third-party missing-stub/import
+diagnostics and inherited unused override-ignore markers. Black passed for all 17 touched/new Python
+files, and `compileall`, Git whitespace validation, the frontend production TypeScript/Vite build,
+and frontend `oxlint` all passed. Vite retained its existing large-chunk advisory. These are release
+checks only; they do not alter the no-outcome claim boundary above.

@@ -158,6 +158,21 @@ equipment consequences.
   custody. The economic MPC's full public tariff projection is also explicitly richer than the
   alpha PPO's five tariff-summary fields, so equal-information tariff generalization remains a
   beta-environment requirement.
+- The first cyclic stochastic-market beta is now implemented as
+  `plant-env-v2-cyclic-market-beta-v1`, without changing or relabelling an alpha task. It composes
+  the unchanged 57-field physical boundary with a 73-field causal market issue and five
+  non-ratcheting cycle margins, while retaining the same four absolute targets and guarded
+  one-minute plant path. Realized price now drives the existing EUR ledger; a new issue at every
+  15-minute boundary supplies 24 hourly mean/p10/p90 bins without future-truth access; and an
+  independent private stream installs at most one finite DAC outage per 24-hour cycle. Exact
+  battery/H2/CO2/CH4 return feasibility is settled against one opening reference without plant
+  resets or a hidden reward penalty. The strict PPO config, checkpoint admission, deterministic
+  policy adapter, and paired heuristic/policy evidence path all recognize the 135/4 task. This is
+  an outcome-free software boundary whose release gate passed 1,461 Python tests with 4 optional
+  skips, strict touched-module typing, formatting/compilation/whitespace checks, and frontend
+  build/lint. No beta policy has been trained or compared, the existing four-arm runner remains
+  alpha-specific, and a beta-native market/cycle-aware MPC, a learner that treats cycle cost as a
+  constraint, and an outcome-blind data split are the next prerequisites.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.
 
@@ -205,6 +220,13 @@ ablated.
 - explicit separation of latent truth, forecast, and observed realization;
 - held-out weather regimes rather than seed-only evaluation.
 
+Current beta status: the weather-alpha truth/forecast separation remains intact, and a separate
+market stream now adds bounded regime-dependent AR(1) residuals and signed decaying price
+excursions over the deterministic tariff baseline. A causal 24-hour ensemble issue is revised at
+every controller boundary; future truth, selected regime, future vintages, and stream identities
+remain private. The market is a synthetic stress generator, not a historical or bidding-zone
+calibration. A prospective regime/seed split remains to be frozen before outcome-bearing work.
+
 ### B2. Temporal equipment commitment
 
 - off, starting, running, and cooldown states for key process units;
@@ -243,6 +265,13 @@ starting endowment to maximize delivery. A sustainable-service beta must add cyc
 terminal constraints or calibrated terminal shadow values without retrospectively changing
 the frozen alpha result.
 
+Current beta status: the first option is implemented. Every exact 24-hour boundary settles
+battery energy and H2, CO2, and saleable CH4 separately against fractions of one immutable
+episode-opening reference. The plant, equipment, weather, contracts, price process, and fault
+lifecycle continue through the boundary. Feasibility and a dimensionless violation cost are
+reported separately from the EUR reward. The generic evaluator retains those values, but the
+future scientific runner must make cycle infeasibility a preregistered hard eligibility failure.
+
 ## Stage C — Controller evidence
 
 - upgrade the heuristic into a credible forecast-aware baseline;
@@ -262,6 +291,15 @@ gap it captures. PPO training begins only after that equal-information comparato
 sustainable terminal objective exist. RL earns a role only by closing a measured residual
 gap, improving tail risk or latency, or handling nonlinear/scenario complexity that the MPC
 does not capture.
+
+The beta closes the trainable-environment dependency but not comparator parity. PPO can now train
+and infer on the exact 135-field public boundary with beta-task and economic identities bound into
+its checkpoint. The next controller work is a separately identified economic MPC that consumes
+only the current public market issue, represents the four daily return constraints, and exposes
+its uncertainty and model mismatch, plus a constrained-RL contract that consumes the separate
+cycle-cost signal while retaining scalar PPO as an ablation. Only after those controllers, the
+four-arm runner, a detached verifier, coefficient uncertainty, and an outcome-blind beta split
+are frozen may a substantive policy training or comparison start.
 
 The first service-MPC replication proves that equal information and a valid MILP are not
 sufficient when the supervisory action contract loses commitment intent. Before comparing
@@ -322,6 +360,14 @@ Add only after the preceding experiment identifies a missing decision pressure:
 
 Each feature must introduce a documented state variable, invariant, observable contract,
 baseline response, test, and intended decision consequence.
+
+Beta progress: stochastic electricity opportunity cost, explicit battery-throughput and
+electrolyser reserves inherited from economic alpha, and finite DAC availability events are now
+independently identified task components. Gradual wear-state evolution, sensor imperfection,
+maintenance actions, import/export, water/compression constraints, and multi-unit bottlenecks
+remain absent. The DAC schedule is private while only ordinary health and telemetry effects are
+public; sensor bias and degradation remain deferred until their truth-versus-measurement and
+remaining-life states can be specified without breaking the observation contract.
 
 ## Stage E — Predictive and supervisory value
 

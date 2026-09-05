@@ -222,6 +222,18 @@ fallback behavior.
   clean committed source, the dependency lock, numerical runtimes, and canonical arm identities.
   It records a software boundary only because no research-scale PPO artifact or new controller
   outcome is stored here.
+- [`CYCLIC_MARKET_BETA_PROTOCOL.md`](CYCLIC_MARKET_BETA_PROTOCOL.md) freezes the next
+  separately identified Environment V2 task before a controller outcome: stochastic realized
+  prices, causal revisable 24-hour forecast issues, uninterrupted non-ratcheting daily returns
+  for battery/H2/CO2/CH4, private finite DAC outages, isolated random streams, and a 135/4
+  controller interface. It explicitly forbids a protected comparison until an outcome-blind
+  beta split and controller-selection rule are committed.
+- [`CYCLIC_MARKET_BETA_BUILD.md`](CYCLIC_MARKET_BETA_BUILD.md) maps that protocol to the
+  runnable environment, immutable market/disturbance/cycle contracts, public/private evidence
+  boundary, realized-price EUR ledger, checkpoint identity, and controller-neutral PPO path.
+  It also records the remaining scientific dependencies: a beta-native market-aware MPC,
+  constrained-RL contract, four-arm evaluator/verifier extension, coefficient calibration or
+  uncertainty bounds, and a prospective split. No beta training or controller result is reported.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.
