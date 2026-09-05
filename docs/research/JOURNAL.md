@@ -5271,3 +5271,49 @@ development cases. Formal evaluation will require new seeds plus unseen weather,
 tariff, plant, and equipment regimes. The complete tables, interpretation, claim boundary, and
 artifact custody are recorded in
 `results/v2_economic_robustness_7b1b656.md`.
+
+## 2026-09-05 — Full-day horizon-only repair frozen before implementation or M24 outcome
+
+The robustness result identified a concrete full-day mechanism but did not distinguish whether
+the six-hour lookahead alone caused the failure or whether the unchanged methane-equivalent
+terminal value also requires repair. I therefore froze
+`FULL_DAY_HORIZON_REPAIR_PROTOCOL.md` as a single-variable causal probe before implementing its
+runner, resetting a protected environment, or requesting an M24 action on seeds 20--24. The raw
+protocol SHA-256 is
+`e203d1bb12246bc43278b686779afdfde310f8b56e487dac7f9d05947079e0e1`.
+
+M24 is the existing `ServiceMPCSetpointControllerV1` with only
+`planning_horizon_h` changed from 6 to 24 hours. The task horizon remains 24 hours and the
+control interval remains 900 seconds. Every terminal, delivery, startup, curtailment, battery,
+solver, plant, constraint, forecast, tariff, economic, command, dispatcher, guard, and evidence
+setting remains fixed. The resulting M24 settings identity is
+`67877c94438fc1bf1bd3ad564f17d860f77cea10b82f07bba0d52b6a6f6b1778`; the rejected M6
+full-day identity is
+`28dd0dbbd732f4defcc700e3fcb91e59b2d14d6df7bac728963090e37ba48b0f`.
+
+The frozen matrix contains only the ten already contaminated 24-hour development cells: rates
+35 and 42 kg/h crossed with seeds 20--24. It creates ten new M24 trajectories, 960 controller
+decisions, 1,920 solver stages, and 14,400 physical minutes. The old H and M6 arms are not rerun;
+the future runner must load and deeply verify their immutable artifacts from the registered
+robustness directory at executed source `7b1b656964dcac4a25c6f5d4d89fed8abf4d4e0e`. It must
+reject any changed reference byte, semantic identity, source state, task identity, or output
+destination before producing an action.
+
+The acceptance logic is intentionally stronger than “more product.” F1--F3 require exact
+source/reference custody, all ten complete executions, closed evidence, accounting, safety, and
+authority. F4 proves that the intervention actually exposes 96 planning intervals and exactly
+four public targets at controller boundaries 24, 48, 72, and 96 while leaving every other
+identity fixed. F5 requires no cell to regress against M6, positive fourth-settlement delivery
+in every cell, and full request plus H-comparable service in at least four of five cells at each
+rate. F6 requires at least a 90% mean unmet-methane reduction and enough post-third-settlement
+CH4 for the complete fourth request in at least four of five cells per rate. F7 reuses the
+registered equal-service economic-expression rules; F8 retains latency and the explicit
+development-only claim boundary.
+
+This order prevents outcome-driven weight tuning. If horizon-only repair fails, the next
+versioned intervention must explicitly protect deliverable methane across renewable outages
+and/or change the physical energy-supply architecture. If it repairs service but not economic
+expression, calibrated operational pressure comes before RL. Only a passing, separately
+verified repair can authorize a separately frozen bounded PPO baseline, tariff-aware economic
+MPC, and cyclic Environment V2 beta design. No M24 protected action, policy training, held-out
+evaluation, or controller/commercial claim was opened by this protocol freeze.

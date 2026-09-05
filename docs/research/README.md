@@ -175,6 +175,13 @@ fallback behavior.
   24-hour strata are comparable in 0/5. The retained evidence localizes the failure to a
   six-hour planning horizon and methane-equivalent terminal value that strand H2/CO2 before a
   sunless fourth commitment. The alpha task is not admitted for substantive RL training.
+- [`FULL_DAY_HORIZON_REPAIR_PROTOCOL.md`](FULL_DAY_HORIZON_REPAIR_PROTOCOL.md)
+  freezes the first causal repair probe after that result. It changes only the service MPC
+  planning horizon from 6 to 24 hours on the ten contaminated full-day development cells,
+  reuses the verified H/M6 artifacts without rerunning them, and requires complete evidence,
+  horizon fidelity, fourth-commitment recovery, service repair, mechanism closure, and
+  equal-service economic expression before the repair is accepted. No M24 outcome has been
+  opened under this protocol.
 - [`CONTROLLER_NEUTRAL_RL_INTEGRATION.md`](CONTROLLER_NEUTRAL_RL_INTEGRATION.md)
   defines the completed RL wiring gate: strict four-target training configuration, exact
   full-task checkpoint compatibility, artifact hashing, checkpoint-bound inference evidence,

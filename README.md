@@ -739,10 +739,12 @@ and 36,000 physical minutes pass execution, identity, accounting, safety, and au
 Both six-hour strata remain service-comparable in 5/5 cells, but both 24-hour strata are
 comparable in 0/5: the six-hour-lookahead MPC fulfills the first two commitments, partially
 fulfills the third, and delivers zero at the fourth while retaining a near-full battery and
-stranded H2/CO2. The task is therefore **not admitted for substantive RL training**. The next
-increment must repair full-day service planning and product-form terminal adequacy under a new
-protocol, not tune a policy against a known horizon defect. The retained report can be verified
-with:
+stranded H2/CO2. The task is therefore **not admitted for substantive RL training**. The first
+repair is now frozen as a single-variable mechanism probe: extend only the service MPC horizon
+from 6 to 24 hours on the already contaminated full-day cells, leaving its objective, the
+plant, the common command path, and the economic assumptions unchanged. No protected M24
+outcome has run. If horizon alone does not recover service, the next protocol must add explicit
+deliverable-product adequacy across renewable outages. The retained report can be verified with:
 
 ```bash
 make v2-economic-robustness-verify REPORT=/absolute/external/directory/report.json
@@ -750,7 +752,8 @@ make v2-economic-robustness-verify REPORT=/absolute/external/directory/report.js
 
 See [`docs/research/results/v2_economic_robustness_7b1b656.md`](docs/research/results/v2_economic_robustness_7b1b656.md)
 for the complete gate result, mechanism diagnosis, coefficient sensitivity, artifact identities,
-and next architecture decision.
+and next architecture decision. The frozen follow-up is
+[`docs/research/FULL_DAY_HORIZON_REPAIR_PROTOCOL.md`](docs/research/FULL_DAY_HORIZON_REPAIR_PROTOCOL.md).
 
 ---
 

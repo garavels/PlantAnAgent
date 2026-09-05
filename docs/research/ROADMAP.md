@@ -18,7 +18,7 @@ The near-term research goal is to show that this separation creates attributable
 on a benchmark whose optimal action depends on uncertain future conditions and delayed
 equipment consequences.
 
-## Progress snapshot — 2026-09-04
+## Progress snapshot — 2026-09-05
 
 - Gate A is **partially complete**: the V1 tank-filling ceiling and heuristic
   saturation are reproduced, but the colleague's trained-policy artifact has not yet
@@ -130,9 +130,16 @@ equipment consequences.
   while retaining 7.1--8.0 MWh battery energy and stranded H2/CO2. The mechanism is the frozen
   six-hour lookahead plus methane-equivalent terminal value: it cannot distinguish deliverable
   CH4 from feedstock that cannot be converted during the sunless final window. Seeds 20--24 are
-  now development-only. The alpha task is not admitted for substantive RL training; the next
-  work package must preregister a full-day, product-form-aware, service-constrained benchmark
-  before any policy training or economic-controller claim.
+  now development-only. The alpha task is not admitted for substantive RL training.
+- The next repair is now preregistered without opening an outcome. M24 changes only the causal
+  service MPC planning horizon from 6 to 24 hours on the ten contaminated full-day cells and
+  references the immutable H/M6 evidence rather than rerunning it. The probe asks whether all
+  four public commitments are enough to restore fourth-settlement and full-day service while
+  every objective weight, plant contract, command path, and economic assumption stays fixed.
+  If horizon-only repair fails, the next protocol must add explicit deliverable-CH4 adequacy
+  across renewable outages and/or change the energy-supply architecture. If it restores
+  service but the task remains coefficient-dependent, calibrated operational pressure comes
+  before PPO. No protected M24 action has run.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.
 
