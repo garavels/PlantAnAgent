@@ -262,10 +262,38 @@ class PlantEconomicSetpointEnvV2(PlantSetpointEnvV2):  # type: ignore[misc]
             battery_throughput_kwh=self.metrics.battery_throughput_kwh,
             delivered_kg=self.metrics.delivered_kg,
             unmet_kg=self.metrics.unmet_kg,
-            opportunity_price_eur_per_mwh=(
-                self.economic_assumptions.tariff.price_at(state.time_h)
+            opportunity_price_eur_per_mwh=self._opportunity_price_eur_per_mwh(
+                time_h=state.time_h,
+                decision_index=self.decisions_taken,
             ),
         )
+
+    def _opportunity_price_eur_per_mwh(
+        self,
+        *,
+        time_h: float,
+        decision_index: int,
+    ) -> float:
+        """Return the public price applying to the next controller interval.
+
+        This protected seam preserves the deterministic alpha tariff exactly while
+        allowing a separately versioned task to supply a reset-bound causal market
+        tape.  The authoritative reward calculation still happens in one place.
+        """
+
+        del decision_index
+        return self.economic_assumptions.tariff.price_at(time_h)
+
+    def _economic_price_context(
+        self,
+        *,
+        time_h: float,
+        decision_index: int,
+    ) -> dict[str, Any]:
+        """Serialize the controller-visible price source at this boundary."""
+
+        del decision_index
+        return self.economic_assumptions.tariff.observe(time_h).to_dict()
 
     def _finish_economic_step(
         self,
@@ -325,9 +353,10 @@ class PlantEconomicSetpointEnvV2(PlantSetpointEnvV2):  # type: ignore[misc]
         info["economic_metrics"] = self.economic_metrics.to_dict()
         info["economic_interval"] = {
             **breakdown.signals,
-            "tariff": self.economic_assumptions.tariff.observe(
-                start.state.time_h
-            ).to_dict(),
+            "tariff": self._economic_price_context(
+                time_h=start.state.time_h,
+                decision_index=start.decisions,
+            ),
         }
         return observation, breakdown.total_eur, terminated, truncated, info
 

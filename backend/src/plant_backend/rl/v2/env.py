@@ -147,7 +147,7 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
                 self.np_random.integers(0, np.iinfo(np.uint32).max, dtype=np.uint32)
             )
         )
-        drawn = sample_episode(self.episode_config, self.config, seed=episode_seed)
+        drawn = self._sample_episode(episode_seed)
         self._episode = drawn
         self.episode_physics_steps = drawn.physics_steps
         self.episode_decisions = drawn.physics_steps // drawn.decision_stride
@@ -183,6 +183,18 @@ class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
             electrolyser_commitment=self.simulator.electrolyser_commitment,
         )
         return self._observe(), self._public_info()
+
+    def _sample_episode(self, seed: int) -> EpisodeV2:
+        """Construct the immutable physical episode used by :meth:`reset`.
+
+        The default implementation is deliberately a one-line delegation so
+        the established V2 alpha sampling contract and random streams remain
+        byte-for-byte unchanged.  Separately versioned environments may
+        override this protected seam to attach additional exogenous schedules
+        before the simulator is loaded, without changing the alpha generator.
+        """
+
+        return sample_episode(self.episode_config, self.config, seed=seed)
 
     def step(
         self,
