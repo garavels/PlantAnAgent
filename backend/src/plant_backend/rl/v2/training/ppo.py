@@ -442,60 +442,115 @@ def save_checkpoint(
 
 
 def plan(config: ControllerNeutralTrainingConfigV1) -> dict[str, Any]:
-    """Build and reset the exact task, but import no trainer and take no gradient."""
+    """Identify the exact task without importing a trainer or taking a gradient.
 
-    environment = make_env(config)
-    observation, info = environment.reset(seed=config.seed)
-    contract = policy_contract_for_environment(environment)
-    manifest = environment.audit_manifest()
-    if isinstance(environment, PlantCyclicMarketEnvV2Beta):
-        exogenous_episode_sha256 = str(manifest["beta_exogenous_episode_sha256"])
-        physical_exogenous_episode_sha256 = str(
-            manifest["alpha_physical_exogenous_episode_sha256"]
-        )
-    else:
-        exogenous_episode_sha256 = str(manifest["exogenous_episode_sha256"])
-        physical_exogenous_episode_sha256 = exogenous_episode_sha256
-    steps_per_episode = environment.episode_decisions
-    rollout_size = config.ppo.n_steps * config.n_envs
-    minimum_updates = math.ceil(config.total_timesteps / rollout_size)
-    minimum_collected_timesteps = minimum_updates * rollout_size
-    result = {
-        "environment_id": config.environment_id,
-        "environment_contract_digest": contract.environment_contract_digest,
-        "checkpoint_contract_digest": contract.checkpoint_contract_digest,
-        "seed": config.seed,
-        "total_timesteps": config.total_timesteps,
-        "minimum_collected_timesteps": minimum_collected_timesteps,
-        "n_envs": config.n_envs,
-        "rollout_transitions_per_update": rollout_size,
-        "minimum_updates": minimum_updates,
-        "observation_shape": list(observation.shape),
-        "action_shape": list(environment.action_space.shape or ()),
-        "steps_per_episode": steps_per_episode,
-        "physics_steps_per_episode": environment.episode_physics_steps,
-        "minimum_episode_equivalents_per_env": (
-            minimum_collected_timesteps / max(1, config.n_envs) / steps_per_episode
-        ),
-        "minimum_simulated_days_total": (
-            minimum_collected_timesteps * config.episode.decision_interval_s / 86_400.0
-        ),
-        "minimum_simulated_days_per_env": (
-            minimum_collected_timesteps
-            * config.episode.decision_interval_s
-            / max(1, config.n_envs)
-            / 86_400.0
-        ),
-        "first_episode_manifest_sha256": manifest["manifest_sha256"],
-        "first_exogenous_episode_sha256": exogenous_episode_sha256,
-        "first_physical_exogenous_episode_sha256": (physical_exogenous_episode_sha256),
-        "first_reset_checkpoint_contract_digest": info["checkpoint_contract_digest"],
-        "output_dir": config.output_dir,
-        "resume_from": config.resume_from,
-        "training_library_imported": False,
-    }
-    environment.close()
-    return result
+    Legacy plans retain their historical single reset.  A beta-RL fixture plan
+    resets all four allocator-wrapped environments only inside the fixture seed
+    domain.  A registered plan is deliberately outcome-blind and performs no
+    reset in the protected training domain.
+    """
+
+    config.validate()
+    environments = [make_env(config, index=0)]
+    wrapped_environments: list[Any] = []
+    allocator_snapshot: dict[str, Any] | None = None
+    manifest: dict[str, Any] | None = None
+    reset_info: dict[str, Any] | None = None
+    first_episode_seed: int | None = None
+    environment = environments[0]
+    try:
+        contract = policy_contract_for_environment(environment)
+        if config.beta_rl is None:
+            observation, reset_info = environment.reset(seed=config.seed)
+            observation_shape = list(observation.shape)
+            manifest = environment.audit_manifest()
+        elif config.beta_rl.run_kind == BETA_FIXTURE_RUN_KIND:
+            allocator = build_episode_allocator(config)
+            environments.extend(
+                make_env(config, index=index) for index in range(1, config.n_envs)
+            )
+            wrapped_environments = [
+                allocator.wrap(item, environment_index=index)
+                for index, item in enumerate(environments)
+            ]
+            reset_results = [item.reset() for item in wrapped_environments]
+            observation_shape = list(reset_results[0][0].shape)
+            reset_info = reset_results[0][1]
+            manifest = environment.audit_manifest()
+            allocator_snapshot = allocator.snapshot().to_dict()
+            first_episode_seed = allocator.ledger[0].episode_seed
+        else:
+            observation_shape = list(environment.observation_space.shape or ())
+
+        if manifest is None:
+            exogenous_episode_sha256 = None
+            physical_exogenous_episode_sha256 = None
+            first_episode_manifest_sha256 = None
+        elif isinstance(environment, PlantCyclicMarketEnvV2Beta):
+            exogenous_episode_sha256 = str(manifest["beta_exogenous_episode_sha256"])
+            physical_exogenous_episode_sha256 = str(
+                manifest["alpha_physical_exogenous_episode_sha256"]
+            )
+            first_episode_manifest_sha256 = manifest["manifest_sha256"]
+        else:
+            exogenous_episode_sha256 = str(manifest["exogenous_episode_sha256"])
+            physical_exogenous_episode_sha256 = exogenous_episode_sha256
+            first_episode_manifest_sha256 = manifest["manifest_sha256"]
+
+        steps_per_episode = environment.episode_decisions
+        rollout_size = config.ppo.n_steps * config.n_envs
+        minimum_updates = math.ceil(config.total_timesteps / rollout_size)
+        minimum_collected_timesteps = minimum_updates * rollout_size
+        return {
+            "environment_id": config.environment_id,
+            "environment_contract_digest": contract.environment_contract_digest,
+            "checkpoint_contract_digest": contract.checkpoint_contract_digest,
+            "seed": config.seed,
+            "optimizer_seed": config.seed if config.beta_rl is not None else None,
+            "first_episode_seed": first_episode_seed,
+            "total_timesteps": config.total_timesteps,
+            "minimum_collected_timesteps": minimum_collected_timesteps,
+            "n_envs": config.n_envs,
+            "rollout_transitions_per_update": rollout_size,
+            "minimum_updates": minimum_updates,
+            "observation_shape": observation_shape,
+            "action_shape": list(environment.action_space.shape or ()),
+            "steps_per_episode": steps_per_episode,
+            "physics_steps_per_episode": environment.episode_physics_steps,
+            "minimum_episode_equivalents_per_env": (
+                minimum_collected_timesteps / max(1, config.n_envs) / steps_per_episode
+            ),
+            "minimum_simulated_days_total": (
+                minimum_collected_timesteps
+                * config.episode.decision_interval_s
+                / 86_400.0
+            ),
+            "minimum_simulated_days_per_env": (
+                minimum_collected_timesteps
+                * config.episode.decision_interval_s
+                / max(1, config.n_envs)
+                / 86_400.0
+            ),
+            "environment_reset": manifest is not None,
+            "first_episode_manifest_sha256": first_episode_manifest_sha256,
+            "first_exogenous_episode_sha256": exogenous_episode_sha256,
+            "first_physical_exogenous_episode_sha256": (
+                physical_exogenous_episode_sha256
+            ),
+            "first_reset_checkpoint_contract_digest": (
+                None if reset_info is None else reset_info["checkpoint_contract_digest"]
+            ),
+            "episode_allocator": allocator_snapshot,
+            "output_dir": config.output_dir,
+            "resume_from": config.resume_from,
+            "training_library_imported": False,
+        }
+    finally:
+        if wrapped_environments:
+            for item in wrapped_environments:
+                item.close()
+        else:
+            environment.close()
 
 
 __all__ = [

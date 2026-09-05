@@ -27,6 +27,7 @@ from plant_backend.rl.v2.training.episode_allocator import (
 from plant_backend.rl.v2.training.ppo import (
     build_episode_allocator,
     build_vec_env,
+    plan,
 )
 
 
@@ -118,6 +119,12 @@ def test_registered_beta_rl_contract_is_exact_and_non_resumable(
     ).validate()
 
     assert registered.total_timesteps == 1_048_576
+    described = plan(registered)
+    assert described["environment_reset"] is False
+    assert described["optimizer_seed"] == 503
+    assert described["first_episode_seed"] is None
+    assert described["first_episode_manifest_sha256"] is None
+    assert described["episode_allocator"] is None
     with pytest.raises(ValueError, match="forbids resume_from"):
         replace(registered, resume_from="/private/tmp/parent").validate()
     with pytest.raises(ValueError, match="frozen defaults"):
@@ -161,6 +168,29 @@ def test_fixture_vector_environment_uses_allocator_owned_episode_seeds(
         assert config.seed not in {entry.episode_seed for entry in allocator.ledger}
     finally:
         vector.close()
+
+
+def test_fixture_dry_plan_opens_only_the_allocator_fixture_domain(
+    tmp_path: Path,
+) -> None:
+    config = _beta_config(
+        tmp_path,
+        run=BetaRLTrainingRunV1(episode_seed_base=9_100_000),
+    ).validate()
+
+    described = plan(config)
+
+    assert described["environment_reset"] is True
+    assert described["optimizer_seed"] == 101
+    assert described["first_episode_seed"] == 9_100_000
+    assert described["first_episode_manifest_sha256"]
+    assert described["episode_allocator"]["allocator_identity"]["base_seed"] == (
+        9_100_000
+    )
+    assert [
+        entry["episode_seed"]
+        for entry in described["episode_allocator"]["ledger"]["entries"]
+    ] == [9_100_000, 9_100_001, 9_100_002, 9_100_003]
 
 
 def test_vector_environment_rejects_foreign_or_unadmitted_custody(
