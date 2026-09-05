@@ -180,10 +180,15 @@ equipment consequences.
   frozen without opening an environment: four resource-specific settlement costs, PI-Lagrangian
   PPO as the primary learner, matched integral-only/scalar controls, a deterministic training
   allocator, five optimizer seeds, 32 development seeds, 32 sealed held-out seeds, pairwise
-  E-beta eligibility, and hierarchical uncertainty. Implementation and fixture-only validation
-  are the next prerequisites. Bounded fixture-domain optimizer smokes are authorized for that
-  gate; registered training and development/held-out resets remain closed until it is committed
-  cleanly.
+  E-beta eligibility, and hierarchical uncertainty. The controller-neutral constrained-RL
+  lifecycle is now implemented and release-validated: PI-Lagrangian, integral-only, and scalar
+  families share the real 135/4 beta task; exact optimizer/rollout/allocator state is attested on
+  load; fixture resume is receipt-bound; and qualified evaluation rejects fixture artifacts. The
+  clean full-repository gate passes 1,760 Python tests plus scoped typing/static and frontend
+  checks. This is an outcome-free software result, not evidence of controller superiority. The
+  next bounded prerequisite is a fixture-only throughput/artifact-size estimate for the frozen
+  15-policy campaign. Registered training and development/held-out resets remain closed pending
+  explicit authorization after that estimate.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.
 

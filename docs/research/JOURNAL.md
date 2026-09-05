@@ -6137,3 +6137,136 @@ optimizer seeds, failed policies remain in the denominator, outage strata are cy
 latency cannot select a development champion. The remaining statistical implementation and host
 measurement contract must be hash-bound before the first development reset. No outcome was opened
 while making these corrections.
+
+## 2026-09-05 — Controller-neutral constrained-RL lifecycle closed under fixture evidence
+
+This increment completed the software prerequisite frozen in the constrained-RL beta protocol.
+It did not open a registered training seed, a development seed, a held-out seed, or a controller
+comparison. The only optimizer executions were bounded fixture-domain integrity tests. Therefore
+this entry establishes that the three learner families can train, checkpoint, reload, infer, and
+continue through the real beta plant interface; it does not establish that any learned policy has
+mastered the task or outperforms the heuristic or economic MPC.
+
+The new learner core is a deliberately narrow Stable-Baselines3 PPO specialization rather than a
+second environment or controller authority path. `plant-beta-ppo-pi-lagrangian-v1` and
+`plant-beta-ppo-i-lagrangian-v1` retain the normal reward actor and value critic while adding one
+four-head cost critic for battery, H2, CO2, and CH4 cycle-return deficits. The primary family uses
+the preregistered proportional-integral multiplier update; the integral-only family fixes the
+proportional term to zero. `plant-beta-sb3-ppo-scalar-v1` uses the same actor/reward architecture,
+rollout schedule, optimizer seed, and production plumbing but disables the cost critic and
+multipliers, making it the matched scalar-reward ablation. All three act stochastically only while
+training and use the same deterministic inference adapter afterward.
+
+The core now treats every optimizer update as auditable state. Each completed rollout records its
+transition count, reward/cost return identities, cycle settlements, multiplier state, gradient and
+optimizer-step accounting, actor/reward parameters, cost-critic parameters where applicable, and
+the previous rollout digest. Live Adam step counts must reconcile exactly with cumulative ledger
+counts. Policy topology and module classes are checked exactly, including the Tanh architecture;
+an apparently shape-compatible activation substitution is rejected before any environment reset.
+Reward and each cost advantage are normalized independently, the frozen actor combination is
+applied, and PI/I/scalar family isolation is tested. Once an optimizer step has occurred, an
+exception poisons that run permanently rather than permitting an outcome-dependent retry. Exact
+Python, NumPy, Torch, policy, optimizer, multiplier, episode-accumulator, and observation state are
+retained for continuation.
+
+Checkpoint evidence is no longer a self-vouching JSON envelope. `ConstrainedPPO.load` alone can
+mint a non-serializable validation attestation after reopening a filesystem artifact and checking
+its embedded state against live policy parameters, optimizer state, settings, architecture,
+rollout ledgers, timestep cut, and checkpoint observation. The attestation binds the artifact
+SHA-256, algorithm, timestep count, full constraint-state digest, and observation digest. Every
+checkpoint admission, including an ineligible fixture checkpoint, requires this load-issued
+capability. Registered-evaluation eligibility is derived only when the run kind is registered and
+the artifact attestation exists; callers cannot select it with a Boolean or authenticate a copied
+mapping by echoing it back.
+
+Exact fixture continuation adds a receipt rather than trusting matching parent labels. The child
+binds the parent artifact, full constraint envelope, policy and optimizer digests, learner RNG,
+multiplier, episode accumulator, external allocator pin, checkpoint observation, timestep count,
+and rollout-ledger tip. The receipt is finalized by the first resumed rollout index and digest, and
+a resumed model cannot be saved before that first rollout is complete. Parent and child allocator
+ledgers must form an exact prefix, and only an episode-boundary fixture checkpoint is physically
+reconstructible. Registered runs remain non-resumable as frozen by the protocol.
+
+The production training path now selects the exact constrained family from the beta run contract,
+uses the deterministic four-environment seed allocator, and binds a 135-value beta observation
+space to the four normalized process targets. Fresh runs require pristine allocator custody.
+Resume first admits the complete recursive parent lineage, restores the allocator, reconstructs
+the physical vector environments at an episode boundary without inventing ledger entries, checks
+the resulting observation byte-for-byte, loads with `force_reset=False`, and only then restores
+learner RNG and optimization state. The common controller adapter remains the sole actuation path:
+policy output becomes an absolute setpoint command, crosses the dispatcher and safety guard, and
+is applied by the unchanged plant simulator.
+
+Saving and loading now bind the live model to more than internally consistent evidence. The exact
+algorithm settings, optimizer seed, four-environment count, PPO hyperparameters, policy topology,
+Gym spaces, allocator mode/split/base seed/episode horizon, runtime dependencies, source content,
+and cumulative SB3 rollout cut must all agree with the serialized training config. A resumed cut
+must equal the parent cut plus the whole-rollout ceiling of the requested increment. Source and
+dependency provenance are checked before training, before publication, and again after artifact
+serialization for both fixture and registered runs. Metadata is reread and compared byte-for-byte
+after recursive admission or inference loading, while artifact hashes are rechecked, closing the
+observed metadata/artifact time-of-check/time-of-use substitutions. A constrained artifact cannot
+be relabelled as generic PPO or fixed beta provenance. Missing training dependencies retain an
+operator-facing installation error rather than being misreported as checkpoint corruption.
+
+The benchmark and general evaluation loaders now make the claim boundary explicit. A qualified
+beta comparison requires registered-evaluation eligibility and recursively re-admits the trained
+artifact immediately before use. Fixture policies remain loadable for engineering inference and
+common-door tests but are rejected by the qualified benchmark. This distinction prevents a tiny
+smoke-trained model from being presented as commission evidence while preserving a fast build
+gate.
+
+Three rounds of adversarial review materially changed the implementation. Early evidence drafts
+accepted stale allocator progress, minimal fabricated rollout records, caller-echoed state,
+runtime relabelling, reordered reset ledgers, and coordinated but unproven parent/child mappings.
+Those paths now fail through nominal load-issued attestations and continuation receipts. The final
+production audit found additional gaps in space/config binding, allocator identity, cumulative
+timestep interpretation, post-save fixture provenance, optional-dependency behavior, and metadata
+replacement; all were closed and covered at the public save/load/resume boundary. A final audit
+also found that an arbitrary unignored repository-local fixture output would alter its own
+worktree identity during save. Fixture outputs are now either external or beneath the ignored
+`runs/` artifact root; registered outputs remain absolute and external.
+
+The genuine resume gate then exposed a separate common-control defect that unit fixtures had not
+reached. When the guard removed an offline DAC share and returned it to the battery, ordered
+IEEE-754 addition could put the four-share sum one ULP above one. The simulator correctly
+sanitized that action again, producing differences near `3e-17`; exact execution evidence then
+correctly rejected the guarded and applied actions as different. The evidence checks were not
+relaxed. Instead, the guard now canonicalizes its final action through the same sanitizer used by
+the simulator, so `ValidatedAction.action` again means byte-for-byte what the plant records. The
+exact failing witness is retained as a regression. An independent review confirmed the layer
+choice and found no mismatch over five million randomized guard-redistribution cases.
+
+The implementation is recorded as four auditable commits: `46e74c4` implements and tests the
+constrained learner core; `720101d` implements artifact attestations and resume receipts;
+`fc7c403` fixes exact guarded-action canonicalization; and `0ecc09b` completes production
+train/save/load/resume/inference plus adversarial boundary coverage. The focused core/evidence gate
+passed 89 tests in 14.71 seconds, the historical policy/protocol/benchmark regression gate passed
+51 in 25.80 seconds, the new adversarial production-boundary gate passed 8 in 14.46 seconds, the
+output-provenance contract gate passed 12 in 19.31 seconds, and the common-control gate passed 57
+in 1.09 seconds. All three real learner families completed a 384-transition 135/4 train-save-load-
+inference/common-door fixture. The initial exact scalar resume run found the one-ULP guard defect;
+after the fix, a fresh parent/child rebuild passed in 105.54 seconds. Independent reviews passed
+the core authenticity/continuation contract and the final production integration with no remaining
+P0/P1 finding.
+
+The final clean release gate ran the entire Python repository after all fixes: **1,760 tests passed
+in 414.83 seconds** with only the existing Starlette/httpx deprecation warning. Strict scoped MyPy,
+Black, Python compilation, and Git whitespace checks passed for every touched production/test
+surface. Frontend TypeScript/Vite production build and `oxlint` passed; the existing greater-than-
+500-kB `Plant3DPage` chunk advisory remains. No protected reset or registered optimizer step was
+performed by any of these gates.
+
+The research conclusion is intentionally limited but important: controller-neutral constrained RL
+is now an executable and falsifiable part of the architecture rather than a placeholder. The next
+step is not to complicate the environment blindly. First, a short fixture-only throughput and
+artifact-size benchmark must estimate the wall-clock and storage cost of the already frozen
+15-policy registered campaign. That benchmark does not authorize the campaign. After the estimate
+is reported and registered training is explicitly authorized, the fixed five-seed PI/I/scalar
+matrix can be run once, followed by the already frozen development selection and sealed held-out
+comparison against E-beta, H, and M24. If the learned families again tie the baselines, that is
+direct evidence that the current beta remains too easy or its decision pressure is misplaced; the
+next environment increment should then add one separately ablatable commercial mechanism such as
+degradation/maintenance state, forecast error, or a shared balance-of-plant bottleneck. HEPA and
+natural-language supervision remain downstream factorial layers and receive no value credit until
+the controller task itself demonstrates a meaningful, reproducible operating tradeoff.
