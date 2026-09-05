@@ -119,9 +119,17 @@ equipment consequences.
   interface digest, complete task digest, and policy artifact bytes; deterministic inference
   binds its exact vector and checkpoint into `ProcessSetpointCommandV1`; and paired
   heuristic/policy evaluation retains the same generic execution ledger. Historical V1
-  loading and runtime behavior remain unchanged. Tiny fixed-policy fixtures and one disposable
-  two-transition train/four-transition resume/load/evaluate smoke have run. No research-scale
-  four-target policy, comparative RL performance outcome, or selection result exists.
+  loading and runtime behavior remain unchanged. A closure audit additionally made constraint
+  parsing fail-closed, rejects physical/economic task substitution before either evaluation arm
+  moves, checks the Gym spaces embedded in real policy bytes, forbids resume-time relabelling of
+  stored PPO settings, and binds each child checkpoint to its exact parent. Symmetric fixed-
+  policy gates and disposable two-transition train/four-transition resume/load/evaluate smokes
+  cover both tasks. No research-scale four-target policy, comparative RL performance outcome,
+  or selection result exists.
+  The live control-room endpoint remains the historical one-minute 30/5 V1 runtime. A V2 policy
+  cannot safely enter it without a separately versioned runtime providing identical forecast,
+  commitment, tariff, cadence, and held-setpoint semantics; a lossy adapter is explicitly not a
+  completion shortcut.
 - The registered economic robustness tournament is complete with an execution-valid negative
   task-readiness result. R1--R3 pass across all 20 cells and 40 trajectories. Both six-hour
   strata achieve comparable service and material separation in 5/5 cells, but both 24-hour

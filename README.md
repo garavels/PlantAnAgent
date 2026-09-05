@@ -714,6 +714,11 @@ therefore refused if the plant, episode distribution, constraints, objective, ta
 assumptions, observation semantics, or action semantics differ. Real policy bytes are hashed;
 fixed-action checkpoints remain explicitly untrained test fixtures.
 
+Resume is also fail-closed: policy and PPO optimization settings embedded in the parent cannot
+be silently relabelled, and every resumed checkpoint records hashes of its parent metadata and
+model artifact. Real SB3 artifacts are checked against the declared Gym shape, dtype, and bounds
+both when saved and when loaded.
+
 ```bash
 make v2-train-dry                                      # constructs and identifies; trains nothing
 make v2-train CONFIG=/path/to/training.json OUTPUT=runs/new-v2-run
@@ -721,12 +726,18 @@ make v2-rl-eval CHECKPOINT=runs/new-v2-run/checkpoint SEEDS=3
 ```
 
 No four-target policy has been trained or evaluated as a research contender in this
-repository. A disposable two-transition PPO wiring test trains, saves, resumes to four
-transitions, reloads, and evaluates a checkpoint when the optional training dependency is
-available; it is not a controller result. The integration is preparation for a registered
-experiment, not evidence that RL outperforms the heuristic or MPC. See
+repository. Disposable two-transition PPO wiring tests exercise both the 57/4 and 62/4 tasks,
+save, resume to four transitions, reload, and evaluate each checkpoint when the optional
+training dependency is available; these are not controller results. The integration is
+preparation for a registered experiment, not evidence that RL outperforms the heuristic or
+MPC. See
 [`docs/research/CONTROLLER_NEUTRAL_RL_INTEGRATION.md`](docs/research/CONTROLLER_NEUTRAL_RL_INTEGRATION.md)
 for the exact admission and claim boundary.
+
+The existing control-room `/api/controller/rl` path remains the historical one-minute 30/5 V1
+runtime. It intentionally rejects these 15-minute four-target checkpoints: deploying them live
+requires a V2 runtime with the same forecast, commitment, tariff, and held-setpoint semantics,
+not a lossy compatibility adapter.
 
 The first preregistered economic task-expression cell passed: heuristic and service MPC both
 safely delivered 210 kg with zero unmet demand, while their auditable operating values differed

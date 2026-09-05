@@ -41,6 +41,22 @@ The integration supports only the two separately identified four-target tasks:
 Historical `plant-env-v1` and the five-action `PlantEnvV2` retain their current checkpoint,
 training, runtime, and evaluation behavior. No implicit environment upgrade is permitted.
 
+### Completion boundary: research task, not the legacy live runtime
+
+“Integrated” in this document means that both four-target tasks have one maintained,
+fail-closed train/resume/load/infer/evaluate path through the common absolute-setpoint command.
+It does **not** mean that a four-target checkpoint can be selected in the existing control-room
+runtime. That runtime still advances the historical one-minute `plant-env-v1` interface, and
+its `/api/controller/rl` slot therefore admits only the 30-observation/five-action V1 contract.
+
+A safe live V2 deployment requires a separately versioned runtime that supplies the same causal
+forecast vintage, commitment context, 15-minute decision cadence, tariff context for the
+economic task, and held-setpoint dispatcher used in training. Adapting a V2 policy to V1 by
+dropping fields, inventing forecasts, or converting targets back to instantaneous shares would
+violate its checkpoint contract. The repository deliberately rejects that shortcut. Live V2
+orchestration is a product milestone after the research task is admitted, not part of this
+training-integration gate.
+
 ## Exact checkpoint admission
 
 `PolicyEnvironmentContract` detaches the policy-facing contract from any globally imported
@@ -96,6 +112,15 @@ intermediate and final save is a complete checkpoint with metadata and artifact 
 SB3 zip is not treated as a checkpoint. Existing output directories are never overwritten, and
 dependency or resume-admission failure does not leave an empty run directory.
 
+The closure audit additionally requires resume truthfulness. A resumed run may change its
+output, duration, vector count, run seed, checkpoint cadence, notes, and explicitly applied
+device, but it may not relabel the loaded model with different policy or PPO optimization
+settings. The child checkpoint records the parent metadata bytes, model bytes, task digest, and
+parent timestep count, and rechecks both parent files before deserialization and every save.
+Real model artifacts must also embed concrete Gym observation/action spaces equal to the
+declared task; metadata with the right names cannot legitimize model bytes for another shape,
+dtype, or bound.
+
 PPO remains the first maintained algorithm only to establish a reproducible baseline. The
 controller and checkpoint contracts are algorithm-neutral; adding SAC or another algorithm
 later must not create another physical action path.
@@ -122,8 +147,11 @@ Before any performance-bearing four-target training run or RL result:
 
 1. legacy V1 checkpoint loading and runtime tests remain unchanged;
 2. both four-target tasks produce exact 57/4 and 62/4 dry-run contracts;
-3. configuration round-trips all task-defining values and rejects unknown nested settings;
-4. V2 checkpoints fail on wrong interface, task digest, or artifact bytes;
+3. configuration round-trips all task-defining values and rejects unknown nested settings,
+   nonnumeric or nonfinite constraint values, and direct-construction attempts to bypass that
+   validation;
+4. V2 checkpoints fail on the wrong interface, physical/economic task, task digest, artifact
+   bytes, or model-internal Gym spaces;
 5. a normalized policy decision binds its exact observation, checkpoint, decoded targets, and
    command;
 6. the same normalized vector through Gym and the checkpoint-bound controller produces exact
@@ -131,10 +159,12 @@ Before any performance-bearing four-target training run or RL result:
 7. one tiny policy episode contains one typed interval execution and all fifteen minute
    applications;
 8. inference failure produces no action, fallback, or state movement;
-9. paired heuristic/policy smoke environments have identical manifest identity;
-10. a disposable real-SB3 test trains two transitions, saves, resumes to four, reloads, and
-    evaluates the policy when the optional dependency is available; and
-11. focused and complete tests, formatting, compilation, strict targeted type checks, Git
+9. paired heuristic/policy smoke environments have identical manifest identity, and checkpoint
+   compatibility is rechecked before either arm moves;
+10. changed embedded PPO settings are rejected on resume and every child binds its exact parent;
+11. disposable real-SB3 tests train two transitions, save, resume to four, reload, and evaluate
+    both the 57/4 and 62/4 tasks when the optional dependency is available; and
+12. focused and complete tests, formatting, compilation, strict targeted type checks, Git
     whitespace, dependency lock, and clean status pass.
 
 Tiny one-decision fixed-policy fixtures and the disposable two-plus-two-transition PPO smoke are

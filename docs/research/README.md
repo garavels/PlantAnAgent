@@ -196,8 +196,10 @@ fallback behavior.
 - [`CONTROLLER_NEUTRAL_RL_INTEGRATION.md`](CONTROLLER_NEUTRAL_RL_INTEGRATION.md)
   defines the completed RL wiring gate: strict four-target training configuration, exact
   full-task checkpoint compatibility, artifact hashing, checkpoint-bound inference evidence,
-  and paired heuristic/policy execution through the common command door. It authorizes only a
-  disposable trainer wiring smoke, not a performance-bearing training run or controller claim.
+  embedded model-space validation, immutable resume lineage, and paired heuristic/policy
+  execution through the common command door for both 57/4 and 62/4 tasks. It authorizes only
+  disposable trainer wiring smokes, not a performance-bearing training run or controller claim,
+  and records why live V2 orchestration is a separate product-runtime milestone.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

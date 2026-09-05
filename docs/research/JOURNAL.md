@@ -5406,3 +5406,85 @@ match M6's public observation, public issue, and full projection identities; onl
 This second clarification changes no task, controller input, objective, plant, dispatcher,
 guard, matrix, threshold intent, or claim boundary. No environment was reset, no solver was
 called, and no controller outcome or policy training was opened.
+
+## 2026-09-05 — Controller-neutral V2 RL integration closure audit and hardening
+
+The controller-neutral RL work was made the immediate milestone and the M24 runner work was
+paused before implementation or any protected action. The existing `a46aabf` increment passed
+its narrowly stated offline gate, but two independent read-only reviews were asked to test the
+stronger word “finished” across both supported tasks, checkpoint custody, resume behavior,
+evaluation ordering, and the repository's live controller surface. The review found real gaps;
+the prior completion label was therefore not accepted without repair.
+
+The resulting implementation and regression matrix were frozen in commit `4f3e5b4`
+(`fix(rl): close controller-neutral admission gaps`).
+
+First, JSON constraint parsing delegated to the permissive live-operator merge helper. That
+helper intentionally treats junk as “no cap,” so a training file such as
+`{"electrolyser_max_kw": "junk"}` could silently remove authority while the run remained
+apparently valid. The V2 training boundary now separately requires exact numeric types: optional
+caps accept only `null` or finite nonnegative real values, battery reserve accepts only a finite
+real in `[0, 0.95]`, and booleans, numeric strings, junk, NaN, infinity, overflow, unknown fields,
+and invalid direct Python construction fail. The operator-facing V1 merge semantics are
+unchanged.
+
+Second, resume metadata could overstate what was run. Stable-Baselines3 restores PPO's policy and
+optimization settings from the parent artifact; the old resume path supplied only environment,
+device, and seed, yet saved any newly requested PPO settings as provenance. Resume admission now
+parses and cross-checks the parent's stored training task and rejects any changed embedded policy
+or PPO setting. Device remains the only PPO-field override because it is explicitly applied by
+`PPO.load`; run duration, output, vector count, seed, cadence, and notes remain new-leg
+provenance. Each child checkpoint records the absolute parent path, raw parent-metadata SHA-256,
+policy-artifact SHA-256, task digest, and parent timestep count. Parent metadata and artifact
+bytes are rechecked before deserialization and before every intermediate or final save, closing
+the admission/use race and making multi-leg lineage auditable.
+
+Third, metadata identity alone did not prove that a real SB3 ZIP embedded the same concrete Gym
+spaces. Saving and V2 loading now compare model and declared observation/action space types,
+shapes, dtypes, lows, and highs. A mismatched artifact is refused before a checkpoint directory
+is claimed on save and before a loaded model can infer on evaluation. Artifact bytes retain their
+existing content hash; the new check closes accidental copying or coherent mislabelling across
+the 57/4 and 62/4 tasks.
+
+Fourth, the paired evaluator previously ran the heuristic before constructing the policy
+adapter, so a caller that handed it an already loaded checkpoint plus the wrong task could move
+one arm before discovering incompatibility. It now reopens and verifies the persisted checkpoint,
+matches it to the selected task, and compares the persisted and in-memory metadata before either
+arm resets. Runtime refusals are converted into the same explicit CLI refusal status, and JSON
+publication continues to use exclusive creation.
+
+Coverage is now symmetric. Outcome-free fixtures prove exact normalized-Gym versus checkpoint-
+controller command parity for the physical 57/4 task and economic 62/4 task, including telemetry,
+control state, reward/accounting evidence, and the common dispatcher/guard/plant path. Both tasks
+complete paired heuristic/policy smokes. Bidirectional physical/economic substitution is rejected
+for checkpoint load, evaluation preflight, and resume before SB3 artifact loading. New CLI tests
+cover stored-task recovery for both tasks, exclusive JSON creation, overwrite refusal, and clean
+runtime-failure handling. Strict constraint tests exercise every cap and reserve boundary, and
+adversarial tests reject in-memory and serialized model-space mismatches.
+
+The ordinary environment omits the optional trainer by design, so its focused gate reports
+**104 passed, 2 skipped in 0.78 seconds**. The optional real runtime separately executes both
+tasks: each trains exactly two transitions, saves, resumes for two more, binds the parent,
+reloads with internal-space verification, and completes a paired evaluation. Both pass in
+**12.91 seconds**. These four transitions per task are serializer/wiring checks, not useful
+rollouts and not controller outcomes. The complete repository passes **1,276 tests with 4 skips
+in 44.44 seconds**; the warning remains the existing Starlette/httpx deprecation and trailing
+HiGHS text remains upstream solver logging. Targeted strict typing passes on all six changed
+production modules with import following and cache writes disabled; the cached host invocation
+first reproduced the already documented mypy unresolved-placeholder internal assertion.
+
+The phrase “controller-neutral V2 RL integration” remains deliberately scoped to the research
+task. The selectable `/api/controller/rl` control-room slot is the historical one-minute 30/5
+V1 runtime. It lacks V2's causal forecast issue, commitment context, 15-minute cadence, economic
+tariff observation, and held absolute-setpoint execution. Making a V2 checkpoint selectable there
+by deleting fields, inventing context, or converting targets back into instantaneous shares would
+break the trained contract and create an unsafe second physical meaning. A separately versioned
+live V2 runtime is therefore a later product-integration milestone, after the task itself passes
+the controller-readiness gate.
+
+No research-scale policy, protected RL seed, hyperparameter search, M24 trajectory, HEPA fit,
+language-layer experiment, controller ranking, or commercial claim was opened. With this software
+closure complete, the scientific blocker is unchanged: the six-hour MPC fails the fourth full-day
+commitment, so substantive PPO remains unauthorized. The next research step is the already frozen
+horizon-only M24 mechanism probe; live V2 orchestration follows only after a credible task and
+controller have earned deployment work.
