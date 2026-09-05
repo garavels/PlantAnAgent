@@ -234,6 +234,16 @@ fallback behavior.
   It also records the remaining scientific dependencies: a beta-native market-aware MPC,
   constrained-RL contract, four-arm evaluator/verifier extension, coefficient calibration or
   uncertainty bounds, and a prospective split. No beta training or controller result is reported.
+- [`CYCLIC_MARKET_BETA_CONTROLLER_BUILD.md`](CYCLIC_MARKET_BETA_CONTROLLER_BUILD.md)
+  records the release-validated beta controller-neutral integration: a causal market/cycle-aware
+  economic MPC, independently reset H/M24/E-beta/PPO arms, common guarded minute execution, strict
+  cycle/safety/service eligibility, exhaustive minute-truth evidence, exact regenerated DAC-outage
+  attribution, and detached semantic report verification. It distinguishes the independently
+  audited E-beta stage-two vector from the primary digest that remains solver provenance, and
+  records the bounded untrained integration smoke and why its zero eligible cells are not a
+  performance result. Its complete repository, static, CLI-import, and frontend gates pass.
+  Constrained RL, a prospective split, registered training, coefficient uncertainty, and held-out
+  evaluation remain subsequent scientific gates.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

@@ -5888,3 +5888,127 @@ diagnostics and inherited unused override-ignore markers. Black passed for all 1
 files, and `compileall`, Git whitespace validation, the frontend production TypeScript/Vite build,
 and frontend `oxlint` all passed. Vite retained its existing large-chunk advisory. These are release
 checks only; they do not alter the no-outcome claim boundary above.
+
+## 2026-09-05 — Beta controller-neutral comparison released after semantic hardening
+
+Work continued without a research-scale training run or protected evaluation. The immediate
+objective was to finish the controller-neutral beta integration rather than infer controller value
+from the earlier environment-only gate. The release-validated integration consists of three linked
+pieces: a beta-native economic MPC, a four-arm H/M24/E-beta/PPO runner, and a detached semantic
+verifier. Its own final combined release gate is recorded below rather than reusing the earlier
+1,461-test beta-environment result as indirect validation of these new files.
+
+The beta-native economic MPC preserves the existing two-stage service-then-cost formulation while
+changing its information and terminal contracts for the cyclic task. It reads only the current
+public physical boundary, issued solar and price projections, observed current price, public cycle
+position and return margins, and declared plant/economic contracts. It does not receive future
+price truth, future forecast vintages, the private market regime, or the private DAC outage
+schedule. Stage one maximizes service; stage two locks that result and minimizes the declared
+opportunity-price, throughput, wear, startup, and terminal-deficit terms. Both stages contain hard
+next-boundary return rows for battery, H2, CO2, and saleable CH4. Alpha and beta plan/evidence types
+remain separate so the new assumptions cannot pass through an older public API under an alpha
+identity.
+
+The runner creates four independent beta environments for each seed and requires exact preflight
+agreement on their physical, economic, market, disturbance, cycle, interface, task, and exogenous
+identities before allowing movement. H receives the physical view, M24 additionally receives the
+public solar issue, and E-beta and PPO receive the complete market/cycle surface appropriate to
+their typed interfaces. These are recorded information-profile ablations rather than falsely
+described equal-information competitors. All four still issue the same four absolute plant targets
+through the common minute dispatcher, independent safety guard, and simulator. Failure is retained;
+there is no controller substitution or surviving-arm average. A cell is value-eligible only when
+all arms complete the exact execution lattice, every daily resource return is feasible, hard safety
+passes, and delivered service is comparable within the registered tolerance.
+
+Safety classification was materially strengthened during adversarial review. Summary fields such as
+minimum SOC and shutdown count were initially too easy to rewrite coherently with the outer report
+hashes. The environment now retains the complete sequence of audit `PlantState` boundaries from
+step zero through every executed physics minute. The audit trace is exposed through a protected
+environment seam and deliberately omitted from Gym observations and `info`; controllers therefore
+gain no additional state. Generic H/E-beta/PPO execution cross-checks every trace boundary against
+the existing minute-application boundary hashes, while M24 cross-checks against its already
+retained full transition records. The runner derives minimum SOC and critical/offline minutes from
+that run-wide ledger rather than relying solely on accumulated summaries.
+
+Expected DAC unavailability also required exact semantics. A reported private schedule is not an
+authority because an attacker could replace it and recompute downstream hashes. The verifier now
+recreates the disturbance episode from the cell seed using the registered beta root-stream
+allocation and requires exact equality with the private audit manifest. It converts each finite DAC
+fault into its executed half-open minute lattice. A critical/offline minute is exempt only if that
+exact executed step is scheduled, DAC is offline, no non-DAC health record is offline, and battery
+SOC remains above the configured reserve. A missing DAC indication, simultaneous battery or other
+component outage, reserve breach, off-lattice declaration, or critical/offline minute outside the
+regenerated schedule remains unexpected. Component health status and aggregate plant status are
+also derived from the recorded condition, closing an attack that relabelled `critical` as `offline`
+while preserving local hashes. Forced-stop deltas are reconstructed from the public commitment
+counter and out-of-range decisions from each controller's retained evidence before the verifier
+rebuilds arm, cell, and aggregate eligibility.
+
+Economic-plan verification was strengthened for a different reason. A plan reconstructed from
+published step values may not recover a solver's exact raw vector when several auxiliary variables
+are degenerate, so comparing its digest to the solver-stage digest can reject an honest result or
+leave an opaque provenance claim. The beta plan now retains the selected stage-two solution vector
+explicitly. The verifier checks its exact cardinality and finite values, reconstructs the primary
+service-lock row, binds the retained vector to the published stage-two solution digest, audits
+bounds, integrality, all model rows and the added lock, and recomputes named costs and the economic
+objective from the same witness. It also checks consistency between that witness and the typed plan
+projection and first issued command. Adversarial cases now include a changed value, missing value,
+non-finite value, changed stage digest, and a coherently rehashed vector/digest combination.
+
+This change has a deliberate limit. The stage-one raw solution vector is not retained, so its
+solution digest remains provenance emitted by the solve rather than an independently reconstructible
+optimality witness. The detached verifier does not rerun HiGHS or either controller. It proves that
+the retained secondary witness is model-feasible, satisfies the reported service lock, and agrees
+with its digest, costs, objective, plan projection, and command chain. It does not independently
+prove that the primary service value or secondary cost is globally optimal. A future stronger
+certificate would have to retain and audit the primary vector and, for optimality rather than
+feasibility, either rerun the frozen solver or carry an independently checkable primal/dual or MIP
+certificate. The current documentation now states this boundary instead of calling both solver
+stage identities independently verified.
+
+The resulting evidence file is intentionally much larger than operational telemetry and contains a
+private disturbance manifest, exhaustive plant-state history, controller evidence, and solver
+witnesses. The runner consequently requires a new external absolute output and refuses overwrite.
+Protected artifacts should remain access-controlled until their registered opening; they should not
+be streamed into routine operator logs or committed merely because the verifier can read them. A
+commercial runtime will need a smaller operator-safe telemetry projection while retaining this
+full artifact only for governed audits.
+
+The only full-path runtime exercise in this increment remains an outcome-free fixed-action smoke at
+seed 34. An explicitly untrained policy fixture and the three nonlearned arms each executed 1,440
+physical minutes. All four passed the current hard-safety rule, all four failed at least one strict
+cycle return, and delivered service was not comparable. The runner consequently produced zero
+eligible value comparisons while retaining all four trajectories. This is evidence that execution,
+failure retention, and exclusion mechanics operate on a complete day. It is not evidence for or
+against PPO, H, M24, or E-beta and did not consume a protected seed, train an optimizer, select a
+checkpoint, or justify a commercial ranking.
+
+Focused verification now passes. The four-arm runner's dedicated suite finished **17/17**, and the
+combined runner, beta MPC schema/solver, and environment minute-truth selection finished **37/37**.
+The expanded detached-verifier suite finished **35/35 in 142.40 seconds**. Its first execution
+exposed two real production defects rather than being weakened to preserve a green result. The
+minute-state fold paired the complete before/after arrays with `zip(..., strict=True)`, whose unequal
+lengths rejected every honest transition; it now pairs the two one-step-offset slices and covers
+each executed transition once. After that cascade was removed, E-beta classification incorrectly
+required the economic decision schema to contain the generic heuristic/PPO `invalid` field. E-beta
+now contributes its contractually fixed zero out-of-range count, while H and PPO still require and
+fold their Boolean invalid evidence. The passing suite includes the coherent state/hash/status,
+disturbance-seed substitution, and retained-vector/digest attacks described above.
+
+Verifier Black, Python compilation, and focused typing pass. Verifier-test Black, compilation, and
+Git whitespace validation also pass. After the explicit metadata and seed annotations, the final
+complete Python repository rerun finished with **1,535 passed, 4 optional skips, and one existing
+Starlette/httpx deprecation warning in 198.61 seconds**. Strict scoped MyPy passed for the five
+touched production modules. Black passed all 10 changed Python files. `compileall`, Git whitespace
+validation, and both beta command-line `--help` imports passed. The frontend production build and
+lint passed while retaining the existing warning for a bundle larger than 500 kB. No training or
+protected rollout occurred during these gates.
+
+The controller-neutral integration dependency is therefore closed without opening a controller
+outcome. The following scientific increment remains prospective constrained RL: freeze an
+outcome-blind train/development/held-out regime and seed split, declare a finite number of training
+seeds and a checkpoint-selection rule, define a constraint budget and admission semantics for the
+separate cycle-cost signal, and retain ordinary scalar PPO as an ablation. Only after those rules
+and economic coefficient uncertainty are frozen should development training begin; the held-out
+comparison must then be opened once. HEPA and natural-language supervision remain separate future
+factorial layers and are not credited to this controller integration.

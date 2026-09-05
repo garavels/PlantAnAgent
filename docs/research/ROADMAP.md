@@ -171,8 +171,13 @@ equipment consequences.
   an outcome-free software boundary whose release gate passed 1,461 Python tests with 4 optional
   skips, strict touched-module typing, formatting/compilation/whitespace checks, and frontend
   build/lint. No beta policy has been trained or compared, the existing four-arm runner remains
-  alpha-specific, and a beta-native market/cycle-aware MPC, a learner that treats cycle cost as a
-  constraint, and an outcome-blind data split are the next prerequisites.
+  alpha-specific at that historical release point. The subsequent release-validated controller
+  integration now adds a separately identified beta-native market/cycle-aware MPC, beta
+  H/M24/E-beta/PPO runner, hard cycle/safety/service eligibility, exhaustive minute truth, exact
+  regenerated DAC-outage attribution, and a detached semantic verifier. Its complete Python gate
+  passes 1,535 tests with 4 optional skips, alongside scoped typing/static and frontend gates; no
+  trained beta controller result has been opened. A learner that treats cycle cost as a constraint
+  and an outcome-blind data split are the next prerequisites.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.
 
@@ -292,14 +297,22 @@ sustainable terminal objective exist. RL earns a role only by closing a measured
 gap, improving tail risk or latency, or handling nonlinear/scenario complexity that the MPC
 does not capture.
 
-The beta closes the trainable-environment dependency but not comparator parity. PPO can now train
-and infer on the exact 135-field public boundary with beta-task and economic identities bound into
-its checkpoint. The next controller work is a separately identified economic MPC that consumes
-only the current public market issue, represents the four daily return constraints, and exposes
-its uncertainty and model mismatch, plus a constrained-RL contract that consumes the separate
-cycle-cost signal while retaining scalar PPO as an ablation. Only after those controllers, the
-four-arm runner, a detached verifier, coefficient uncertainty, and an outcome-blind beta split
-are frozen may a substantive policy training or comparison start.
+The beta closes the trainable-environment dependency and now has a release-validated
+controller-neutral comparison boundary. PPO can train and infer on the exact 135-field public
+boundary with beta-task and economic identities bound into its checkpoint. A separately identified
+beta economic MPC consumes only the current public weather/market issue, enforces all four
+next-cycle resource returns, and declares its deterministic uncertainty/model-mismatch boundary.
+The beta H/M24/E-beta/PPO runner uses independent matched twins, one command/guard/simulator
+authority, failure retention, and hard cycle/safety/service gates. Its detached verifier reconstructs the
+typed evidence and eligibility summaries, regenerates private DAC disturbances from the seed, and
+audits the complete minute-truth ledger instead of trusting report booleans. It also validates the
+retained E-beta stage-two vector against its digest, model, service lock, cost ledger, and objective;
+the unretained primary vector is not independently re-solved and its digest remains provenance.
+The complete repository, scoped typing/static, CLI-import, and frontend gates pass. The next
+controller work is a constrained-RL contract that consumes the separate cycle-cost signal while
+retaining scalar PPO as an ablation. Only after that learner, coefficient uncertainty, and an
+outcome-blind beta split plus finite policy-selection rule are frozen may a substantive policy
+training or comparison start.
 
 The first service-MPC replication proves that equal information and a valid MILP are not
 sufficient when the supervisory action contract loses commitment intent. Before comparing

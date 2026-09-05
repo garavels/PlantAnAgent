@@ -758,6 +758,44 @@ economic optimizer's model mismatch and the current unequal tariff representatio
 in
 [`docs/research/CONTROLLER_NEUTRAL_BENCHMARK_BUILD.md`](docs/research/CONTROLLER_NEUTRAL_BENCHMARK_BUILD.md).
 
+The harder cyclic-market beta now has a release-validated controller-neutral comparison boundary.
+Its public state is 135 values: the 57-field physical boundary, a 73-field causal and revisable
+electricity-price issue, and five cycle-progress/resource-return values. A beta-native economic MPC
+uses the current public solar/price issue and imposes hard battery, H2, CO2, and CH4 return rows at
+the next daily boundary. The beta runner compares **H**, **M24**, **E-beta**, and a checkpoint-bound
+deterministic **PPO** on four independent identity-matched twins, while every arm still issues the
+same four absolute targets through the common dispatcher, safety guard, and simulator.
+
+Value aggregation is fail-closed: all four arms must complete, meet every cycle return, pass hard
+safety, and provide comparable delivery service. A detached verifier reconstructs typed boundary,
+command, minute-execution, economic, cycle, classification, and digest evidence rather than
+trusting the report's summaries. Its exhaustive minute-truth ledger supports exact regeneration
+and attribution of isolated DAC outages while preserving simultaneous plant faults as safety
+failures. For E-beta, it independently audits the retained stage-two solution vector, digest,
+service lock, feasibility, costs, and objective; the unretained primary-stage digest remains
+provenance rather than an independently re-solved optimality certificate. Qualified operation
+requires a real trained beta PPO checkpoint, clean committed source, and a new absolute report path
+outside the repository.
+
+```bash
+make v2-beta-controller-benchmark \
+  CHECKPOINT=/absolute/path/to/trained-beta-checkpoint \
+  SEED_START=100 SEEDS=3 \
+  OUTPUT=/absolute/path/to/new-beta-report.json
+
+make v2-beta-controller-benchmark-verify \
+  REPORT=/absolute/path/to/new-beta-report.json
+```
+
+The complete repository gate passes 1,535 Python tests with 4 optional skips, scoped typing and
+static checks, and frontend build/lint. A bounded untrained seed-34 smoke completed all four
+1,440-minute arms safely but produced no eligible comparison because cycle returns failed and
+service differed; it is not a performance result. No trained beta checkpoint or controller ranking
+is claimed here. See
+[`docs/research/CYCLIC_MARKET_BETA_CONTROLLER_BUILD.md`](docs/research/CYCLIC_MARKET_BETA_CONTROLLER_BUILD.md)
+for the complete information policy, eligibility gates, verifier scope, integration-smoke finding,
+and next research steps.
+
 The existing control-room `/api/controller/rl` path remains the historical one-minute 30/5 V1
 runtime. It intentionally rejects these 15-minute four-target checkpoints: deploying them live
 requires a V2 runtime with the same forecast, commitment, tariff, and held-setpoint semantics,
