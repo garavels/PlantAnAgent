@@ -167,6 +167,9 @@ fallback behavior.
   action admission, settings identities, immediate per-cell publication, failure retention,
   deterministic timing exclusion, stratum/sensitivity reporting, and whole-directory
   verification. It is the execution admission record, not a result.
+- [`ECONOMIC_ROBUSTNESS_TOURNAMENT_REGISTRATION.md`](ECONOMIC_ROBUSTNESS_TOURNAMENT_REGISTRATION.md)
+  fixes the clean executable revision, detached worktree, external output directory, complete
+  matrix, and one-execution/no-retry custody rule before any protected reset or outcome.
 - [`CONTROLLER_NEUTRAL_RL_INTEGRATION.md`](CONTROLLER_NEUTRAL_RL_INTEGRATION.md)
   defines the remaining RL wiring gate: strict four-target training configuration, exact
   full-task checkpoint compatibility, artifact hashing, checkpoint-bound inference evidence,

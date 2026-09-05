@@ -5143,10 +5143,9 @@ deterministic outcome hash.
 
 Twelve new outcome-blind tests use fabricated controller evidence under non-protected
 identifiers 901 and 902, plus one 15-minute generic-door wiring reset at non-protected seed 903.
-They cover the protocol/lock identities, 2,400-decision and
-36,000-minute matrix arithmetic, strict cell serialization, settings hashes, sensitivity
-algebra, cell gates,
-four-stratum aggregation, deep tamper rejection, timing exclusion, output refusal, paired
+They cover the protocol/lock identities, 2,400-decision and 36,000-minute matrix arithmetic,
+strict cell serialization, settings hashes, sensitivity algebra, cell gates, four-stratum
+aggregation, deep tamper rejection, timing exclusion, output refusal, paired
 reset-before-action order, preflight-failure retention and continuation, full-directory
 verification, and registered seed-substitution refusal. Together with the existing economic
 smoke tests, the focused selection currently passes **19 tests in 0.89 seconds**. A read-only
@@ -5168,3 +5167,24 @@ targeted MyPy with imported legacy modules skipped and cache disabled, Git white
 Makefile command expansion, the frozen protocol hash, and the unchanged dependency-lock hash
 all pass. This runner and admission record are ready for a clean commit; the tournament remains
 forbidden until that commit exists and the worktree is clean.
+
+## 2026-09-05 — Economic robustness execution registered before outcome
+
+The runner, deep verifier, tests, and admission record were committed cleanly as
+`7b1b656964dcac4a25c6f5d4d89fed8abf4d4e0e`. The frozen runner contract is
+`6f789629393188f406c929305721aa257e33e329fc3b5b85da9e5d62d77d7d38`; protocol and lock
+identities remain `6fb5eb11933ba5ee601849210b4e61278e4cec2ddb97c8e31b05817ee7141412`
+and `080d96275581ebbec1b2c27b354ea54e3e66419bfaadb034896da1fd22b228dd`.
+
+Before creating a worktree, output, or environment, the exact execution was registered in
+`ECONOMIC_ROBUSTNESS_TOURNAMENT_REGISTRATION.md`. The executable revision is the runner commit,
+not this later narrative commit. It will be checked out detached at
+`/private/tmp/plantanagent-economic-robustness-7b1b656`. The new exclusive output directory is
+`/Users/filippogombac/.codex/visualizations/2026/08/31/01a05842-8e4b-73b1-8810-42296fdaca5b/v2_economic_robustness_7b1b656`.
+Both paths were absent when registered.
+
+The registered execution contains all 20 cells and no selection surface: horizons 6/24 hours,
+rates 35/42 kg/h, seeds 20--24, H then M, sequentially. The first execution is final regardless
+of gate outcome. A failed controller or cell remains evidence; no alternate directory, retry,
+seed, coefficient, controller edit, or parallel cell is authorized. At registration time no
+seed 20--24 environment had been constructed or reset and no tournament outcome had been opened.
