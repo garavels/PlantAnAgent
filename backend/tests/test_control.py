@@ -384,6 +384,39 @@ def test_validation_drops_allocations_to_offline_units(sim: PlantSimulator) -> N
     assert any("offline" in note for note in validated.adjustments)
 
 
+def test_validation_redistribution_is_the_simulators_exact_action() -> None:
+    """Preserve the one-ULP witness found by exact beta resume execution."""
+
+    simulator = PlantSimulator()
+    observation = replace(
+        simulator.get_telemetry(),
+        health={
+            **simulator.get_telemetry().health,
+            "dac": ComponentHealth(status="offline", offline=True),
+        },
+    )
+    requested = Action(
+        battery_share=0.6069337555062922,
+        electrolyser_share=0.08203814143164075,
+        dac_share=0.26794750663311434,
+        methanator_share=0.043080596428952726,
+    )
+    assert Action.sanitised(requested) == requested
+
+    validated = validate(
+        requested,
+        observation,
+        constraints=Constraints(),
+        config=simulator.config,
+    )
+    applied = simulator.step(validated.action)
+
+    assert validated.action == Action.sanitised(validated.action)
+    assert applied.action == validated.action
+    assert validated.action.dac_share == 0.0
+    assert any("DAC is offline" in item for item in validated.adjustments)
+
+
 def test_validation_protects_the_battery_reserve(sim: PlantSimulator) -> None:
     observation = observe(sim, battery_soc=0.2)
     validated = validate(

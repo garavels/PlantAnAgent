@@ -239,16 +239,21 @@ def validate(
     freed = sum(getattr(safe, key) - shares[key] for key, _, _, _ in limits)
     battery_share = min(1.0, safe.battery_share + max(0.0, freed))
 
-    return ValidatedAction(
+    # Redistributing a disabled process share back to the battery can put the
+    # ordered IEEE-754 sum one ULP above 1.0 even though the allocation is
+    # mathematically conserved.  Canonicalize the final guard output through
+    # the same sanitizer used by ``PlantSimulator.step`` so "validated" means
+    # byte-for-byte what the plant will record, not merely numerically close.
+    guarded_action = Action.sanitised(
         Action(
             battery_share=battery_share,
             electrolyser_share=shares["electrolyser_share"],
             dac_share=shares["dac_share"],
             methanator_share=shares["methanator_share"],
             battery_support_kw=support_kw,
-        ),
-        tuple(adjustments),
+        )
     )
+    return ValidatedAction(guarded_action, tuple(adjustments))
 
 
 def _support_kw(
@@ -261,7 +266,7 @@ def _support_kw(
     headroom_kw: float,
 ) -> float:
     """Battery discharge the plant is allowed to lend the stack right now."""
-    requested_kw = action.battery_support_kw
+    requested_kw = float(action.battery_support_kw)
     if requested_kw <= 0.0:
         return 0.0
     if offline.get("electrolyser", False):
