@@ -25,6 +25,7 @@ from .beta_config import (
     CyclicMarketTaskConfigV1,
     canonical_sha256,
 )
+from .beta_constraint_transition import CycleConstraintTransitionV1
 from .beta_control import CycleObservationV1, CyclicMarketControllerObservationV1
 from .beta_disturbances import DisturbanceEpisodeV1, generate_disturbance_episode
 from .config import EpisodeConfigV2, EpisodeV2, sample_episode
@@ -342,6 +343,9 @@ class PlantCyclicMarketEnvV2Beta(PlantEconomicSetpointEnvV2):  # type: ignore[mi
             elif len(self._cycle_settlements) != expected_cycle:
                 raise RuntimeError("cycle settlements lost exact boundary cardinality")
         info["cycle_constraint"] = self._cycle_constraint_info(settlement=settlement)
+        info["cycle_constraint_transition"] = self._cycle_constraint_transition(
+            settlement=settlement
+        ).to_dict()
         info["environment_id"] = beta_spaces.ENVIRONMENT_ID
         info["environment_contract_digest"] = beta_spaces.ENVIRONMENT_CONTRACT_DIGEST
         info["stage"] = beta_spaces.STAGE
@@ -364,6 +368,24 @@ class PlantCyclicMarketEnvV2Beta(PlantEconomicSetpointEnvV2):  # type: ignore[mi
                 item.total_constraint_cost for item in self._cycle_settlements
             ),
         }
+
+    def _cycle_constraint_transition(
+        self,
+        *,
+        settlement: CycleSettlementV1 | None,
+    ) -> CycleConstraintTransitionV1:
+        cycle_decisions = self.beta_task.cycle.cycle_decisions(self.episode_config)
+        episode_cycle_count, remainder = divmod(
+            self.episode_decisions,
+            cycle_decisions,
+        )
+        if episode_cycle_count <= 0 or remainder:
+            raise RuntimeError("beta episode lost whole-cycle alignment")
+        return CycleConstraintTransitionV1.from_settlement(
+            decision_index=self.decisions_taken,
+            settlement=settlement,
+            episode_cycle_count=episode_cycle_count,
+        )
 
     def _observe(self) -> NDArray[np.float32]:
         physical = np.asarray(PlantSetpointEnvV2._observe(self), dtype=np.float32)
@@ -391,6 +413,9 @@ class PlantCyclicMarketEnvV2Beta(PlantEconomicSetpointEnvV2):  # type: ignore[mi
                 "stage": beta_spaces.STAGE,
                 "market": self.current_market_issue.to_dict(),
                 "cycle_constraint": self._cycle_constraint_info(settlement=None),
+                "cycle_constraint_transition": self._cycle_constraint_transition(
+                    settlement=None
+                ).to_dict(),
                 "economic_context": {
                     "assumptions_sha256": self.economic_assumptions.sha256,
                     "realized_price_eur_per_mwh": (
