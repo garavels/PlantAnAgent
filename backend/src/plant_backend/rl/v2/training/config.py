@@ -22,9 +22,15 @@ from plant_sim import (
 
 from ....controllers.base import Constraints
 from ...training.config import PPOConfig
-from .. import economic_spaces, setpoint_spaces
+from .. import beta_spaces, economic_spaces, setpoint_spaces
+from ..beta_config import (
+    CyclicMarketTaskConfigV1,
+    CyclicReturnConfigV1,
+)
+from ..beta_disturbances import DisturbanceConfigV1
 from ..config import EpisodeConfigV2
 from ..economics import DayAheadTariffV1, EconomicAssumptionsV1
+from ..market import MarketConfigV1, MarketRegimeV1
 from ..reward import RewardWeightsV2
 from ..weather import WeatherConfigV2
 
@@ -32,6 +38,7 @@ from ..weather import WeatherConfigV2
 SUPPORTED_CONTROLLER_NEUTRAL_ENVIRONMENTS = (
     economic_spaces.ENVIRONMENT_ID,
     setpoint_spaces.ENVIRONMENT_ID,
+    beta_spaces.ENVIRONMENT_ID,
 )
 
 
@@ -261,6 +268,74 @@ def _ppo_from_dict(raw: object | None) -> PPOConfig:
     return result
 
 
+def _cycle_from_dict(raw: object | None) -> CyclicReturnConfigV1:
+    result = _flat_dataclass(
+        CyclicReturnConfigV1(),
+        raw,
+        name="cyclic return settings",
+    )
+    if not isinstance(result, CyclicReturnConfigV1):  # pragma: no cover
+        raise TypeError("cyclic return settings produced the wrong type")
+    return result
+
+
+def _market_from_dict(raw: object | None) -> MarketConfigV1:
+    values = _object("market settings", raw)
+    known = {item.name for item in fields(MarketConfigV1)}
+    _reject_unknown("market settings", values, known)
+    updates: dict[str, Any] = {}
+    for key, value in values.items():
+        if key == "regime":
+            if not isinstance(value, str):
+                raise TypeError("market settings.regime must be a string")
+            try:
+                updates[key] = MarketRegimeV1(value)
+            except ValueError as reason:
+                choices = ", ".join(item.value for item in MarketRegimeV1)
+                raise ValueError(
+                    f"market settings.regime must be one of: {choices}"
+                ) from reason
+        else:
+            updates[key] = _typed_scalar(
+                f"market settings.{key}",
+                value,
+                getattr(MarketConfigV1(), key),
+            )
+    return replace(MarketConfigV1(), **updates).validate()
+
+
+def _disturbances_from_dict(raw: object | None) -> DisturbanceConfigV1:
+    values = _object("disturbance settings", raw)
+    known = {item.name for item in fields(DisturbanceConfigV1)}
+    _reject_unknown("disturbance settings", values, known)
+    if "duration_h" in values:
+        values["duration_h"] = _tuple2(
+            "disturbance settings.duration_h", values["duration_h"]
+        )
+    result = _flat_dataclass(
+        DisturbanceConfigV1(),
+        values,
+        name="disturbance settings",
+    )
+    if not isinstance(result, DisturbanceConfigV1):  # pragma: no cover
+        raise TypeError("disturbance settings produced the wrong type")
+    return result.validate()
+
+
+def _beta_task_from_dict(raw: object | None) -> CyclicMarketTaskConfigV1:
+    values = _object("cyclic-market beta settings", raw)
+    _reject_unknown(
+        "cyclic-market beta settings",
+        values,
+        {"cycle", "market", "disturbances"},
+    )
+    return CyclicMarketTaskConfigV1(
+        cycle=_cycle_from_dict(values.get("cycle")),
+        market=_market_from_dict(values.get("market")),
+        disturbances=_disturbances_from_dict(values.get("disturbances")),
+    )
+
+
 def _validate_ppo(config: PPOConfig, *, n_envs: int) -> None:
     for name in ("policy", "device"):
         value = getattr(config, name)
@@ -320,6 +395,20 @@ def _assumptions_to_dict(assumptions: EconomicAssumptionsV1) -> dict[str, Any]:
     }
 
 
+def _beta_task_to_training_dict(
+    task: CyclicMarketTaskConfigV1,
+) -> dict[str, Any]:
+    return {
+        "cycle": asdict(task.cycle),
+        "market": {
+            "regime": task.market.regime.value,
+            "forecast_ensemble_members": task.market.forecast_ensemble_members,
+            "forecast_innovation_scale": task.market.forecast_innovation_scale,
+        },
+        "disturbances": task.disturbances.to_dict(),
+    }
+
+
 @dataclass(frozen=True)
 class ControllerNeutralTrainingConfigV1:
     """One reproducible PPO run against a four-target Environment V2 task."""
@@ -338,6 +427,7 @@ class ControllerNeutralTrainingConfigV1:
     economic_assumptions: EconomicAssumptionsV1 = field(
         default_factory=EconomicAssumptionsV1
     )
+    beta_task: CyclicMarketTaskConfigV1 | None = None
     ppo: PPOConfig = field(default_factory=PPOConfig)
     notes: str = ""
 
@@ -346,7 +436,7 @@ class ControllerNeutralTrainingConfigV1:
             raise TypeError("environment_id must be a string")
         if self.environment_id not in SUPPORTED_CONTROLLER_NEUTRAL_ENVIRONMENTS:
             raise ValueError(
-                "environment_id must identify the common-setpoint or economic V2 task"
+                "environment_id must identify a supported controller-neutral V2 task"
             )
         for name in ("seed", "total_timesteps", "n_envs", "checkpoint_every"):
             value = getattr(self, name)
@@ -384,6 +474,18 @@ class ControllerNeutralTrainingConfigV1:
         _constraints_from_dict(self.constraints.to_dict())
         self.diagnostic_reward.validate()
         self.economic_assumptions.validate()
+        if self.environment_id == beta_spaces.ENVIRONMENT_ID:
+            if not isinstance(self.beta_task, CyclicMarketTaskConfigV1):
+                raise TypeError(
+                    "beta_task must be CyclicMarketTaskConfigV1 for the beta environment"
+                )
+            self.beta_task.validate(
+                episode=self.episode,
+                plant=self.plant,
+                assumptions=self.economic_assumptions,
+            )
+        elif self.beta_task is not None:
+            raise ValueError("beta_task is only valid for the cyclic-market beta")
         _validate_ppo(self.ppo, n_envs=self.n_envs)
         return self
 
@@ -401,6 +503,11 @@ class ControllerNeutralTrainingConfigV1:
             "constraints": self.constraints.to_dict(),
             "diagnostic_reward": self.diagnostic_reward.to_dict(),
             "economic_assumptions": _assumptions_to_dict(self.economic_assumptions),
+            "beta_task": (
+                None
+                if self.beta_task is None
+                else _beta_task_to_training_dict(self.beta_task)
+            ),
             "ppo": asdict(self.ppo),
             "notes": self.notes,
         }
@@ -422,6 +529,9 @@ class ControllerNeutralTrainingConfigV1:
             "constraints": _constraints_from_dict,
             "diagnostic_reward": _reward_from_dict,
             "economic_assumptions": _assumptions_from_dict,
+            "beta_task": (
+                lambda value: None if value is None else _beta_task_from_dict(value)
+            ),
             "ppo": _ppo_from_dict,
         }
         updates: dict[str, Any] = {}

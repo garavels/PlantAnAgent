@@ -14,7 +14,9 @@ from plant_sim import ElectrolyserCommitmentProfile, PlantConfig
 from ...controllers.base import Constraints
 from .. import checkpoints
 from ..policies import LoadedPolicy
-from . import economic_spaces, setpoint_spaces
+from . import beta_spaces, economic_spaces, setpoint_spaces
+from .beta_control import CyclicMarketControllerObservationV1
+from .beta_env import PlantCyclicMarketEnvV2Beta
 from .control import ControllerObservationV2
 from .economic_env import PlantEconomicSetpointEnvV2
 from .economics import EconomicControllerObservationV1
@@ -34,9 +36,13 @@ NORMALIZED_POLICY_SETPOINT_EVIDENCE_SCHEMA = "rl-setpoint-decision-evidence-v1"
 NORMALIZED_POLICY_SETPOINT_EVIDENCE_DOMAIN = NORMALIZED_POLICY_SETPOINT_EVIDENCE_SCHEMA
 
 PolicyObservationV1: TypeAlias = (
-    ControllerObservationV2 | EconomicControllerObservationV1
+    ControllerObservationV2
+    | EconomicControllerObservationV1
+    | CyclicMarketControllerObservationV1
 )
-SetpointPolicyEnvironmentV1: TypeAlias = PlantSetpointEnvV2 | PlantEconomicSetpointEnvV2
+SetpointPolicyEnvironmentV1: TypeAlias = (
+    PlantSetpointEnvV2 | PlantEconomicSetpointEnvV2 | PlantCyclicMarketEnvV2Beta
+)
 
 
 def policy_contract_for_environment(
@@ -45,7 +51,9 @@ def policy_contract_for_environment(
     """Detach the exact policy interface and full task digest from an environment."""
 
     interface: ModuleType
-    if isinstance(environment, PlantEconomicSetpointEnvV2):
+    if isinstance(environment, PlantCyclicMarketEnvV2Beta):
+        interface = beta_spaces
+    elif isinstance(environment, PlantEconomicSetpointEnvV2):
         interface = economic_spaces
     elif isinstance(environment, PlantSetpointEnvV2):
         interface = setpoint_spaces
@@ -169,8 +177,9 @@ class NormalizedSetpointPolicyControllerV1:
     uses_forecast: ClassVar[bool] = True
     information_set: ClassVar[str] = (
         "the checkpoint-declared V2 public observation; economic policies additionally "
-        "receive the declared public tariff summary; no simulator, private weather truth, "
-        "future forecast vintage, or hidden delivery schedule"
+        "receive the declared public tariff or beta market/cycle fields; no simulator, "
+        "private weather or price truth, future forecast vintage, disturbance schedule, "
+        "market regime, or hidden delivery schedule"
     )
 
     def __init__(
@@ -183,6 +192,7 @@ class NormalizedSetpointPolicyControllerV1:
         commitment_profile: ElectrolyserCommitmentProfile | None,
         economic_assumptions_sha256: str | None = None,
         tariff_id: str | None = None,
+        beta_task_sha256: str | None = None,
     ) -> None:
         if not isinstance(loaded, LoadedPolicy):
             raise TypeError("loaded must be LoadedPolicy")
@@ -198,22 +208,39 @@ class NormalizedSetpointPolicyControllerV1:
         self.config = config
         self.constraints = constraints
         self.commitment_profile = commitment_profile
-        expects_economic = contract.environment_id == economic_spaces.ENVIRONMENT_ID
-        if expects_economic:
+        expects_alpha_economic = (
+            contract.environment_id == economic_spaces.ENVIRONMENT_ID
+        )
+        expects_beta = contract.environment_id == beta_spaces.ENVIRONMENT_ID
+        if expects_alpha_economic or expects_beta:
             _require_sha256(
                 "economic_assumptions_sha256",
                 economic_assumptions_sha256,
             )
+        if expects_alpha_economic:
             if not isinstance(tariff_id, str) or not tariff_id:
                 raise ValueError(
                     "economic policy controller requires a tariff identity"
                 )
-        elif economic_assumptions_sha256 is not None or tariff_id is not None:
+            if beta_task_sha256 is not None:
+                raise ValueError("alpha economic policy cannot declare a beta task")
+        elif expects_beta:
+            _require_sha256("beta_task_sha256", beta_task_sha256)
+            if tariff_id is not None:
+                raise ValueError(
+                    "beta policy uses a causal market, not an alpha tariff"
+                )
+        elif (
+            economic_assumptions_sha256 is not None
+            or tariff_id is not None
+            or beta_task_sha256 is not None
+        ):
             raise ValueError(
                 "physical setpoint policy cannot declare economic identities"
             )
         self.economic_assumptions_sha256 = economic_assumptions_sha256
         self.tariff_id = tariff_id
+        self.beta_task_sha256 = beta_task_sha256
         self.encoder = ObservationEncoderV2(config, commitment_profile)
         self.adapter = ProcessSetpointActionAdapterV1()
         self._decision_count = 0
@@ -232,6 +259,16 @@ class NormalizedSetpointPolicyControllerV1:
         loaded: LoadedPolicy,
         environment: SetpointPolicyEnvironmentV1,
     ) -> "NormalizedSetpointPolicyControllerV1":
+        if isinstance(environment, PlantCyclicMarketEnvV2Beta):
+            return cls(
+                loaded,
+                contract=policy_contract_for_environment(environment),
+                config=environment.config,
+                constraints=environment.constraints,
+                commitment_profile=environment.episode_config.electrolyser_commitment,
+                economic_assumptions_sha256=(environment.economic_assumptions.sha256),
+                beta_task_sha256=environment.beta_task.sha256,
+            )
         if isinstance(environment, PlantEconomicSetpointEnvV2):
             return cls(
                 loaded,
@@ -262,13 +299,29 @@ class NormalizedSetpointPolicyControllerV1:
     ) -> NDArray[np.float32]:
         """Produce exactly the checkpoint-declared vector from the common typed source."""
 
-        expects_economic = (
+        expects_alpha_economic = (
             self.contract.environment_id == economic_spaces.ENVIRONMENT_ID
         )
-        if isinstance(observation, EconomicControllerObservationV1):
-            if not expects_economic:
+        expects_beta = self.contract.environment_id == beta_spaces.ENVIRONMENT_ID
+        market = None
+        cycle = None
+        if isinstance(observation, CyclicMarketControllerObservationV1):
+            if not expects_beta:
+                raise TypeError("checkpoint does not accept the beta observation")
+            if observation.economic_assumptions_sha256 != (
+                self.economic_assumptions_sha256
+            ):
+                raise ValueError("beta economic assumptions identity drifted")
+            if observation.beta_task_sha256 != self.beta_task_sha256:
+                raise ValueError("beta task identity drifted")
+            physical = observation.plant
+            market = observation.market
+            cycle = observation.cycle
+            tariff = None
+        elif isinstance(observation, EconomicControllerObservationV1):
+            if not expects_alpha_economic:
                 raise TypeError(
-                    "checkpoint requires the physical controller observation"
+                    "checkpoint does not accept the alpha economic observation"
                 )
             if observation.economic_assumptions_sha256 != (
                 self.economic_assumptions_sha256
@@ -279,10 +332,8 @@ class NormalizedSetpointPolicyControllerV1:
             physical = observation.plant
             tariff = observation.tariff
         elif isinstance(observation, ControllerObservationV2):
-            if expects_economic:
-                raise TypeError(
-                    "checkpoint requires the economic controller observation"
-                )
+            if expects_alpha_economic or expects_beta:
+                raise TypeError("checkpoint requires its richer task observation")
             physical = observation
             tariff = None
         else:  # pragma: no cover - defensive runtime type check
@@ -294,6 +345,14 @@ class NormalizedSetpointPolicyControllerV1:
         if tariff is not None:
             encoded = np.concatenate(
                 (encoded, np.asarray(tariff.normalized(), dtype=np.float32))
+            ).astype(np.float32, copy=False)
+        if market is not None and cycle is not None:
+            encoded = np.concatenate(
+                (
+                    encoded,
+                    np.asarray(market.normalized(), dtype=np.float32),
+                    np.asarray(cycle.normalized(self.config), dtype=np.float32),
+                )
             ).astype(np.float32, copy=False)
         if encoded.shape != (len(self.contract.observation_fields),):
             raise RuntimeError(
@@ -323,7 +382,10 @@ class NormalizedSetpointPolicyControllerV1:
             )
         physical = (
             observation.plant
-            if isinstance(observation, EconomicControllerObservationV1)
+            if isinstance(
+                observation,
+                (EconomicControllerObservationV1, CyclicMarketControllerObservationV1),
+            )
             else observation
         )
         if not isinstance(physical, ControllerObservationV2):
@@ -340,7 +402,13 @@ class NormalizedSetpointPolicyControllerV1:
             ),
             economic_observation_sha256=(
                 observation.sha256
-                if isinstance(observation, EconomicControllerObservationV1)
+                if isinstance(
+                    observation,
+                    (
+                        EconomicControllerObservationV1,
+                        CyclicMarketControllerObservationV1,
+                    ),
+                )
                 else None
             ),
             checkpoint_metadata_sha256=self._metadata_sha256,
@@ -376,6 +444,7 @@ class NormalizedSetpointPolicyControllerV1:
             "policy_contract_sha256": self._contract_sha256,
             "economic_assumptions_sha256": self.economic_assumptions_sha256,
             "tariff_id": self.tariff_id,
+            "beta_task_sha256": self.beta_task_sha256,
             "inference": "deterministic",
             "failure_policy": "raise; no controller-internal fallback",
         }

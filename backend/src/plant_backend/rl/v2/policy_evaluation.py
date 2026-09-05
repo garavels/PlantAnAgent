@@ -17,11 +17,13 @@ from numpy.typing import NDArray
 
 from .. import checkpoints
 from ..policies import LoadedPolicy, load_policy
+from .beta_env import PlantCyclicMarketEnvV2Beta
 from .economic_env import PlantEconomicSetpointEnvV2
 from .mpc_schema import domain_sha256
 from .policy_setpoint_controller import (
     NORMALIZED_POLICY_SETPOINT_CONTROLLER_ID,
     NormalizedSetpointPolicyControllerV1,
+    PolicyObservationV1,
     SetpointPolicyEnvironmentV1,
     policy_contract_for_environment,
 )
@@ -45,12 +47,30 @@ def _vector_sha256(vector: NDArray[np.generic]) -> str:
 
 def _manifest_identity(environment: SetpointPolicyEnvironmentV1) -> dict[str, str]:
     manifest = environment.audit_manifest()
-    identity = {
-        "manifest_sha256": str(manifest["manifest_sha256"]),
-        "physical_exogenous_episode_sha256": str(manifest["exogenous_episode_sha256"]),
-        "checkpoint_contract_sha256": environment.checkpoint_contract_digest,
-    }
-    if isinstance(environment, PlantEconomicSetpointEnvV2):
+    if isinstance(environment, PlantCyclicMarketEnvV2Beta):
+        identity = {
+            "manifest_sha256": str(manifest["manifest_sha256"]),
+            "physical_exogenous_episode_sha256": str(
+                manifest["alpha_physical_exogenous_episode_sha256"]
+            ),
+            "beta_exogenous_episode_sha256": str(
+                manifest["beta_exogenous_episode_sha256"]
+            ),
+            "economic_assumptions_sha256": (environment.economic_assumptions.sha256),
+            "checkpoint_contract_sha256": environment.checkpoint_contract_digest,
+        }
+    else:
+        identity = {
+            "manifest_sha256": str(manifest["manifest_sha256"]),
+            "physical_exogenous_episode_sha256": str(
+                manifest["exogenous_episode_sha256"]
+            ),
+            "checkpoint_contract_sha256": environment.checkpoint_contract_digest,
+        }
+    if isinstance(environment, PlantEconomicSetpointEnvV2) and not isinstance(
+        environment,
+        PlantCyclicMarketEnvV2Beta,
+    ):
         identity.update(
             {
                 "economic_episode_sha256": str(manifest["economic_episode_sha256"]),
@@ -132,8 +152,33 @@ def _episode_result(
     truncated: bool,
     failure: Mapping[str, Any] | None,
 ) -> dict[str, Any]:
+    cycle_constraint: dict[str, Any] | None = None
+    effective_failure = None if failure is None else dict(failure)
+    if isinstance(environment, PlantCyclicMarketEnvV2Beta):
+        cycle_constraint = {
+            "settlements": [item.to_dict() for item in environment.cycle_settlements],
+            "all_settled_cycles_feasible": all(
+                item.feasible for item in environment.cycle_settlements
+            ),
+            "cumulative_constraint_cost": math.fsum(
+                item.total_constraint_cost for item in environment.cycle_settlements
+            ),
+        }
+        if (
+            effective_failure is None
+            and terminated
+            and not truncated
+            and not cycle_constraint["all_settled_cycles_feasible"]
+        ):
+            effective_failure = {
+                "phase": "cycle_constraint",
+                "exception_type": "CycleConstraintViolation",
+                "message": "one or more 24 h resource-return constraints failed",
+            }
     status = (
-        "complete" if failure is None and terminated and not truncated else "failed"
+        "complete"
+        if effective_failure is None and terminated and not truncated
+        else "failed"
     )
     deterministic = {
         "controller_id": controller["id"],
@@ -150,9 +195,10 @@ def _episode_result(
             if isinstance(environment, PlantEconomicSetpointEnvV2)
             else None
         ),
+        "cycle_constraint": cycle_constraint,
         "decisions": [dict(item) for item in decisions],
         "executions": [dict(item) for item in executions],
-        "failure": None if failure is None else dict(failure),
+        "failure": effective_failure,
     }
     return {
         "status": status,
@@ -195,7 +241,10 @@ def execute_policy_episode(
     failure: dict[str, Any] | None = None
     try:
         while not terminated and not truncated:
-            if isinstance(environment, PlantEconomicSetpointEnvV2):
+            source: PolicyObservationV1
+            if isinstance(environment, PlantCyclicMarketEnvV2Beta):
+                source = environment.cyclic_market_controller_observation
+            elif isinstance(environment, PlantEconomicSetpointEnvV2):
                 source = environment.economic_controller_observation
             else:
                 source = environment.controller_observation
@@ -330,8 +379,16 @@ def compare_policy_to_heuristic(
     loaded = _preflight_loaded_policy_task(loaded, config)
     runs: list[dict[str, Any]] = []
     for seed in seed_values:
-        heuristic = execute_heuristic_episode(make_env(config), seed=seed)
-        policy = execute_policy_episode(make_env(config), loaded, seed=seed)
+        heuristic_environment = make_env(config)
+        try:
+            heuristic = execute_heuristic_episode(heuristic_environment, seed=seed)
+        finally:
+            heuristic_environment.close()
+        policy_environment = make_env(config)
+        try:
+            policy = execute_policy_episode(policy_environment, loaded, seed=seed)
+        finally:
+            policy_environment.close()
         if heuristic["manifest_identity"] != policy["manifest_identity"]:
             raise RuntimeError(f"paired manifest identity differs for seed {seed}")
         runs.extend((heuristic, policy))

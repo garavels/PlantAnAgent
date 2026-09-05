@@ -10,7 +10,8 @@ from pathlib import Path
 from typing import Any, Callable, cast
 
 from ... import checkpoints
-from .. import economic_spaces, setpoint_spaces
+from .. import beta_spaces, economic_spaces, setpoint_spaces
+from ..beta_env import PlantCyclicMarketEnvV2Beta
 from ..economic_env import PlantEconomicSetpointEnvV2
 from ..policy_setpoint_controller import (
     SetpointPolicyEnvironmentV1,
@@ -54,6 +55,17 @@ def make_env(
 
     del index
     config.validate()
+    if config.environment_id == beta_spaces.ENVIRONMENT_ID:
+        if config.beta_task is None:  # pragma: no cover - config.validate closes this
+            raise RuntimeError("validated beta training task omitted beta_task")
+        return PlantCyclicMarketEnvV2Beta(
+            config=config.plant,
+            episode=config.episode,
+            constraints=config.constraints,
+            weights=config.diagnostic_reward,
+            economic_assumptions=config.economic_assumptions,
+            beta_task=config.beta_task,
+        )
     if config.environment_id == economic_spaces.ENVIRONMENT_ID:
         return PlantEconomicSetpointEnvV2(
             config=config.plant,
@@ -351,11 +363,20 @@ def plan(config: ControllerNeutralTrainingConfigV1) -> dict[str, Any]:
     environment = make_env(config)
     observation, info = environment.reset(seed=config.seed)
     contract = policy_contract_for_environment(environment)
+    manifest = environment.audit_manifest()
+    if isinstance(environment, PlantCyclicMarketEnvV2Beta):
+        exogenous_episode_sha256 = str(manifest["beta_exogenous_episode_sha256"])
+        physical_exogenous_episode_sha256 = str(
+            manifest["alpha_physical_exogenous_episode_sha256"]
+        )
+    else:
+        exogenous_episode_sha256 = str(manifest["exogenous_episode_sha256"])
+        physical_exogenous_episode_sha256 = exogenous_episode_sha256
     steps_per_episode = environment.episode_decisions
     rollout_size = config.ppo.n_steps * config.n_envs
     minimum_updates = math.ceil(config.total_timesteps / rollout_size)
     minimum_collected_timesteps = minimum_updates * rollout_size
-    return {
+    result = {
         "environment_id": config.environment_id,
         "environment_contract_digest": contract.environment_contract_digest,
         "checkpoint_contract_digest": contract.checkpoint_contract_digest,
@@ -381,17 +402,16 @@ def plan(config: ControllerNeutralTrainingConfigV1) -> dict[str, Any]:
             / max(1, config.n_envs)
             / 86_400.0
         ),
-        "first_episode_manifest_sha256": environment.audit_manifest()[
-            "manifest_sha256"
-        ],
-        "first_exogenous_episode_sha256": environment.audit_manifest()[
-            "exogenous_episode_sha256"
-        ],
+        "first_episode_manifest_sha256": manifest["manifest_sha256"],
+        "first_exogenous_episode_sha256": exogenous_episode_sha256,
+        "first_physical_exogenous_episode_sha256": (physical_exogenous_episode_sha256),
         "first_reset_checkpoint_contract_digest": info["checkpoint_contract_digest"],
         "output_dir": config.output_dir,
         "resume_from": config.resume_from,
         "training_library_imported": False,
     }
+    environment.close()
+    return result
 
 
 __all__ = [

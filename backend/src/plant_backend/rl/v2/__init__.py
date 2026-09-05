@@ -10,6 +10,22 @@ separately switchable electrolyser commitment dynamics.
 """
 
 from .config import EpisodeConfigV2, EpisodeV2, sample_episode
+from .beta_config import (
+    CycleReferenceV1,
+    CycleSettlementV1,
+    CyclicMarketTaskConfigV1,
+    CyclicReturnConfigV1,
+)
+from .beta_control import (
+    CycleObservationV1,
+    CyclicMarketControllerObservationV1,
+)
+from .beta_disturbances import (
+    DisturbanceConfigV1,
+    DisturbanceEpisodeV1,
+    generate_disturbance_episode,
+)
+from .beta_env import PlantCyclicMarketEnvV2Beta, describe_beta_checkpoint_contract
 from .boundary import ControlStateV2, IntervalSummaryV2
 from .control import ControllerObservationV2, ControllerV2, DeliveryObservation
 from .controllers import (
@@ -70,6 +86,14 @@ from .mpc_setpoints import (
     MPCProcessSetpointsV1,
     dispatch_mpc_setpoints,
 )
+from .market import (
+    MarketConfigV1,
+    MarketEpisodeV1,
+    MarketRegimeV1,
+    PriceForecastBinV1,
+    PublicPriceForecastIssueV1,
+    generate_market_episode,
+)
 from .reward import RewardWeightsV2
 from .setpoint_control import (
     DecodedProcessSetpointActionV1,
@@ -128,9 +152,17 @@ __all__ = [
     "ControllerV2",
     "ControllerEvaluationV2",
     "ClimatologyControllerV2",
+    "CycleObservationV1",
+    "CycleReferenceV1",
+    "CycleSettlementV1",
+    "CyclicMarketControllerObservationV1",
+    "CyclicMarketTaskConfigV1",
+    "CyclicReturnConfigV1",
     "DeliveryAwareControllerV2",
     "DeliveryObservation",
     "DeliveryPlannerSettingsV2",
+    "DisturbanceConfigV1",
+    "DisturbanceEpisodeV1",
     "DecodedProcessSetpointActionV1",
     "DayAheadTariffV1",
     "EconomicAssumptionsV1",
@@ -157,10 +189,14 @@ __all__ = [
     "MPCSetpointDecisionFailureV1",
     "MPCSetpointDecisionV1",
     "MPCSetpointIntervalExecutionV1",
+    "MarketConfigV1",
+    "MarketEpisodeV1",
+    "MarketRegimeV1",
     "NORMALIZED_POLICY_SETPOINT_CONTROLLER_ID",
     "OBSERVATION_NAMES",
     "OBSERVATION_SIZE",
     "PlantEnvV2",
+    "PlantCyclicMarketEnvV2Beta",
     "PlantEconomicSetpointEnvV2",
     "PlantSetpointEnvV2",
     "NormalizedSetpointPolicyControllerV1",
@@ -177,6 +213,8 @@ __all__ = [
     "ProcessSetpointTargetsV1",
     "PolicySetpointDecisionEvidenceV1",
     "PolicySetpointDecisionV1",
+    "PriceForecastBinV1",
+    "PublicPriceForecastIssueV1",
     "RewardWeightsV2",
     "RiskAdjustedIssuedForecastControllerV2",
     "SPEC_VERSION",
@@ -194,10 +232,13 @@ __all__ = [
     "compute_economic_reward",
     "build_economic_mpc_model",
     "describe",
+    "describe_beta_checkpoint_contract",
     "dispatch_mpc_setpoints",
     "dispatch_process_setpoint_command",
     "evaluate",
     "evaluate_controllers",
+    "generate_disturbance_episode",
+    "generate_market_episode",
     "issue_process_setpoint_command",
     "resolve_process_setpoint_envelope",
     "record_process_setpoint_application",

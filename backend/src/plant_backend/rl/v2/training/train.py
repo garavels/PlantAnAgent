@@ -10,6 +10,8 @@ import sys
 from typing import Any
 
 from ... import checkpoints
+from .. import beta_spaces
+from ..beta_config import CyclicMarketTaskConfigV1
 from . import ppo
 from .config import (
     SUPPORTED_CONTROLLER_NEUTRAL_ENVIRONMENTS,
@@ -59,6 +61,13 @@ def resolve(arguments: argparse.Namespace) -> ControllerNeutralTrainingConfigV1:
         updates["resume_from"] = str(arguments.resume)
     if arguments.environment is not None:
         updates["environment_id"] = arguments.environment
+        if arguments.environment == beta_spaces.ENVIRONMENT_ID:
+            if config.beta_task is None:
+                updates["beta_task"] = CyclicMarketTaskConfigV1()
+            if arguments.config is None and arguments.output is None:
+                updates["output_dir"] = "runs/v2-cyclic-market-beta-ppo"
+        elif config.beta_task is not None:
+            updates["beta_task"] = None
     return replace(config, **updates).validate()
 
 
