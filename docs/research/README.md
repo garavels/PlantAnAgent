@@ -193,6 +193,15 @@ fallback behavior.
   availability, complete 21-file reference custody, production-aware fourth-delivery closure,
   solver-runtime matching, and a cross-revision no-existing-runtime-edit rule. These close the
   final pre-code ambiguities without changing the horizon-only hypothesis.
+- [`FULL_DAY_HORIZON_REPAIR_ADMISSION.md`](FULL_DAY_HORIZON_REPAIR_ADMISSION.md)
+  records the completed outcome-free implementation gate: additive admission, typed nested-run
+  reconstruction, 96-row accounting, F1--F8 analysis, durable one-shot publication, 96 focused
+  tests, two non-protected 24-hour integration checks, and a clean deep rebuild of all historical
+  evidence. It contains no protected M24 outcome.
+- [`FULL_DAY_HORIZON_REPAIR_REGISTRATION.md`](FULL_DAY_HORIZON_REPAIR_REGISTRATION.md)
+  fixes the exact clean executable revision, detached worktree, immutable historical report,
+  unused external destination, canonical ten-cell order, and one-execution/no-retry rule before
+  the first M24 seed 20--24 reset.
 - [`CONTROLLER_NEUTRAL_RL_INTEGRATION.md`](CONTROLLER_NEUTRAL_RL_INTEGRATION.md)
   defines the completed RL wiring gate: strict four-target training configuration, exact
   full-task checkpoint compatibility, artifact hashing, checkpoint-bound inference evidence,

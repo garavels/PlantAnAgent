@@ -154,7 +154,9 @@ equipment consequences.
   Clarification 002 additionally freezes exact tolerances, chained gate semantics, complete
   missing-seed/extrema reporting, production-aware settlement closure, solver-version matching,
   and rejection of any change to a pre-existing physical/controller/runtime file since the M6
-  source. No protected M24 action has run.
+  source. The additive runner/verifier and its 96-test adversarial gate are now admitted, and an
+  exact clean revision plus unused external destination are registered for one sequential run.
+  No protected M24 action has run.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.
 

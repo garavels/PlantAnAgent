@@ -5488,3 +5488,55 @@ closure complete, the scientific blocker is unchanged: the six-hour MPC fails th
 commitment, so substantive PPO remains unauthorized. The next research step is the already frozen
 horizon-only M24 mechanism probe; live V2 orchestration follows only after a credible task and
 controller have earned deployment work.
+
+## 2026-09-05 — M24 implementation admitted and exact one-shot execution registered
+
+The frozen full-day horizon-only repair is now implemented without changing any pre-existing
+simulator, controller, safety, or V2 runtime file. Commit `90788cc` on the main research branch
+contains four additive production modules plus tests and Makefile entry points. The same logical
+implementation was replayed onto the clean post-protocol base as `f7ee304`; the outcome-free
+admission record was then committed as executable revision
+`d18082594b7fea692c9fff146c54d9b0f2f31733` on `codex/m24-horizon-execution`.
+
+The admission layer requires the exact historical report plus all 20 cell files, canonical JSON,
+regular nonsymlink custody, immutable registered hashes, an unchanged dependency lock, a clean
+authenticated source diff against `7b1b656`, and a new external output directory. It rejects any
+modified or deleted existing runtime file and any undeclared new runtime/package surface. The
+typed codec rebuilds every nested M6/M24 target, solver stage, setpoint, dispatch, guard,
+commitment boundary, minute application, interval execution, residual, event, aggregate, and
+digest rather than trusting coherent outer rehashes.
+
+The analysis contract retains the complete event-zero observation/issue/96-interval projection,
+all 96 M24 interval rows, delivery and physical-boundary chains, execution energy, commitment-
+derived wear exposure, production-aware final settlement, tariff, terminal liability, and all
+seven additive objective components. Historical H/M6 values use explicit `available`,
+`not_retained`, and `not_applicable` states. All five seeds remain in each rate denominator, and
+F1--F7 are chained while F8 reports latency and enforces the exact claim boundary.
+
+The final outcome-free suite passes 96 focused tests. Its unmocked synthetic ten-cell
+run/publication/verifier test found two real JSON-boundary defects: tuple-valued episode fields
+were being compared directly with reopened JSON arrays in both task and complete-cell
+reconstruction. Canonical JSON equality now closes those boundaries without weakening any value
+or digest requirement. Other attacks cover duplicate keys, path escape, symlinks, TOCTOU, extra
+files, reordered coherently rehashed citations, noncanonical bytes, canonical body tampering,
+source drift, missing evidence, threshold edges, and failed-cell retention without environment
+construction.
+
+Two production-path integration runs used only non-protected seeds 905 and 906. Each completed
+96 decisions, 1,440 physical steps, 96 executions, 1,440 minute applications, and four
+settlements. They exposed and fixed the 06:00 episode time-origin assumption and the exact
+retained H allocation paths. A clean read-only admission then reopened the 215 MB historical
+directory, deeply verified all 21 artifacts, typed-rebuilt all 20 M6 runs, and selected only
+full-day cells 11--20 in canonical rate/seed order. No H/M6 controller was rerun.
+
+The repository passed 1,372 tests with 4 skips; the four production modules pass strict typing,
+all eight new source/test files pass Black and compilation, Git whitespace checks pass, and the
+frontend production build passes. The existing large 3D frontend chunk warning is unrelated.
+
+`FULL_DAY_HORIZON_REPAIR_REGISTRATION.md` now binds the exact executable revision above, the
+fresh detached worktree `/private/tmp/plantanagent-m24-d180825`, and the unused external
+destination
+`/Users/filippogombac/.codex/visualizations/2026/08/31/01a05842-8e4b-73b1-8810-42296fdaca5b/v2_full_day_horizon_repair_d180825`.
+It authorizes one sequential ten-cell M24 run only. No protected action or outcome had occurred
+when the registration was written, and no RL, controller-superiority, held-out, economic,
+commercial, commission, HEPA, or language-layer claim is opened by this software gate.

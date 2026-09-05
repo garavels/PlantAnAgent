@@ -754,7 +754,9 @@ stranded H2/CO2. The task is therefore **not admitted for substantive RL trainin
 repair is now frozen as a single-variable mechanism probe: extend only the service MPC horizon
 from 6 to 24 hours on the already contaminated full-day cells, leaving its objective, the
 plant, the common command path, and the economic assumptions unchanged. No protected M24
-outcome has run. If horizon alone does not recover service, the next protocol must add explicit
+outcome has run. Its additive runner, typed detached verifier, interval/economic reconstruction,
+and adversarial suite are now admitted and the exact clean one-shot execution revision is
+registered. If horizon alone does not recover service, the next protocol must add explicit
 deliverable-product adequacy across renewable outages. The retained report can be verified with:
 
 ```bash
@@ -767,7 +769,10 @@ and next architecture decision. The frozen follow-up is
 [`docs/research/FULL_DAY_HORIZON_REPAIR_PROTOCOL.md`](docs/research/FULL_DAY_HORIZON_REPAIR_PROTOCOL.md),
 with its pre-code evidence clarifications in
 [`clarification 001`](docs/research/FULL_DAY_HORIZON_REPAIR_CLARIFICATION_001.md) and
-[`clarification 002`](docs/research/FULL_DAY_HORIZON_REPAIR_CLARIFICATION_002.md).
+[`clarification 002`](docs/research/FULL_DAY_HORIZON_REPAIR_CLARIFICATION_002.md). The outcome-free
+software gate and exact execution custody are recorded in the
+[`admission`](docs/research/FULL_DAY_HORIZON_REPAIR_ADMISSION.md) and
+[`registration`](docs/research/FULL_DAY_HORIZON_REPAIR_REGISTRATION.md).
 
 ---
 
