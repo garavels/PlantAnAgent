@@ -32,6 +32,15 @@ from .economics import (
     ch4_equivalent_inventory_kg,
     compute_economic_reward,
 )
+from .economic_mpc_controller import TariffAwareEconomicMPCControllerV1
+from .economic_mpc_model import EconomicMPCModelV1, build_economic_mpc_model
+from .economic_mpc_schema import (
+    EconomicMPCDecisionEvidenceV1,
+    EconomicMPCDecisionV1,
+    EconomicMPCPlanV1,
+    EconomicMPCSettingsV1,
+)
+from .economic_mpc_solver import solve_economic_mpc_model
 from .setpoint_env import PlantSetpointEnvV2
 from .evaluation import (
     BaselineEvaluation,
@@ -128,6 +137,11 @@ __all__ = [
     "EconomicControllerObservationV1",
     "EconomicEpisodeMetricsV1",
     "EconomicIntervalOutcomeV1",
+    "EconomicMPCDecisionEvidenceV1",
+    "EconomicMPCDecisionV1",
+    "EconomicMPCModelV1",
+    "EconomicMPCPlanV1",
+    "EconomicMPCSettingsV1",
     "EconomicRewardBreakdownV1",
     "EpisodeConfigV2",
     "EpisodeMetricsV2",
@@ -172,11 +186,13 @@ __all__ = [
     "ServiceMPCSettingsV1",
     "SetpointControllerV2",
     "TariffObservationV1",
+    "TariffAwareEconomicMPCControllerV1",
     "WeatherConfigV2",
     "adapt_mpc_process_setpoints",
     "allocate_process_setpoint_targets",
     "ch4_equivalent_inventory_kg",
     "compute_economic_reward",
+    "build_economic_mpc_model",
     "describe",
     "dispatch_mpc_setpoints",
     "dispatch_process_setpoint_command",
@@ -187,4 +203,5 @@ __all__ = [
     "record_process_setpoint_application",
     "policy_contract_for_environment",
     "sample_episode",
+    "solve_economic_mpc_model",
 ]
