@@ -6569,3 +6569,63 @@ production schema is V3 and synthetic schema is V2, both bound to the exact Repa
 hash `1809e88942a0d075409e80c12219a1352bb2abfe4210a73580446e2a82012b06`. Only after
 implementation, independent audit, a clean commit, and complete release gates may one new revision
 receive one new three-cell capacity attempt.
+
+## 2026-09-05 — Capacity Repair 002 implemented; no third attempt opened
+
+No capacity cell, registered optimizer step, development/held-out reset, controller comparison,
+HEPA fit, or supervisor evaluation ran during this implementation. The failed V2 report and all
+external `27a47d0` artifacts remain unchanged. Repair 002 was already frozen and committed in
+`82a616c` with raw SHA-256
+`1809e88942a0d075409e80c12219a1352bb2abfe4210a73580446e2a82012b06` before either production or
+test source changed.
+
+The capacity module now extracts the existing exact training-config serialization into one shared
+`_training_config_mapping_bytes` function. It retains the prior sorted, two-space-indented,
+`allow_nan=False`, UTF-8, trailing-newline encoding byte-for-byte; it does not substitute the
+compact MPC evidence serializer. `_training_config_bytes(config)` passes the dataclass mapping
+through that function, while the new metadata verifier first requires the loaded metadata value to
+be a complete mapping and then passes the whole mapping through the same function. Exact serialized
+bytes must match. There is no field-specific list/tuple coercion, subset comparison, ignored key,
+or numerical tolerance.
+
+Checkpoint admission still reads and exactly compares the independent `training_config.json` file
+before loading metadata. Only after that byte check does the new whole-object metadata comparison
+run; algorithm/seed/timestep, constrained evidence, environment/task identity, runtime, allocator,
+rollout, optimizer-step, artifact, and production policy-load checks remain in their original order.
+The learner and every optimizer-affecting module are untouched by Repair 002.
+
+The production report, deterministic-evidence domain, and verifier now require V3. Synthetic
+fixtures use a separately versioned synthetic V2 report and deterministic domain. The protocol
+identity retains Repair 001 with both clarifications and appends Repair 002 with its exact path and
+raw digest. Production verification rejects production V1/V2 and synthetic V2 before runtime,
+host, or checkpoint access; synthetic verification symmetrically rejects synthetic V1 and
+production V3 before invoking any injected hook.
+
+The new tests prove that the raw dataclass mapping and JSON-round-tripped mapping are unequal as
+Python objects while producing identical frozen config bytes. A production `_admit_checkpoint`
+test writes the exact config file, supplies correctly identified JSON-round-tripped metadata, and
+proves execution advances beyond the repaired comparison to the deliberately failing next campaign
+identity gate. Changed scalar and nested sequence values, missing/extra keys, reordered sequences,
+and non-finite values all fail. A separate ordering test supplies internally consistent metadata
+but a changed standalone config file and proves metadata loading is never reached.
+
+The final capacity suite passes **69 tests in 0.96 seconds**; capacity plus the unchanged constrained
+learner passes **100 tests in 15.04 seconds**. The authoritative locked learner/capacity/checkpoint/
+production/provenance/config selection passes **297 tests in 213.49 seconds**. Strict scoped MyPy,
+Black, Python compilation, and Git whitespace checks pass for the changed production/test files.
+An independent read-only audit found no P0/P1 implementation issue. Its initial P2/P3 test-evidence
+requests are the production-wiring, self-consistent-file-ordering, symmetric cross-version, and
+explicit-domain tests described above and are now closed.
+
+The audit also recorded a pre-existing checkpoint-format limitation outside Repair 002: the generic
+metadata loader uses ordinary `json.loads` and converts `training_config` with `dict(...)`, so raw
+duplicate keys or a JSON array of key/value pairs are normalized before this semantic comparison.
+The capacity verifier binds the raw metadata file hash and later reloads the artifact, but this
+repair is not described as authenticating a globally canonical raw `metadata.json` encoding. That
+broader checkpoint-format hardening must be separately scoped rather than smuggled into the frozen
+admission repair.
+
+The Repair-002 implementation is not yet capacity evidence. It must be committed, confirmed clean,
+and pass the complete Python repository plus frontend release gates on that exact revision before
+the one permitted V3 attempt can begin. While that future three-cell attempt runs, no parallel work
+or token-consuming analysis will occur.

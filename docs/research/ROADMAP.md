@@ -193,10 +193,12 @@ equipment consequences.
   sole clean-revision attempt completed all three child trainers but rejected all three serialized
   checkpoints because JSON-loaded configuration lists were compared directly with tuple-valued
   in-memory configuration. That V2 report is retained without a projection or retry. Repair 002 is
-  frozen to compare the complete metadata configuration through the existing canonical JSON byte
-  representation while retaining all independent file, metadata, evidence, and policy checks. This
-  is still no evidence of controller superiority. Registered training and development/held-out
-  resets remain closed pending explicit authorization after a valid capacity estimate.
+  implemented to compare the complete metadata configuration through the unchanged training-config
+  JSON byte representation while retaining all independent file, metadata, evidence, and policy
+  checks. V3 production/V2 synthetic schemas bind its frozen digest; one new clean-revision attempt
+  remains gated on the complete release suite. This is still no evidence of controller superiority.
+  Registered training and development/held-out resets remain closed pending explicit authorization
+  after a valid capacity estimate.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.
 

@@ -289,6 +289,9 @@ fallback behavior.
   narrow repair before source changes. It retains exact standalone configuration bytes and every
   later admission check, compares the complete metadata configuration using the same canonical
   JSON bytes, versions the report, and permits only one new clean-revision attempt after all gates.
+  Its implementation shares the unchanged training-config serializer across the expected and
+  metadata copies, rejects semantic/structural changes adversarially, and keeps V3 production
+  evidence separate from synthetic V2 fixtures. No new capacity cell has run.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

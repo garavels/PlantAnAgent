@@ -276,6 +276,95 @@ def test_frozen_cell_configs_and_reported_formulas_are_exact(tmp_path: Path) -> 
     }
 
 
+def test_metadata_training_config_accepts_only_the_canonical_json_round_trip(
+    tmp_path: Path,
+) -> None:
+    config = capacity._cell_config(
+        (tmp_path / "pi").resolve(),
+        BETA_PI_LAGRANGIAN_ALGORITHM_ID,
+    )
+    in_memory = config.to_dict()
+    round_tripped = json.loads(capacity._training_config_bytes(config))
+
+    assert in_memory != round_tripped
+    assert isinstance(in_memory["episode"]["battery_soc"], tuple)
+    assert isinstance(round_tripped["episode"]["battery_soc"], list)
+    assert capacity._metadata_training_config_bytes(round_tripped) == (
+        capacity._training_config_bytes(config)
+    )
+    capacity._verify_metadata_training_config(round_tripped, config)
+
+
+def test_production_admission_accepts_the_json_representation_before_next_gate(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root = tmp_path.resolve()
+    output = root / "artifacts" / "pi-lagrangian"
+    checkpoint = output / "checkpoint"
+    checkpoint.mkdir(parents=True)
+    config = capacity._cell_config(output, BETA_PI_LAGRANGIAN_ALGORITHM_ID)
+    (checkpoint / capacity.CONFIG_FILE).write_bytes(
+        capacity._training_config_bytes(config)
+    )
+    metadata = checkpoints.CheckpointMetadata(
+        format=checkpoints.FORMAT_SB3_PPO,
+        algorithm="deliberately-next-gate",
+        seed=capacity.CAPACITY_OPTIMIZER_SEED,
+        total_timesteps=capacity.CAPACITY_TRANSITIONS,
+        training_config=json.loads(capacity._training_config_bytes(config)),
+    )
+    monkeypatch.setattr(
+        capacity.checkpoints,
+        "load_metadata",
+        lambda *_args, **_kwargs: metadata,
+    )
+
+    with pytest.raises(
+        capacity.CapacityBenchmarkError,
+        match="checkpoint campaign identity differs",
+    ):
+        capacity._admit_checkpoint(root, checkpoint, config, _runtime())
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    (
+        "changed_scalar",
+        "changed_nested_sequence",
+        "missing_key",
+        "extra_key",
+        "wrong_sequence_order",
+        "nonfinite",
+    ),
+)
+def test_metadata_training_config_rejects_semantic_or_structural_changes(
+    tmp_path: Path,
+    mutation: str,
+) -> None:
+    config = capacity._cell_config(
+        (tmp_path / mutation).resolve(),
+        BETA_PI_LAGRANGIAN_ALGORITHM_ID,
+    )
+    metadata_config = json.loads(capacity._training_config_bytes(config))
+    if mutation == "changed_scalar":
+        metadata_config["episode"]["horizon_h"] += 1.0
+    elif mutation == "changed_nested_sequence":
+        metadata_config["beta_task"]["disturbances"]["duration_h"][1] += 0.5
+    elif mutation == "missing_key":
+        metadata_config["episode"].pop("start_hour")
+    elif mutation == "extra_key":
+        metadata_config["beta_task"]["unexpected"] = True
+    elif mutation == "wrong_sequence_order":
+        metadata_config["episode"]["weather"]["forecast_windows_h"].reverse()
+    else:
+        metadata_config["ppo"]["learning_rate"] = float("nan")
+
+    message = "not canonical JSON" if mutation == "nonfinite" else "differs"
+    with pytest.raises(capacity.CapacityBenchmarkError, match=message):
+        capacity._verify_metadata_training_config(metadata_config, config)
+
+
 def test_projection_arithmetic_rounds_once_after_128_rollouts() -> None:
     measurement = capacity._build_measurement(2_000_000_007, 1_000_000_001)
     checkpoint = {
@@ -660,12 +749,22 @@ def test_hookable_cell_runner_cannot_publish_any_report(tmp_path: Path) -> None:
     assert not (trace.data.root / capacity.CAPACITY_SYNTHETIC_REPORT_FILENAME).exists()
 
 
-def test_production_verifier_rejects_synthetic_schema_before_external_access(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+@pytest.mark.parametrize(
+    "rejected_schema",
+    (
+        "plant-beta-constrained-rl-capacity-report-v1",
+        "plant-beta-constrained-rl-capacity-report-v2",
+        capacity.CAPACITY_SYNTHETIC_REPORT_SCHEMA,
+    ),
+)
+def test_production_verifier_rejects_old_or_synthetic_schema_before_external_access(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, rejected_schema: str
 ) -> None:
     synthetic_path, _, _, _ = _execute_successfully(tmp_path)
     production_name = synthetic_path.parent / capacity.CAPACITY_REPORT_FILENAME
-    production_name.write_bytes(synthetic_path.read_bytes())
+    report = _read_report(synthetic_path)
+    report["schema"] = rejected_schema
+    production_name.write_bytes((canonical_json(report) + "\n").encode("utf-8"))
     observed: list[str] = []
 
     def unexpected_runtime() -> runtime_provenance.BetaTrainingRuntimeProvenanceV1:
@@ -686,6 +785,45 @@ def test_production_verifier_rejects_synthetic_schema_before_external_access(
 
     with pytest.raises(capacity.CapacityBenchmarkError, match="schema differs"):
         capacity.verify_capacity_report(production_name)
+    assert observed == []
+
+
+@pytest.mark.parametrize(
+    "rejected_schema",
+    (
+        "plant-beta-constrained-rl-capacity-synthetic-report-v1",
+        capacity.CAPACITY_REPORT_SCHEMA,
+    ),
+)
+def test_synthetic_verifier_rejects_old_or_production_schema_before_external_access(
+    tmp_path: Path,
+    rejected_schema: str,
+) -> None:
+    synthetic_path, _, _, _ = _execute_successfully(tmp_path)
+    report = _read_report(synthetic_path)
+    report["schema"] = rejected_schema
+    synthetic_path.write_bytes((canonical_json(report) + "\n").encode("utf-8"))
+    observed: list[str] = []
+
+    def unexpected_runtime() -> runtime_provenance.BetaTrainingRuntimeProvenanceV1:
+        observed.append("runtime")
+        raise AssertionError("runtime capture must not run")
+
+    def unexpected_host() -> Mapping[str, Any]:
+        observed.append("host")
+        raise AssertionError("host capture must not run")
+
+    def unexpected_admission(*_args: object) -> tuple[dict[str, Any], int, int]:
+        observed.append("checkpoint")
+        raise AssertionError("checkpoint admission must not run")
+
+    with pytest.raises(capacity.CapacityBenchmarkError, match="schema differs"):
+        capacity._verify_synthetic_capacity_report(
+            synthetic_path,
+            runtime_capture=unexpected_runtime,
+            checkpoint_admitter=unexpected_admission,
+            host_capture=unexpected_host,
+        )
     assert observed == []
 
 
@@ -871,6 +1009,7 @@ def test_external_output_contract_rejects_relative_existing_and_repository_paths
 
 def test_checkpoint_admission_rejects_changed_internal_training_config_first(
     tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     root = tmp_path / "root"
     checkpoint = root / "checkpoint"
@@ -878,9 +1017,25 @@ def test_checkpoint_admission_rejects_changed_internal_training_config_first(
     config = capacity._cell_config(
         tmp_path / "output", capacity.CAPACITY_ALGORITHM_ORDER[0]
     )
+    metadata = checkpoints.CheckpointMetadata(
+        format=checkpoints.FORMAT_SB3_PPO,
+        algorithm=capacity.CAPACITY_ALGORITHM_ORDER[0],
+        seed=capacity.CAPACITY_OPTIMIZER_SEED,
+        total_timesteps=capacity.CAPACITY_TRANSITIONS,
+        training_config=json.loads(capacity._training_config_bytes(config)),
+    )
+    metadata_loads = 0
+
+    def load_metadata(*_args: object, **_kwargs: object) -> object:
+        nonlocal metadata_loads
+        metadata_loads += 1
+        return metadata
+
+    monkeypatch.setattr(capacity.checkpoints, "load_metadata", load_metadata)
     (checkpoint / capacity.CONFIG_FILE).write_bytes(b"{}\n")
     with pytest.raises(capacity.CapacityBenchmarkError, match="training_config"):
         capacity._admit_checkpoint(root, checkpoint, config, _runtime())
+    assert metadata_loads == 0
 
 
 @pytest.mark.parametrize(
@@ -1244,6 +1399,7 @@ def test_protocol_digest_constant_matches_current_frozen_bytes() -> None:
     repair = repository / capacity.CAPACITY_REPAIR_PATH
     clarification = repository / capacity.CAPACITY_REPAIR_CLARIFICATION_PATH
     clarification_002 = repository / capacity.CAPACITY_REPAIR_CLARIFICATION_002_PATH
+    repair_002 = repository / capacity.CAPACITY_REPAIR_002_PATH
     assert hashlib.sha256(protocol.read_bytes()).hexdigest() == (
         capacity.CAPACITY_PROTOCOL_SHA256
     )
@@ -1256,8 +1412,26 @@ def test_protocol_digest_constant_matches_current_frozen_bytes() -> None:
     assert hashlib.sha256(clarification_002.read_bytes()).hexdigest() == (
         capacity.CAPACITY_REPAIR_CLARIFICATION_002_SHA256
     )
+    assert hashlib.sha256(repair_002.read_bytes()).hexdigest() == (
+        capacity.CAPACITY_REPAIR_002_SHA256
+    )
     assert capacity.CAPACITY_REPORT_SCHEMA == (
-        "plant-beta-constrained-rl-capacity-report-v2"
+        "plant-beta-constrained-rl-capacity-report-v3"
+    )
+    assert capacity.CAPACITY_REPORT_DOMAIN == (
+        "plant-beta-constrained-rl-capacity-report-v3"
+    )
+    assert capacity.CAPACITY_SYNTHETIC_REPORT_SCHEMA == (
+        "plant-beta-constrained-rl-capacity-synthetic-report-v2"
+    )
+    assert capacity.CAPACITY_SYNTHETIC_REPORT_DOMAIN == (
+        "plant-beta-constrained-rl-capacity-synthetic-report-v2"
+    )
+    assert capacity.CAPACITY_DETERMINISTIC_DOMAIN == (
+        "plant-beta-constrained-rl-capacity-deterministic-evidence-v3"
+    )
+    assert capacity.CAPACITY_SYNTHETIC_DETERMINISTIC_DOMAIN == (
+        "plant-beta-constrained-rl-capacity-synthetic-deterministic-evidence-v2"
     )
     assert capacity._protocol_identity(repository)["repairs"] == [
         {
@@ -1278,5 +1452,10 @@ def test_protocol_digest_constant_matches_current_frozen_bytes() -> None:
                     ),
                 },
             ],
-        }
+        },
+        {
+            "id": capacity.CAPACITY_REPAIR_002_ID,
+            "path": capacity.CAPACITY_REPAIR_002_PATH,
+            "raw_file_sha256": capacity.CAPACITY_REPAIR_002_SHA256,
+        },
     ]

@@ -82,17 +82,22 @@ CAPACITY_REPAIR_CLARIFICATION_002_PATH = (
 CAPACITY_REPAIR_CLARIFICATION_002_SHA256 = (
     "f4db393d54d48aa5deca69b5b1c220bccd94b5fd87bac4fc6b4b40416feca8ea"
 )
-CAPACITY_REPORT_SCHEMA = "plant-beta-constrained-rl-capacity-report-v2"
+CAPACITY_REPAIR_002_ID = "plant-beta-constrained-rl-capacity-repair-002"
+CAPACITY_REPAIR_002_PATH = "docs/research/CONSTRAINED_RL_CAPACITY_REPAIR_002.md"
+CAPACITY_REPAIR_002_SHA256 = (
+    "1809e88942a0d075409e80c12219a1352bb2abfe4210a73580446e2a82012b06"
+)
+CAPACITY_REPORT_SCHEMA = "plant-beta-constrained-rl-capacity-report-v3"
 CAPACITY_REPORT_DOMAIN = CAPACITY_REPORT_SCHEMA
 CAPACITY_DETERMINISTIC_DOMAIN = (
-    "plant-beta-constrained-rl-capacity-deterministic-evidence-v2"
+    "plant-beta-constrained-rl-capacity-deterministic-evidence-v3"
 )
 CAPACITY_SYNTHETIC_REPORT_SCHEMA = (
-    "plant-beta-constrained-rl-capacity-synthetic-report-v1"
+    "plant-beta-constrained-rl-capacity-synthetic-report-v2"
 )
 CAPACITY_SYNTHETIC_REPORT_DOMAIN = CAPACITY_SYNTHETIC_REPORT_SCHEMA
 CAPACITY_SYNTHETIC_DETERMINISTIC_DOMAIN = (
-    "plant-beta-constrained-rl-capacity-synthetic-deterministic-evidence-v1"
+    "plant-beta-constrained-rl-capacity-synthetic-deterministic-evidence-v2"
 )
 CAPACITY_CLAIM = "fixture-capacity-only; no controller-performance evidence"
 CAPACITY_SYNTHETIC_CLAIM = (
@@ -535,6 +540,12 @@ def _protocol_identity(repository: Path) -> dict[str, Any]:
         raise CapacityBenchmarkError(
             "capacity repair clarification 002 content differs from frozen SHA-256"
         )
+    repair_002 = repository / CAPACITY_REPAIR_002_PATH
+    repair_002_digest = hashlib.sha256(_read_regular_bytes(repair_002)).hexdigest()
+    if repair_002_digest != CAPACITY_REPAIR_002_SHA256:
+        raise CapacityBenchmarkError(
+            "capacity repair 002 protocol content differs from frozen SHA-256"
+        )
     return {
         "id": CAPACITY_PROTOCOL_ID,
         "path": CAPACITY_PROTOCOL_PATH,
@@ -556,7 +567,12 @@ def _protocol_identity(repository: Path) -> dict[str, Any]:
                         "raw_file_sha256": clarification_002_digest,
                     },
                 ],
-            }
+            },
+            {
+                "id": CAPACITY_REPAIR_002_ID,
+                "path": CAPACITY_REPAIR_002_PATH,
+                "raw_file_sha256": repair_002_digest,
+            },
         ],
     }
 
@@ -585,10 +601,36 @@ def _cell_config(output: Path, algorithm: str) -> ControllerNeutralTrainingConfi
     ).validate()
 
 
+def _training_config_mapping_bytes(value: Mapping[str, Any]) -> bytes:
+    return (json.dumps(value, allow_nan=False, indent=2, sort_keys=True) + "\n").encode(
+        "utf-8"
+    )
+
+
 def _training_config_bytes(config: ControllerNeutralTrainingConfigV1) -> bytes:
-    return (
-        json.dumps(config.to_dict(), allow_nan=False, indent=2, sort_keys=True) + "\n"
-    ).encode("utf-8")
+    return _training_config_mapping_bytes(config.to_dict())
+
+
+def _metadata_training_config_bytes(value: object) -> bytes:
+    """Canonicalize the metadata copy across its required JSON boundary."""
+
+    mapping = dict(_mapping("checkpoint metadata training config", value))
+    try:
+        return _training_config_mapping_bytes(mapping)
+    except (TypeError, ValueError) as reason:
+        raise CapacityBenchmarkError(
+            "checkpoint metadata training config is not canonical JSON"
+        ) from reason
+
+
+def _verify_metadata_training_config(
+    value: object,
+    config: ControllerNeutralTrainingConfigV1,
+) -> None:
+    if _metadata_training_config_bytes(value) != _training_config_bytes(config):
+        raise CapacityBenchmarkError(
+            "checkpoint training config differs from capacity cell"
+        )
 
 
 def _cell_layout(order: int, algorithm: str) -> dict[str, str]:
@@ -882,10 +924,7 @@ def _admit_checkpoint(
             "checkpoint training_config.json differs from the capacity cell"
         )
     metadata = checkpoints.load_metadata(checkpoint, check=False)
-    if metadata.training_config != config.to_dict():
-        raise CapacityBenchmarkError(
-            "checkpoint training config differs from capacity cell"
-        )
+    _verify_metadata_training_config(metadata.training_config, config)
     if (
         metadata.algorithm != config.beta_rl.algorithm  # type: ignore[union-attr]
         or metadata.seed != CAPACITY_OPTIMIZER_SEED
@@ -2363,6 +2402,8 @@ __all__ = [
     "CAPACITY_REPAIR_CLARIFICATION_002_ID",
     "CAPACITY_REPAIR_CLARIFICATION_002_SHA256",
     "CAPACITY_REPAIR_CLARIFICATION_SHA256",
+    "CAPACITY_REPAIR_002_ID",
+    "CAPACITY_REPAIR_002_SHA256",
     "CAPACITY_REPAIR_ID",
     "CAPACITY_REPAIR_SHA256",
     "CAPACITY_REPORT_SCHEMA",

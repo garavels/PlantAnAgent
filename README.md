@@ -810,9 +810,11 @@ The V2 capacity evidence path now also separates synthetic test issuance from th
 production runner/verifier and binds an exact pre-run-only deterministic identity. The sole
 Repair-001 attempt at `27a47d0` then completed all three child trainers but failed their parent-side
 admission because JSON-loaded lists were compared directly with tuple-valued in-memory task
-configuration. It produced no capacity projection and cannot be retried. Repair 002 freezes a
-whole-object canonical-JSON comparison while retaining the exact config-file byte check and every
-later artifact/evidence check. No registered training run or controller result is claimed here.
+configuration. It produced no capacity projection and cannot be retried. Repair 002 now compares
+the complete metadata copy through the same JSON byte serializer while retaining the exact config-
+file byte check and every later artifact/evidence check. Production evidence advances to schema V3
+and synthetic evidence to its distinct V2 schema. No new capacity attempt, registered training run,
+or controller result is claimed here.
 See the retained [`V1 failure`](docs/research/results/v2_constrained_rl_capacity_fab4a55.md),
 [`V2 failure`](docs/research/results/v2_constrained_rl_capacity_27a47d0.md), frozen
 [`Repair 001`](docs/research/CONSTRAINED_RL_CAPACITY_REPAIR_001.md), and frozen
