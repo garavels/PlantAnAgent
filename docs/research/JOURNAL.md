@@ -6829,3 +6829,27 @@ of the current browser view, local-link existence and whitespace review. No simu
 step/reset, optimizer, registered/development/held-out execution, checkpoint selection
 or performance comparison was run. Application code and all pre-existing user edits,
 including the untracked registered-training custody protocol, remain unchanged.
+
+## 2026-09-10 — Weather visuals and independent feature panels accepted into the plan
+
+The user requested 3D clouds and a satellite-like overhead weather view to make
+stochastic solar reduction and forecasts immediately understandable. They also
+requested a separate Overview and independent feature panels, especially Economics,
+instead of scrolling through multipurpose pages. The plan now supersedes its initial
+three-view grouping with shared-session Overview, Plant, Weather, Planning, Deliveries
+& resources, Economics, Events and Evidence destinations.
+
+Source inspection found a scalar site-wide weather factor, no spatial cloud/wind
+model, and an intentional night-time mask in public V2 telemetry. Solar output also
+combines resource and equipment-health effects; curtailment is a separate quantity.
+The proposed visual adapter therefore preserves observation/forecast/unknown status,
+uses public sample-time-aligned data, distinguishes equipment losses from weather,
+and labels the overhead rendering as synthetic. It cannot infer night-time clouds,
+forecast cloud positions, or read private future truth. Weather graphics are a
+presentation layer and leave the frozen physics/135-observation contract unchanged.
+
+`UNIFIED_COMMISSION_DEMO_PLAN.md` now records the revised navigation, weather treatment,
+public-data dependencies, per-panel responsibilities, migration and acceptance checks.
+Validation is documentation/source consistency, local-link existence and whitespace
+review. No application code, simulator execution or research protocol changed, and
+all pre-existing user documentation edits remain separate.
