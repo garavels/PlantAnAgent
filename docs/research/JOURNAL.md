@@ -6806,3 +6806,26 @@ their predefined fixture domains. No registered training, development or held-ou
 seed was opened, no protected policy was selected, and no comparative performance
 or commercial claim follows. Verified artifact replay, full-frame historical
 scrubbing and governed live intervention remain future product increments.
+
+## 2026-09-10 — Unified commission demo inventory and product proposal
+
+The user requested a complete V1-to-V2 presentation inventory and a plan for one
+cohesive demo product. Source inspection at `ed5a24e`, research-document review and
+read-only browser inspection confirmed the central integration gap: the V1 provider
+still supplies Overview/3D/Agent/Events/Scenarios, while V2 uses a page-local session.
+Current V2 telemetry exposes the latest public snapshot, not historical plant frames,
+commitment timers, detailed exposure or the original forecast attached to every plan.
+
+`UNIFIED_COMMISSION_DEMO_PLAN.md` records the proposed Plant/Planning/Review workspace,
+17 capability mappings, reuse of existing 2D/3D and design tokens, a shared cursor and
+contextual inspector, public-record dependencies, staged acceptance criteria and the
+boundary between an illustrative fixture and admitted research evidence. The product
+hypothesis is that connecting obligations, equipment, decisions and outcomes will make
+the implemented research understandable within a five-minute walkthrough. This is a
+proposal for discussion, not a new frozen research protocol or an implementation claim.
+
+Validation for this documentation-only increment is source/DTO traceability, inspection
+of the current browser view, local-link existence and whitespace review. No simulation
+step/reset, optimizer, registered/development/held-out execution, checkpoint selection
+or performance comparison was run. Application code and all pre-existing user edits,
+including the untracked registered-training custody protocol, remain unchanged.
