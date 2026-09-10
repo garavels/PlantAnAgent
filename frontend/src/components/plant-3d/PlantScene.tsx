@@ -25,6 +25,8 @@ import { CARRIER, SKY, SURFACE } from './palette'
 import { PowerHub } from './PowerHub'
 import { SolarField } from './SolarField'
 import { SunRig } from './SunRig'
+import { WeatherClouds } from './WeatherClouds'
+import type { CommitmentView, WeatherView } from '../../types/v2'
 import { UnitSelectionContext, type UnitId } from './selection'
 import { deriveVisuals } from './visuals'
 
@@ -33,10 +35,19 @@ interface PlantSceneProps {
   config: PlantConfig | null
   /** When the sim clock is stopped, flow packets freeze with it. */
   playing: boolean
+  weather?: WeatherView
+  commitment?: CommitmentView | null
+  minLoadFrac?: number
+  overhead?: boolean
+  hideLabels?: boolean
+  selectedUnit?: UnitId | null
+  onSelectUnit?: (id: UnitId | null) => void
 }
 
-export function PlantScene({ state, config, playing }: PlantSceneProps) {
-  const [selected, setSelected] = useState<UnitId | null>(null)
+export function PlantScene({ state, config, playing, weather, commitment, minLoadFrac: activeMinLoad, overhead = false, hideLabels = false, selectedUnit, onSelectUnit }: PlantSceneProps) {
+  const [localSelection, setLocalSelection] = useState<UnitId | null>(null)
+  const selected = selectedUnit === undefined ? localSelection : selectedUnit
+  const setSelected = onSelectUnit ?? setLocalSelection
   const reducedMotion = useReducedMotion()
   const visuals = useMemo(() => deriveVisuals(state, config), [state, config])
 
@@ -47,19 +58,20 @@ export function PlantScene({ state, config, playing }: PlantSceneProps) {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [])
+  }, [setSelected])
 
   const peakKw = config?.solar.peak_kw ?? 5000
-  const minLoadFrac = config?.electrolyser.min_load_frac ?? 0.15
+  const sun = weather ? { ...visuals.sun, dayFactor: Math.max(0, Math.min(1, weather.clear_sky_kw / (.22 * peakKw))) } : visuals.sun
+  const minLoadFrac = activeMinLoad ?? config?.electrolyser.min_load_frac ?? 0.15
 
   return (
     <UnitSelectionContext.Provider
-      value={{ selected, select: setSelected, flowsFrozen: !playing || reducedMotion }}
+      value={{ selected, select: setSelected, flowsFrozen: !playing || reducedMotion, hideLabels: overhead || hideLabels, externalInspector: !!onSelectUnit }}
     >
       <Canvas
         shadows
         dpr={[1, 2]}
-        camera={{ position: [CAMERA.position.x, CAMERA.position.y, CAMERA.position.z], fov: CAMERA.fov }}
+        camera={{ position: overhead ? [-2, 72, 0.01] : [CAMERA.position.x, 22, 36], fov: overhead ? 55 : CAMERA.fov }}
         gl={{ antialias: false }}
         onPointerMissed={() => setSelected(null)}
         onCreated={({ scene }) => {
@@ -67,13 +79,14 @@ export function PlantScene({ state, config, playing }: PlantSceneProps) {
           scene.fog = new THREE.Fog(SKY.night, 55, 150)
         }}
       >
-        <SunRig sun={visuals.sun} />
-        <Ground sun={visuals.sun} />
+        <SunRig sun={sun} attenuation={weather?.attenuation ?? 0} />
+        {weather && <WeatherClouds weather={weather} />}
+        <Ground sun={sun} surroundings={!!weather} />
 
         <SolarField solar={visuals.solar} peakKw={peakKw} />
         <PowerHub flows={visuals.flows} />
         <BatteryUnit battery={visuals.battery} />
-        <ElectrolyserUnit electrolyser={visuals.electrolyser} minLoadFrac={minLoadFrac} />
+        <ElectrolyserUnit electrolyser={visuals.electrolyser} minLoadFrac={minLoadFrac} mode={commitment?.mode} />
         <DacUnit dac={visuals.dac} />
         <MethanatorUnit methanator={visuals.methanator} />
         <GasVessel
@@ -161,12 +174,13 @@ export function PlantScene({ state, config, playing }: PlantSceneProps) {
 
         <OrbitControls
           target={[CAMERA.target.x, CAMERA.target.y, CAMERA.target.z]}
+          enableRotate={!overhead}
           enableDamping
           dampingFactor={0.08}
           rotateSpeed={0.55}
           minDistance={9}
-          maxDistance={70}
-          maxPolarAngle={1.42}
+          maxDistance={overhead ? 110 : 70}
+          maxPolarAngle={overhead ? 0.001 : 1.42}
           makeDefault
         />
 

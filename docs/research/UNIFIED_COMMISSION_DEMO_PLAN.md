@@ -1,6 +1,6 @@
 # Unified commission demo: product and presentation plan
 
-Status: **user-steered product plan, grounded in source revision `ed5a24e`; implementation remains pending. This is not an experiment protocol.**
+Status: **implemented workspace; see [implementation and limits](UNIFIED_WORKSPACE_IMPLEMENTATION.md). Original inventory below was grounded in `ed5a24e`. This is not an experiment protocol.**
 
 Date: **2026-09-10**
 
@@ -249,12 +249,13 @@ adapters and evidence gates. Earlier alpha results retain their original task la
 | V2 provenance/research status | Evidence panel and expandable details. |
 | Scenarios | Mission setup/new-run flow; initially the existing fixed V2 fixture. |
 | Agent | Decision/execution explanation in the inspector; separately identify any future supervisor or HEPA output. |
-| V1 controls and scenarios | Explicit legacy workspace reached through a secondary entry; preserve implementation and API semantics. |
+| V1 controls and scenarios | Preserve implementation and API semantics; no separate product entry. Unsupported V2 integrations appear as pending in Evidence. |
 
-Promote the unified V2 workspace to the primary demo entry after route compatibility
-checks. Preserve old V1 destinations through explicit legacy routes/aliases. Avoid
-mounting the V1 stream provider behind ordinary V2 navigation. The same visual shell
-may host either runtime, but its session capability contract must distinguish them.
+The user subsequently requested one product without separately accessible V1/V2 views.
+The unified V2 workspace is now the sole frontend entry; previous URLs redirect into
+its panels. The V1 stream provider is not mounted behind ordinary navigation. Original
+branding, fonts, palette and control styling are preserved. Page titles and labels
+use concise operational language; tutorial subtitles are removed.
 
 ## Visual direction
 

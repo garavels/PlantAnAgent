@@ -18,6 +18,7 @@ from typing import Any, Literal
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
 
+from .demo_projection import boundary_events, forecast_view, weather_view
 from .rl.v2 import beta_spaces
 from .rl.v2.beta_env import PlantCyclicMarketEnvV2Beta
 from .rl.v2.setpoint_controllers import LegacyHeuristicSetpointControllerV1
@@ -77,6 +78,9 @@ class V2DemoSession:
         self._history: deque[dict[str, Any]] = deque(maxlen=HISTORY_LIMIT)
         self._settlements: dict[float, dict[str, Any]] = {}
         self._committed: dict[str, Any] | None = None
+        self._frames: list[dict[str, Any]] = []
+        self._events: list[dict[str, Any]] = []
+        self._archives: deque[dict[str, Any]] = deque(maxlen=3)
 
     def snapshot(self) -> dict[str, Any]:
         with self._lock:
@@ -104,6 +108,8 @@ class V2DemoSession:
         except Exception:
             environment.close()
             raise
+        if self._committed is not None:
+            self._archives.append(self._recording())
         if self._environment is not None:
             self._environment.close()
         self._environment = environment
@@ -114,10 +120,12 @@ class V2DemoSession:
         self._status = "ready"
         self._error = None
         self._decision = self._plan = None
+        self._frames.clear()
+        self._events.clear()
         self._settlements.clear()
         self._history.clear()
         self._remember()
-        self._committed = self._snapshot()
+        self._commit()
 
     def step(self, request: StepRequest) -> dict[str, Any]:
         with self._lock:
@@ -139,7 +147,7 @@ class V2DemoSession:
                     # Commit each successfully projected boundary, not just the
                     # end of the batch: later failures may leave physics partly
                     # advanced, or even prevent another observation being read.
-                    self._committed = self._snapshot()
+                    self._commit()
                 except Exception as exc:
                     # Raw exception text can contain solver internals. Publish a typed
                     # failure, never substitute a controller or expose private evidence.
@@ -162,6 +170,7 @@ class V2DemoSession:
         environment = self._env
         observation = environment.cyclic_market_controller_observation
         at_hours = environment.physics_steps_taken * environment.config.dt_h
+        input_forecasts = forecast_view(observation, environment.config.solar.peak_kw)
         source = observation.plant if self._controller_id == "H" else observation
         started = time.perf_counter()
         decision = self._controller.compute_command(
@@ -214,6 +223,21 @@ class V2DemoSession:
         notes.extend(dict.fromkeys(info["adjustments"]))
         self._decision = {
             "at_hours": at_hours,
+            "input_forecasts": input_forecasts,
+            "input_state": observation.plant.state.boundary.to_dict(),
+            "minutes": [
+                {
+                    "offset_minutes": item.ordinal,
+                    "solar_kw": item.applied_solar_available_kw,
+                    "electrolyser_kw": item.applied_electrolyser_kw,
+                    "dac_kw": item.applied_dac_kw,
+                    "methanator_kw": item.applied_methanator_kw,
+                    "battery_charge_kw": item.applied_solar_to_battery_kw,
+                    "battery_support_kw": item.applied_battery_support_kw,
+                    "adjustments": list(item.adjustments),
+                }
+                for item in applications
+            ],
             "controller_id": self._controller_id,
             "computation_ms": computation_ms,
             "notes": notes,
@@ -247,6 +271,11 @@ class V2DemoSession:
                         "dac_kw": item.solar_to_dac_kw,
                         "methanator_kw": item.solar_to_methanator_kw,
                         "battery_charge_kw": item.solar_to_battery_kw,
+                        "battery_kwh": item.battery_energy_end_kwh,
+                        "h2_kg": item.h2_end_kg,
+                        "co2_kg": item.co2_end_kg,
+                        "ch4_kg": item.ch4_end_kg,
+                        "delivered_kg": item.delivered_kg,
                     }
                     for item in decision.evidence.plan.steps
                 ],
@@ -283,6 +312,9 @@ class V2DemoSession:
                 "elapsed_hours": environment.physics_steps_taken
                 * environment.config.dt_h,
                 "solar_kw": state.solar_available_kw,
+                "clear_sky_kw": state.solar_potential_kw,
+                "h2_kg": state.h2_level_kg,
+                "co2_kg": state.co2_level_kg,
                 "battery_soc": state.battery_soc,
                 "ch4_kg": state.ch4_level_kg,
                 "delivered_kg": environment.economic_metrics.delivered_kg,
@@ -333,6 +365,19 @@ class V2DemoSession:
         )
         return {
             "state": state.to_dict(),
+            "weather": weather_view(state.to_dict(), elapsed),
+            "commitment": (
+                observation.plant.state.electrolyser_commitment.to_dict()
+                if observation.plant.state.electrolyser_commitment
+                else None
+            ),
+            "metrics": environment.metrics.to_dict(),
+            "assumptions": environment.economic_assumptions.to_dict(),
+            "commitment_profile": (
+                episode.electrolyser_commitment.to_dict()
+                if episode.electrolyser_commitment
+                else None
+            ),
             "clock": {
                 "elapsed_hours": elapsed,
                 "decision_index": environment.decisions_taken,
@@ -357,30 +402,7 @@ class V2DemoSession:
                 "requested_kg": delivery.cumulative_requested_kg,
                 "commitments": commitments,
             },
-            "forecasts": {
-                "issued_at_hours": observation.market.issued_at_offset_s / 3600.0,
-                "price_current_eur_mwh": observation.market.current_eur_per_mwh,
-                "prices": [
-                    {
-                        "offset_hours": item.start_offset_h,
-                        "mean": item.mean_eur_per_mwh,
-                        "p10": item.p10_eur_per_mwh,
-                        "p90": item.p90_eur_per_mwh,
-                    }
-                    for item in observation.market.bins
-                ],
-                "solar": [
-                    {
-                        "offset_hours": item.start_offset_s_from_issue / 3600.0,
-                        "end_offset_hours": item.end_offset_s_from_issue / 3600.0,
-                        "mean_kw": item.mean_peak_power_fraction
-                        * environment.config.solar.peak_kw,
-                        "p10_kw": item.p10_peak_power_fraction
-                        * environment.config.solar.peak_kw,
-                    }
-                    for item in forecast.windows
-                ],
-            },
+            "forecasts": forecast_view(observation, environment.config.solar.peak_kw),
             "resources": [
                 {
                     "id": identifier,
@@ -409,10 +431,46 @@ class V2DemoSession:
             "decision": self._decision,
             "plan": self._plan,
             "cycle_settlements": [
-                {"cycle_index": item.cycle_index, "feasible": item.feasible}
-                for item in environment.cycle_settlements
+                item.to_dict() for item in environment.cycle_settlements
             ],
         }
+
+    def _commit(self) -> None:
+        candidate = self._snapshot()
+        frame = candidate["frame"]
+        new_events = boundary_events(self._frames[-1] if self._frames else None, frame)
+        self._events.extend(new_events)
+        self._frames.append(deepcopy(frame))
+        candidate["events"] = deepcopy(self._events)
+        self._committed = candidate
+
+    def frame(self, run_id: str, index: int) -> dict[str, Any]:
+        with self._lock:
+            if run_id != self._run_id:
+                raise HTTPException(
+                    status_code=409,
+                    detail="Run changed; refresh before inspecting history",
+                )
+            if index < 0 or index >= len(self._frames):
+                raise HTTPException(
+                    status_code=404, detail="No completed frame at this decision"
+                )
+            return deepcopy(self._frames[index])
+
+    def _recording(self) -> dict[str, Any]:
+        from .demo_recordings import seal_recording
+
+        return seal_recording(self._view(), self._frames)
+
+    def recording(self) -> dict[str, Any]:
+        with self._lock:
+            if self._committed is None:
+                raise HTTPException(status_code=404, detail="No active run to export")
+            return self._recording()
+
+    def archives(self) -> list[dict[str, Any]]:
+        with self._lock:
+            return deepcopy(list(self._archives))
 
     def _snapshot(self) -> dict[str, Any]:
         environment = self._env
@@ -474,6 +532,7 @@ class V2DemoSession:
                 },
                 "frame": self._frame(),
                 "history": list(self._history),
+                "events": list(self._events),
             }
         )
 
@@ -508,6 +567,37 @@ def _reject_query(request: Request) -> None:
 def get_snapshot(request: Request) -> dict[str, Any]:
     _reject_query(request)
     return session.snapshot()
+
+
+@router.get("/frames/{run_id}/{index}")
+def get_frame(request: Request, run_id: str, index: int) -> dict[str, Any]:
+    _reject_query(request)
+    return session.frame(run_id, index)
+
+
+@router.get("/recording")
+def get_recording(request: Request) -> dict[str, Any]:
+    _reject_query(request)
+    return session.recording()
+
+
+@router.get("/recordings")
+def get_recordings(request: Request) -> list[dict[str, Any]]:
+    from .demo_recordings import catalog, summarize
+
+    _reject_query(request)
+    return catalog() + [summarize(item, "recent") for item in session.archives()]
+
+
+@router.get("/recordings/{recording_id}")
+def get_saved_recording(request: Request, recording_id: str) -> dict[str, Any]:
+    from .demo_recordings import read_recording
+
+    _reject_query(request)
+    for item in session.archives():
+        if item["snapshot"]["run_id"] == recording_id:
+            return item
+    return read_recording(recording_id)
 
 
 @router.post("/reset")

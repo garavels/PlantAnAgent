@@ -6853,3 +6853,77 @@ public-data dependencies, per-panel responsibilities, migration and acceptance c
 Validation is documentation/source consistency, local-link existence and whitespace
 review. No application code, simulator execution or research protocol changed, and
 all pre-existing user documentation edits remain separate.
+
+## 2026-09-10 — Unified workspace implementation and bounded rehearsal declaration
+
+The user authorized completion of the agreed demo and removal of separate V1/V2
+product entries. One V2 mission now supplies eight panels and the shared history
+cursor. Legacy URLs redirect within that workspace; V1 source/API remain preserved.
+The product hypothesis is that observed weather, exact decision inputs, equipment
+execution and delivery/resource outcomes become inspectable as one coherent story.
+
+Before running presentation recordings, declare exactly one H attempt and one E-beta
+attempt on existing disposable seed 9,000,034. Each targets 168 hours and has a
+20-minute wall limit; no retry, alternative seed, winner selection or hidden fallback.
+The recording CLI writes an exclusive attempt marker, source digest and public
+record checksum outside Git in runs/commission-demo. Preserve stopped/failed arms.
+The page initially opens saved E-beta at decision 32 (8 elapsed hours), or H if no
+E-beta record is available; this is a fixed presentation cursor, not outcome selection.
+These runs exercise the demo only: no training, admitted research, development
+selection or held-out evaluation is authorized by this declaration.
+
+## 2026-09-10 — Unified workspace completed; presentation outcomes retained
+
+Implemented one V2-backed product with Overview, Plant, Weather, Planning,
+Deliveries & resources, Economics, Events and Evidence. Shared state retains the
+run, controller, selected equipment and completed-decision cursor across panels.
+Legacy frontend URLs redirect into this product; V1 source and APIs remain intact.
+The user explicitly retained the original visual identity and rejected tutorial
+copy. The workspace therefore uses the existing logo, palette, fonts and pill
+controls, concise page names and operational labels. Weather and uncertainty
+qualifications stay factual, with research/methodology detail in Evidence.
+
+The public API now retains complete detached frames, original decision forecast
+issues, commitment state/timers/exposure, planned inventories, exact minute applied
+quantities, observed boundary events and per-resource cycle settlements. Indexed
+history reads, bounded previous-session archives and checksum-sealed public JSON
+recordings support playback without executing a controller. Failure exports preserve
+only the last successfully projected boundary, including the terminal failure status.
+Night-time cloud state remains unobserved; solar equipment losses are not painted as
+weather. Synthetic cloud/shading geometry reads only public attenuation. Existing
+3D units and flow colors are reused with an overhead weather view and 2D alternative.
+
+The two declared rehearsal attempts ran exactly once. H completed 168 hours, delivered
+5,564.720180 kg, left 1,155.279820 kg unmet, failed all seven daily resource returns,
+and accumulated EUR -28,834.280382 simulated value. E-beta stopped at 9.25 hours with
+BetaMPCSolveError, after 240 kg delivered, zero settled shortfall and no daily cycle
+settlement; cumulative value was EUR -938.238778. The failure remains visible through
+its earlier frames, and no fallback or replacement attempt was used. These unequal
+records are not a controller ranking or an admitted experiment. Raw records are
+outside Git; UNIFIED_WORKSPACE_REHEARSAL_MANIFEST.json retains both identities,
+checksums, dirty-source disclosure and the common Python-source digest.
+
+Validation: 21 focused API/replay/weather tests passed. The full frozen-source Python
+suite then passed **1,853 tests** in 482.52 seconds, with one existing Starlette/httpx
+deprecation warning. compileall passed. The final frontend build, TypeScript and
+oxlint passed after the subsequent copy/layout cleanup; Git whitespace validation
+passed. Browser checks covered all panels, fixed-record loading, minute execution,
+historical night masking, original forecast issues, full-week failed settlements,
+keyboard focus containment, redirects and 390/1280-pixel layouts. Overview's weather
+readout was moved out of its clipped mission column. Fresh-load browser error logs
+were empty. Existing Three.js deprecation and lazy 3D bundle-size warnings remain.
+
+Routine development failures were resolved: formatter downloads needed network
+permission; the initial black invocation found no installed module, so formatting
+used isolated ruff/Prettier tools. A temporary hot-refresh context error during the
+provider extraction cleared on reload and did not recur on fresh loads. A browser
+heading assertion initially reached the cold API load before the page was ready;
+redirect destinations and the loaded page were subsequently verified. No failure
+was represented as a passing check.
+
+UNIFIED_WORKSPACE_IMPLEMENTATION.md records startup instructions, retained outcomes,
+contract semantics and scope limits. M24, admitted beta PPO, HEPA/NLP, governed live
+intervention, site/economic calibration and HIL integration remain pending. No
+registered training, selection, held-out evaluation or protocol change occurred.
+All pre-existing user documentation and the untracked custody protocol are preserved
+outside this implementation commit.

@@ -23,6 +23,8 @@ export interface UnitSelection {
   select: (id: UnitId | null) => void
   /** Freezes flow packet motion (sim paused or reduced motion). */
   flowsFrozen: boolean
+  hideLabels?: boolean
+  externalInspector?: boolean
 }
 
 export const UnitSelectionContext = createContext<UnitSelection>({

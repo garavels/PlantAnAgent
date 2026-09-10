@@ -15,11 +15,12 @@ import { damp, type PlantVisuals } from './visuals'
 
 interface SunRigProps {
   sun: PlantVisuals['sun']
+  attenuation?: number
 }
 
 const SUN_DIST = 120
 
-export function SunRig({ sun }: SunRigProps) {
+export function SunRig({ sun, attenuation = 0 }: SunRigProps) {
   const lightRef = useRef<THREE.DirectionalLight>(null)
   const hemiRef = useRef<THREE.HemisphereLight>(null)
   const discRef = useRef<THREE.Mesh>(null)
@@ -65,7 +66,7 @@ export function SunRig({ sun }: SunRigProps) {
       if (elev > 0.001) {
         light.position.set(sx * 0.5, Math.max(8, sy * 0.5), sz * 0.5)
         light.color.lerpColors(colors.sunLow, colors.sunNoon, elev)
-        light.intensity = 0.25 + elev * 2.6
+        light.intensity = 0.25 + elev * 2.6 * (1 - attenuation * .85)
       } else {
         // moonlight: fixed, cool, faint
         light.position.set(-30, 42, -18)

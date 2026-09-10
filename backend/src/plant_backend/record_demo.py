@@ -1,0 +1,94 @@
+"""One bounded, disposable rehearsal; no registered seeds, training or selection.
+
+Run once per controller with ``python -m plant_backend.record_demo H`` or E-beta.
+Attempt markers prevent silently replacing a failed rehearsal with a retry.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import signal
+import subprocess
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+
+from .demo_recordings import RECORDING_ROOT, summarize, validate
+from .v2_demo import FIXTURE_SEED, StepRequest, V2DemoSession
+
+WALL_LIMIT_SECONDS = 20 * 60
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("controller", choices=("H", "E-beta"))
+    args = parser.parse_args()
+    root = Path(__file__).resolve().parents[3]
+    RECORDING_ROOT.mkdir(parents=True, exist_ok=True)
+    marker = RECORDING_ROOT / f"{args.controller}.attempt.json"
+    source_files = sorted(
+        [*root.glob("backend/src/**/*.py"), *root.glob("simulator/src/**/*.py")]
+    )
+    source = {
+        str(p.relative_to(root)): hashlib.sha256(p.read_bytes()).hexdigest()
+        for p in source_files
+    }
+    manifest = {
+        "purpose": "single disposable presentation rehearsal, not registered research",
+        "controller": args.controller,
+        "fixture_seed": FIXTURE_SEED,
+        "horizon_hours": 168,
+        "wall_limit_seconds": WALL_LIMIT_SECONDS,
+        "started_utc": datetime.now(timezone.utc).isoformat(),
+        "git_revision": subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=root, text=True
+        ).strip(),
+        "git_dirty": bool(
+            subprocess.check_output(
+                ["git", "status", "--porcelain"], cwd=root, text=True
+            ).strip()
+        ),
+        "python_source_sha256": hashlib.sha256(
+            json.dumps(source, sort_keys=True).encode()
+        ).hexdigest(),
+        "status": "started",
+    }
+    with marker.open("x") as stream:
+        json.dump(manifest, stream, indent=2)
+    started = time.monotonic()
+    demo = V2DemoSession()
+
+    def timeout(*_: object) -> None:
+        raise TimeoutError("fixed rehearsal wall limit reached")
+
+    previous = signal.signal(signal.SIGALRM, timeout)
+    signal.alarm(WALL_LIMIT_SECONDS)
+    try:
+        snapshot = demo.reset(args.controller)
+        while snapshot["status"] == "ready":
+            snapshot = demo.step(
+                StepRequest(
+                    expected_run_id=snapshot["run_id"],
+                    expected_revision=snapshot["revision"],
+                    decisions=4,
+                )
+            )
+        record = validate(demo.recording())
+        with (RECORDING_ROOT / f"{snapshot['run_id']}.json").open("x") as stream:
+            json.dump(record, stream, separators=(",", ":"), allow_nan=False)
+        manifest.update(summarize(record, "saved"), error=snapshot["error"])
+    except Exception as exc:
+        manifest.update(status="recording_failed", error=f"{type(exc).__name__}: {exc}")
+        raise
+    finally:
+        signal.alarm(0)
+        signal.signal(signal.SIGALRM, previous)
+        manifest["wall_seconds"] = time.monotonic() - started
+        marker.write_text(json.dumps(manifest, indent=2) + "\n")
+        print(json.dumps(manifest, indent=2), flush=True)
+
+
+if __name__ == "__main__":
+    main()

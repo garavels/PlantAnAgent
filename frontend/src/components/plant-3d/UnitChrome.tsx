@@ -63,7 +63,7 @@ function Beacon({ tint, height }: { tint: string; height: number }) {
 }
 
 export function UnitChrome({ id, name, accent, plateHeight, plateOffset, rows, status = 'nominal', children }: UnitChromeProps) {
-  const { selected, select } = useUnitSelection()
+  const { selected, select, hideLabels, externalInspector } = useUnitSelection()
   const [hovered, setHovered] = useState(false)
   useCursor(hovered)
 
@@ -87,7 +87,7 @@ export function UnitChrome({ id, name, accent, plateHeight, plateOffset, rows, s
     >
       {children(active)}
       {tint && <Beacon tint={tint} height={plateHeight - 0.7} />}
-      <Html
+      {!hideLabels && (!externalInspector || active || !!tint) && <Html
         position={[plateOffset?.[0] ?? 0, plateHeight, plateOffset?.[1] ?? 0]}
         center
         distanceFactor={13}
@@ -103,7 +103,7 @@ export function UnitChrome({ id, name, accent, plateHeight, plateOffset, rows, s
             {name}
             {tint && <em className="unit-plate__flag">{status}</em>}
           </span>
-          <dl className={`unit-plate__rows${active ? ' unit-plate__rows--on' : ''}`}>
+          <dl aria-hidden={!active || !!externalInspector} className={`unit-plate__rows${active && !externalInspector ? ' unit-plate__rows--on' : ''}`}>
             {rows.map((row) => (
               <div key={row.label} className="unit-plate__row">
                 <dt>{row.label}</dt>
@@ -112,7 +112,7 @@ export function UnitChrome({ id, name, accent, plateHeight, plateOffset, rows, s
             ))}
           </dl>
         </div>
-      </Html>
+      </Html>}
     </group>
   )
 }
