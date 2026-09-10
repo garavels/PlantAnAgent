@@ -21,7 +21,7 @@ The three families, five optimizer seeds, plant task, learning budgets and seed 
 | Production/synthetic separation | Implemented; separate report paths and schema rejection before dependency access | Passed clean gate at `ad6ad1e` |
 | Detached verification and post-publication gate | Implemented; independent reconstruction and mandatory fresh-process invocation, including recapture failure | Passed clean gate at `ad6ad1e` |
 | Protected seed isolation and full release gate | No protected reset or optimizer step used during this build | 2,285 Python tests and complete static/frontend gate passed at `ad6ad1e` |
-| Development analysis and campaign schema binding | Pending | All-32 pairwise eligibility, selection, sensitivity, uncertainty, latency and detached verifiers |
+| Development analysis and campaign schema binding | Numerical statistics, selection and sensitivity kernels implemented; 82 reset-free tests pass | Verified pairwise input binding, scorecards/latency, stage custody and detached development/held-out verifiers |
 
 The generic registered `train()` entry point now requires a one-use permission delivered by
 the live campaign parent. It reauthenticates the tracked authorization, complete config
@@ -79,7 +79,9 @@ campaign admission floor remain visible planning constraints, not execution appr
 
 ## Work still required before requesting the study
 
-Close the development-analysis build required by the post-capacity audit. The campaign runner
+Close the development-analysis build required by the post-capacity audit, tracked in
+[`CONSTRAINED_RL_STUDY_ANALYSIS_BUILD.md`](CONSTRAINED_RL_STUDY_ANALYSIS_BUILD.md). Its numerical
+kernels are implemented; they confer no verified arm eligibility or stage authorization. The campaign runner
 and detached verifier passed their complete clean release gate at
 `ad6ad1e85a0269f592d42b7c9edcd6c64f2c0579`: 2,285 Python tests, strict typing of all 17 changed
 source modules, Black on all 29 changed Python files, compilation, CLI help/import,

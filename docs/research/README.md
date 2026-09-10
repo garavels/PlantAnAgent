@@ -308,6 +308,10 @@ fallback behavior.
   registered learner requires authenticated campaign custody. The runner and detached verifier
   passed 2,285 Python tests plus the complete static/frontend gate at clean revision `ad6ad1e`.
   The downstream analysis build and later explicit authorization remain required before the study.
+- [`CONSTRAINED_RL_STUDY_ANALYSIS_BUILD.md`](CONSTRAINED_RL_STUDY_ANALYSIS_BUILD.md)
+  binds numerical representations before study outcomes and tracks the remaining evaluation
+  integration. Statistics, family selection and additive sensitivity kernels have 82 reset-free
+  tests; verified input binding, scorecards/latency and detached stage custody remain pending.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

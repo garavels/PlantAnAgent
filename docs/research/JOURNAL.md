@@ -7142,3 +7142,44 @@ the existing task, optimizer matrix, seed domains, primary contrast or success r
 authorize training or evaluation. The numerical layer alone will grant no verified eligibility
 or production claim. The operational pairwise, campaign, scorecard/latency and detached-stage
 verification layers remain required before a training request.
+
+## 2026-09-11 — Study numerical kernels and independent arithmetic checks
+
+The analysis representations were committed as `ea081f6` before source implementation.
+New isolated study modules now provide the exact source contract, 32-pair statistics,
+10,000-replicate paired and two-stage family bootstrap, Wilson intervals, fixed performance
+profiles, exact optimizer matching, all-five family selection and generic additive policy-minus-
+E-beta sensitivity. Missing/ineligible pair slots prevent a policy score; every optimizer seed
+remains visible. Source-ledger admission is deliberately not inferred by the numerical layer:
+selection/sensitivity reconstruction returns `source_evidence_verified: false` and null claim.
+The full detached stage verifier and physical evidence binding remain necessary.
+
+The initial statistics suite passed 32 tests. Independent expected values use closed-form
+arithmetic and sort/fsum/manual linear interpolation rather than calling the implementation's
+aggregate helpers. They check repeated bootstrap observations, common episode resampling across
+optimizer rows, between-policy variance and the absence of Cartesian optimizer comparisons.
+Selection tests cover each lexicographic priority, exact zero, lower-seed ties, failed training,
+unverified reports and missing pairs despite arbitrarily large surviving values. Sensitivity
+tests independently rescore weighted input ledgers, preserve unmet-service penalty when changing
+methane liability, reverse every sign when swapping inputs and retain exact-zero/tiny reversals.
+
+All three suites passed 77 tests; numeric sequence/float64-overflow rejection cases increased
+this to **82 passing tests in 0.42 seconds**. Autouse guards prohibit plant construction/reset,
+learner construction and policy loading in these tests. Initial strict typing identified seven
+annotation/export/narrowing issues; explicit re-exports and checked local narrowing resolved
+them, and all five study source modules passed. No plant/controller behavior, optimizer setting,
+frozen upstream protocol, dependency lock or UI changed. No protected seed, manifest, admitted
+checkpoint, sealed log, selection outcome or study execution was opened.
+
+The numerical contract digest is
+`94c4ce4b665ab31228b124f9fe056c98fb37ab5b349a12f785c2368b4d095d72`.
+The next integration must derive pairwise eligibility from independently verified complete
+arm evidence, bind numerical results to those source ledgers, and implement the remaining
+scorecard/latency, development/held-out custody and detached verification requirements.
+
+The combined numerical, custody, config, constrained learner, checkpoint, runtime and capacity
+regression passed **791 tests in 93.11 seconds**. Strict typing passed all 22 custody/verifier/
+study source modules; Black checked the nine new numerical source/test files, compilation and
+Git whitespace checks passed, and the dependency lock is unchanged. This is an intermediate
+implementation regression, not the final clean study release gate. The latter remains required
+after verified input binding and stage execution/verification are complete.

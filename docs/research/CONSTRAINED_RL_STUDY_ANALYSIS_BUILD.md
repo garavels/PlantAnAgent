@@ -70,7 +70,21 @@ instantiate a plant, load an admitted policy, inspect an outcome, or consume pro
 
 ## Source and stage boundary
 
-Training custody is validated at `ad6ad1e`; analysis remains to be implemented. Its registered
+The numerical, family-selection and additive-sensitivity kernels are implemented in
+`backend/src/plant_backend/rl/v2/study/`, with 82 reset-free numeric/adversarial tests.
+The source contract digest is
+`94c4ce4b665ab31228b124f9fe056c98fb37ab5b349a12f785c2368b4d095d72`.
+Independent oracles cover trimmed positions, lower-tail rounding, linear bootstrap endpoints,
+common episode clustering, optimizer variation and exact matched-seed contrasts. Selection
+tests exercise every tie-break and retain failed/unverified/incomplete policies. Sensitivity
+reconstruction rejects altered coefficients, orientation, arithmetic, settings and reversals.
+
+The current selection and sensitivity result verifiers reconstruct calculations only. They
+return `source_evidence_verified: false` and `result_claim: null`; source-ledger admission and
+production report verification remain separate, incomplete layers. No numerical result is a
+replacement for independently verified physical/minute/cycle evidence or campaign custody.
+
+Training custody is validated at `ad6ad1e`; full study integration remains pending. Its registered
 authorization file is absent. Later training/development/held-out permissions remain separate.
 The final workflow must execute against the admitted training source identity while retaining
 stage evidence outside Git; it cannot edit the loader or report semantics after study outcomes.
