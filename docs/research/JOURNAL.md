@@ -7018,3 +7018,27 @@ all nine touched source modules; Black checked all 15 touched source/test files,
 checks passed, and the ordinary training CLI help imported successfully. The dependency lock and
 frontend are unchanged. The complete campaign, detached verifier and downstream analysis gates
 remain pending; this commit is an auditable intermediate foundation, not a release admission.
+
+## 2026-09-11 — Detached beta policy descriptor custody closed
+
+Hypothesis: a coherently rehashed benchmark could relabel the PPO controller's fallback or
+information contract because the detached verifier validated only selected descriptor fields.
+Static inspection confirmed the missing checks. The verifier now requires the complete exact
+controller descriptor, the exact loaded-checkpoint fields, the canonical label/description,
+forecast and information declarations, and `raise; no controller-internal fallback`. The
+controller, dispatcher, solver, plant and economic behavior remain unchanged.
+
+Eight new adversarial descriptor tests reject changed or missing fallback declarations,
+misleading information/forecast text and undeclared controller/checkpoint fields. They explicitly
+forbid environment reset and admit the genuine fixed-policy descriptor before mutation. The full
+existing detached beta verifier suite passed **43 tests in 131.33 seconds**. A subsequent
+annotation-only cleanup separated branch-local MPC/process execution variable names and replaced
+an untyped file-identity lambda with the same typed projection; the eight new tests also passed
+after the first cleanup. Complete release validation remains a later gate.
+
+The host's older mypy initially produced 17 errors, including NumPy/source-resolution issues and
+existing function-wide variable collisions. An isolated mypy 2.3.1 installation under
+`/private/tmp`, explicit `MYPYPATH=backend/src:simulator/src`, and the annotation cleanup now pass
+strict checking of the verifier. The same current tool also passes all nine custody source
+modules. Black and Git whitespace checks pass. No dependency lock, protocol, evaluation seed
+domain, UI identity or training authorization changed; no registered or held-out run occurred.

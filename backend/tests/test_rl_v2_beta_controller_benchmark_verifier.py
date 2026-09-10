@@ -38,6 +38,7 @@ from plant_backend.rl.v2.economics import ch4_equivalent_inventory_kg
 from plant_backend.rl.v2.mpc_forecast import project_issued_mean_solar
 from plant_backend.rl.v2.mpc_schema import domain_sha256
 from plant_backend.rl.v2.policy_setpoint_controller import (
+    NormalizedSetpointPolicyControllerV1,
     policy_contract_for_environment,
 )
 from plant_backend.rl.v2.setpoint_command import (
@@ -148,6 +149,62 @@ def failed_arm_report(
         economic_controller_factory=_FailingCanonicalBetaController,
         require_trained_policy=False,
     )
+
+
+@pytest.mark.parametrize(
+    "defect",
+    [
+        "fallback",
+        "missing_fallback",
+        "label",
+        "description",
+        "uses_forecast",
+        "information_set",
+        "unknown_field",
+        "loaded_unknown_field",
+    ],
+)
+def test_policy_descriptor_cannot_relabel_fallback_or_information_contract(
+    benchmark_inputs: tuple[LoadedPolicy, ControllerNeutralTrainingConfigV1],
+    monkeypatch: pytest.MonkeyPatch,
+    defect: str,
+) -> None:
+    from plant_backend.rl.v2.beta_env import PlantCyclicMarketEnvV2Beta
+    from plant_backend.rl.v2.beta_controller_benchmark_verifier import (
+        _verify_policy_controller,
+    )
+
+    def forbidden_reset(*args: object, **kwargs: object) -> None:
+        pytest.fail("descriptor admission must not reset an environment")
+
+    monkeypatch.setattr(PlantCyclicMarketEnvV2Beta, "reset", forbidden_reset)
+    loaded, config = benchmark_inputs
+    environment = make_env(config)
+    try:
+        descriptor = NormalizedSetpointPolicyControllerV1.from_environment(
+            loaded, environment
+        ).to_dict()
+    finally:
+        environment.close()
+    checkpoint = benchmark._checkpoint_identity(loaded)
+    _verify_policy_controller(descriptor, config=config, checkpoint=checkpoint)
+    modified = deepcopy(descriptor)
+    if defect == "fallback":
+        modified["failure_policy"] = "switch to heuristic on failure"
+    elif defect == "missing_fallback":
+        del modified["failure_policy"]
+    elif defect == "unknown_field":
+        modified["fallback_enabled"] = True
+    elif defect == "loaded_unknown_field":
+        modified["checkpoint"]["fallback_enabled"] = True
+    elif defect == "uses_forecast":
+        modified[defect] = False
+    else:
+        modified[defect] = "coherently relabelled descriptor"
+    # Descriptor validation is independent of the enclosing report hashes:
+    # recomputing those hashes cannot make these declarations admissible.
+    with pytest.raises(ValueError):
+        _verify_policy_controller(modified, config=config, checkpoint=checkpoint)
 
 
 def _report_body(report: dict[str, Any]) -> dict[str, Any]:

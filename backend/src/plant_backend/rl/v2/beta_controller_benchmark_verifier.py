@@ -121,6 +121,7 @@ from .policy_setpoint_controller import (
     NORMALIZED_POLICY_SETPOINT_CONTROLLER_ID,
     NORMALIZED_POLICY_SETPOINT_EVIDENCE_DOMAIN,
     NORMALIZED_POLICY_SETPOINT_EVIDENCE_SCHEMA,
+    NormalizedSetpointPolicyControllerV1,
     PolicySetpointDecisionEvidenceV1,
 )
 from .reward import OBJECTIVE_VERSION
@@ -1607,9 +1608,45 @@ def _verify_policy_controller(
     checkpoint: Mapping[str, Any],
 ) -> tuple[str, str]:
     descriptor = _mapping("PPO controller descriptor", raw)
+    _exact_keys(
+        "PPO controller descriptor",
+        descriptor,
+        frozenset(
+            {
+                "id",
+                "label",
+                "description",
+                "uses_forecast",
+                "information_set",
+                "checkpoint",
+                "policy_contract",
+                "constraints",
+                "checkpoint_metadata_sha256",
+                "policy_contract_sha256",
+                "economic_assumptions_sha256",
+                "tariff_id",
+                "beta_task_sha256",
+                "inference",
+                "failure_policy",
+            }
+        ),
+    )
+    expected_declarations = {
+        "label": NormalizedSetpointPolicyControllerV1.label,
+        "description": NormalizedSetpointPolicyControllerV1.description,
+        "uses_forecast": NormalizedSetpointPolicyControllerV1.uses_forecast,
+        "information_set": NormalizedSetpointPolicyControllerV1.information_set,
+        "failure_policy": "raise; no controller-internal fallback",
+    }
+    _exact(
+        "PPO controller declarations",
+        {key: descriptor[key] for key in expected_declarations},
+        expected_declarations,
+    )
     if descriptor.get("id") != NORMALIZED_POLICY_SETPOINT_CONTROLLER_ID:
         raise ValueError("PPO controller identity differs")
     loaded = _mapping("PPO loaded checkpoint", descriptor.get("checkpoint"))
+    _exact_keys("PPO loaded checkpoint", loaded, frozenset({"path", "metadata"}))
     metadata_raw = _mapping("PPO checkpoint metadata", loaded.get("metadata"))
     metadata = checkpoints.CheckpointMetadata.from_dict(metadata_raw)
     _exact("PPO checkpoint metadata", metadata_raw, metadata.to_dict())
@@ -3894,11 +3931,11 @@ def _verify_normal_arm(
         for index, (execution_raw, command) in enumerate(
             zip(executions, commands, strict=True)
         ):
-            execution = _decode_execution(
+            decoded_execution = _decode_execution(
                 execution_raw, name=f"{arm} execution {index}", command=command
             )
-            decoded_executions.append(execution)
-            for application in execution.applications:
+            decoded_executions.append(decoded_execution)
+            for minute_application in decoded_execution.applications:
                 if truth_offset + 1 >= len(minute_states):
                     raise ValueError(f"{arm} execution exceeds retained minute truth")
                 expected_boundary_sha256 = domain_sha256(
@@ -3909,11 +3946,14 @@ def _verify_normal_arm(
                     PROCESS_SETPOINT_BOUNDARY_DOMAIN,
                     minute_states[truth_offset + 1].to_dict(),
                 )
-                if application.boundary_sha256 != expected_boundary_sha256:
+                if minute_application.boundary_sha256 != expected_boundary_sha256:
                     raise ValueError(
                         f"{arm} execution {index} minute boundary differs from truth"
                     )
-                if application.next_boundary_sha256 != expected_next_boundary_sha256:
+                if (
+                    minute_application.next_boundary_sha256
+                    != expected_next_boundary_sha256
+                ):
                     raise ValueError(
                         f"{arm} execution {index} next minute boundary differs from truth"
                     )
@@ -3931,16 +3971,16 @@ def _verify_normal_arm(
                 PROCESS_SETPOINT_BOUNDARY_DOMAIN,
                 all_observations[index + 1].plant.state.boundary.to_dict(),
             )
-            if execution.first_boundary_sha256 != expected_start_sha:
+            if decoded_execution.first_boundary_sha256 != expected_start_sha:
                 raise ValueError(
                     f"{arm} execution {index} starts from another boundary"
                 )
-            if execution.final_boundary_sha256 != expected_end_sha:
+            if decoded_execution.final_boundary_sha256 != expected_end_sha:
                 raise ValueError(f"{arm} execution {index} ends at another boundary")
             timings = _array(
                 f"{arm} dispatcher elapsed {index}", dispatcher_elapsed[index]
             )
-            if len(timings) != len(execution.applications):
+            if len(timings) != len(decoded_execution.applications):
                 raise ValueError(f"{arm} dispatcher timing count differs")
             for timing in timings:
                 _integer(f"{arm} dispatcher latency", timing)
@@ -4458,13 +4498,16 @@ def _read_regular_file(path: Path) -> bytes:
     descriptor = os.open(path, flags)
     try:
         opened = os.fstat(descriptor)
-        identity = lambda item: (  # noqa: E731 - compact stable-file projection
-            item.st_dev,
-            item.st_ino,
-            item.st_mode,
-            item.st_size,
-            item.st_mtime_ns,
-        )
+
+        def identity(item: os.stat_result) -> tuple[int, int, int, int, int]:
+            return (
+                item.st_dev,
+                item.st_ino,
+                item.st_mode,
+                item.st_size,
+                item.st_mtime_ns,
+            )
+
         if identity(opened) != identity(before):
             raise RuntimeError("beta benchmark JSON changed while opening")
         chunks: list[bytes] = []

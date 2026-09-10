@@ -61,8 +61,9 @@ campaign admission floor remain visible planning constraints, not execution appr
 ## Work still required before requesting the study
 
 Complete and adversarially test the campaign runner and detached verifier, then close the
-development-analysis build required by the post-capacity audit. Review the comparator fallback
-descriptor verifier gap before reusing benchmark evidence. The accepted E-beta stop diagnosis,
+development-analysis build required by the post-capacity audit. The comparator fallback
+descriptor verifier gap is now closed with exact-field and declaration checks, eight new
+reset-free adversarial tests, and a passing 43-test verifier regression run. The accepted E-beta stop diagnosis,
 M24 product connection and explicit operational handover remain separate product work; none
 constitutes evidence of PPO value. Preserve the existing UI identity and operational copy.
 
