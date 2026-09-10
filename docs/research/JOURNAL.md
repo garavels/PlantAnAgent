@@ -7124,3 +7124,21 @@ sensitivity, registered uncertainty/latency/scorecards and detached development/
 campaign verification. Later stage permission and evidence publication must preserve the
 training source identity. These findings required no manifest, protected seed, checkpoint
 outcome, sealed log or controller evaluation to be opened.
+
+## 2026-09-11 — Outcome-blind study analysis representations
+
+The previous turn completed the custody implementation and its clean release evidence, which
+is substantive progress toward the unchanged study goal. Current HEAD `b0ee589` is clean.
+The next hypothesis is that pure numerical rules can be specified and verified independently
+before connecting them to protected evaluation execution. CONSTRAINED_RL_STUDY_ANALYSIS_BUILD.md
+now records the complete remaining layer checklist and the numerical representations for
+32-pair summaries, exact selection, conditional family missingness, matched optimizer contrasts,
+paired/hierarchical resampling, fixed absolute-EUR profile thresholds, Wilson intervals and
+additive policy-minus-E-beta sensitivity. The common episode bootstrap block preserves shared
+exogenous/baseline pairing; family summaries explicitly retain a denominator of five policies.
+
+These choices are recorded before implementation or any study outcome. They do not alter
+the existing task, optimizer matrix, seed domains, primary contrast or success rule, and do not
+authorize training or evaluation. The numerical layer alone will grant no verified eligibility
+or production claim. The operational pairwise, campaign, scorecard/latency and detached-stage
+verification layers remain required before a training request.
