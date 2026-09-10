@@ -12,6 +12,7 @@ import { EventsPage } from './pages/EventsPage'
 import { OverviewPage } from './pages/OverviewPage'
 import { Plant3DView } from './pages/Plant3DView'
 import { ScenariosPage } from './pages/ScenariosPage'
+import { V2LabPage } from './pages/V2LabPage'
 
 export interface ViewDef {
   path: string
@@ -41,6 +42,17 @@ export const VIEWS: ViewDef[] = [
         <rect x="11.5" y="2.5" width="6" height="6" />
         <rect x="2.5" y="11.5" width="6" height="6" />
         <rect x="11.5" y="11.5" width="6" height="6" />
+      </svg>
+    ),
+  },
+  {
+    path: '/v2',
+    label: 'V2 Lab',
+    ready: true,
+    element: <V2LabPage />,
+    glyph: (
+      <svg viewBox="0 0 20 20" {...stroke}>
+        <path d="M3 15.5h14M4 11l4-5 4 3 4-5M4 11v4.5M8 6v9.5M12 9v6.5M16 4v11.5" />
       </svg>
     ),
   },

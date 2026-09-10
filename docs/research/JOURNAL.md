@@ -6717,3 +6717,92 @@ held-out reset, policy selection, controller comparison, or controller-performan
 opened. The detailed result is retained in `results/v2_constrained_rl_capacity_4f505b8.md`. The
 next step is an authorization packet for the already frozen 15-policy protocol; registered
 execution remains closed until explicit approval.
+
+## 2026-09-10 — V2 visibility preview scoped before implementation checks
+
+The user prioritized making the existing V2 backend visible to understand the
+current product. A read-only frontend/backend audit found that the existing
+control room and state-driven 3D scene still receive V1 telemetry, while the V2
+public forecasts, commitments, cycle margins and economic/command ledgers have no
+operator-facing API.
+
+The bounded product hypothesis is that one connected V2 inspection view will
+expose the current capabilities and integration gaps. The implementation scope is
+recorded in `V2_VISIBILITY_PREVIEW.md`: a separate `/v2` page and lazy API session,
+unchanged default beta task, fixed disposable fixture seed `9,000,034`, explicit
+one/four-decision requests, H and optional experimental E-beta, and public-only
+presentation data. No registered training, development or held-out execution is
+authorized by this increment. No benchmark, training or protected report has been
+opened during the scoping audit.
+
+Work is split between the V2 API/fixture checks and frontend presentation, with
+shared DTO semantics and parent integration review. All inherited user document
+changes and the untracked registered-training custody protocol are preserved.
+Validation and any fixture failures will be appended after implementation.
+
+## 2026-09-10 — V2 Lab connected and fixture verification completed
+
+Implemented an additive `/api/v2/demo` router and `/v2` control-room view without
+changing V1 control, the simulator, any research task/controller, or any frozen
+training/evaluation protocol. The canonical UI contract projects current public
+V2 data: actual physical state, solar mean/p10 windows, market mean/p10/p90 bins,
+recurring methane obligations, realized economic contributions, daily resource
+margins and settlements, and requested/applied power with command/execution
+identities. H is explicitly forecast-blind. Optional E-beta exposes its actual
+retained schedule. Neither PPO nor HEPA is represented as available or trained.
+
+The preview has one lazy in-memory session, only fixture seed `9,000,034`, explicit
+one/four-decision requests, strict input rejection and run/revision preconditions.
+It accepts no checkpoint, seed, task or artifact path. Synchronous FastAPI worker
+routes serialize access independently of the V1 event loop. There is no automatic
+clock, fallback, supervisor write authority or registered experiment. A fixed
+168-hour task is available to inspect, but no full-week benchmark was run.
+
+Independent source review found one P1 presentation defect: a failure during an
+interval could expose partially advanced telemetry with the prior ledger/counters,
+or prevent snapshot generation entirely. The fix commits a deep public snapshot
+after each fully projected decision, including intermediate successes in a batch.
+A failed run shows only that boundary, explicitly warns that a partial interval
+may have executed, refuses further advancement and serves subsequent reads without
+accessing damaged environment state. Tests inject real partial minute movement
+and a post-physics projection failure. The defect is retained here rather than
+misrepresented as a successful first implementation.
+
+Validation evidence:
+
+- The original nine API tests passed in 22.11 seconds, including one fixture day
+  crossing delivery and resource-return settlements. After the failure fix and
+  real E-beta projection test, 11 tests passed in 28.29 seconds with the already
+  exercised daily test excluded; all 12 passed in the subsequent full run.
+- The complete Python repository run returned **1,843 passed, 1 failed** in
+  475.91 seconds. The failure was the scalar case of
+  `test_real_beta_family_trains_saves_loads_and_crosses_common_physical_door`:
+  `RuntimeProvenanceChangedError` identified only `worktree_content_sha256` during
+  resume admission. The root agent had edited frontend/documentation files while
+  this fixture test was running. The custody check correctly rejected that
+  change. No production or test code was weakened. With all source edits stopped,
+  the exact failing case passed in **22.50 seconds**. This is full-suite coverage
+  plus a focused rerun, not a claim of one clean-revision all-pass execution.
+- Scoped MyPy, Black, compilation and whitespace checks passed for the new backend
+  files. The final frontend TypeScript/Vite build and oxlint passed. The existing
+  large lazy 3D chunk advisory, Starlette/httpx deprecation and inherited Three.js
+  deprecation warnings remain; no browser application error was observed.
+- Browser checks exercised a real H hour, real E-beta decisions and retained plans,
+  controller reset, 2D/3D switching, exact-value disclosures, desktop and 360px layout,
+  and two-tab stale-command refusal followed by explicit refresh with no automatic
+  retry. Chart labels retain 11px screen size at the narrow width and the page has
+  no document-wide horizontal overflow. Controls were moved above the plant and
+  the delivery table gained an explicit all-commitments expansion after visual QA.
+
+The existing servers on ports 8000/5173 did not respond to the initial HTTP check
+and were left running. An isolated preview was started on 8001/5174 with the V1
+supervisor disabled. The frontend proxy now accepts optional `PLANT_API_TARGET`,
+retaining port 8000 by default. Locked optional dependencies were installed with
+`uv sync --frozen --all-groups --inexact`; `uv.lock` did not change. The V2 browser
+preview is left available for the user with the clock paused.
+
+Existing repository tests include disposable optimizer smokes, which ran only in
+their predefined fixture domains. No registered training, development or held-out
+seed was opened, no protected policy was selected, and no comparative performance
+or commercial claim follows. Verified artifact replay, full-frame historical
+scrubbing and governed live intervention remain future product increments.

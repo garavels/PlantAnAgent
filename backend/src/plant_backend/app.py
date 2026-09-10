@@ -30,6 +30,7 @@ from . import authoring
 from .hepa.api import configure as configure_hepa
 from .hepa.api import router as hepa_router
 from .orchestration import Broadcaster, PlantRuntime, SimulationClock
+from .v2_demo import router as v2_demo_router
 
 #: Seconds without an update before the stream sends a keepalive comment.
 KEEPALIVE_S = 15.0
@@ -55,6 +56,10 @@ app = FastAPI(title="Plant An Agent -- control backend", version="0.6.0", lifesp
 # rest of the backend is unaffected. It reads the session's rolling telemetry history.
 app.include_router(hepa_router)
 configure_hepa(lambda: list(runtime.session.history))
+
+# Separate, explicitly fixture-only V2 inspection. Importing the router does not
+# construct/reset a V2 environment or attach it to the historical V1 clock.
+app.include_router(v2_demo_router)
 
 # Dev only: the Vite dev server proxies /api, but allow direct calls too.
 app.add_middleware(

@@ -3,6 +3,7 @@
   align-items: center;
   gap: 26px;
   height: var(--nav-h);
+  flex-shrink: 0;
   padding: 0 20px;
   border-bottom: 1px solid var(--hairline);
 }
@@ -30,6 +31,7 @@
   font-size: 13.5px;
   color: var(--text-dim);
   text-decoration: none;
+  white-space: nowrap;
   transition:
     color 160ms ease,
     background 160ms ease;
@@ -68,4 +70,11 @@
   align-items: center;
   gap: 18px;
   margin-left: auto;
+}
+
+@media (max-width: 900px) {
+  .nav { gap: 12px; padding-inline: 12px; }
+  .nav__mark, .nav__status { flex-shrink: 0; }
+  .nav__list { min-width: 0; overflow-x: auto; }
+  .nav__status { gap: 8px; }
 }
