@@ -305,7 +305,9 @@ fallback behavior.
   and is not a training authorization.
 - [`REGISTERED_TRAINING_CUSTODY_BUILD.md`](REGISTERED_TRAINING_CUSTODY_BUILD.md)
   tracks custody implementation, fixture evidence and remaining admission gates. The generic
-  registered learner stays closed while the campaign runner and detached verifier are built.
+  registered learner requires authenticated campaign custody. The runner and detached verifier
+  are implemented and fixture-tested; complete clean release validation and later explicit
+  authorization remain required before any registered reset.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

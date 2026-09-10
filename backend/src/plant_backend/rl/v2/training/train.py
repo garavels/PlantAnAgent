@@ -42,7 +42,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="construct, reset, and identify the task without importing SB3 or training",
+        help="identify the task without training; registered plans never reset",
     )
     return parser
 
@@ -146,13 +146,14 @@ def train(config: ControllerNeutralTrainingConfigV1) -> Path:
     """Run the explicitly requested long optimization and save a complete checkpoint."""
 
     config.validate()
+    launch_runtime = None
     if (
         config.beta_rl is not None
         and config.beta_rl.run_kind == BETA_REGISTERED_RUN_KIND
     ):
-        # Closed until the durable campaign launcher can authenticate a claim.
-        # A valid task config alone is never permission to consume study seeds.
-        raise ValueError("registered training requires admitted campaign custody")
+        from .custody_launch import admit_registered_launch
+
+        launch_runtime = admit_registered_launch(config)
     output = Path(config.output_dir)
     if output.exists():
         raise ValueError(
@@ -163,6 +164,8 @@ def train(config: ControllerNeutralTrainingConfigV1) -> Path:
         runtime_before = capture_runtime_provenance(
             require_clean=run.run_kind == BETA_REGISTERED_RUN_KIND
         )
+        if launch_runtime is not None:
+            verify_runtime_unchanged(launch_runtime, runtime_before)
         resume_parent = ppo.admit_resume(
             config,
             runtime_provenance=runtime_before,

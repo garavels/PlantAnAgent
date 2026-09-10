@@ -7042,3 +7042,54 @@ existing function-wide variable collisions. An isolated mypy 2.3.1 installation 
 strict checking of the verifier. The same current tool also passes all nine custody source
 modules. Black and Git whitespace checks pass. No dependency lock, protocol, evaluation seed
 domain, UI identity or training authorization changed; no registered or held-out run occurred.
+
+## 2026-09-11 — Registered campaign execution and detached custody reconstruction
+
+Hypothesis: the fixed 15-cell plan can be executed and closed without outcome-dependent operator
+choices by separating durable receipt collection from production reporting and independently
+reconstructing the report from retained evidence. The registered runner now prepublishes the
+authorization copy, plan and all 15 canonical configs, claims each cell durably, executes the
+fixed sequential command with sealed logs, applies the frozen continuation/abort precedence,
+and retains complete failed artifacts. A single-use anonymous parent pipe binds the current
+claim/config to the registered learner; it reopens the complete registry and prior receipt chain
+before environment/model construction. Standalone registered training still has no authority.
+
+The production report is available only through fixed production dependencies. Synthetic
+collection and verification use a separate filename/schema and always carry a null production
+claim. Detached verification reopens every config, receipt, log and inventory, independently
+re-admits completed checkpoints through the existing production loader, reconstructs all counts
+and statuses, and checks the evidence again after loading. The runner unconditionally invokes
+a fresh-process verifier after durable report publication, including when local recapture fails.
+Read-only forensic inspection classifies interrupted or malformed claims without authorizing
+retry, reconstructing a terminal receipt or issuing a verified claim. CLI errors use fixed
+categorical text so exception payloads cannot reveal sealed outcomes.
+
+The first integrated campaign/process suite passed 38 tests; the combined campaign, verifier,
+launch, registered-config and process run passed 230 tests. Eight subsequent read-only launch
+admission cases and publication/forensic checks passed in a 25-test targeted run. Seven new
+after-load corruption cases exposed six missed mutations in the synthetic verifier (report,
+plan, authorization, claim, log and earlier policy bytes); the extra-root case was already
+rejected. Production and synthetic verification now share the final complete evidence recheck,
+including root identity and exact directory contents. All 40 verifier tests then passed in
+31.50 seconds. The expanded 27-test campaign suite passed in 11.16 seconds, including retained
+partial/forbidden artifacts, prior receipt/log/artifact mutation, physical root replacement,
+and config corruption before the first claim. Strict typing passed all 16 custody/config/learner
+source modules, and Black checked all 23 custody source/test files.
+
+REGISTERED_TRAINING_CUSTODY_BUILD.md records the parent-channel representation, independently
+reconstructible process-time boundary, storage-abort object and non-authorizing forensic schema.
+The frozen protocols, task, optimizer matrix, dependency lock, V1 and unified UI remain unchanged.
+No production authorization, registered reset/update, development/held-out reset, checkpoint
+selection or policy-performance outcome was opened. Complete regression and clean release
+validation follow; the downstream analysis build remains pending.
+
+The combined custody, exact-config, constrained learner, checkpoint, runtime and capacity
+regression passed **697 tests in 84.40 seconds**. Final static review then found that unexpected
+files in the open campaign namespace could reach the child gate and unnecessarily consume an
+attempt before rejection. The parent now checks every root/config/log/attempt/artifact directory
+before claiming, after the process and after admission. Twelve new cases cover unexpected root,
+log, future-claim and future-artifact entries at all three boundaries; the expanded campaign
+suite passed **39 tests in 13.54 seconds**. The protocol and learner command remain unchanged.
+CLI import/help, the Makefile's nonexecuting command expansion, dependency-lock cleanliness,
+both frozen protocol hashes and Git whitespace checks passed. The next complete repository
+gate will run on the clean committed campaign implementation, without opening study seeds.

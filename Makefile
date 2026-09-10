@@ -146,6 +146,26 @@ v2-beta-rl-capacity: ## run the three frozen fixture-only RL capacity cells
 		python -m plant_backend.rl.v2.training.capacity_benchmark run $(OUTPUT) \
 		--assert-exclusive --assert-first-attempt
 
+.PHONY: v2-beta-rl-registered v2-beta-rl-registered-verify v2-beta-rl-registered-inspect
+
+v2-beta-rl-registered: ## consume the committed registered-training authorization once
+	$(if $(OUTPUT),,$(error OUTPUT=/absolute/new/campaign/root is required))
+	$(if $(filter yes,$(ASSERT_EXCLUSIVE)),,$(error ASSERT_EXCLUSIVE=yes is required))
+	$(if $(filter yes,$(ASSERT_FIRST_ATTEMPT)),,$(error ASSERT_FIRST_ATTEMPT=yes is required))
+	$(if $(filter yes,$(ASSERT_AUTHORIZED)),,$(error ASSERT_AUTHORIZED=yes is required after committed user authorization))
+	uv run --frozen --group train --group optimisation \
+		python -m plant_backend.rl.v2.training.registered_campaign run "$(OUTPUT)" \
+		--assert-exclusive --assert-first-attempt --assert-authorized
+
+v2-beta-rl-registered-verify: ## independently verify registered custody without a reset
+	$(if $(REPORT),,$(error REPORT=/absolute/campaign/root/report.json is required))
+	uv run --frozen --group train --group optimisation \
+		python -m plant_backend.rl.v2.training.registered_campaign verify "$(REPORT)"
+
+v2-beta-rl-registered-inspect: ## inspect interrupted custody without permitting retry
+	$(if $(OUTPUT),,$(error OUTPUT=/absolute/campaign/root is required))
+	uv run --frozen python -m plant_backend.rl.v2.training.registered_campaign inspect "$(OUTPUT)"
+
 v2-beta-rl-capacity-verify: ## verify one fixture-only RL capacity report
 	$(if $(REPORT),,$(error REPORT=/absolute/path/to/report.json is required))
 	uv run --frozen --group train \

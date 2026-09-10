@@ -203,8 +203,10 @@ equipment consequences.
   controller superiority. Registered training and development/held-out resets remain closed
   pending explicit authorization. A post-capacity readiness audit also found that registered
   configuration did not yet freeze every task/economic default and that no 15-run durable campaign
-  custodian existed. Their outcome-blind repair is now frozen before source changes; development
-  pairwise selection and held-out statistics remain a separate subsequent build gate.
+  custodian existed. The frozen repair now has exact task validation, a durable sequential
+  campaign runner, authenticated child launch and detached verification, with synthetic failure
+  and tampering coverage. Its complete clean release gate remains pending; development pairwise
+  selection and held-out statistics remain a separate subsequent build gate.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.
 

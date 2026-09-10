@@ -73,6 +73,7 @@ def capture_process(
     stderr: Path,
     timeout_seconds: int,
     log_limit_bytes: int,
+    launch_permission: bytes | None = None,
 ) -> tuple[dict[str, Any], set[str]]:
     """Handle operator interruption with the same complete process-group cleanup."""
 
@@ -91,6 +92,7 @@ def capture_process(
             stderr=stderr,
             timeout_seconds=timeout_seconds,
             log_limit_bytes=log_limit_bytes,
+            launch_permission=launch_permission,
         )
     finally:
         for signum, handler in previous.items():
@@ -104,6 +106,7 @@ def _capture_process(
     stderr: Path,
     timeout_seconds: int,
     log_limit_bytes: int,
+    launch_permission: bytes | None = None,
 ) -> tuple[dict[str, Any], set[str]]:
     """Execute one command and return only process metadata and closed codes.
 
@@ -118,7 +121,6 @@ def _capture_process(
     logs: list[BinaryIO] = []
     child: subprocess.Popen[bytes] | None = None
     observed: set[str] = set()
-    started_at = time.perf_counter_ns()
     before = resource.getrusage(resource.RUSAGE_CHILDREN)
     process: dict[str, Any] = {
         "command": command,
@@ -137,21 +139,49 @@ def _capture_process(
             )
             logs.append(os.fdopen(descriptor, "wb"))
         fsync_directory(stdout.parent)
+        started_at = time.perf_counter_ns()
+        deadline = time.monotonic() + timeout_seconds
+        permission_fd: int | None = None
         try:
+            environment = None
+            pass_fds: tuple[int, ...] = ()
+            if launch_permission is not None:
+                from .custody_launch import LAUNCH_FD_ENV
+
+                if (
+                    not 0 < len(launch_permission) <= 1024
+                    or LAUNCH_FD_ENV in os.environ
+                ):
+                    raise ValueError("child launch permission transport is invalid")
+                permission_fd, writer = os.pipe()
+                try:
+                    if os.write(writer, launch_permission) != len(launch_permission):
+                        raise OSError(
+                            "child launch permission was not written completely"
+                        )
+                finally:
+                    os.close(writer)
+                pass_fds = (permission_fd,)
+                environment = {**os.environ, LAUNCH_FD_ENV: str(permission_fd)}
             child = subprocess.Popen(
                 command,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 start_new_session=True,
+                pass_fds=pass_fds,
+                env=environment,
+                stdin=subprocess.DEVNULL,
             )
         except OSError:
             observed.add("child_spawn_failed")
+        finally:
+            if permission_fd is not None:
+                os.close(permission_fd)
         if child is not None:
             process["started"] = True
             assert child.stdout is not None and child.stderr is not None
             streams = (child.stdout, child.stderr)
             sizes = [0, 0]
-            deadline = time.monotonic() + timeout_seconds
             try:
                 with selectors.DefaultSelector() as selector:
                     for index, stream in enumerate(streams):
@@ -212,6 +242,19 @@ def _capture_process(
                 observed.add("child_signaled")
             elif child.returncode:
                 observed.add("child_nonzero_exit")
+            # The process budget includes launch and group closure, and ends
+            # before log fsync. The detached verifier can reconstruct a timeout
+            # exactly from this recorded interval without reading stream data.
+            process["wall_elapsed_ns"] = time.perf_counter_ns() - started_at
+            if process["wall_elapsed_ns"] >= timeout_seconds * 1_000_000_000:
+                observed.add("child_timeout")
+            after = resource.getrusage(resource.RUSAGE_CHILDREN)
+            process["child_user_cpu_ns"] = max(
+                0, round((after.ru_utime - before.ru_utime) * 1e9)
+            )
+            process["child_system_cpu_ns"] = max(
+                0, round((after.ru_stime - before.ru_stime) * 1e9)
+            )
     finally:
         cleanup_errors: list[BaseException] = []
         try:
@@ -233,13 +276,4 @@ def _capture_process(
             cleanup_errors.append(reason)
         if cleanup_errors:
             raise BaseExceptionGroup("sealed process cleanup failed", cleanup_errors)
-    if process["started"]:
-        after = resource.getrusage(resource.RUSAGE_CHILDREN)
-        process["wall_elapsed_ns"] = time.perf_counter_ns() - started_at
-        process["child_user_cpu_ns"] = max(
-            0, round((after.ru_utime - before.ru_utime) * 1e9)
-        )
-        process["child_system_cpu_ns"] = max(
-            0, round((after.ru_stime - before.ru_stime) * 1e9)
-        )
     return process, observed

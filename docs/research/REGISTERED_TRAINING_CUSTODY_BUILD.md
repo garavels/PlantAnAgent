@@ -11,21 +11,23 @@ The three families, five optimizer seeds, plant task, learning budgets and seed 
 
 | Requirement | Implementation status | Remaining admission evidence |
 | --- | --- | --- |
-| Exact registered task and canonical configs | Implemented; mutations across all immutable config leaves rejected | Integration with authenticated child launch |
-| Exact 15-cell matrix and paths | Implemented; deterministic family-first order and config hashes | Durable prepublication and verifier reconstruction |
+| Exact registered task and canonical configs | Implemented; complete immutable template and all-15 config bytes rechecked before authenticated child launch | Complete clean release gate |
+| Exact 15-cell matrix and paths | Implemented; durable prepublication and independent verifier reconstruction | Complete clean release gate |
 | Tracked authorization, scope, host and commit lineage | Read-only admission implemented; synthetic scope and Git fixtures | Final approved implementation, explicit user authorization and subsequent clean release gate |
-| Durable claims, non-retry and sequential chain | Exclusive file/directory barriers and inert claim schemas implemented | Campaign state machine and crash-window integration tests |
-| Sealed bounded subprocess logs and process groups | Implemented; tiny process fixtures cover both stream caps, timeout, signals and surviving descendants | End-to-end frozen matrix continuation/abort tests |
-| Artifact inventory and checkpoint admission | Non-following inventory and fixed production-loader adapter implemented | Completed-cell integration, substitution and admission tests |
-| Closed failures and complete accounting | All cell failure codes and precedence implemented | Terminal/report construction and all-15 accounting |
-| Production/synthetic separation | Distinct report schemas declared | Separate execution/report paths and rejection before dependency access |
-| Detached verification and post-publication gate | Pending | Independent reconstruction, tampering tests and mandatory fresh-process invocation |
+| Durable claims, non-retry and sequential chain | Implemented; campaign state machine, single-use parent pipe, interruption and publication-failure fixtures | Complete clean release gate |
+| Sealed bounded subprocess logs and process groups | Implemented; tiny process fixtures and complete synthetic matrix continuation/abort tests | Complete clean release gate |
+| Artifact inventory and checkpoint admission | Implemented; production loader, retained partial/forbidden artifacts, substitution and post-load mutation checks | Complete clean release gate |
+| Closed failures and complete accounting | Implemented; all 15 cells, exact failure precedence, stopped/unstarted accounting | Complete clean release gate |
+| Production/synthetic separation | Implemented; separate report paths and schema rejection before dependency access | Complete clean release gate |
+| Detached verification and post-publication gate | Implemented; independent reconstruction and mandatory fresh-process invocation, including recapture failure | Complete clean release gate |
 | Protected seed isolation and full release gate | No protected reset or optimizer step used during this build | Full repository checks on a clean completed implementation |
 | Development analysis and campaign schema binding | Pending | All-32 pairwise eligibility, selection, sensitivity, uncertainty, latency and detached verifiers |
 
-The generic registered `train()` entry point deliberately refuses execution until the
-campaign launch gate is complete. Config validation and static plan inspection remain
-available. This is an interim closed boundary, not final training admission.
+The generic registered `train()` entry point now requires a one-use permission delivered by
+the live campaign parent. It reauthenticates the tracked authorization, complete config
+registry, plan and open sequential claim before environment/model construction. No such
+production authorization exists. Config validation, static plan inspection and read-only
+forensic classification remain available; none grants permission to consume study seeds.
 
 ## Representation choices within the frozen protocol
 
@@ -53,6 +55,23 @@ representations are made explicit here before any registered outcome exists:
   cannot be retried or replaced at the same source revision.”
 - A forbidden artifact root itself is represented by one forbidden `.` entry. Missing
   roots retain the protocol's empty, absent-root inventory. No partial bytes are repaired.
+- The live parent sends an anonymous-pipe envelope with exactly `schema`, `parent_pid`,
+  `claim_sha256` and `config_sha256`. Its schema is
+  `plant-beta-constrained-rl-registered-training-child-launch-v1`. The child consumes and
+  closes the inherited descriptor before any protected reset; the environment key
+  `PLANT_BETA_REGISTERED_CUSTODY_FD` is removed. This transport adds no config override,
+  mutable sidecar or thread-setting change. It prevents accidental standalone/repeated
+  launches; it is not a security boundary against malicious code running as the same user.
+- Process wall time covers launch through process-group closure and buffered-byte capture,
+  ending before log fsync. A recorded interval at or above the frozen 36,000-second limit
+  is a timeout. This makes the timeout classification independently reconstructible.
+- Pre-claim storage exhaustion uses campaign abort code `storage_budget_unavailable`,
+  stage `pre_child` and fixed message “The remaining campaign storage budget is unavailable.”
+  It leaves every remaining claim absent and never becomes a child failure.
+- Read-only `inspect` uses schema
+  `plant-beta-constrained-rl-registered-training-forensic-inspection-v1`. It reports
+  receipt syntax and declared states, with `verified: false`, `result_claim: null` and
+  `retry_permitted: false`. An interrupted claim cannot be repaired or resumed by inspection.
 
 No authorization file, production campaign root or registered checkpoint has been created.
 The previously measured 62.4889–93.7075-hour sequential planning scenarios and 5-GiB
@@ -60,8 +79,8 @@ campaign admission floor remain visible planning constraints, not execution appr
 
 ## Work still required before requesting the study
 
-Complete and adversarially test the campaign runner and detached verifier, then close the
-development-analysis build required by the post-capacity audit. The comparator fallback
+Finish the clean release validation of the campaign runner and detached verifier, then close
+the development-analysis build required by the post-capacity audit. The comparator fallback
 descriptor verifier gap is now closed with exact-field and declaration checks, eight new
 reset-free adversarial tests, and a passing 43-test verifier regression run. The accepted E-beta stop diagnosis,
 M24 product connection and explicit operational handover remain separate product work; none
