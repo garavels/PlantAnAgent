@@ -201,7 +201,10 @@ equipment consequences.
   host, with 78.10/93.71-hour mechanical planning scenarios and 1.17 GiB recommended checkpoint
   free space. The capacity prerequisite is therefore closed, but this is still no evidence of
   controller superiority. Registered training and development/held-out resets remain closed
-  pending explicit authorization.
+  pending explicit authorization. A post-capacity readiness audit also found that registered
+  configuration did not yet freeze every task/economic default and that no 15-run durable campaign
+  custodian existed. Their outcome-blind repair is now frozen before source changes; development
+  pairwise selection and held-out statistics remain a separate subsequent build gate.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.
 

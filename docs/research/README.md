@@ -298,6 +298,11 @@ fallback behavior.
   campaign projects to 62.49 sequential hours at 1.00x, with 78.10/93.71-hour mechanical planning
   scenarios, 174.35 MiB of projected logical checkpoint data, and 1.17 GiB recommended free space. It
   opens no registered seed or controller-performance outcome.
+- [`CONSTRAINED_RL_REGISTERED_TRAINING_CUSTODY_PROTOCOL.md`](CONSTRAINED_RL_REGISTERED_TRAINING_CUSTODY_PROTOCOL.md)
+  freezes the outcome-blind build required before requesting the 15 registered runs. It specifies
+  how to close the audited gaps in exact task identity, 3-by-5 order, durable attempt/log/output
+  custody, checkpoint admission, and detached campaign verification. It permits fixture tests only
+  and is not a training authorization.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

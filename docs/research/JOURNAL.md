@@ -6718,6 +6718,51 @@ opened. The detailed result is retained in `results/v2_constrained_rl_capacity_4
 next step is an authorization packet for the already frozen 15-policy protocol; registered
 execution remains closed until explicit approval.
 
+## 2026-09-05 — Post-capacity registered-study readiness audit and custody design frozen
+
+No registered, development, or held-out environment was constructed or reset during this audit.
+No training process, optimizer update, controller comparison, or HEPA operation ran. Three
+independent static reviews compared the current implementation with the complete frozen
+constrained-RL protocol.
+
+The learner foundation is substantive: the single-run path enforces the three family identifiers,
+five optimizer seeds, 1,048,576-transition budget, four synchronous environments, final-only
+checkpoint, no resume, registered allocator domain, exact 1,564-reset endpoint, and production
+checkpoint eligibility. It captures clean runtime provenance, the beta checkpoint retains all 128
+rollouts and allocator custody, and the beta benchmark can independently load a registered final
+policy.
+
+The audit nevertheless returned a training **no-go**. Registered validation allowed arbitrary
+otherwise-valid plant, episode, reward, economic, market, cycle, and disturbance settings, so the
+`registered` label alone did not prove the frozen beta task. The repository also had no committed
+3-by-5 registry, exact execution order, preclaimed output map, durable consumed-attempt ledger,
+sealed process-log custody, complete failure accounting, or detached 15-checkpoint campaign
+verifier. The generic one-run CLI permits an output override and cannot safely substitute for that
+missing campaign boundary.
+
+Development and held-out readiness also returned **no-go**. The existing beta runner is a strong
+four-arm integration instrument, but it makes H and M24 blockers for PPO/E-beta eligibility,
+aggregates surviving subsets, accepts arbitrary one-to-32 seed ranges, and contains only one policy.
+There is no complete 15-policy campaign, all-32-or-no-score vector, frozen IQM/lower-CVaR/median/
+strict-positive selector, family-denominator rule, generic policy-minus-E-beta sensitivity
+rescorer, hierarchical bootstrap, Wilson interval, performance profile, registered 1/1-thread
+latency procedure, held-out report, or executable ten-clause success rule. A detached verifier gap
+also permits coherent mutation of the policy controller's fallback descriptor; that must be closed
+before its evidence is reused.
+
+`CONSTRAINED_RL_REGISTERED_TRAINING_CUSTODY_PROTOCOL.md` is now frozen before source changes. It
+binds the successful capacity report, exact M4 host planning context, the full registered task
+template, family/seed matrix, deterministic paths, tracked user-authorization record, conservative
+pre-launch attempt claims, sequential child/log handling, checkpoint admission, production versus
+synthetic evidence, detached verification, and fixture-only adversarial gates. Removing only seed,
+output path, and algorithm from the complete default registered config produces task-template
+domain SHA-256 `89abbe6288d512c254d8186f56c6d269b9f273fb49bbb13d24d7b02425bfa77b`.
+
+The custody protocol is a build authorization only. It does not create the later user authorization
+record and permits no registered optimizer step or protected reset. After this layer is implemented
+and release-validated, the development analysis and campaign schemas must be implemented and
+hash-bound before requesting the multi-day experiment.
+
 ## 2026-09-10 — V2 visibility preview scoped before implementation checks
 
 The user prioritized making the existing V2 backend visible to understand the

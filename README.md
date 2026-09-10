@@ -823,6 +823,10 @@ See the retained [`V1 failure`](docs/research/results/v2_constrained_rl_capacity
 [`Repair 001`](docs/research/CONSTRAINED_RL_CAPACITY_REPAIR_001.md), and frozen
 [`Repair 002`](docs/research/CONSTRAINED_RL_CAPACITY_REPAIR_002.md), plus the authenticated
 [`V3 capacity result`](docs/research/results/v2_constrained_rl_capacity_4f505b8.md).
+The next outcome-blind implementation boundary is frozen in the
+[`registered training custody protocol`](docs/research/CONSTRAINED_RL_REGISTERED_TRAINING_CUSTODY_PROTOCOL.md):
+it must close exact task, 15-run order, durable attempt, sealed-log, and detached-verification gaps
+before an explicit user authorization record can open registered training.
 
 The existing control-room `/api/controller/rl` path remains the historical one-minute 30/5 V1
 runtime. It intentionally rejects these 15-minute four-target checkpoints: deploying them live
