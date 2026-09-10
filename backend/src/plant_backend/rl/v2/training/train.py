@@ -60,6 +60,7 @@ def resolve(arguments: argparse.Namespace) -> ControllerNeutralTrainingConfigV1:
         forbidden_overrides = tuple(
             name
             for name, value in (
+                ("output", arguments.output),
                 ("seed", arguments.seed),
                 ("timesteps", arguments.timesteps),
                 ("resume", arguments.resume),
@@ -69,7 +70,7 @@ def resolve(arguments: argparse.Namespace) -> ControllerNeutralTrainingConfigV1:
         )
         if forbidden_overrides:
             raise ValueError(
-                "registered beta RL permits only an output override; refused "
+                "registered beta RL forbids all CLI overrides; refused "
                 + ", ".join(forbidden_overrides)
             )
     if (
@@ -109,7 +110,7 @@ def _checkpoint_callback(
 ) -> Any:
     from stable_baselines3.common.callbacks import BaseCallback
 
-    class AuditableCheckpointCallback(BaseCallback):  # type: ignore[misc]
+    class AuditableCheckpointCallback(BaseCallback):
         """Write complete checkpoints; raw SB3 zip files are never called checkpoints."""
 
         def __init__(self) -> None:
@@ -144,6 +145,14 @@ def _checkpoint_callback(
 def train(config: ControllerNeutralTrainingConfigV1) -> Path:
     """Run the explicitly requested long optimization and save a complete checkpoint."""
 
+    config.validate()
+    if (
+        config.beta_rl is not None
+        and config.beta_rl.run_kind == BETA_REGISTERED_RUN_KIND
+    ):
+        # Closed until the durable campaign launcher can authenticate a claim.
+        # A valid task config alone is never permission to consume study seeds.
+        raise ValueError("registered training requires admitted campaign custody")
     output = Path(config.output_dir)
     if output.exists():
         raise ValueError(

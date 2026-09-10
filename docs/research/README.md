@@ -303,6 +303,9 @@ fallback behavior.
   how to close the audited gaps in exact task identity, 3-by-5 order, durable attempt/log/output
   custody, checkpoint admission, and detached campaign verification. It permits fixture tests only
   and is not a training authorization.
+- [`REGISTERED_TRAINING_CUSTODY_BUILD.md`](REGISTERED_TRAINING_CUSTODY_BUILD.md)
+  tracks custody implementation, fixture evidence and remaining admission gates. The generic
+  registered learner stays closed while the campaign runner and detached verifier are built.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

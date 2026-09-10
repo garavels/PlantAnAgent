@@ -7,7 +7,7 @@ import math
 from dataclasses import asdict, dataclass, field, fields, replace
 from numbers import Integral, Real
 from pathlib import Path
-from typing import Any, Mapping, cast
+from typing import Any, Mapping, TypeVar, cast
 
 from plant_sim import (
     BatteryConfig,
@@ -33,6 +33,7 @@ from ..economics import DayAheadTariffV1, EconomicAssumptionsV1
 from ..market import MarketConfigV1, MarketRegimeV1
 from ..reward import RewardWeightsV2
 from ..weather import WeatherConfigV2
+from .custody_json import canonical_bytes, decode
 
 
 SUPPORTED_CONTROLLER_NEUTRAL_ENVIRONMENTS = (
@@ -110,15 +111,18 @@ def _tuple2(name: str, value: object) -> tuple[float, float]:
     )
 
 
-def _flat_dataclass(base: Any, raw: object | None, *, name: str) -> Any:
+_Dataclass = TypeVar("_Dataclass")
+
+
+def _flat_dataclass(base: _Dataclass, raw: object | None, *, name: str) -> _Dataclass:
     values = _object(name, raw)
-    known = {item.name for item in fields(base)}
+    known = {item.name for item in fields(cast(Any, base))}
     _reject_unknown(name, values, known)
     normalized = {
         key: _typed_scalar(f"{name}.{key}", value, getattr(base, key))
         for key, value in values.items()
     }
-    return replace(base, **normalized)
+    return cast(_Dataclass, replace(cast(Any, base), **normalized))
 
 
 def _plant_from_dict(raw: object | None) -> PlantConfig:
@@ -638,6 +642,9 @@ class ControllerNeutralTrainingConfigV1:
                 raise ValueError(
                     "registered beta RL output_dir must be external to the repository"
                 )
+            from .registered_contract import require_task_template
+
+            require_task_template(self)
         else:
             if collected_timesteps > BETA_FIXTURE_MAX_COLLECTED_TIMESTEPS:
                 raise ValueError(
@@ -717,19 +724,33 @@ class ControllerNeutralTrainingConfigV1:
         target = Path(path)
         if not target.is_file():
             raise ValueError(f"no controller-neutral training config at {target}")
+        from .registered_contract import is_registered_config_path
+
+        campaign_path = is_registered_config_path(target)
         try:
-            raw = json.loads(target.read_text(encoding="utf-8"))
+            encoded = target.read_bytes()
+            raw = decode(encoded)
         except (OSError, json.JSONDecodeError) as reason:
             raise ValueError(f"cannot read {target}: {reason}") from reason
-        return cls.from_dict(_object("controller-neutral training settings", raw))
+        config = cls.from_dict(raw)
+        # A campaign config cannot downgrade itself by deleting beta_rl. This
+        # classification uses reserved paths, independently of config data.
+        if campaign_path or (
+            config.beta_rl is not None
+            and config.beta_rl.run_kind == BETA_REGISTERED_RUN_KIND
+        ):
+            from .custody_io import read_regular
+            from .registered_contract import require_canonical_config
+
+            if read_regular(target.absolute()) != encoded:
+                raise ValueError("registered configuration changed during admission")
+            require_canonical_config(encoded, config)
+        return config
 
     def write(self, path: Path | str) -> Path:
         target = Path(path)
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(
-            json.dumps(self.to_dict(), indent=2, sort_keys=True) + "\n",
-            encoding="utf-8",
-        )
+        target.write_bytes(canonical_bytes(self.to_dict()))
         return target
 
 

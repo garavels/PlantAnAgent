@@ -6972,3 +6972,49 @@ intervention, site/economic calibration and HIL integration remain pending. No
 registered training, selection, held-out evaluation or protocol change occurred.
 All pre-existing user documentation and the untracked custody protocol are preserved
 outside this implementation commit.
+
+## 2026-09-11 — Registered custody admission foundation
+
+Hypothesis: the frozen task digest, path-derived config classification and explicit campaign
+authority can close the generic learner's audited bypasses without changing plant physics,
+learning settings, seed domains, comparator behavior or the unified product UI.
+
+The inherited custody protocol and its four status-document edits were preserved unchanged and
+committed as `8c3d535` before source edits. Registered task validation now requires the exact
+frozen digest; JSON decoding rejects duplicates and non-finite constants/numbers before run-kind
+classification. Registered files require complete canonical bytes and regular nonsymlink,
+singly linked custody. Reserved campaign config names remain registered even if their plan is
+removed. All registered CLI overrides, including output destinations, are rejected. The generic
+registered learner remains closed until an authenticated campaign claim can admit a child.
+
+New outcome-free infrastructure provides the exact 15-cell matrix, exclusive file and directory
+persistence barriers, complete retained-artifact inventories, bounded sealed subprocess logs,
+process-group cleanup, read-only tracked authorization and commit-lineage admission, a fixed
+production checkpoint-loader adapter, exact plan/claim/receipt/report schemas, and the closed
+failure precedence. These are components of the custodian; they do not yet constitute a complete
+campaign runner or detached verifier. REGISTERED_TRAINING_CUSTODY_BUILD.md tracks each remaining
+admission obligation and records representation choices before registered outcomes exist.
+
+The initial config-focused suite passed 226 tests. Process fixtures first exposed three failures
+when querying an exiting process group before reaping its leader; rerunning outside the sandbox
+did not resolve them. Cleanup now reaps before probing and treats only ESRCH as disappearance,
+with bounded retry for Darwin's transient EPERM. The filesystem/process suite then passed 15
+tests; adding handled parent SIGTERM/SIGHUP fixtures raised that to 17 passing tests. One
+authorization test exposed an exception-class mismatch from the reused strict host validator;
+the custody boundary now normalizes that categorical schema rejection, and all 20 authorization
+tests passed. Existing loosely typed dataclass parsing was made generic, and an obsolete callback
+type suppression removed, to pass strict typing of the touched modules.
+
+The combined config, authorization, inventory/process and negative checkpoint suite passed 270
+tests before the final two interruption fixtures. Inert document tests then passed 129 tests,
+including every pair of failure-precedence collisions and the complete sequential claim chain.
+Strict typing passed the eight source modules checked at that point. These are incremental
+fixture results, not the complete clean release gate. No registered, development or held-out
+reset, optimizer update, policy comparison, selection or production authorization occurred.
+
+The final foundation regression run passed **605 tests in 39.40 seconds**, including the existing
+constrained learner, beta checkpoint, runtime provenance and capacity suites. Strict typing passed
+all nine touched source modules; Black checked all 15 touched source/test files, Git whitespace
+checks passed, and the ordinary training CLI help imported successfully. The dependency lock and
+frontend are unchanged. The complete campaign, detached verifier and downstream analysis gates
+remain pending; this commit is an auditable intermediate foundation, not a release admission.

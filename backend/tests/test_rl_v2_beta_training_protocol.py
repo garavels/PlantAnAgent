@@ -159,7 +159,7 @@ def test_fixture_output_cannot_contaminate_its_own_source_provenance(
     assert Path(admitted.output_dir).is_relative_to(repository / "runs")
 
 
-def test_registered_cli_refuses_identity_overrides_but_allows_destination(
+def test_registered_cli_refuses_all_overrides(
     tmp_path: Path,
 ) -> None:
     config_path = _registered_config(tmp_path / "registered").write(
@@ -172,15 +172,13 @@ def test_registered_cli_refuses_identity_overrides_but_allows_destination(
         ["--timesteps", "8192"],
         ["--resume", str(tmp_path / "parent")],
         ["--environment", beta_spaces.ENVIRONMENT_ID],
+        ["--output", str(tmp_path / "registered-override")],
     ):
-        with pytest.raises(ValueError, match="only an output override"):
+        with pytest.raises(ValueError, match="forbids all CLI overrides"):
             resolve(parser.parse_args(["--config", str(config_path), *override]))
-
-    destination = tmp_path / "registered-override"
-    resolved = resolve(
-        parser.parse_args(["--config", str(config_path), "--output", str(destination)])
+    assert resolve(parser.parse_args(["--config", str(config_path)])) == (
+        _registered_config(tmp_path / "registered")
     )
-    assert resolved.output_dir == str(destination)
 
 
 def test_fixture_cli_cannot_relabel_beta_rl_as_an_alpha_task(tmp_path: Path) -> None:
