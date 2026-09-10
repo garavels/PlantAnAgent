@@ -1,6 +1,6 @@
 # Registered training custody build
 
-Status: **implementation in progress; registered training closed**
+Status: **custody implementation validated at `ad6ad1e`; study preparation in progress; registered training closed**
 
 The unchanged custody protocol and inherited status edits were committed as `8c3d535`
 before this implementation. Its raw SHA-256 is
@@ -11,16 +11,16 @@ The three families, five optimizer seeds, plant task, learning budgets and seed 
 
 | Requirement | Implementation status | Remaining admission evidence |
 | --- | --- | --- |
-| Exact registered task and canonical configs | Implemented; complete immutable template and all-15 config bytes rechecked before authenticated child launch | Complete clean release gate |
-| Exact 15-cell matrix and paths | Implemented; durable prepublication and independent verifier reconstruction | Complete clean release gate |
+| Exact registered task and canonical configs | Implemented; complete immutable template and all-15 config bytes rechecked before authenticated child launch | Passed clean gate at `ad6ad1e` |
+| Exact 15-cell matrix and paths | Implemented; durable prepublication and independent verifier reconstruction | Passed clean gate at `ad6ad1e` |
 | Tracked authorization, scope, host and commit lineage | Read-only admission implemented; synthetic scope and Git fixtures | Final approved implementation, explicit user authorization and subsequent clean release gate |
-| Durable claims, non-retry and sequential chain | Implemented; campaign state machine, single-use parent pipe, interruption and publication-failure fixtures | Complete clean release gate |
-| Sealed bounded subprocess logs and process groups | Implemented; tiny process fixtures and complete synthetic matrix continuation/abort tests | Complete clean release gate |
-| Artifact inventory and checkpoint admission | Implemented; production loader, retained partial/forbidden artifacts, substitution and post-load mutation checks | Complete clean release gate |
-| Closed failures and complete accounting | Implemented; all 15 cells, exact failure precedence, stopped/unstarted accounting | Complete clean release gate |
-| Production/synthetic separation | Implemented; separate report paths and schema rejection before dependency access | Complete clean release gate |
-| Detached verification and post-publication gate | Implemented; independent reconstruction and mandatory fresh-process invocation, including recapture failure | Complete clean release gate |
-| Protected seed isolation and full release gate | No protected reset or optimizer step used during this build | Full repository checks on a clean completed implementation |
+| Durable claims, non-retry and sequential chain | Implemented; campaign state machine, single-use parent pipe, interruption and publication-failure fixtures | Passed clean gate at `ad6ad1e` |
+| Sealed bounded subprocess logs and process groups | Implemented; tiny process fixtures and complete synthetic matrix continuation/abort tests | Passed clean gate at `ad6ad1e` |
+| Artifact inventory and checkpoint admission | Implemented; production loader, retained partial/forbidden artifacts, substitution and post-load mutation checks | Passed clean gate at `ad6ad1e` |
+| Closed failures and complete accounting | Implemented; all 15 cells, exact failure precedence, stopped/unstarted accounting | Passed clean gate at `ad6ad1e` |
+| Production/synthetic separation | Implemented; separate report paths and schema rejection before dependency access | Passed clean gate at `ad6ad1e` |
+| Detached verification and post-publication gate | Implemented; independent reconstruction and mandatory fresh-process invocation, including recapture failure | Passed clean gate at `ad6ad1e` |
+| Protected seed isolation and full release gate | No protected reset or optimizer step used during this build | 2,285 Python tests and complete static/frontend gate passed at `ad6ad1e` |
 | Development analysis and campaign schema binding | Pending | All-32 pairwise eligibility, selection, sensitivity, uncertainty, latency and detached verifiers |
 
 The generic registered `train()` entry point now requires a one-use permission delivered by
@@ -79,8 +79,20 @@ campaign admission floor remain visible planning constraints, not execution appr
 
 ## Work still required before requesting the study
 
-Finish the clean release validation of the campaign runner and detached verifier, then close
-the development-analysis build required by the post-capacity audit. The comparator fallback
+Close the development-analysis build required by the post-capacity audit. The campaign runner
+and detached verifier passed their complete clean release gate at
+`ad6ad1e85a0269f592d42b7c9edcd6c64f2c0579`: 2,285 Python tests, strict typing of all 17 changed
+source modules, Black on all 29 changed Python files, compilation, CLI help/import,
+Git whitespace and lock cleanliness, and frontend production build/lint. This does not admit
+any later implementation revision or authorize training.
+
+The current registered policy loader requires the exact training source/runtime identity.
+Consequently selection, sensitivity, uncertainty, latency registration and independent
+development/held-out report verification must be in the frozen implementation before training;
+post-training source edits cannot silently become the evaluation runtime. The later stage
+authorization/evidence workflow must preserve this identity and keep stage permissions separate.
+
+The comparator fallback
 descriptor verifier gap is now closed with exact-field and declaration checks, eight new
 reset-free adversarial tests, and a passing 43-test verifier regression run. The accepted E-beta stop diagnosis,
 M24 product connection and explicit operational handover remain separate product work; none

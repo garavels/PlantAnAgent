@@ -205,8 +205,9 @@ equipment consequences.
   configuration did not yet freeze every task/economic default and that no 15-run durable campaign
   custodian existed. The frozen repair now has exact task validation, a durable sequential
   campaign runner, authenticated child launch and detached verification, with synthetic failure
-  and tampering coverage. Its complete clean release gate remains pending; development pairwise
-  selection and held-out statistics remain a separate subsequent build gate.
+  and tampering coverage. Clean revision `ad6ad1e` passed 2,285 Python tests and the complete
+  static/frontend gate. Development pairwise selection, sensitivity and held-out statistics
+  remain a separate subsequent build gate before requesting the study.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.
 

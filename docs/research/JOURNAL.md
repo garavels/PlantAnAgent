@@ -7093,3 +7093,34 @@ suite passed **39 tests in 13.54 seconds**. The protocol and learner command rem
 CLI import/help, the Makefile's nonexecuting command expansion, dependency-lock cleanliness,
 both frozen protocol hashes and Git whitespace checks passed. The next complete repository
 gate will run on the clean committed campaign implementation, without opening study seeds.
+
+## 2026-09-11 — Complete custody release gate at `ad6ad1e`
+
+Clean revision `ad6ad1e85a0269f592d42b7c9edcd6c64f2c0579` passed **2,285 Python tests in
+536.22 seconds**, with successful process exit. The existing Starlette/httpx deprecation
+warning remained; native HiGHS cleanup diagnostics appeared after the passing test summary.
+Compilation, CLI help/import, Git whitespace, unchanged dependency lock, Black checks on
+all 29 Python files changed since the frozen custody protocol, strict mypy 2.3.1 checks on
+all 17 changed source modules, frontend production build and oxlint also passed. Git status
+was empty before and after the gate. The existing large 3D frontend chunk warning remains.
+
+An optional type-check expansion into the unchanged `training/ppo.py` reported a redundant
+cast at line 150. That module is outside this implementation's changed-source set; no source
+was modified to suppress the diagnostic. The required 17-module scope passed on the clean
+revision. Test collection found the same 2,285 tests and performed no environment resets.
+
+The custody runner/verifier implementation is now validated; this status update records its
+tested revision and does not claim that a future code or authorization revision has passed.
+All genuine model training in this gate was disposable fixture-domain test work. No registered
+training, development/held-out reset, outcome selection or production authorization occurred.
+The fixed three-family/five-seed study and both protocol hashes remain unchanged.
+
+Read-only downstream inspection confirmed two prerequisites: the current four-arm aggregator
+filters on H/M24 feasibility and therefore cannot supply the registered PPO/E-beta pairwise
+selector, and registered checkpoint loading requires exact training source/runtime provenance.
+Before requesting the multi-day study, the frozen source still needs all-32 pairwise eligibility,
+five-policy family retention, the lexicographic champion selector, generic policy-minus-E-beta
+sensitivity, registered uncertainty/latency/scorecards and detached development/held-out
+campaign verification. Later stage permission and evidence publication must preserve the
+training source identity. These findings required no manifest, protected seed, checkpoint
+outcome, sealed log or controller evaluation to be opened.

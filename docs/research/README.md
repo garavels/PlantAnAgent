@@ -306,8 +306,8 @@ fallback behavior.
 - [`REGISTERED_TRAINING_CUSTODY_BUILD.md`](REGISTERED_TRAINING_CUSTODY_BUILD.md)
   tracks custody implementation, fixture evidence and remaining admission gates. The generic
   registered learner requires authenticated campaign custody. The runner and detached verifier
-  are implemented and fixture-tested; complete clean release validation and later explicit
-  authorization remain required before any registered reset.
+  passed 2,285 Python tests plus the complete static/frontend gate at clean revision `ad6ad1e`.
+  The downstream analysis build and later explicit authorization remain required before the study.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.
