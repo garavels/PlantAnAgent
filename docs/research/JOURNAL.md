@@ -8029,3 +8029,14 @@ Training root and authorization remain absent; both frozen upstream protocols,
 lock, simulator and frontend are unchanged. The repair is implemented with
 negative fixture evidence; comparator reliability and final training admission
 remain unresolved.
+
+### Commission operating controller
+
+The user authorized the simplified commission scope: physical correctness and
+safety remain hard, extra conservative forecasting is deferred, daily inventory
+restoration becomes a measured operating target, and an infeasible forecast must
+not end the product run. `COMMISSION_OPERATING_SCOPE.md` freezes this prospective
+implementation and its single bounded fixture rehearsal. Product MPC receives a
+new identity; the strict E-beta and all registered study contracts stay unchanged.
+The hypothesis is usable supervisory operation with explicit shortfall/recovery
+and fallback records, not reliable fulfillment or an economic performance win.
