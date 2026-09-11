@@ -7861,3 +7861,14 @@ evidence raw digest and exact budget reconstruction. Both frozen upstream protoc
 hashes and `uv.lock` remain unchanged. The proposed training root and tracked
 training authorization are still absent. No second full-suite run was warranted
 for this documentation-only record.
+
+### Authorized E-beta uncertainty repair
+
+The user explicitly authorized implementation of forecast/model discrepancy
+diagnosis, conservative scheduling and early reserves before PPO training. The
+prospective scope in `BETA_MPC_UNCERTAINTY_REPAIR.md` fixes a public-band-p10 policy,
+1% capacity buffers and a two-hour daylight lead, with spendable observed buffers
+after the restoration deadline. These values are declared before the revised
+controller is run; no parameter search is authorized. Existing mean-policy
+behavior and negative evidence remain reproducible. Focused tests and three
+bounded fixture seeds are specified; no registered execution is opened.
