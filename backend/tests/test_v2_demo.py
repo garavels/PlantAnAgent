@@ -267,8 +267,19 @@ def test_ebeta_error_stops_without_fallback_or_private_exception_text(
 
 def test_optional_real_ebeta_decision_projects_its_actual_plan(
     demo: v2_demo.V2DemoSession,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     pytest.importorskip("scipy")
+    # A feasible projection fixture is separate from the fixed product scenario,
+    # whose revised exact-settlement model is independently tested below.
+    from plant_backend.rl.v2.config import EpisodeConfigV2
+
+    environment_type = v2_demo.PlantCyclicMarketEnvV2Beta
+    monkeypatch.setattr(
+        v2_demo,
+        "PlantCyclicMarketEnvV2Beta",
+        lambda: environment_type(episode=EpisodeConfigV2(delivery_rate_kg_h=1.0)),
+    )
     before = demo.reset("E-beta")
     after = demo.step(_step(before))
     assert after["status"] == "ready", after["error"]
@@ -410,3 +421,14 @@ def test_single_fixture_day_settles_real_deliveries_and_resource_cycle(
         )
     assert len(snapshot["history"]) == 97
     assert demo._history.maxlen == 673
+
+
+def test_default_ebeta_infeasibility_is_retained_without_advancing(demo):
+    pytest.importorskip("scipy")
+    before = demo.reset("E-beta")
+    after = demo.step(_step(before))
+    assert after["status"] == "failed"
+    assert "BetaMPCSolveError" in after["error"]
+    assert "No fallback" in after["error"]
+    assert after["frame"]["state"] == before["frame"]["state"]
+    assert after["frame"]["decision"] is None

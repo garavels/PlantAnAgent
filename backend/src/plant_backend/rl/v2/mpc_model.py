@@ -803,6 +803,7 @@ def build_service_mpc_model(
     commitment_profile: ElectrolyserCommitmentProfile | None,
     horizon_intervals: int,
     causal_current_dac_health: bool = False,
+    mandatory_deliveries: bool = False,
 ) -> ServiceMPCModelV1:
     """Build the frozen finite service-MPC model from public inputs only."""
 
@@ -816,6 +817,8 @@ def build_service_mpc_model(
         raise TypeError("constraints must be Constraints")
     if not isinstance(config, PlantConfig):
         raise TypeError("config must be PlantConfig")
+    if type(mandatory_deliveries) is not bool:
+        raise TypeError("mandatory_deliveries must be a bool")
     horizon = _integer("horizon_intervals", horizon_intervals, minimum=1)
     if (
         horizon > settings.maximum_planning_intervals
@@ -1135,6 +1138,13 @@ def build_service_mpc_model(
     terminal_feedstock = variables.add_group(
         "terminal_feedstock_ch4_equivalent_kg", 1, upper=feedstock_capacity
     )[0]
+    delivery_stockout = (
+        variables.add_group(
+            "mandatory_delivery_stockout", len(deliveries), upper=1.0, binary=True
+        )
+        if mandatory_deliveries and deliveries
+        else ()
+    )
 
     for index in delivered:
         variables.primary[index] = -1.0
@@ -1358,6 +1368,21 @@ def build_service_mpc_model(
                 upper=1.0,
             )
     for target in deliveries:
+        if mandatory_deliveries:
+            stockout = delivery_stockout[target.ordinal]
+            rows.add(
+                f"mandatory_delivery_request[{target.ordinal}]",
+                {
+                    delivered[target.due_boundary - 1]: 1.0,
+                    stockout: target.requested_kg,
+                },
+                lower=target.requested_kg,
+            )
+            rows.add(
+                f"mandatory_delivery_empty[{target.ordinal}]",
+                {ch4_state[target.due_boundary]: 1.0, stockout: ch4_capacity},
+                upper=ch4_capacity,
+            )
         rows.add(
             f"minimum_fill[{target.ordinal}]",
             {
@@ -1426,6 +1451,10 @@ def build_service_mpc_model(
                 "nominal recovery without consulting a future fault schedule"
             ),
         }
+    if mandatory_deliveries:
+        metadata["mandatory_deliveries"] = (
+            "delivered=min(available CH4, request); no withholding action"
+        )
     return ServiceMPCModelV1(
         model_version=SERVICE_MPC_MODEL_VERSION,
         settings_sha256=settings.sha256,

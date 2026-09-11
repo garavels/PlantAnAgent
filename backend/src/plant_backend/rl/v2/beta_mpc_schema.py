@@ -33,7 +33,7 @@ from .setpoint_control import ProcessSetpointTargetsV1
 BETA_MPC_SCHEMA_VERSION = 1
 BETA_MPC_CONTROLLER_ID = "cyclic-market-economic-mpc-v1"
 BETA_MPC_MODEL_VERSION = "cyclic-return-economic-mpc-v2"
-BETA_MPC_UNCERTAINTY_POLICY = "public-p10-early-reserves-v1"
+BETA_MPC_UNCERTAINTY_POLICY = "public-p10-early-reserves-v2"
 BETA_MPC_MEAN_POLICY = "issued-mean-v1"
 BETA_MPC_OBJECTIVE_VERSION = "cycle-feasible-service-then-eur-v1"
 BETA_MPC_PRICE_PROJECTION_VERSION = "current-then-issued-hourly-mean-v1"
@@ -175,6 +175,7 @@ class BetaMPCSettingsV1(EconomicMPCSettingsV1):
             body.update(
                 {
                     "uncertainty_policy": self.uncertainty_policy,
+                    "delivery_settlement_semantics": "mandatory min(available CH4, request); no withholding action",
                     "forecast_projection_version": P10_FORECAST_PROJECTION_VERSION,
                     "forecast_statistic": "issued_band_p10",
                     "weather_forecast_statistic": "current public issued band p10",

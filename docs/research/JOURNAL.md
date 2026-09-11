@@ -7927,3 +7927,33 @@ was 240 kg. The next prospective scope, `BETA_MPC_DELIVERY_MODEL_REPAIR.md`, fix
 this independently demonstrable model mismatch with exact mandatory settlement,
 preserving every failed attempt and all uncertainty-policy parameters. This is
 part of the user-authorized model repair, not an outcome-based parameter search.
+
+The exact-settlement implementation adds one binary per delivery to the revised
+policy only. Existing methane balance and request bounds plus the disjunction
+(full shipment or empty post-shipment tank) enforce the simulator's minimum rule
+independently of objective weights. The legacy mean/M24/alpha formulation remains
+unchanged. The policy identity advances to `public-p10-early-reserves-v2`; the
+complete solution witness and detached model audit include the added variables.
+
+The first focused model/roundoff gate passed 17 cases in 3.50 seconds; strict
+mypy passed five changed modules. The broader model/solver/verifier/product gate
+passed 92 cases and failed one previous assumption that the default product
+fixture always yields an E-beta plan. Direct inspection at fixture 9,000,034
+confirmed primary-stage infeasibility (HiGHS status 2), before any physical
+advance. Public-boundary structural diagnostics also found infeasibility with
+p10 without extra buffers, mean with buffers/constant-power rows, and mean
+without either added row set, all retaining mandatory settlement. Those modified
+model objects are diagnostic relaxations, not admissible controller plans or
+performance comparisons; no protected seed was opened. This does not establish
+infeasibility of the nonlinear physical plant.
+
+The product keeps its fixed scenario and records the opening failure without
+advancing or falling back. A separate low-load unit fixture tests projection of
+a feasible real plan; the fixed product scenario has its own explicit failure
+regression. The API now derives task horizon/cadence from its actual environment,
+and its existing information line accurately describes the revised E-beta policy.
+No frontend or visual styling changed. The final API/uncertainty gate completed
+with 21 passes and one existing deprecation warning in 36.55 seconds; its exact
+terminal result was recovered from this task's command record after compaction,
+without duplicating the process. This commit precedes the second, distinct
+three-seed fixture; no complete-week success or training readiness is claimed.

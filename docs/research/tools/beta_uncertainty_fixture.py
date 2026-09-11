@@ -28,8 +28,8 @@ from study_capacity_fixture import (
 )
 
 SEEDS = (9_100_001, 9_100_002, 9_100_003)
-SCHEMA = "plant-beta-mpc-uncertainty-fixture-v1"
-PROTOCOL = "docs/research/BETA_MPC_UNCERTAINTY_REPAIR.md"
+SCHEMA = "plant-beta-mpc-uncertainty-delivery-fixture-v2"
+PROTOCOL = "docs/research/BETA_MPC_DELIVERY_MODEL_REPAIR.md"
 
 
 def identity() -> dict[str, Any]:
@@ -37,6 +37,11 @@ def identity() -> dict[str, Any]:
         "source": benchmark._source_provenance(require_clean=True),
         "scope_raw_sha256": hashlib.sha256(
             (repository_root() / PROTOCOL).read_bytes()
+        ).hexdigest(),
+        "original_scope_raw_sha256": hashlib.sha256(
+            (
+                repository_root() / "docs/research/BETA_MPC_UNCERTAINTY_REPAIR.md"
+            ).read_bytes()
         ).hexdigest(),
     }
 

@@ -58,7 +58,11 @@ def _controller(
     from .rl.v2.beta_mpc_schema import BetaMPCSettingsV1, BETA_MPC_UNCERTAINTY_POLICY
 
     return CyclicMarketEconomicMPCControllerV1(
-        settings=BetaMPCSettingsV1(uncertainty_policy=BETA_MPC_UNCERTAINTY_POLICY),
+        settings=BetaMPCSettingsV1(
+            task_horizon_h=environment.episode_config.horizon_h,
+            interval_s=environment.episode_config.decision_interval_s,
+            uncertainty_policy=BETA_MPC_UNCERTAINTY_POLICY,
+        ),
         assumptions=environment.economic_assumptions,
         beta_task=environment.beta_task,
     )
@@ -215,7 +219,7 @@ class V2DemoSession:
         notes = list(getattr(decision.evidence, "source_notes", ()))
         if self._controller_id == "E-beta":
             notes.append(
-                "Experimental economic MPC: current public mean forecasts and next-cycle resource returns."
+                "Economic MPC: public solar p10, early resource reserves, mandatory deliveries."
             )
         notes.append(
             "Targets held for 15 minutes; dispatcher and safety guard run every minute."

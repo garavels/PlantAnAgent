@@ -604,6 +604,8 @@ def build_beta_mpc_model(
             interval_prices_eur_per_mwh=price_projection.prices_eur_per_mwh,
             price_source_id=price_projection.price_source_id,
             causal_current_dac_health=True,
+            mandatory_deliveries=settings.uncertainty_policy
+            == BETA_MPC_UNCERTAINTY_POLICY,
         )
     except (EconomicMPCInputError, ServiceMPCInputError) as exc:
         raise BetaMPCInputError(str(exc)) from exc

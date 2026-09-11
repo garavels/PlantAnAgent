@@ -261,3 +261,48 @@ def test_retained_deficit_is_dispatch_mismatch_despite_more_available_solar():
     )
     assert states[1]["solar_curtailed_kw"] > 0
     assert states[-1]["solar_to_battery_kw"] < 1e-10
+
+
+def test_mandatory_delivery_disjunction_matches_physical_minimum(case):
+    model, _ = build(case)
+    physical = model.physical_model
+    request = physical.deliveries[0].requested_kg
+    boundary = physical.deliveries[0].due_boundary
+    delivered_index = physical.group("delivered_kg")[boundary - 1]
+    inventory_index = physical.group("ch4_inventory_kg")[boundary]
+    stockout_index = physical.group("mandatory_delivery_stockout")[0]
+    rows = [row for row in physical.rows if row.name.startswith("mandatory_delivery_")]
+    assert len(rows) == 2
+    capacity = case[0].config.ch4_tank.capacity_kg
+    # Exhaust both binary choices. This oracle does not depend on objective weights.
+    for available in (0.0, request / 2, request, request + 50):
+        for delivery in {
+            0.0,
+            request / 4,
+            request / 2,
+            request,
+            min(available, request),
+        }:
+            accepted = False
+            for stockout in (0.0, 1.0):
+                values = {
+                    delivered_index: delivery,
+                    inventory_index: available - delivery,
+                    stockout_index: stockout,
+                }
+                feasible = (
+                    0 <= delivery <= request and 0 <= available - delivery <= capacity
+                )
+                for row in rows:
+                    value = sum(
+                        coefficient * values[index]
+                        for index, coefficient in row.coefficients
+                    )
+                    feasible &= row.lower is None or value >= row.lower
+                    feasible &= row.upper is None or value <= row.upper
+                accepted |= feasible
+            assert accepted == (delivery == min(available, request))
+    legacy, _ = build(
+        case, settings=replace(case[1], uncertainty_policy="issued-mean-v1")
+    )
+    assert not any(row.name.startswith("mandatory_delivery_") for row in legacy.rows)
