@@ -331,8 +331,12 @@ fallback behavior.
   producer and compressed physical/timing verifier retain failures and reject protected scope;
   explicit execution-budget arithmetic covers all slots and both stages. The combined new
   execution/historical timing/archive/budget/campaign regression passes 251 tests.
-  Production stage authority, capacity, registered per-arm custody and complete detached
-  campaign reconstruction remain required.
+  External stage authority, sequential claims, isolated children and complete detached
+  campaign reconstruction are now implemented. Reset-free fixtures cover the full 576-slot
+  matrix, retained failed training/process slots, aborts, input substitution and report
+  tampering. Physical wrapper/standalone-arm/historical-admission regression passes
+  196 tests. Measured stage capacity, final complete clean release and explicit later
+  execution authorization remain required.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

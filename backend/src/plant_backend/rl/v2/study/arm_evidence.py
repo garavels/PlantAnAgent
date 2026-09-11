@@ -232,6 +232,13 @@ def _verify_fixture_envelope(envelope: dict[str, Any]) -> dict[str, Any]:
         or envelope["result_claim"] is not None
     ):
         raise ValueError("synthetic arm claim/contract differs")
+    return _verify_arm_body(envelope, config=config, seed=seed)
+
+
+def _verify_arm_body(
+    envelope: dict[str, Any], *, config: ControllerNeutralTrainingConfigV1, seed: int
+) -> dict[str, Any]:
+    """Shared physics reconstruction after the caller admits stage/task/seed scope."""
     actor = verifier._mapping("study actor", envelope["actor"])
     arm = verifier._text("study arm", actor.get("arm"))
     verifier._exact("study actor", actor, _actor(arm, config))
@@ -298,7 +305,7 @@ def _verify_fixture_envelope(envelope: dict[str, Any]) -> dict[str, Any]:
         "source_evidence_verified": True,
         "registered_checkpoint_verified": False,
         "result_claim": None,
-        "stage": "fixture",
+        "stage": envelope["stage"],
         "seed": seed,
         "actor": actor,
         "source_provenance": source,

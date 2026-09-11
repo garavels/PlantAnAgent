@@ -402,8 +402,8 @@ development and must remain unchanged for held-out execution. No limit may be
 selected from development or held-out outcomes.
 
 Mechanical reservation retains all 576 physical/timing allowances, both capped
-logs for every cell, two 64 KiB cell control documents, five 8 MiB root/authority
-documents, the compressed report and the filesystem reserve. Development opening
+logs for every cell, two 64 KiB cell control documents, six 8 MiB root/authority
+documents, two detached-verifier logs, the compressed report and the filesystem reserve. Development opening
 requires room for both stages; held-out opening requires the remaining stage.
 The sum of child timeouts is reported separately and excludes parent admission,
 verification and publication. These bounds are not measured wall-clock or storage
@@ -418,5 +418,69 @@ and rehashed budget/authority substitutions. Strict typing passes all five
 changed source modules, Black checks seven Python files, and compilation,
 whitespace, unchanged-lock and frozen upstream protocol checks pass. No capacity
 measurement or production authority is inferred from these fixture results.
-The source execution-contract digest is
+At `a445e56`, the source execution-contract digest was
 `617689e17b528adc73addb4f67ac85f40c60cfd5b190bcbb3de6c780c9594371`.
+
+## Production stage custody connection
+
+External stage authorization binds the fixed registry, freshly reconstructed
+training inputs, exact source and evaluation host, explicit budget, and operator
+assertions covering capacity review, no concurrent benchmarks, no retries and no
+outcome inspection before detached closure. It authorizes one named stage only.
+Held-out admission must freshly reconstruct the development report and every
+opening condition, retain its exact choices, and preserve its budget and host.
+No saved verification flag is an admission token.
+
+The parent keeps the original training thread contract; each child verifies its
+live parent's anonymous permission pipe and durable claim, readmits its own PPO
+checkpoint without reset, then configures Torch 1/1. It constructs/resets its execution environment and
+publishes arm/timing archives bound to its claim, stage, source and training
+inputs. A host lock and the sequential claim/terminal chain enforce one study
+child at a time. Detached closure reconstructs process failures, full physical
+and timing witnesses, every missing/failed slot and the complete aggregate.
+
+Stage directories and all 576 cell directories are consumed before the first
+attempt. Each cell has one claim and terminal, including skipped unadmitted
+training slots. Process failures and rejected evidence retain all files; an
+integrity loss stops subsequent attempts. No retry, repair or source change is
+permitted after opening. Production admission requires at least 1 GiB of
+filesystem reserve beyond explicit data/control allowances; the final capacity
+review must account for allocation rounding and filesystem metadata overhead.
+
+The implemented CLI is `python -m plant_backend.rl.v2.study.stage_cli` with
+`run`, `child` and `verify` subcommands. Each requires the canonical external
+training root and named stage. `run` also requires confirmed operator assertions;
+`child` cannot run from saved files without its live parent's consumed pipe.
+`verify --publish` runs in the parent's fixed fresh subprocess and publishes the
+compact verdict only after complete reconstruction. The verifier has its own
+86,400-second timeout and two external bounded logs; its process receipt is retained
+beside the stage root, so publication does not mutate already-sealed cell evidence.
+The current execution-contract digest is
+`16d683ffc9a9f30076acd86efccc7c2c7f8a9acdb5e89daa7d27c729276da6e8`.
+
+The child rechecks the training tree, stage inputs, authorization identity, live
+parent and source immediately before execution and before publication. Only its
+two parent-owned live logs may grow during admission. The parent checks that the
+original durable claim was not replaced before it can start a later cell.
+If a replaced root/claim or damaged history cannot be reconstructed, publication
+fails and the consumed files remain for forensic inspection; no repair or retry
+is implied. A pre-claim storage/operator abort retains all remaining slots.
+
+Initial strict typing found a nullable failure assignment and an indirect timestamp
+import; both are corrected. The new reset-free fixtures exercise the complete
+576-slot parent, analysis, cached-verdict rejection and rehashed report changes,
+as well as external authority, live pipes, locks and child admission ordering.
+An initial runtime-change fixture supplied `None` and therefore tested a type
+error instead of a changed runtime; it now substitutes a valid different revision.
+Seven focused corrections/additions pass, including the complete existing training
+custody bridge with explicitly fake models and all 128 endpoint rollout rows.
+The initial combined stage/budget suite completed with 112 passes and that one
+fixture failure in 665.60 seconds; its valid-runtime correction is in the passing
+seven-case follow-up. Full 576-slot closure, failed training/process retention and
+every tested abort/layout boundary pass. The complete stage/budget coverage is
+76 stage cases plus 43 budget cases across those runs. The physical-wrapper,
+standalone-arm and historical-admission regression passes **196 tests in 498.39
+seconds**. All four fixture digests are preserved; rehashed bindings are rejected
+before physics reconstruction, and physical/timing/hardware changes fail their
+witness checks. These are not capacity or final release results. The latest
+complete clean repository gate remains `ad6ad1e`.

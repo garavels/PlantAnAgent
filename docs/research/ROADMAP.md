@@ -222,9 +222,12 @@ equipment consequences.
   results with one environment/reset, and its fixture-only compressed evidence verifier retains
   failures while rejecting protected scope. Explicit budget arithmetic covers every slot and
   both stages; the combined execution/timing/archive/budget/campaign regression passes 251 tests.
-  Registered evaluation/hardware authority, measured stage capacity, per-arm claim/checkpoint
-  binding, campaign orchestration and complete detached custody remain build gates before
-  requesting the study.
+  External evaluation/hardware authority, per-arm claim/checkpoint binding, sequential child
+  orchestration and complete detached custody are now implemented. Reset-free fixtures cover
+  all 576 slots, failure retention, aborts and substituted inputs/reports. The physical-wrapper,
+  standalone-arm and historical-admission regression passes 196 tests. Measured stage
+  capacity, the final complete clean release gate and explicit later execution
+  authorization remain required before requesting the study.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.
 

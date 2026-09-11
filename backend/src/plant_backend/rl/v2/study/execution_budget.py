@@ -18,7 +18,7 @@ from .contract import PREFIX
 ARMS = ("H", "M24", "E-beta", "PPO")
 ROOT_CONTROL_LIMIT_BYTES = 8 * 1024**2
 CELL_CONTROL_LIMIT_BYTES = 64 * 1024
-ROOT_CONTROL_DOCUMENT_COUNT = 5  # registry, authority input/copy, opening, verification
+ROOT_CONTROL_DOCUMENT_COUNT = 6  # includes the external detached-process receipt
 CELL_CONTROL_DOCUMENT_COUNT = 2  # claim and terminal
 SCHEMA = PREFIX + "execution-budget-v1"
 
@@ -76,6 +76,8 @@ def execution_contract() -> dict[str, Any]:
             "concurrent_children": 1,
             "attempts_per_cell": 1,
             "resets_per_executed_cell": 1,
+            "detached_verifier_timeout_seconds": 86_400,
+            "detached_verifier_log_count": 2,
             "same_limits_for_all_ppo_families_and_seeds": True,
             "limits_frozen_before_development_and_unchanged_in_heldout": True,
             "development_reserves_stage_count": 2,
@@ -147,6 +149,7 @@ class ExecutionBudget:
             + ROOT_CONTROL_DOCUMENT_COUNT * ROOT_CONTROL_LIMIT_BYTES
             + 576 * CELL_CONTROL_DOCUMENT_COUNT * CELL_CONTROL_LIMIT_BYTES
             + self.report_stored_bytes
+            + 2 * self.log_limit_bytes
         )
 
     def opening_free_bytes(self, stage: str) -> int:

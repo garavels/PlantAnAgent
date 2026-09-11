@@ -29,12 +29,13 @@ def example() -> budget.ExecutionBudget:
 def test_complete_reservation_oracle_and_no_permission(tmp_path: Path) -> None:
     model = example()
     # 32 episodes, three baselines once and 15 PPO policies. Include every
-    # failed-arm log allowance, two controls/cell, five root/authority documents.
+    # failed-arm log allowance, two controls/cell, six root/authority documents,
+    # and the detached verifier's two bounded logs.
     evidence_per_episode = (
         (100 + 10) + (200 + 20) + (300 + 30) + 15 * (400 + 40) + 18 * 2 * 17
     )
-    controls = 5 * 8 * 1024**2 + 576 * 2 * 64 * 1024
-    one_stage = 32 * evidence_per_episode + controls + 1_000
+    controls = 6 * 8 * 1024**2 + 576 * 2 * 64 * 1024
+    one_stage = 32 * evidence_per_episode + controls + 1_000 + 2 * 17
     assert model.stage_allocation_bound_bytes == one_stage
     assert model.opening_free_bytes("development") == 2 * one_stage + 123
     assert model.opening_free_bytes("heldout") == one_stage + 123

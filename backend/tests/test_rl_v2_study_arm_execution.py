@@ -2,6 +2,7 @@
 
 from copy import deepcopy
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -365,3 +366,142 @@ def test_failure_retains_timing_and_never_retries(
     else:
         assert resets == [9_000_118]
         assert result["latency"]["channels"]["controller"]["sample_count"] == 1
+
+
+def stage_fixture(
+    executed: dict[str, Any],
+    root: Path,
+    arm: str,
+) -> tuple[Any, dict[str, Any], dict[str, Any], execute.ArmExecution]:
+    """Explicit fake stage bindings around existing 9M fixture witnesses.
+
+    This tests only the private arm wrapper; no production admission is called.
+    """
+    from plant_backend.rl.v2.study import stage_arm
+    from plant_backend.rl.v2.training import custody_io as io
+
+    source = executed["paths"][arm]
+    envelope, _ = archive.read_archive(source / compressed.ARM_FILENAME, **LIMITS.arm())
+    timing, _ = archive.read_archive(
+        source / compressed.TIMING_FILENAME, **LIMITS.timing()
+    )
+    root.mkdir()
+    descriptor = None
+    if arm == "PPO":
+        path = executed["loaded"].path
+        descriptor = {
+            "path": str(path),
+            "files": [io.file_record(path / "metadata.json")],
+            "metadata_sha256": envelope["checkpoint"]["metadata_file_sha256"],
+        }
+    cell = {
+        "order": 1,
+        "episode_seed": SEED,
+        "actor": envelope["actor"],
+        "arm_path": str(root / "arm.json.gz"),
+        "latency_path": str(root / "latency.json.gz"),
+    }
+    context = SimpleNamespace(
+        registry={"sha256": "a" * 64, "stage": "development", "cells": [cell]},
+        authorization={
+            "sha256": "b" * 64,
+            "training_inputs_sha256": "c" * 64,
+            "source_provenance": envelope["source_provenance"],
+            "latency_host": timing["host_before"],
+        },
+        budget=SimpleNamespace(for_arm=lambda _: LIMITS),
+        config_for=lambda _: executed["config"],
+        checkpoint_for=lambda _: descriptor,
+        training_failure=lambda _: None,
+    )
+    claim = {"sha256": "d" * 64}
+    result = execute.ArmExecution(
+        envelope["run"],
+        envelope["checkpoint"],
+        envelope["manifest_identity"],
+        envelope["audit_manifest"],
+        envelope["source_provenance"],
+        timing["host_before"],
+        timing["host_after"],
+        timing["measurement"],
+    )
+    stage_arm.publish_arm(context, cell, claim, result)
+    return context, cell, claim, result
+
+
+@pytest.mark.parametrize("arm", benchmark.BETA_CONTROLLER_ARM_ORDER)
+def test_stage_wrapper_reconstructs_existing_fixture_physics_without_reset(
+    executed: dict[str, Any],
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    arm: str,
+) -> None:
+    from plant_backend.rl.v2.study import stage_arm
+
+    context, cell, claim, _ = stage_fixture(executed, tmp_path / "bound", arm)
+
+    def forbidden(*args: Any, **kwargs: Any) -> None:
+        pytest.fail("stage wrapper reconstruction attempted a model or reset")
+
+    monkeypatch.setattr(PlantCyclicMarketEnvV2Beta, "__init__", forbidden)
+    monkeypatch.setattr(FixedActionPolicy, "act", forbidden)
+    actual = stage_arm.verify_cell(context, cell, claim)
+    assert (
+        actual["physical"]["arm_evidence_sha256"]
+        == executed["results"][arm]["physical"]["arm_evidence_sha256"]
+    )
+    assert actual["physical"]["seed"] == SEED
+    assert actual["physical"]["result_claim"] is None
+    assert (
+        actual["latency"]["channel_samples_ns"]
+        == executed["results"][arm]["latency"]["channel_samples_ns"]
+    )
+
+
+@pytest.mark.parametrize(
+    "defect",
+    ["claim", "source", "actor", "seed", "checkpoint", "physical", "timing", "host"],
+)
+def test_stage_wrapper_rejects_rehashed_binding_and_witness_changes(
+    executed: dict[str, Any],
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    defect: str,
+) -> None:
+    from plant_backend.rl.v2.study import stage_arm
+
+    context, cell, claim, _ = stage_fixture(executed, tmp_path / "bound", "PPO")
+    path = Path(
+        cell["latency_path"] if defect in {"timing", "host"} else cell["arm_path"]
+    )
+    limits = LIMITS.timing() if defect in {"timing", "host"} else LIMITS.arm()
+    raw, _ = archive.read_archive(path, **limits)
+    if defect == "claim":
+        raw["custody"]["claim_sha256"] = "0" * 64
+    elif defect == "source":
+        raw["source_provenance"]["git_head"] = "0" * 40
+    elif defect == "actor":
+        raw["actor"]["optimizer_seed"] += 1
+    elif defect == "seed":
+        raw["seed"] += 1
+    elif defect == "checkpoint":
+        raw["checkpoint"]["metadata_file_sha256"] = "0" * 64
+    elif defect == "physical":
+        raw["run"]["economic_metrics"]["net_operating_value_eur"] += 1
+    elif defect == "timing":
+        raw["result"]["channel_samples_ns"]["inference"][0] += 1
+    else:
+        raw["host_before"]["machine"]["cpu_brand"] = "substituted CPU"
+        raw["host_before"] = authenticate(raw["host_before"])
+    path.unlink()
+    archive.publish_archive(path, authenticate(raw), **limits)
+    if defect in {"claim", "source", "actor", "seed", "checkpoint"}:
+        monkeypatch.setattr(
+            arms,
+            "_verify_arm_body",
+            lambda *_, **__: pytest.fail(
+                "unadmitted binding reached physics reconstruction"
+            ),
+        )
+    with pytest.raises(ValueError):
+        stage_arm.verify_cell(context, cell, claim)

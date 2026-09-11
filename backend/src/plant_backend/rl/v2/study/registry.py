@@ -133,6 +133,15 @@ def stage_registry(training_root: Path | str, stage: str) -> dict[str, Any]:
             "opening_claim_path": str(stage_root / "opened.json"),
             "report_path": str(stage_root / "report.json.gz"),
             "verification_path": str(stage_root / "verification.json"),
+            "verification_stdout_path": str(
+                stage_root.with_name(stage_root.name + ".verification.stdout.log")
+            ),
+            "verification_stderr_path": str(
+                stage_root.with_name(stage_root.name + ".verification.stderr.log")
+            ),
+            "verification_process_path": str(
+                stage_root.with_name(stage_root.name + ".verification-process.json")
+            ),
             "claim_boundary": "fixed identities only; no reset, execution, stage or checkpoint authorization",
         }
     )

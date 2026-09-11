@@ -7582,3 +7582,73 @@ unchanged, and the overall goal remains active.
 
 The execution-contract digest is
 `617689e17b528adc73addb4f67ac85f40c60cfd5b190bcbb3de6c780c9594371`.
+
+### Connecting production study authority and custody
+
+The previous turn made verified progress at clean `a445e56`: one-environment
+execution, compressed witness reconstruction and explicit budgets, with 251
+passing combined cases. Hypothesis: those components can be enclosed by fresh
+training/development admission, external one-stage authorization, live-parent
+launch permissions, a serial host lock and durable per-cell records without
+weakening either seed custody or the training/evaluation host distinction.
+
+The build contract now records that enclosure. Production data/control byte
+allowances are mechanical planning bounds, not exact filesystem allocation
+measurements. A production authority must retain at least 1 GiB additional
+filesystem reserve; capacity review must include rounding and metadata overhead.
+The private physics verifier body is shared after separate fixture/registered
+scope admission. No registered authorization is being created and no protected
+seed, trained checkpoint or experiment is being opened for this build.
+
+The stage parent, child and detached CLI are now connected. Initial strict typing
+found two implementation issues: the nullable failure variable was inferred as a
+plain string, and a timestamp validator was imported indirectly. Both are fixed;
+all 12 changed source modules pass strict typing. Review added input-tree and
+live-parent recapture immediately before child execution/publication, nonsymlink
+cell admission and detection of an identical-byte claim replacement before the
+parent may advance. The stage budget now includes the detached process receipt
+and both of its bounded logs. Its current execution-contract digest is
+`16d683ffc9a9f30076acd86efccc7c2c7f8a9acdb5e89daa7d27c729276da6e8`.
+
+The first reset-free integration run is still completing. Its full 576-slot
+successful-fixture test has passed, including fresh aggregate reconstruction,
+cached-verdict checks and rejection of rehashed report/choice/physical changes.
+One earlier launch test failed because its fixture supplied `None` instead of a
+different valid runtime; the corrected test changes a real runtime record's
+revision. The focused corrections/additions pass **7 tests in 3.74 seconds**,
+including complete production training-receipt/ledger reconstruction with explicit
+synthetic model and host dependencies, all 128 rollout rows, closed CLI paths,
+and bounded detached process receipt retention. These results confer no real
+training or protected-episode admission. Full failure-retention and physical
+wrapper regression remain underway; no capacity or release claim follows yet.
+
+The initial stage/authority/launch/budget suite completed with **112 passing tests
+and the one fixture-type failure in 665.60 seconds**. The corrected valid-runtime
+case is included in the already passing seven-case follow-up. Every full-stage
+case passed: all 576 sequential claims, 480 skipped failed-training slots plus 96
+failed baseline processes, full aggregate reconstruction, all retained storage/
+operator/integrity abort slots, forbidden layouts, consumed claims and report
+tampering. These reset-free checks use explicit process/physical substitutes and
+therefore do not assert real registered physics or capacity. The physical wrapper
+and historical arm regression now follow with source held unchanged during runs.
+
+The final physical-wrapper, standalone-arm and historical-admission regression
+passed **196 tests in 498.39 seconds**, with successful process exit and the existing
+native HiGHS cleanup text. All four new wrappers preserve the corresponding
+fixture physical/economic digest; detached reconstruction makes no plant/model
+execution call. Rehashed claim/source/actor/seed/checkpoint substitutions are
+rejected before physical reconstruction, and physical/timing/host changes fail
+their complete witness checks. The new execution fixtures use only 9,000,000-series
+seeds and an untrained fixed policy; they are not registered evaluation or the
+168-hour/15-minute storage-capacity measurement.
+
+All 76 stage cases and 43 budget cases are covered by the initial 112-pass run
+and the seven-case correction/addition run; the initial test-only failure remains
+recorded above. Strict typing passes the 12 changed source modules, Black checks
+18 Python files, and compilation passes. The final whitespace, unchanged-lock,
+upstream protocol hashes, absent training authority and CLI-help checks pass.
+This closes the production stage implementation milestone, not the overall
+training-readiness goal. Measured stage capacity, concrete frozen budgets, the
+complete clean repository release gate and explicit later authorization remain.
+The latest complete clean repository gate is still `ad6ad1e`; no registered
+training, protected evaluation, checkpoint selection or deployment has occurred.
