@@ -223,8 +223,7 @@ def test_unavailable_optional_controller_preserves_existing_run(
     before = client.get("/api/v2/demo").json()
     monkeypatch.setattr(v2_demo, "_has_scipy", lambda: False)
     assert (
-        client.post("/api/v2/demo/reset", json={"controller": "E-beta"}).status_code
-        == 503
+        client.post("/api/v2/demo/reset", json={"controller": "MPC"}).status_code == 503
     )
     after = client.get("/api/v2/demo").json()
     assert after["run_id"] == before["run_id"]
@@ -233,12 +232,14 @@ def test_unavailable_optional_controller_preserves_existing_run(
     assert after["frame"] == before["frame"]
 
 
-def test_ebeta_error_stops_without_fallback_or_private_exception_text(
+def test_unexpected_mpc_error_stops_without_fallback_or_private_exception_text(
     demo: v2_demo.V2DemoSession, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     calls: list[Any] = []
 
     class FailedEconomicController:
+        id = "test-failed-controller"
+
         def reset(self) -> None:
             pass
 
@@ -250,12 +251,12 @@ def test_ebeta_error_stops_without_fallback_or_private_exception_text(
     monkeypatch.setattr(
         v2_demo, "_controller", lambda *args: FailedEconomicController()
     )
-    before = demo.reset("E-beta")
+    before = demo.reset("MPC")
     after = demo.step(_step(before, 4))
     assert len(calls) == 1
     assert hasattr(calls[0], "market") and hasattr(calls[0], "cycle")
     assert after["status"] == "failed"
-    assert after["controller"]["id"] == "E-beta"
+    assert after["controller"]["id"] == "MPC"
     assert "RuntimeError" in after["error"]
     assert "protected" not in json.dumps(after)
     assert after["frame"]["state"] == before["frame"]["state"]
@@ -265,25 +266,15 @@ def test_ebeta_error_stops_without_fallback_or_private_exception_text(
     assert stopped.value.status_code == 409
 
 
-def test_optional_real_ebeta_decision_projects_its_actual_plan(
+def test_optional_operating_mpc_projects_its_actual_plan(
     demo: v2_demo.V2DemoSession,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     pytest.importorskip("scipy")
-    # A feasible projection fixture is separate from the fixed product scenario,
-    # whose revised exact-settlement model is independently tested below.
-    from plant_backend.rl.v2.config import EpisodeConfigV2
-
-    environment_type = v2_demo.PlantCyclicMarketEnvV2Beta
-    monkeypatch.setattr(
-        v2_demo,
-        "PlantCyclicMarketEnvV2Beta",
-        lambda: environment_type(episode=EpisodeConfigV2(delivery_rate_kg_h=1.0)),
-    )
-    before = demo.reset("E-beta")
+    before = demo.reset("MPC")
     after = demo.step(_step(before))
     assert after["status"] == "ready", after["error"]
-    assert after["controller"]["id"] == "E-beta"
+    assert after["controller"]["id"] == "MPC"
     assert after["frame"]["clock"]["decision_index"] == 1
     assert after["frame"]["state"]["step"] == 15
     plan = after["frame"]["plan"]
@@ -423,12 +414,27 @@ def test_single_fixture_day_settles_real_deliveries_and_resource_cycle(
     assert demo._history.maxlen == 673
 
 
-def test_default_ebeta_infeasibility_is_retained_without_advancing(demo):
+def test_default_operating_mpc_reports_recovery_and_continues(demo):
     pytest.importorskip("scipy")
-    before = demo.reset("E-beta")
+    before = demo.reset("MPC")
     after = demo.step(_step(before))
-    assert after["status"] == "failed"
-    assert "BetaMPCSolveError" in after["error"]
-    assert "No fallback" in after["error"]
-    assert after["frame"]["state"] == before["frame"]["state"]
-    assert after["frame"]["decision"] is None
+    assert after["status"] == "ready"
+    assert after["error"] is None
+    operation = after["frame"]["decision"]["operation"]
+    assert operation["mode"] == "recovery"
+    assert operation["policy_id"] == "operational-economic-mpc-v1"
+    assert operation["forecast_statistic"] == "issued_mean"
+    assert any(r["projected_deficit"] > 1 for r in operation["resources"])
+    assert operation["fallback_controller"] is None
+    assert after["frame"]["clock"]["decision_index"] == 1
+    assert after["frame"]["operating_policy"] == "inventory-targets-v1"
+
+
+def test_research_ebeta_is_not_an_interactive_product_option(client):
+    before = client.get("/api/v2/demo").json()
+    assert {c["id"] for c in before["available_controllers"]} == {"H", "MPC"}
+    assert (
+        client.post("/api/v2/demo/reset", json={"controller": "E-beta"}).status_code
+        == 422
+    )
+    assert client.get("/api/v2/demo").json() == before

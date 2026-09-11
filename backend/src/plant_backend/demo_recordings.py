@@ -77,6 +77,16 @@ def summarize(record: dict[str, Any], source: str) -> dict[str, Any]:
         "delivered_kg": snap["frame"]["delivery"]["delivered_kg"],
         "unmet_kg": snap["frame"]["delivery"]["unmet_kg"],
         "net_value_eur": snap["frame"]["economics"]["net_value_eur"],
+        "fallback_decisions": sum(
+            (f.get("decision") or {}).get("operation", {}).get("mode") == "fallback"
+            for f in record["frames"]
+            if (f.get("decision") or {}).get("operation")
+        ),
+        "recovery_decisions": sum(
+            (f.get("decision") or {}).get("operation", {}).get("mode") == "recovery"
+            for f in record["frames"]
+            if (f.get("decision") or {}).get("operation")
+        ),
         "failed_cycles": sum(
             not c["feasible"] for c in snap["frame"]["cycle_settlements"]
         ),

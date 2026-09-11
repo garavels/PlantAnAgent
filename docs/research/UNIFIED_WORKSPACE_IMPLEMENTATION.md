@@ -16,11 +16,12 @@ V2 fixture run, selected equipment and completed-decision cursor:
 - **Weather:** synthetic overhead site, procedural clouds driven by public observed
   solar attenuation, clear-sky/available history and aggregate solar forecasts.
   The previous decision's forecast can be overlaid with its original issue time.
-- **Planning:** exact decision input forecasts, four retained MPC target schedules,
+- **Planning:** operating mode, predicted delivery shortfalls and resource outlook,
+  exact decision input forecasts, four retained MPC target schedules,
   predicted inventories, delivery deadlines, first-interval actual/model comparison,
   requested/applied targets and minute execution/guard notes.
 - **Deliveries & resources:** seven-day commitments, produced/stored/delivered methane,
-  separate daily resource requirements and complete settlement quantities.
+  fixed opening inventory references and complete daily review quantities.
 - **Economics:** reconciled signed EUR contributions, cumulative history and assumptions.
 - **Events:** filtered observed events, equipment/settlement links through the shared
   cursor; optional whole-recording retrospective view is explicitly labelled.
@@ -34,7 +35,7 @@ this is not a new brand. V1 geometry, source, backend APIs and tests are preserv
 normal navigation never mounts the V1 stream provider.
 
 Use **Mission & recordings** to open a saved run, export public history, return to
-the current interactive simulation or reset with H/E-beta. **Play recording** advances
+the current interactive simulation or reset with H/MPC. **Play recording** advances
 stored frames; **Run simulation** executes real decisions. Pausing a simulation stops
 new requests after any already accepted interval finishes. Historical inspection is
 read-only. Reset retains the previous three runs in server memory; downloaded/saved
@@ -46,7 +47,9 @@ Exactly one H and one E-beta recording were declared before execution, each on s
 9,000,034 with a 168-hour target and 20-minute wall limit. Both use the same simulator,
 minute dispatcher and independent guard. Raw recordings and attempt manifests live
 in ignored `runs/commission-demo/`; compact manifests are committed alongside this guide.
-No training, development selection or held-out evaluation took place.
+No training, development selection or held-out evaluation took place. These are
+historical outcomes; the separate product controller was scoped on 2026-09-11 in
+[`COMMISSION_OPERATING_SCOPE.md`](COMMISSION_OPERATING_SCOPE.md).
 
 | Controller | Retained time | Outcome | Delivered / unmet methane | Failed daily returns |
 | --- | --- | --- | --- | --- |
@@ -54,9 +57,10 @@ No training, development selection or held-out evaluation took place.
 | E-beta | 9.25 h | Stopped: BetaMPCSolveError | 240 / 0 kg settled | No daily settlement reached |
 
 These unequal-length records cannot establish comparative performance. No retry or
-fallback replaced the failed E-beta attempt. The default E-beta cursor is the
-predeclared 8-hour presentation point; the terminal failure remains visible throughout
-its playback. H supplies the complete seven-day history. Read the Evidence panel or
+fallback replaced the failed E-beta attempt. Its terminal failure remains visible throughout
+playback. Saved product MPC is now preferred when available, initially at the
+existing 8-hour presentation cursor; otherwise historical recordings remain available.
+H supplies the original complete seven-day history. Read the Evidence panel or
 open Mission & recordings to switch between them.
 
 The recordings were generated from a dirty implementation checkout, explicitly
@@ -77,10 +81,24 @@ cd frontend
 PLANT_API_TARGET=http://127.0.0.1:8001 npm run dev -- --host 127.0.0.1 --port 5174 --strictPort
 ```
 
-The optional optimisation dependency is required for E-beta. The recording CLI is
-`python -m plant_backend.record_demo H` or `E-beta` in the configured environment.
+The optional optimisation dependency is required for product MPC. The recording CLI is
+`python -m plant_backend.record_demo H` or `MPC` in the configured environment.
 It uses exclusive attempt markers: existing attempts cannot silently be overwritten.
 Do not delete a failed attempt to manufacture a replacement success.
+
+The product's `operational-economic-mpc-v1` uses public mean solar/market forecasts,
+exact mandatory shipments and sampled held-power bounds. A rolling 24-hour plan
+maximizes delivery service, then minimizes economic cost with wear and depletion
+priced against fixed episode-opening endowments. Daily restoration is measured,
+not required for optimizer feasibility. Recovery means a current/projected resource
+deficit or predicted shipment shortfall; it does not promise eventual restoration.
+Typed solver/plan rejection selects an explicitly recorded heuristic fallback for
+one interval and retries planning at the next boundary. Fallback publishes no plan
+or inventory prediction. Unexpected errors and invalid/stale observations stop the
+session. Every command uses the unchanged dispatcher, guard and minute physics.
+The strict offline E-beta research controller is unchanged and no longer selectable
+for new interactive sessions. Its old recordings retain their original outcomes
+and strict daily-return labels.
 
 The existing `/api/v2/demo` contract now retains all completed public frames, exact
 original forecast issues, commitment state, full cycle settlements and applied minute

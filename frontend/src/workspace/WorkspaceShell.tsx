@@ -17,7 +17,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
   const w = useWorkspace(),
     location = useLocation();
   const [setup, setSetup] = useState(false),
-    [controller, setController] = useState<"H" | "E-beta">("E-beta");
+    [controller, setController] = useState<"H" | "MPC">("MPC");
   const [menu, setMenu] = useState(false);
   useEffect(() => {
     document.querySelector(".workspace-main")?.scrollTo(0, 0);
@@ -287,7 +287,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
                 Close
               </button>
             </div>
-            <p>168 hours · 240 kg CH₄ every 6 hours · daily resource returns</p>
+            <p>168 hours · 240 kg CH₄ every 6 hours · inventory recovery</p>
             <div className="w-mission-actions">
               <button
                 className="w-button"
@@ -315,7 +315,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
                 <select
                   value={controller}
                   onChange={(e) =>
-                    setController(e.target.value as "H" | "E-beta")
+                    setController(e.target.value as "H" | "MPC")
                   }
                 >
                   {w.live.snapshot?.available_controllers.map((c) => (

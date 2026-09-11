@@ -1,6 +1,6 @@
 """One bounded, disposable rehearsal; no registered seeds, training or selection.
 
-Run once per controller with ``python -m plant_backend.record_demo H`` or E-beta.
+Run once per controller with ``python -m plant_backend.record_demo H`` or MPC.
 Attempt markers prevent silently replacing a failed rehearsal with a retry.
 """
 
@@ -15,15 +15,19 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-from .demo_recordings import RECORDING_ROOT, summarize, validate
+from .demo_recordings import RECORDING_ROOT, seal_recording, summarize, validate
 from .v2_demo import FIXTURE_SEED, StepRequest, V2DemoSession
 
 WALL_LIMIT_SECONDS = 20 * 60
 
 
+class RehearsalTimeout(BaseException):
+    """Stop the rehearsal even inside a solver's ordinary exception boundary."""
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("controller", choices=("H", "E-beta"))
+    parser.add_argument("controller", choices=("H", "MPC"))
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[3]
     RECORDING_ROOT.mkdir(parents=True, exist_ok=True)
@@ -61,21 +65,32 @@ def main() -> None:
     demo = V2DemoSession()
 
     def timeout(*_: object) -> None:
-        raise TimeoutError("fixed rehearsal wall limit reached")
+        raise RehearsalTimeout("fixed rehearsal wall limit reached")
 
     previous = signal.signal(signal.SIGALRM, timeout)
     signal.alarm(WALL_LIMIT_SECONDS)
     try:
-        snapshot = demo.reset(args.controller)
-        while snapshot["status"] == "ready":
-            snapshot = demo.step(
-                StepRequest(
-                    expected_run_id=snapshot["run_id"],
-                    expected_revision=snapshot["revision"],
-                    decisions=4,
+        try:
+            snapshot = demo.reset(args.controller)
+            while snapshot["status"] == "ready":
+                snapshot = demo.step(
+                    StepRequest(
+                        expected_run_id=snapshot["run_id"],
+                        expected_revision=snapshot["revision"],
+                        decisions=4,
+                    )
                 )
+        except RehearsalTimeout:
+            snapshot = demo.recording()["snapshot"]
+            snapshot["status"] = "failed"
+            snapshot["error"] = (
+                "Rehearsal stopped (wall_limit). Last completed boundary retained; "
+                "a partial interval may have executed."
             )
-        record = validate(demo.recording())
+        finally:
+            # Preserve the completed prefix outside the execution deadline.
+            signal.alarm(0)
+        record = validate(seal_recording(snapshot, demo.recording()["frames"]))
         with (RECORDING_ROOT / f"{snapshot['run_id']}.json").open("x") as stream:
             json.dump(record, stream, separators=(",", ":"), allow_nan=False)
         manifest.update(summarize(record, "saved"), error=snapshot["error"])

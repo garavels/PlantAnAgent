@@ -19,6 +19,7 @@ const UNITS: [UnitId, string][] = [
   ["ch4Tank", "Methane storage"],
 ];
 const colors = ["var(--stored)", "var(--h2)", "var(--co2)", "var(--ch4)"];
+const CONTROL_MODES = { scheduled: "Scheduled", recovery: "Recovery", fallback: "Fallback" };
 const metric = (frame: V2DemoFrame, key: string) =>
   Number(frame.metrics[key] ?? 0);
 function Heading({ title, children }: { title: string; children?: ReactNode }) {
@@ -142,9 +143,9 @@ export function Overview() {
             note={`${n(s.h2_production_kg_h)} kg H₂/h`}
           />
           <Stat
-            label="Daily resource return"
-            value={`In ${duration(f.clock.hours_to_cycle_end)}`}
-            note={`${f.resources.filter((r) => r.margin < -1e-6).length} resources currently below return minimum`}
+            label={f.operating_policy ? "Inventory recovery" : "Daily resource return"}
+            value={f.operating_policy ? (f.decision?.operation ? CONTROL_MODES[f.decision.operation.mode] : "Monitoring") : `In ${duration(f.clock.hours_to_cycle_end)}`}
+            note={`${f.resources.filter((r) => r.margin < -1e-6).length} resources below ${f.operating_policy ? "opening reference" : "return minimum"}`}
           />
         </div>
         <div className="w-overview-events">
@@ -472,6 +473,43 @@ export function Weather() {
   );
 }
 
+function OperatingPlan({ frame }: { frame: V2DemoFrame }) {
+  const operation = frame.decision?.operation;
+  if (!operation) return null;
+  return (
+    <section className="w-section" aria-label="Operating outlook">
+      <div className="w-panel-heading">
+        <h2>Operating outlook</h2>
+        <span>Issued {time(operation.issued_at_hours)}</span>
+      </div>
+      <div className="w-stats w-stats--three">
+        <Stat label="Control mode" value={CONTROL_MODES[operation.mode]}
+          note={operation.mode === "fallback" ? `Planner: ${words(operation.solver_failure?.reason ?? "unavailable")}` : "Mean forecasts · operating targets"} />
+        <Stat label="Predicted delivery shortfall"
+          value={operation.projected_shortfall_kg === null ? "Unavailable" : `${n(operation.projected_shortfall_kg)} kg`}
+          note={`Next ${n(operation.horizon_hours, 1)} hours`} />
+        <Stat label="Inventory outlook" value={time(operation.issued_at_hours + operation.horizon_hours)}
+          note="Fixed opening references" />
+      </div>
+      <div className="w-table">
+        <table>
+          <thead><tr><th>Resource</th><th>Opening reference</th><th>Projected inventory</th><th>Projected deficit</th></tr></thead>
+          <tbody>{operation.resources.map((resource) => (
+            <tr key={resource.id}>
+              <th>{resource.label}</th>
+              <td>{n(resource.reference)} {resource.unit}</td>
+              <td>{resource.projected === null ? "—" : `${n(resource.projected)} ${resource.unit}`}</td>
+              <td className={(resource.projected_deficit ?? 0) > 1e-6 ? "w-amber" : undefined}>
+                {resource.projected_deficit === null ? "—" : `${n(resource.projected_deficit)} ${resource.unit}`}
+              </td>
+            </tr>
+          ))}</tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
 export function Planning() {
   const w = useWorkspace(),
     f = w.frame!,
@@ -500,6 +538,7 @@ export function Planning() {
             : "Economic MPC · mean forecasts"}
         </span>
       </Heading>
+      <OperatingPlan frame={f} />
       <div className="w-plan-top">
         <Plot
           title="Public solar at decision time"
@@ -612,7 +651,7 @@ export function Planning() {
                   })),
                 },
                 {
-                  label: "Daily return minimum",
+                  label: f.operating_policy ? "Opening inventory reference" : "Daily return minimum",
                   color: "var(--text-dim)",
                   dashed: true,
                   points: [
@@ -627,12 +666,10 @@ export function Planning() {
       ) : (
         <div className="w-empty">
           <h2>
-            {d
-              ? "The heuristic publishes immediate targets."
-              : "No plan has been issued yet."}
+            {d?.operation?.mode === "fallback" ? "Heuristic fallback" : d ? "Immediate targets" : "No active plan"}
           </h2>
           <p>
-            {d
+            {d?.operation?.mode === "fallback" ? "Planner unavailable for this interval. Next planning attempt at the following decision." : d
               ? "It does not consume these forecasts or publish a forward schedule. Its requested and applied targets remain fully inspectable below."
               : "Run the economic MPC to inspect a real 24-hour schedule."}
           </p>
@@ -682,7 +719,7 @@ export function Planning() {
                 </span>
               ))}
             <span>
-              Resource return:{" "}
+              {f.operating_policy ? "Inventory review: " : "Resource return: "}
               {time(f.clock.elapsed_hours + f.clock.hours_to_cycle_end)}
             </span>
           </div>
@@ -820,6 +857,11 @@ export function Deliveries() {
                     ? "Requested · awaiting settlement"
                     : `${n(d.requested_kg)} kg requested · ${n(d.unmet_kg ?? 0)} kg shortfall`}
                 </p>
+                {d.status === "pending" && f.decision?.operation?.deliveries
+                  .filter((prediction) => prediction.due_hours === d.due_hours)
+                  .map((prediction) => <p key={prediction.due_hours} className={prediction.shortfall_kg > 1e-6 ? "w-amber" : undefined}>
+                    Forecast {n(prediction.predicted_kg)} kg · {n(prediction.shortfall_kg)} kg shortfall
+                  </p>)}
                 {d.status !== "pending" && (
                   <button
                     className="w-button"
@@ -834,8 +876,8 @@ export function Deliveries() {
       </section>
       <section className="w-section">
         <div className="w-panel-heading">
-          <h2>Daily resource returns</h2>
-          <span>Due in {duration(f.clock.hours_to_cycle_end)}</span>
+          <h2>{f.operating_policy ? "Inventory recovery" : "Daily resource returns"}</h2>
+          <span>{f.operating_policy ? "Review" : "Due"} in {duration(f.clock.hours_to_cycle_end)}</span>
         </div>
         <div className="w-resources">
           {f.resources.map((r, i) => (
@@ -854,16 +896,16 @@ export function Deliveries() {
                 <i />
               </div>
               <small>
-                Return minimum {n(r.required)} {r.unit}
+                {f.operating_policy ? "Opening reference" : "Return minimum"} {n(r.required)} {r.unit}
               </small>
               <p className={r.margin < -1e-6 ? "w-amber" : "w-green"}>
                 {n(Math.abs(r.margin))} {r.unit}{" "}
-                {r.margin < -1e-6 ? "to restore" : "above minimum"}
+                {r.margin < -1e-6 ? "to restore" : f.operating_policy ? "above reference" : "above minimum"}
               </p>
             </div>
           ))}
         </div>
-        <p className="w-note">Daily settlement · fixed opening reference</p>
+        <p className="w-note">{f.operating_policy ? "Daily inventory review · fixed opening reference" : "Daily settlement · fixed opening reference"}</p>
         <div className="w-table">
           <table>
             <thead>
@@ -892,12 +934,12 @@ export function Deliveries() {
                         {n(c.actual[r.id])} / {n(c.targets[r.id])} {r.unit}
                       </td>
                     ))}
-                    <td>{c.feasible ? "Met" : "Failed"}</td>
+                    <td>{f.operating_policy ? c.feasible ? "Restored" : "Deficit" : c.feasible ? "Met" : "Failed"}</td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6}>No daily return has settled at this time.</td>
+                  <td colSpan={6}>{f.operating_policy ? "No daily inventory review yet." : "No daily return has settled at this time."}</td>
                 </tr>
               )}
             </tbody>
@@ -1173,9 +1215,14 @@ export function Evidence() {
               <td>Offline research implementation</td>
             </tr>
             <tr>
-              <th>Economic MPC · E-beta</th>
-              <td>Public solar/market means + cycle return requirements</td>
-              <td>Interactive, experimental</td>
+              <th>Economic MPC · MPC</th>
+              <td>Public solar/market means · rolling inventory recovery</td>
+              <td>Interactive · explicit heuristic fallback</td>
+            </tr>
+            <tr>
+              <th>Research MPC · E-beta</th>
+              <td>Public p10 solar · hard daily resource returns</td>
+              <td>Offline research · historical recordings retained</td>
             </tr>
             <tr>
               <th>PPO · three families</th>
@@ -1205,7 +1252,8 @@ export function Evidence() {
                 <th>Run</th>
                 <th>Retained hours</th>
                 <th>Delivered / unmet kg</th>
-                <th>Failed cycles</th>
+                <th>Daily deficits</th>
+                <th>Fallback decisions</th>
                 <th>Net simulated value</th>
                 <th>Status</th>
               </tr>
@@ -1230,6 +1278,7 @@ export function Evidence() {
                       : `${n(c.delivered_kg)} / ${n(c.unmet_kg ?? 0)}`}
                   </td>
                   <td>{c.failed_cycles ?? "—"}</td>
+                  <td>{c.fallback_decisions ?? "—"}</td>
                   <td>
                     {c.net_value_eur === undefined ? "—" : eur(c.net_value_eur)}
                   </td>
@@ -1272,7 +1321,7 @@ export function Evidence() {
         <section>
           <h3>Active capabilities</h3>
           <p>
-            Plant physics, forecasts, recurring deliveries, daily returns,
+            Plant physics, forecasts, recurring deliveries, daily inventory reviews,
             heuristic/economic MPC, execution guard, observed events and public
             replay.
           </p>

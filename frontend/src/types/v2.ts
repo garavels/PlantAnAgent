@@ -8,9 +8,9 @@ export interface V2DemoSnapshot {
   mode: "interactive_fixture";
   status: "ready" | "complete" | "failed";
   error: string | null;
-  controller: { id: "H" | "E-beta"; label: string; uses_forecast: boolean };
+  controller: { id: "H" | "MPC" | "E-beta"; label: string; uses_forecast: boolean; policy_id?: string };
   available_controllers: {
-    id: "H" | "E-beta";
+    id: "H" | "MPC" | "E-beta";
     label: string;
     available: boolean;
     reason: string | null;
@@ -35,6 +35,8 @@ export interface V2DemoSnapshot {
 }
 
 export interface V2DemoFrame {
+  /** Absent in historical strict daily-return recordings. */
+  operating_policy?: "inventory-targets-v1";
   state: PlantState;
   weather: WeatherView;
   commitment: CommitmentView | null;
@@ -90,6 +92,7 @@ export interface V2DemoFrame {
     assumption_note: string;
   };
   decision: {
+    operation?: OperatingOutlook | null;
     at_hours: number;
     controller_id: string;
     computation_ms: number;
@@ -140,6 +143,20 @@ export interface V2DemoFrame {
     deficits: Record<string, number>;
     tolerances: Record<string, number>;
   }[];
+}
+
+export interface OperatingOutlook {
+  policy_id: string;
+  mode: "scheduled" | "recovery" | "fallback";
+  forecast_statistic: "issued_mean";
+  restoration_policy: "operating_target";
+  issued_at_hours: number;
+  horizon_hours: number;
+  projected_shortfall_kg: number | null;
+  fallback_controller: string | null;
+  solver_failure: { reason: string; exception_type: string; stages: Record<string, unknown>[] } | null;
+  resources: { id: string; label: string; unit: string; reference: number; current: number; projected: number | null; projected_deficit: number | null }[];
+  deliveries: { due_hours: number; requested_kg: number; predicted_kg: number; shortfall_kg: number }[];
 }
 
 export interface V2DemoHistoryPoint {
@@ -213,4 +230,6 @@ export interface RecordingSummary {
   unmet_kg?: number;
   net_value_eur?: number;
   failed_cycles?: number;
+  fallback_decisions?: number;
+  recovery_decisions?: number;
 }

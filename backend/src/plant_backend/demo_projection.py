@@ -14,11 +14,9 @@ def weather_view(state: dict[str, Any], elapsed: float) -> dict[str, Any]:
     factor = max(0.0, min(1.0, available / potential)) if observed else None
     return {
         "sample_end_hours": elapsed,
-        "status": "observed"
-        if observed
-        else "night"
-        if potential <= 1.0
-        else "unattributed",
+        "status": (
+            "observed" if observed else "night" if potential <= 1.0 else "unattributed"
+        ),
         "clear_sky_kw": potential,
         "available_kw": available,
         "resource_factor": factor,
@@ -110,12 +108,35 @@ def boundary_events(
                 "ch4Tank",
             )
     for cycle in current["cycle_settlements"][len(previous["cycle_settlements"]) :]:
+        operating = current.get("operating_policy") == "inventory-targets-v1"
         add(
             "cycle",
-            f"Day {cycle['cycle_index']} resource returns {'met' if cycle['feasible'] else 'failed'}",
+            f"Day {cycle['cycle_index']} "
+            + (
+                f"inventory {'restored' if cycle['feasible'] else 'deficit'}"
+                if operating
+                else f"resource returns {'met' if cycle['feasible'] else 'failed'}"
+            ),
             "Battery, H2, CO2 and CH4 checked against the fixed opening reference.",
         )
     decision = current.get("decision")
+    operation = (decision or {}).get("operation")
+    old_operation = (previous.get("decision") or {}).get("operation")
+    if operation and (
+        operation["mode"] == "fallback"
+        or not old_operation
+        or old_operation["mode"] != operation["mode"]
+    ):
+        failure = operation.get("solver_failure")
+        add(
+            "warning" if operation["mode"] == "fallback" else "recovery",
+            f"Control mode: {operation['mode'].capitalize()}",
+            (
+                f"Guarded heuristic applied: {failure['reason']}."
+                if failure
+                else f"Issued {operation['horizon_hours']:g}-hour plan; predicted delivery shortfall {operation['projected_shortfall_kg']:.1f} kg."
+            ),
+        )
     if decision and decision["guard_adjustments"]:
         add(
             "guard",

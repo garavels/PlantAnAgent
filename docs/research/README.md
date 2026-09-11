@@ -369,6 +369,11 @@ fallback behavior.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.
+- [`COMMISSION_OPERATING_SCOPE.md`](COMMISSION_OPERATING_SCOPE.md) freezes the
+  separate product MPC: mean forecasts, measured inventory targets and visible
+  guarded heuristic fallback. It does not relax or admit the registered E-beta
+  benchmark. [`UNIFIED_WORKSPACE_IMPLEMENTATION.md`](UNIFIED_WORKSPACE_IMPLEMENTATION.md)
+  describes its interactive controls, public outlook and recording workflow.
 
 Small canonical benchmark outputs may be committed under [`results/`](results/) when
 they make a reported conclusion directly auditable. Large generated datasets, model

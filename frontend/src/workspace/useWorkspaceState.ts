@@ -84,7 +84,7 @@ export function useWorkspaceState() {
     setDefaultLoaded(true);
     const featured =
       catalog.find(
-        (c) => c.available && c.source === "saved" && c.controller === "E-beta",
+        (c) => c.available && c.source === "saved" && c.controller === "MPC",
       ) ?? catalog.find((c) => c.available && c.source === "saved");
     if (featured) void loadRecording(featured.id, 32);
   }, [catalog, defaultLoaded, loadRecording]);
@@ -166,7 +166,7 @@ export function useWorkspaceState() {
     setNotice(null);
     void live.refresh();
   };
-  const reset = async (controller: "H" | "E-beta") => {
+  const reset = async (controller: "H" | "MPC") => {
     ++generation.current;
     setDefaultLoaded(true);
     setPlaying(false);

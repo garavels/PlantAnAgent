@@ -131,3 +131,21 @@ def test_event_changes_refer_only_to_observed_boundary():
     assert events[0]["unit"] == "dac"
     assert events[0]["at_hours"] == 0.25
     assert "recovery time" in events[0]["detail"]
+
+
+def test_daily_inventory_labels_preserve_historical_research_meaning():
+    initial = V2DemoSession().snapshot()["frame"]
+    settled = deepcopy(initial)
+    settled["clock"].update(decision_index=96, elapsed_hours=24)
+    settled["cycle_settlements"] = [{"cycle_index": 1, "feasible": False}]
+    events = boundary_events(initial, settled)
+    assert (
+        next(e for e in events if e["kind"] == "cycle")["title"]
+        == "Day 1 inventory deficit"
+    )
+    del settled["operating_policy"]
+    events = boundary_events(initial, settled)
+    assert (
+        next(e for e in events if e["kind"] == "cycle")["title"]
+        == "Day 1 resource returns failed"
+    )

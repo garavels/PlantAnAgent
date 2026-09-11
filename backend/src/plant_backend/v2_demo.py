@@ -25,7 +25,7 @@ from .rl.v2.setpoint_controllers import LegacyHeuristicSetpointControllerV1
 
 FIXTURE_SEED = 9_000_034
 HISTORY_LIMIT = 673
-ControllerId = Literal["H", "E-beta"]
+ControllerId = Literal["H", "MPC"]
 router = APIRouter(prefix="/api/v2/demo", tags=["v2-demo"])
 
 
@@ -52,17 +52,13 @@ def _controller(
         return LegacyHeuristicSetpointControllerV1()
     if not _has_scipy():
         raise HTTPException(
-            status_code=503, detail="E-beta requires the optional optimisation runtime"
+            status_code=503, detail="MPC requires the optional optimisation runtime"
         )
-    from .rl.v2.beta_mpc_controller import CyclicMarketEconomicMPCControllerV1
-    from .rl.v2.beta_mpc_schema import BetaMPCSettingsV1, BETA_MPC_UNCERTAINTY_POLICY
+    from .operational_mpc import OperationalMPCController
 
-    return CyclicMarketEconomicMPCControllerV1(
-        settings=BetaMPCSettingsV1(
-            task_horizon_h=environment.episode_config.horizon_h,
-            interval_s=environment.episode_config.decision_interval_s,
-            uncertainty_policy=BETA_MPC_UNCERTAINTY_POLICY,
-        ),
+    return OperationalMPCController(
+        horizon_h=environment.episode_config.horizon_h,
+        interval_s=environment.episode_config.decision_interval_s,
         assumptions=environment.economic_assumptions,
         beta_task=environment.beta_task,
     )
@@ -101,11 +97,13 @@ class V2DemoSession:
             return self._view()
 
     def _reset(self, controller_id: ControllerId) -> None:
+        if controller_id not in ("H", "MPC"):
+            raise HTTPException(status_code=422, detail="Unknown operating controller")
         # Construct first so an unavailable optional controller preserves the old run.
-        if controller_id == "E-beta" and not _has_scipy():
+        if controller_id == "MPC" and not _has_scipy():
             raise HTTPException(
                 status_code=503,
-                detail="E-beta requires the optional optimisation runtime",
+                detail="MPC requires the optional optimisation runtime",
             )
         environment = PlantCyclicMarketEnvV2Beta()
         try:
@@ -217,10 +215,6 @@ class V2DemoSession:
             ),
         )
         notes = list(getattr(decision.evidence, "source_notes", ()))
-        if self._controller_id == "E-beta":
-            notes.append(
-                "Economic MPC: public solar p10, early resource reserves, mandatory deliveries."
-            )
         notes.append(
             "Targets held for 15 minutes; dispatcher and safety guard run every minute."
         )
@@ -246,6 +240,9 @@ class V2DemoSession:
                 for item in applications
             ],
             "controller_id": self._controller_id,
+            "operation": (
+                decision.evidence.operation() if self._controller_id == "MPC" else None
+            ),
             "computation_ms": computation_ms,
             "notes": notes,
             "targets": [
@@ -265,7 +262,7 @@ class V2DemoSession:
             "command_digest": decision.command.sha256,
         }
         self._plan = None
-        if self._controller_id == "E-beta":
+        if self._controller_id == "MPC" and decision.evidence.plan is not None:
             self._plan = {
                 "issued_at_hours": at_hours,
                 "points": [
@@ -371,6 +368,7 @@ class V2DemoSession:
             ("ch4", "Methane", "kg", state.ch4_level_kg, cycle.ch4_margin_kg),
         )
         return {
+            "operating_policy": "inventory-targets-v1",
             "state": state.to_dict(),
             "weather": weather_view(state.to_dict(), elapsed),
             "commitment": (
@@ -496,9 +494,10 @@ class V2DemoSession:
                     "label": (
                         "Reactive heuristic"
                         if self._controller_id == "H"
-                        else "Economic MPC (experimental)"
+                        else "Economic MPC"
                     ),
-                    "uses_forecast": self._controller_id == "E-beta",
+                    "uses_forecast": self._controller_id == "MPC",
+                    "policy_id": self._controller.id,
                 },
                 "available_controllers": [
                     {
@@ -508,8 +507,8 @@ class V2DemoSession:
                         "reason": None,
                     },
                     {
-                        "id": "E-beta",
-                        "label": "Economic MPC (experimental)",
+                        "id": "MPC",
+                        "label": "Economic MPC",
                         "available": scipy_available,
                         "reason": (
                             None

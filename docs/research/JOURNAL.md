@@ -8040,3 +8040,56 @@ implementation and its single bounded fixture rehearsal. Product MPC receives a
 new identity; the strict E-beta and all registered study contracts stay unchanged.
 The hypothesis is usable supervisory operation with explicit shortfall/recovery
 and fallback records, not reliable fulfillment or an economic performance win.
+
+Implementation adds `operational-economic-mpc-v1` outside the research controller
+package. It composes the existing mean/public-price economic model with exact
+mandatory delivery and held-power rows, a rolling 24-hour horizon, hard physical
+reserve and commitment constraints, and fixed opening-endowment depletion costs.
+It adds no p10 or early-reserve policy and no hard daily-return constraint. Typed
+solver/plan rejection alone selects the existing heuristic for one interval; the
+next boundary attempts planning again. Source/command hashes bind each public
+observation, model, selected plan or fallback, targets and operating outlook.
+Missing predictions stay null; stale data, reference ratcheting and unexpected
+software exceptions stop rather than inventing commands.
+
+The product API now offers H/MPC. Research E-beta and all `rl/v2` source remain
+unchanged. Public frames carry the distinct operating policy and mode, forecast
+shipment shortfalls and per-resource outlook; events and recording summaries
+retain fallback/recovery outcomes. Planning, delivery/resources and Evidence use
+these fields in the existing visual design. Old recordings keep their E-beta
+identity, strict daily-return meaning and stopped outcomes. Saved MPC is preferred
+when available. V1, simulator, CSS, 3D assets, lock and both frozen protocols are
+unchanged; protected runs and training authorization remain unopened/absent.
+
+The real opening probe on fixture 9,000,034 solves in Recovery mode, forecasts
+roughly 960 kg delivery over 24 hours and depleted gas stocks while preserving
+the opening battery. This is a prediction, not demonstrated restoration. One
+interactive browser interval uses the actual API/physics and displays that
+outlook, shipment predictions and opening references. Browser review confirms
+the existing visual identity, new controller choices and separate research
+availability. The original stopped E-beta recording remains loadable and labelled.
+
+Validation: the initial API gate passed 14 tests in 34.81 seconds. New controller
+tests initially had four assertion-path errors (metadata nesting and event
+location), then one incorrect equality for the fixed opening battery variable;
+these were test mistakes, corrected against the existing model/API schema.
+The complete affected product gate subsequently passed **31 tests in 71.82
+seconds**, with one existing Starlette warning. It covers real mean plans, exact
+shipments, hard safety-floor and held-power rows, model/evidence identity, three
+typed fallback reasons, no fabricated predictions, return to planning, stale
+input rejection, immutable endowments, 97 guarded intervals across a daily
+deficit, API boundaries, public recordings and historical daily-label semantics.
+All five changed backend modules pass strict mypy; frontend TypeScript/build and
+oxlint pass, retaining the existing Three.js bundle-size warning.
+
+Before the rehearsal, review found that the old TimeoutError alarm could be
+converted into a recoverable solver failure and swallowed by the new fallback.
+The recording runner now uses a dedicated BaseException deadline and preserves
+only the last completed public prefix outside the execution timer. A fixture
+forces the deadline through the planner/session exception boundaries and verifies
+the retained wall-limit failure with zero fallback decisions. It passes separately
+in 2.61 seconds after the final prefix-access correction; it does not run a week
+or create an MPC attempt outside its temporary test directory. Black passes for
+all nine changed Python files, and whitespace checks pass. This is targeted
+product validation, not a complete repository or training release gate. The
+single full MPC rehearsal has not yet started at this implementation commit.

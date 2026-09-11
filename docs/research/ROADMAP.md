@@ -2,6 +2,14 @@
 
 ## Product and research thesis
 
+Commission scope update, 2026-09-11: the unified product uses a separately
+identified operating MPC with public mean forecasts, rolling inventory targets
+and explicit heuristic fallback through the unchanged guard. This removes strict
+daily-return infeasibility as a product-run stop without changing the registered
+research task. See [`COMMISSION_OPERATING_SCOPE.md`](COMMISSION_OPERATING_SCOPE.md).
+Comparator reliability, registered training admission and commercial validation
+remain unresolved research work.
+
 Plant An Agent targets the scheduling and resilient operation of coupled industrial
 processes powered by uncertain renewable energy. Its product proposition is a bounded,
 layered autonomy stack:
