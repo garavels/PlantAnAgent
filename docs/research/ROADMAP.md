@@ -2,6 +2,14 @@
 
 ## Product and research thesis
 
+Submission priority update, 2026-09-11: the user requires executed PPO training
+and inspectable learned-controller evidence in the commission submission.
+[COMMISSION_SUBMISSION_SCOPE.md](COMMISSION_SUBMISSION_SCOPE.md) makes the
+preserved three-family/five-seed campaign, gated evaluation and product evidence
+integration part of that objective. Positive superiority remains a result to
+test, not a promised deliverable; no execution or protected seed opening occurs
+through this scope update.
+
 Commission scope update, 2026-09-11: the unified product uses a separately
 identified operating MPC with public mean forecasts, rolling inventory targets
 and explicit heuristic fallback through the unchanged guard. This removes strict

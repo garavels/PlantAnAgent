@@ -12,6 +12,11 @@ fallback behavior.
 
 ## Files
 
+- [`COMMISSION_SUBMISSION_SCOPE.md`](COMMISSION_SUBMISSION_SCOPE.md) records the
+  current submission objective: the unified product plus executed PPO training,
+  gated evaluation and inspectable policy evidence. It preserves the full
+  three-family/five-seed design and separates RL capability from superiority.
+
 - [`JOURNAL.md`](JOURNAL.md) is chronological and append-only in spirit. It records
   commands, observations, decisions, failures, and changes of direction.
 - [`ROADMAP.md`](ROADMAP.md) defines hypotheses, experimental gates, benchmark arms,

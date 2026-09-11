@@ -10,13 +10,21 @@ been trained, selected or evaluated. This review is not an authorization record.
 The three families, five optimizer seeds, task, learning budgets and protected
 seed domains remain unchanged.
 
+Submission update: the user now requires executed PPO training and inspectable
+policy evidence for the commission. See
+[COMMISSION_SUBMISSION_SCOPE.md](COMMISSION_SUBMISSION_SCOPE.md). This changes
+the work priority, not the registered task or execution/selection gates.
+
 The subsequent user-authorized E-beta repair is implemented at `a82f11c`.
 [Its result](results/v2_beta_uncertainty_a82f11c.md) supersedes the comparator
 recommendation below: public p10/early reserves and held-power delivery are
 implemented, and exact mandatory methane settlement exposes an opening
 forecast-scenario energy deficit on all three fixtures. No full-week revised
-comparator run succeeds. The current product's E-beta option also stops at its
-opening decision; focused tests verify that explicit failure. The complete
+comparator run succeeds. The product's E-beta option at that revision also stopped
+at its opening decision; focused tests verified that explicit failure. The later
+commission product uses a separate mean-forecast operating MPC with measured
+inventory targets and explicit fallback; its completed week does not close the
+strict research-comparator gate. The complete
 repository gate below remains historical and is not claimed for the later
 controller revision. Training remains unopened.
 

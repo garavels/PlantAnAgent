@@ -8130,3 +8130,35 @@ rehearsal source revision. Browser review also confirms all seven daily Deficit
 rows at the final boundary; the workspace is left on the complete MPC recording
 at its existing eight-hour Overview cursor. The final overview and Planning panel
 retain the original palette, typography, logo and 3D scene.
+
+### PPO becomes a commission submission requirement
+
+The user explicitly rejected deferring PPO training beyond the commission:
+demonstrating the environment's RL capability is essential to its value.
+`COMMISSION_SUBMISSION_SCOPE.md` makes executed training, gated evaluation and
+inspectable learned-policy evidence required alongside the unified product.
+This corrects the prior recommendation to keep PPO off the submission's critical
+path. Useful learning and comparative superiority remain empirical questions;
+a training smoke is not the requested deliverable.
+
+Read-only review confirms that scalar/PI/I learners, custody and evaluation
+software exist and the canonical campaign has not started. The 15-run matrix,
+final-checkpoint-only rule and protected domains are unchanged. E-beta's failures
+obstruct strict selection, not the ability to perform PPO updates; product MPC's
+relaxed operating targets do not silently replace that research contract. The
+plan closes the task/comparator decision and product inference/evidence interfaces
+before source freeze, then capacity/storage, the release gate and concrete
+execution authority. Held-out remains conditional on the frozen development gate.
+
+The existing recorded training projection is 62.49 hours on its M4 Pro host;
+evaluation is additional. A current read-only filesystem check finds 26.22 GiB
+free versus the earlier unfrozen 46.80-GiB evaluation reservation scenario.
+No files were deleted or provisioned. The proposed registered root and tracked
+authorization remain absent. No optimizer update, plant reset, protected outcome
+inspection or experiment occurred. The exact commission rubric and deadline
+still need user input. An initial combined documentation patch was rejected for
+a journal-context mismatch and made no changes; a later readiness-review patch
+also required matching its actual line wrapping before application. The corrected
+patches preserve the journal and clarify the historical E-beta product statement.
+No software behavior changed; validation checks the diff
+and frozen protocol/dependency hashes rather than rerunning unrelated tests.

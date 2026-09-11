@@ -2,6 +2,12 @@
 
 Authorized by the user on 2026-09-11, before implementation and rehearsal.
 
+This document records the completed operating-controller increment and its
+rehearsal authorization. The broader
+[commission submission scope](COMMISSION_SUBMISSION_SCOPE.md) now also requires
+PPO training, following the user's subsequent instruction. Registered execution
+and evaluation gates remain separate from this product rehearsal.
+
 The product receives a separate `operational-economic-mpc-v1` controller, shown
 as Economic MPC (`MPC`). The offline E-beta implementation, 3-family × 5-seed
 PPO design, registered task and protected seeds remain unchanged. Historical
