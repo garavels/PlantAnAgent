@@ -162,7 +162,7 @@ def summarize(root: Path) -> dict[str, Any]:
         )
     return {
         "schema": "plant-beta-mpc-delivery-repair-result-v1",
-        "root": str(root),
+        "root": report["plan"]["root"],
         "source": report["plan"]["identity"]["source"],
         "report_sha256": report["sha256"],
         "report_raw_sha256": hashlib.sha256(raw).hexdigest(),

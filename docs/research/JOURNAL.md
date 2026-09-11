@@ -7999,3 +7999,33 @@ frontend/simulator and absent training-root/authorization checks pass. Strict
 mypy initially found an unguarded optional forecast in the new result-only
 summarizer; it now explicitly rejects a missing public forecast. This changes
 neither the already recorded controller executions nor the compact artifact.
+
+At clean `3b6ac67`, the complete affected-controller/product/evidence regression
+passed **291 tests**, one existing Starlette warning, in **798.26 seconds**,
+exit zero. It covers mean and p10 projection, physical/economic/beta models,
+schema/controller/solver, roundoff, benchmark and detached verifier, standalone
+arm/evidence/latency, and product API behavior. Source stayed fixed throughout.
+All 13 changed source/tool modules pass strict mypy; all 16 changed Python files
+pass Black and compilation. This is an affected-surface gate, not a new complete
+repository/training release gate.
+
+Final inspection found an independent model-identity edge case: with optional
+reserve rows removed, power rows were omitted from the model hash. A regression
+first failed with two different constraint sets sharing a digest. Serializing
+each optional row set independently fixes it. Production revised models contain
+both sets and legacy mean models contain neither, so their serialized bodies,
+plans and recorded outcomes are unchanged. The subsequent schema/model/uncertainty/
+roundoff gate passes **24 tests in 4.41 seconds**. No full-week fixture was retried
+for this identity-only edge case.
+
+Both completed attempts were also preserved byte-for-byte under the existing
+external research artifact root. All 40 files match their original sizes and
+SHA-256 values. Preservation record SHA is
+`33035df329b87554c6ea7d78d52cf8eb0a8fe42a98aa6e161d956f802346a941`.
+Original paths/source identities stay intact; the result summarizer reproduces
+the same compact bytes from either original or preserved location. Final typing,
+formatting, whitespace, compact reconstruction and preservation checks pass.
+Training root and authorization remain absent; both frozen upstream protocols,
+lock, simulator and frontend are unchanged. The repair is implemented with
+negative fixture evidence; comparator reliability and final training admission
+remain unresolved.

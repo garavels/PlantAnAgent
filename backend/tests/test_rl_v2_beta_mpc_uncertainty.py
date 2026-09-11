@@ -203,6 +203,20 @@ def test_spent_buffer_is_not_demanded_back_after_deadline(case):
     )
 
 
+def test_power_constraints_remain_hash_bound_without_optional_reserve_rows(case):
+    model, _ = build(case)
+    unbuffered = replace(model, reserve_rows=())
+    changed = replace(
+        unbuffered,
+        power_rows=(
+            replace(unbuffered.power_rows[0], upper=1.0),
+            *unbuffered.power_rows[1:],
+        ),
+    )
+    assert changed.rows != unbuffered.rows
+    assert changed.sha256 != unbuffered.sha256
+
+
 def test_uncertainty_descriptor_roundtrip_and_tampering(case):
     settings = case[1]
     assert _parse_beta_settings(settings.to_dict()) == settings

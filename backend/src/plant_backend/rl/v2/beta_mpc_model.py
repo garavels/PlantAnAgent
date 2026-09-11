@@ -441,6 +441,7 @@ class BetaMPCModelV1:
         }
         if self.reserve_rows:
             body["reserve_rows"] = [row.to_dict() for row in self.reserve_rows]
+        if self.power_rows:
             body["power_rows"] = [row.to_dict() for row in self.power_rows]
         return body
 

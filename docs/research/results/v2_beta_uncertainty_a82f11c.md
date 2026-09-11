@@ -48,6 +48,14 @@ The report-domain digest is
 The [compact result](v2_beta_uncertainty_a82f11c.json) includes source, raw/archive
 digests, classifications and the public inputs for the following calculation.
 
+Both attempts also have byte-for-byte persistent copies under
+`/Users/filippogombac/Developer/PlantAnAgentResearchArtifacts/`, in
+`beta-uncertainty-c5b049b270af/` and `beta-uncertainty-a82f11c44e36/`.
+All 40 files were checked. `beta-uncertainty-repair-preservation-v1.json` records
+the original paths, preserved paths and every file digest; its raw SHA-256 is
+`33035df329b87554c6ea7d78d52cf8eb0a8fe42a98aa6e161d956f802346a941`.
+Preservation does not rewrite original evidence identities or claim a new run.
+
 ## Independent necessary energy bound
 
 This calculation reads saved public observations only. It invokes no environment
@@ -86,6 +94,15 @@ guarantee. The reproducible calculation is
 [`beta_uncertainty_result.py`](../tools/beta_uncertainty_result.py).
 
 ## Remaining decision
+
+Validation at clean `3b6ac67`: 291 affected-controller, product and evidence tests
+passed in 798.26 seconds; strict typing passed 13 source/tool modules and Black
+and compilation passed all 16 changed Python files. One subsequent model-hash
+edge-case regression first failed, then passed after independently binding
+optional power rows; the focused follow-up passed 24 tests in 4.41 seconds.
+That identity-only correction leaves production model bodies and fixture outcomes
+unchanged. The last complete repository gate remains the earlier `12936c7`;
+these focused checks do not replace the final training-admission release gate.
 
 E-beta is not ready to freeze as the reliable primary comparator. A subsequent
 scope must address how supervisory control acts when public forecasts cannot
