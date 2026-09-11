@@ -51,6 +51,14 @@ No training, development selection or held-out evaluation took place. These are
 historical outcomes; the separate product controller was scoped on 2026-09-11 in
 [`COMMISSION_OPERATING_SCOPE.md`](COMMISSION_OPERATING_SCOPE.md).
 
+The subsequent product MPC rehearsal at clean `ccc8690` completed 168 hours in
+309.71 seconds: 5,938.07 kg delivered, 781.93 kg unmet, 22/28 commitments met,
+5 explicit fallback intervals and inventory deficits on all seven days. Its
+[retained result](results/commission_operating_ccc8690.md) includes all failures,
+resource depletion and provenance. This complete 31 MB recording is now preferred
+on load. It demonstrates continued product operation, not sustainable fulfillment
+or a registered comparative result.
+
 | Controller | Retained time | Outcome | Delivered / unmet methane | Failed daily returns |
 | --- | --- | --- | --- | --- |
 | H | 168 h | Completed | 5,564.72 / 1,155.28 kg | 7 of 7 |
@@ -126,12 +134,20 @@ product never presents them as active layers. Site calibration, credible commerc
 savings and hardware commissioning remain unestablished.
 
 Recording retention is bounded to 673 frames and three previous interactive runs;
-saved files are limited to eight and 128 MB each. The current 16 MB H and 1.6 MB E-beta
+saved files are limited to eight and 128 MB each. The 31 MB MPC, 16 MB H and 1.6 MB E-beta
 recordings load as complete public files; pagination is a later scaling improvement.
 The 3D scene loads lazily and has a process-diagram fallback. Its existing Three.js
 stack still produces dependency deprecation/bundle-size warnings.
 
 ## Validation
+
+2026-09-11 commission controller update: 31 affected controller/API/recording tests
+pass in 71.82 seconds, plus the separate deadline/prefix-retention test in 2.61
+seconds. Strict typing, Python formatting, frontend build/TypeScript and lint pass.
+Browser review covers the real interactive MPC interval, completed recording,
+inventory outlook, delivery forecasts, historical record identity, and an actual
+Fallback → Recovery transition. No CSS, visual assets or research runtime changed.
+The historical full-suite gate below predates this update.
 
 Full Python suite: **1,853 passed** in 482.52 seconds (one Starlette/httpx deprecation
 warning). The final frontend build/TypeScript and oxlint passed; compileall and Git

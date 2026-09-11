@@ -374,6 +374,9 @@ fallback behavior.
   guarded heuristic fallback. It does not relax or admit the registered E-beta
   benchmark. [`UNIFIED_WORKSPACE_IMPLEMENTATION.md`](UNIFIED_WORKSPACE_IMPLEMENTATION.md)
   describes its interactive controls, public outlook and recording workflow.
+  The [single completed rehearsal](results/commission_operating_ccc8690.md)
+  retains 168 hours, five explicit fallback intervals and seven daily inventory
+  deficits; it establishes product continuity, not sustainable service or research admission.
 
 Small canonical benchmark outputs may be committed under [`results/`](results/) when
 they make a reported conclusion directly auditable. Large generated datasets, model

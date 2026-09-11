@@ -8093,3 +8093,40 @@ or create an MPC attempt outside its temporary test directory. Black passes for
 all nine changed Python files, and whitespace checks pass. This is targeted
 product validation, not a complete repository or training release gate. The
 single full MPC rehearsal has not yet started at this implementation commit.
+
+At clean `ccc86903cd7dbfcad0c2ebc2f93b7cc6c0f6ecaa`, the exclusive MPC rehearsal
+ran once and completed all 168 hours, 672 decisions and 10,080 physics minutes in
+309.71 seconds, exit zero. No source changed during execution. It delivered
+5,938.0718 of 6,720 kg, with 781.9282 kg shortfall and 22/28 fully met commitments.
+There were 667 Recovery decisions, five Fallback decisions and deficits at every
+daily inventory review. Net simulated value was −18,929.62 EUR. Every fallback
+was status-2 infeasibility: four second-stage economic solves and one primary
+delivery solve. All returned to a valid plan on the next decision. Their specific
+causes remain undiagnosed; no retry/tuning/search followed. HiGHS also printed
+internal transformNewIntegerFeasibleSolution notices after the manifest; process
+exit remained zero and the notices are not treated as additional solver success.
+
+The exact public record is retained outside Git, with content SHA
+`a42cf8729324454fe785b575db584b97ebc5f8fb9537e987bcf24d347b9021bb`
+and raw file SHA `bc3a5e7381c9f0a45870b6e3d9200163d08856df256110f21cb6f6de8897114b`.
+The compact result/report preserve all daily deficits, fallback stages, physical
+metrics, final inventory depletion and economics. A result-only summarizer checks
+recording integrity and manifest agreement and invokes no optimizer or reset.
+Its initial result SHA is
+`323e0b34d07a75ed366b2f2111d175e328c153596b6c76c48459f151de148999`.
+The historical H/E-beta recordings are preserved. Browser playback now opens the
+complete MPC recording; boundary 127 shows the actual heuristic fallback with
+null predictions, and boundary 128 restores its economic plan with 82.4 kg
+forecast shortfall. This meets the scoped continuity/visibility objective while
+explicitly retaining unmet deliveries, inventory depletion and unresolved planner
+failures. It does not establish sustainable operation, comparative savings,
+plant readiness or admission of the registered research study.
+
+Final saved-result checks reproduce the compact JSON byte-for-byte; its summarizer
+passes strict mypy and Black. Both historical attempt manifests exactly match
+their committed copies, and their public content digests still validate. Backend,
+simulator, frontend, lock and frozen protocols remain byte-unchanged from the
+rehearsal source revision. Browser review also confirms all seven daily Deficit
+rows at the final boundary; the workspace is left on the complete MPC recording
+at its existing eight-hour Overview cursor. The final overview and Planning panel
+retain the original palette, typography, logo and 3D scene.
