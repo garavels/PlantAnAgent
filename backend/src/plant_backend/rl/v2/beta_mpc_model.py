@@ -32,6 +32,12 @@ from .economic_mpc_model import (
 from .economic_mpc_schema import EconomicMPCInputError
 from .economics import EconomicAssumptionsV1
 from .mpc_forecast import MPCForecastTrajectoryV1
+from .beta_mpc_uncertainty import (
+    constant_power_rows,
+    early_reserve_rows,
+    project_beta_mpc_solar,
+)
+from .beta_mpc_schema import BETA_MPC_UNCERTAINTY_POLICY
 from .mpc_model import MPCSolutionAuditV1, MPCSparseRowV1, ServiceMPCModelV1
 from .mpc_schema import (
     MODEL_BALANCE_TOLERANCE,
@@ -230,6 +236,8 @@ class BetaMPCModelV1:
         MPCSparseRowV1,
     ]
     metadata_json: str
+    reserve_rows: tuple[MPCSparseRowV1, ...] = ()
+    power_rows: tuple[MPCSparseRowV1, ...] = ()
 
     model_version = BETA_MPC_MODEL_VERSION
 
@@ -288,8 +296,27 @@ class BetaMPCModelV1:
                 raise ValueError(
                     f"{resource.resource} return row has an invalid hard lower bound"
                 )
+        if not isinstance(self.reserve_rows, tuple) or any(
+            not isinstance(row, MPCSparseRowV1)
+            or len(row.coefficients) != 1
+            or row.coefficients[0][1] != 1.0
+            or row.lower is None
+            or row.upper is not None
+            for row in self.reserve_rows
+        ):
+            raise ValueError(
+                "early reserve rows must be immutable singleton lower bounds"
+            )
         if len({row.name for row in self.rows}) != len(self.rows):
             raise ValueError("beta model row names must remain unique")
+        if not isinstance(self.power_rows, tuple) or any(
+            not isinstance(row, MPCSparseRowV1)
+            or row.lower is not None
+            or row.upper is None
+            or row.upper < 0
+            for row in self.power_rows
+        ):
+            raise ValueError("constant-power rows must be immutable upper bounds")
         if not isinstance(self.metadata_json, str):
             raise TypeError("metadata_json must be text")
         try:
@@ -337,9 +364,10 @@ class BetaMPCModelV1:
         # strict plan validation, without enlarging the feasible region or its
         # tolerances. Retain a stronger physical reserve when one exists.
         lower = list(self.economic_model.variable_lower)
-        for resource in self.cycle_return.resources:
-            index = self.group(_RESOURCE_GROUPS[resource.resource])[-1]
-            lower[index] = max(lower[index], resource.required_minimum)
+        for row in (*self.return_rows, *self.reserve_rows):
+            index = row.coefficients[0][0]
+            assert row.lower is not None
+            lower[index] = max(lower[index], row.lower)
         return tuple(lower)
 
     @property
@@ -364,7 +392,12 @@ class BetaMPCModelV1:
 
     @property
     def rows(self) -> tuple[MPCSparseRowV1, ...]:
-        return (*self.economic_model.rows, *self.return_rows)
+        return (
+            *self.economic_model.rows,
+            *self.return_rows,
+            *self.reserve_rows,
+            *self.power_rows,
+        )
 
     @property
     def variable_count(self) -> int:
@@ -376,11 +409,11 @@ class BetaMPCModelV1:
 
     @property
     def row_count(self) -> int:
-        return self.economic_model.row_count + len(self.return_rows)
+        return len(self.rows)
 
     @property
     def nonzero_count(self) -> int:
-        return self.economic_model.nonzero_count + len(self.return_rows)
+        return sum(len(row.coefficients) for row in self.rows)
 
     def group(self, name: str) -> tuple[int, ...]:
         return self.economic_model.group(name)
@@ -392,7 +425,7 @@ class BetaMPCModelV1:
         return value
 
     def body(self) -> dict[str, Any]:
-        return {
+        body = {
             "model_version": self.model_version,
             "economic_model_sha256": self.economic_model.sha256,
             "settings_sha256": self.settings_sha256,
@@ -406,6 +439,10 @@ class BetaMPCModelV1:
             "return_rows": [row.to_dict() for row in self.return_rows],
             "metadata": self.metadata(),
         }
+        if self.reserve_rows:
+            body["reserve_rows"] = [row.to_dict() for row in self.reserve_rows]
+            body["power_rows"] = [row.to_dict() for row in self.power_rows]
+        return body
 
     @property
     def sha256(self) -> str:
@@ -435,7 +472,12 @@ class BetaMPCModelV1:
         return self.economic_model.audit_solution(
             solution,
             tolerance=tolerance,
-            extra_rows=(*self.return_rows, *tuple(extra_rows)),
+            extra_rows=(
+                *self.return_rows,
+                *self.reserve_rows,
+                *self.power_rows,
+                *tuple(extra_rows),
+            ),
         )
 
     def predicted_cost_components(
@@ -508,6 +550,18 @@ def build_beta_mpc_model(
         config=config,
     )
     horizon = cycle_return.remaining_intervals
+    if observation.plant.forecast is None:
+        raise BetaMPCInputError("beta MPC requires the public weather issue")
+    expected_weather = project_beta_mpc_solar(
+        observation.plant.forecast,
+        boundary_time_s=observation.plant.state.boundary.time_s,
+        config=config,
+        settings=settings,
+    )
+    if weather_projection != expected_weather:
+        raise BetaMPCInputError(
+            "weather projection differs from the declared public policy"
+        )
     expected_price_projection = project_beta_mpc_prices(
         observation.market,
         interval_s=settings.interval_s,
@@ -571,7 +625,7 @@ def build_beta_mpc_model(
     dac_health = boundary_health.get("dac")
     if dac_health is None:  # The reused physical model also checks this.
         raise BetaMPCInputError("missing public health for dac")
-    metadata = {
+    metadata: dict[str, Any] = {
         "formulation_scope": (
             "service-first causal economic MPC with four separate hard resource "
             "returns at the exact next cycle boundary"
@@ -604,6 +658,23 @@ def build_beta_mpc_model(
         return_rows[2],
         return_rows[3],
     )
+    reserve_rows: tuple[MPCSparseRowV1, ...] = ()
+    power_rows: tuple[MPCSparseRowV1, ...] = ()
+    if settings.uncertainty_policy == BETA_MPC_UNCERTAINTY_POLICY:
+        reserve_rows, reserve_evidence = early_reserve_rows(
+            economic, cycle_return, weather_projection, config
+        )
+        power_rows, constant_power_kw = constant_power_rows(
+            economic, weather_projection, config
+        )
+        reserve_evidence["constant_solar_power_kw"] = list(constant_power_kw)
+        metadata["uncertainty_policy"] = reserve_evidence
+        metadata["information_policy"][
+            "weather"
+        ] = "current public band-p10 projection only"
+        metadata["model_mismatch_declaration"] = settings.body()[
+            "model_mismatch_declaration"
+        ]
     return BetaMPCModelV1(
         economic_model=economic,
         settings_sha256=settings.sha256,
@@ -614,6 +685,8 @@ def build_beta_mpc_model(
         cycle_return=cycle_return,
         return_rows=typed_rows,
         metadata_json=canonical_json(metadata),
+        reserve_rows=reserve_rows,
+        power_rows=power_rows,
     )
 
 

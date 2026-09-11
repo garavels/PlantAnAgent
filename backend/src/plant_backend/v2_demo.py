@@ -55,9 +55,12 @@ def _controller(
             status_code=503, detail="E-beta requires the optional optimisation runtime"
         )
     from .rl.v2.beta_mpc_controller import CyclicMarketEconomicMPCControllerV1
+    from .rl.v2.beta_mpc_schema import BetaMPCSettingsV1, BETA_MPC_UNCERTAINTY_POLICY
 
     return CyclicMarketEconomicMPCControllerV1(
-        assumptions=environment.economic_assumptions, beta_task=environment.beta_task
+        settings=BetaMPCSettingsV1(uncertainty_policy=BETA_MPC_UNCERTAINTY_POLICY),
+        assumptions=environment.economic_assumptions,
+        beta_task=environment.beta_task,
     )
 
 

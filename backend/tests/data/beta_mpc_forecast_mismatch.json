@@ -1,0 +1,1630 @@
+{
+  "applied_battery_support_kwh": 0.0,
+  "applied_charge_input_kwh": 2.0787793787110593,
+  "battery_balance_residual_kwh": 2.885247596395857e-12,
+  "battery_change_reconstructed_from_applied_flows_kwh": 1.995628203562617,
+  "decision_index": 53,
+  "environment_resets": 0,
+  "forecast_available_solar_kwh": 20.706582912459183,
+  "interpretation": "Forecast-path error and requested/applied charging mismatch are measured separately. Tiny battery balance residual does not attribute all dispatch mismatch to weather; no weather-only counterfactual executed.",
+  "interval_hours": 0.25,
+  "minute_records": [
+    {
+      "action": {
+        "battery_share": 1.7605416412119422e-16,
+        "battery_support_kw": 0.0,
+        "dac_share": 0.6514765367300198,
+        "electrolyser_share": 0.0,
+        "methanator_share": 0.34852346326998
+      },
+      "battery_capacity_kwh": 8000.0,
+      "battery_energy_kwh": 5010.463976604686,
+      "battery_power_kw": 2.842170943040401e-14,
+      "battery_soc": 0.6263079970755857,
+      "battery_to_electrolyser_kw": 0.0,
+      "ch4_capacity_kg": 3000.0,
+      "ch4_fill": 0.13765358434678873,
+      "ch4_level_kg": 412.96075304036617,
+      "ch4_produced_total_kg": 696.7897915185785,
+      "ch4_production_kg_h": 46.887239940158885,
+      "clock": "D1 19:15",
+      "co2_capacity_kg": 6000.0,
+      "co2_capture_kg_h": 52.58630751534009,
+      "co2_captured_total_kg": 1907.7049718808935,
+      "co2_fill": 0.13346721381466226,
+      "co2_level_kg": 800.8032828879735,
+      "dac_load_frac": 0.08764384585890014,
+      "dac_online": true,
+      "dac_power_kw": 105.17261503068018,
+      "day": 0,
+      "electrolyser_efficiency": 0.0,
+      "electrolyser_load_frac": 0.0,
+      "electrolyser_online": false,
+      "electrolyser_power_kw": 0.0,
+      "electrolyser_temperature_c": 22.0,
+      "energy_curtailed_kwh": 713.9275214775063,
+      "energy_produced_kwh": 24592.99791942053,
+      "h2_capacity_kg": 2000.0,
+      "h2_fill": 0.2923750719607686,
+      "h2_level_kg": 584.7501439215372,
+      "h2_produced_total_kg": 351.53505156710315,
+      "h2_production_kg_h": 0.0,
+      "health": {
+        "battery": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "ch4_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "co2_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "dac": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "electrolyser": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "h2_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "methanator": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "solar": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        }
+      },
+      "methanator_load_frac": 0.31258159960105925,
+      "methanator_online": true,
+      "methanator_power_kw": 56.26468792819067,
+      "plant_status": "normal",
+      "solar_available_kw": 161.43730295887087,
+      "solar_curtailed_kw": 0.0,
+      "solar_output_factor": 0.5206283708468162,
+      "solar_potential_kw": 310.08164748357586,
+      "solar_to_battery_kw": 2.842170943040401e-14,
+      "solar_to_dac_kw": 105.17261503068018,
+      "solar_to_electrolyser_kw": 0.0,
+      "solar_to_methanator_kw": 56.26468792819067,
+      "step": 795,
+      "time_h": 19.25,
+      "time_of_day_h": 19.25,
+      "time_s": 69300.0
+    },
+    {
+      "action": {
+        "battery_share": 0.0813088249019089,
+        "battery_support_kw": 0.0,
+        "dac_share": 0.4273382455265835,
+        "electrolyser_share": 0.0,
+        "methanator_share": 0.0021041741885002275
+      },
+      "battery_capacity_kwh": 8000.0,
+      "battery_energy_kwh": 5010.674944641071,
+      "battery_power_kw": 13.185502274075132,
+      "battery_soc": 0.6263343680801339,
+      "battery_to_electrolyser_kw": 0.0,
+      "ch4_capacity_kg": 3000.0,
+      "ch4_fill": 0.13765516409157663,
+      "ch4_level_kg": 412.9654922747299,
+      "ch4_produced_total_kg": 696.7945307529421,
+      "ch4_production_kg_h": 0.28435406182325096,
+      "clock": "D1 19:16",
+      "co2_capacity_kg": 6000.0,
+      "co2_capture_kg_h": 34.64980225078716,
+      "co2_captured_total_kg": 1908.2824685850733,
+      "co2_fill": 0.13356129111627552,
+      "co2_level_kg": 801.367746697653,
+      "dac_load_frac": 0.0577496704179786,
+      "dac_online": true,
+      "dac_power_kw": 69.29960450157432,
+      "day": 0,
+      "electrolyser_efficiency": 0.0,
+      "electrolyser_load_frac": 0.0,
+      "electrolyser_online": false,
+      "electrolyser_power_kw": 0.0,
+      "electrolyser_temperature_c": 22.0,
+      "energy_curtailed_kwh": 715.2498442357213,
+      "energy_produced_kwh": 24595.700681039576,
+      "h2_capacity_kg": 2000.0,
+      "h2_fill": 0.29237388715217766,
+      "h2_level_kg": 584.7477743043553,
+      "h2_produced_total_kg": 351.53505156710315,
+      "h2_production_kg_h": 0.0,
+      "health": {
+        "battery": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "ch4_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "co2_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "dac": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "electrolyser": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "h2_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "methanator": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "solar": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        }
+      },
+      "methanator_load_frac": 0.0018956937454883396,
+      "methanator_online": true,
+      "methanator_power_kw": 0.34122487418790115,
+      "plant_status": "normal",
+      "solar_available_kw": 162.1656971427412,
+      "solar_curtailed_kw": 79.33936549290385,
+      "solar_output_factor": 0.5577992065035535,
+      "solar_potential_kw": 290.7241445523787,
+      "solar_to_battery_kw": 13.185502274075132,
+      "solar_to_dac_kw": 69.29960450157432,
+      "solar_to_electrolyser_kw": 0.0,
+      "solar_to_methanator_kw": 0.34122487418790115,
+      "step": 796,
+      "time_h": 19.266666666666666,
+      "time_of_day_h": 19.266666666666666,
+      "time_s": 69360.0
+    },
+    {
+      "action": {
+        "battery_share": 0.08399423063829542,
+        "battery_support_kw": 0.0,
+        "dac_share": 0.44145204654755354,
+        "electrolyser_share": 0.0,
+        "methanator_share": 0.002173669245684633
+      },
+      "battery_capacity_kwh": 8000.0,
+      "battery_energy_kwh": 5010.885912677457,
+      "battery_power_kw": 13.185502274075134,
+      "battery_soc": 0.6263607390846821,
+      "battery_to_electrolyser_kw": 0.0,
+      "ch4_capacity_kg": 3000.0,
+      "ch4_fill": 0.13765674383636456,
+      "ch4_level_kg": 412.97023150909365,
+      "ch4_produced_total_kg": 696.7992699873058,
+      "ch4_production_kg_h": 0.28435406182325096,
+      "clock": "D1 19:17",
+      "co2_capacity_kg": 6000.0,
+      "co2_capture_kg_h": 34.64980225078716,
+      "co2_captured_total_kg": 1908.859965289253,
+      "co2_fill": 0.13365536841788875,
+      "co2_level_kg": 801.9322105073326,
+      "dac_load_frac": 0.0577496704179786,
+      "dac_online": true,
+      "dac_power_kw": 69.29960450157432,
+      "day": 0,
+      "electrolyser_efficiency": 0.0,
+      "electrolyser_load_frac": 0.0,
+      "electrolyser_online": false,
+      "electrolyser_power_kw": 0.0,
+      "electrolyser_temperature_c": 22.0,
+      "energy_curtailed_kwh": 716.485756159517,
+      "energy_produced_kwh": 24598.3170318242,
+      "h2_capacity_kg": 2000.0,
+      "h2_fill": 0.2923727023435867,
+      "h2_level_kg": 584.7454046871734,
+      "h2_produced_total_kg": 351.53505156710315,
+      "h2_production_kg_h": 0.0,
+      "health": {
+        "battery": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "ch4_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "co2_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "dac": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "electrolyser": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "h2_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "methanator": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "solar": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        }
+      },
+      "methanator_load_frac": 0.0018956937454883396,
+      "methanator_online": true,
+      "methanator_power_kw": 0.34122487418790115,
+      "plant_status": "normal",
+      "solar_available_kw": 156.98104707757724,
+      "solar_curtailed_kw": 74.15471542773989,
+      "solar_output_factor": 0.5784925371333035,
+      "solar_potential_kw": 271.36226831117045,
+      "solar_to_battery_kw": 13.185502274075134,
+      "solar_to_dac_kw": 69.29960450157432,
+      "solar_to_electrolyser_kw": 0.0,
+      "solar_to_methanator_kw": 0.34122487418790115,
+      "step": 797,
+      "time_h": 19.283333333333335,
+      "time_of_day_h": 19.283333333333335,
+      "time_s": 69420.0
+    },
+    {
+      "action": {
+        "battery_share": 0.08102213640533443,
+        "battery_support_kw": 0.0,
+        "dac_share": 0.4258314846148794,
+        "electrolyser_share": 0.0,
+        "methanator_share": 0.0020967550364541896
+      },
+      "battery_capacity_kwh": 8000.0,
+      "battery_energy_kwh": 5011.096880713842,
+      "battery_power_kw": 13.185502274075134,
+      "battery_soc": 0.6263871100892303,
+      "battery_to_electrolyser_kw": 0.0,
+      "ch4_capacity_kg": 3000.0,
+      "ch4_fill": 0.13765832358115246,
+      "ch4_level_kg": 412.9749707434574,
+      "ch4_produced_total_kg": 696.8040092216695,
+      "ch4_production_kg_h": 0.28435406182325096,
+      "clock": "D1 19:18",
+      "co2_capacity_kg": 6000.0,
+      "co2_capture_kg_h": 34.64980225078716,
+      "co2_captured_total_kg": 1909.4374619934329,
+      "co2_fill": 0.133749445719502,
+      "co2_level_kg": 802.4966743170121,
+      "dac_load_frac": 0.0577496704179786,
+      "dac_online": true,
+      "dac_power_kw": 69.29960450157432,
+      "day": 0,
+      "electrolyser_efficiency": 0.0,
+      "electrolyser_load_frac": 0.0,
+      "electrolyser_online": false,
+      "electrolyser_power_kw": 0.0,
+      "electrolyser_temperature_c": 22.0,
+      "energy_curtailed_kwh": 717.8176423617431,
+      "energy_produced_kwh": 24601.02935688726,
+      "h2_capacity_kg": 2000.0,
+      "h2_fill": 0.29237151753499574,
+      "h2_level_kg": 584.7430350699915,
+      "h2_produced_total_kg": 351.53505156710315,
+      "h2_production_kg_h": 0.0,
+      "health": {
+        "battery": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "ch4_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "co2_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "dac": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "electrolyser": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "h2_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "methanator": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "solar": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        }
+      },
+      "methanator_load_frac": 0.0018956937454883396,
+      "methanator_online": true,
+      "methanator_power_kw": 0.34122487418790115,
+      "plant_status": "normal",
+      "solar_available_kw": 162.73950378340075,
+      "solar_curtailed_kw": 79.91317213356339,
+      "solar_output_factor": 0.6458011380101526,
+      "solar_potential_kw": 251.99631001709744,
+      "solar_to_battery_kw": 13.185502274075134,
+      "solar_to_dac_kw": 69.29960450157432,
+      "solar_to_electrolyser_kw": 0.0,
+      "solar_to_methanator_kw": 0.34122487418790115,
+      "step": 798,
+      "time_h": 19.3,
+      "time_of_day_h": 19.3,
+      "time_s": 69480.0
+    },
+    {
+      "action": {
+        "battery_share": 0.08564641147756087,
+        "battery_support_kw": 0.0,
+        "dac_share": 0.4501354835790948,
+        "electrolyser_share": 0.0,
+        "methanator_share": 0.002216425690399103
+      },
+      "battery_capacity_kwh": 8000.0,
+      "battery_energy_kwh": 5011.307848750228,
+      "battery_power_kw": 13.185502274075134,
+      "battery_soc": 0.6264134810937785,
+      "battery_to_electrolyser_kw": 0.0,
+      "ch4_capacity_kg": 3000.0,
+      "ch4_fill": 0.13765990332594039,
+      "ch4_level_kg": 412.97970997782113,
+      "ch4_produced_total_kg": 696.8087484560332,
+      "ch4_production_kg_h": 0.28435406182325096,
+      "clock": "D1 19:19",
+      "co2_capacity_kg": 6000.0,
+      "co2_capture_kg_h": 34.64980225078716,
+      "co2_captured_total_kg": 1910.0149586976127,
+      "co2_fill": 0.13384352302111527,
+      "co2_level_kg": 803.0611381266916,
+      "dac_load_frac": 0.0577496704179786,
+      "dac_online": true,
+      "dac_power_kw": 69.29960450157432,
+      "day": 0,
+      "electrolyser_efficiency": 0.0,
+      "electrolyser_load_frac": 0.0,
+      "electrolyser_online": false,
+      "electrolyser_power_kw": 0.0,
+      "electrolyser_temperature_c": 22.0,
+      "energy_curtailed_kwh": 719.0030829982941,
+      "energy_produced_kwh": 24603.59523638464,
+      "h2_capacity_kg": 2000.0,
+      "h2_fill": 0.2923703327264048,
+      "h2_level_kg": 584.7406654528096,
+      "h2_produced_total_kg": 351.53505156710315,
+      "h2_production_kg_h": 0.0,
+      "health": {
+        "battery": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "ch4_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "co2_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "dac": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "electrolyser": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "h2_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "methanator": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "solar": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        }
+      },
+      "methanator_load_frac": 0.0018956937454883396,
+      "methanator_online": true,
+      "methanator_power_kw": 0.34122487418790115,
+      "plant_status": "normal",
+      "solar_available_kw": 153.9527698428988,
+      "solar_curtailed_kw": 71.12643819306143,
+      "solar_output_factor": 0.6618022000091168,
+      "solar_potential_kw": 232.62656098873344,
+      "solar_to_battery_kw": 13.185502274075134,
+      "solar_to_dac_kw": 69.29960450157432,
+      "solar_to_electrolyser_kw": 0.0,
+      "solar_to_methanator_kw": 0.34122487418790115,
+      "step": 799,
+      "time_h": 19.316666666666666,
+      "time_of_day_h": 19.316666666666666,
+      "time_s": 69540.0
+    },
+    {
+      "action": {
+        "battery_share": 0.09009720252629505,
+        "battery_support_kw": 0.0,
+        "dac_share": 0.47352769519039345,
+        "electrolyser_share": 0.0,
+        "methanator_share": 0.002331606787339719
+      },
+      "battery_capacity_kwh": 8000.0,
+      "battery_energy_kwh": 5011.518816786614,
+      "battery_power_kw": 13.185502274075134,
+      "battery_soc": 0.6264398520983266,
+      "battery_to_electrolyser_kw": 0.0,
+      "ch4_capacity_kg": 3000.0,
+      "ch4_fill": 0.13766148307072829,
+      "ch4_level_kg": 412.98444921218487,
+      "ch4_produced_total_kg": 696.8134876903969,
+      "ch4_production_kg_h": 0.284354061823251,
+      "clock": "D1 19:20",
+      "co2_capacity_kg": 6000.0,
+      "co2_capture_kg_h": 34.64980225078716,
+      "co2_captured_total_kg": 1910.5924554017924,
+      "co2_fill": 0.13393760032272853,
+      "co2_level_kg": 803.6256019363711,
+      "dac_load_frac": 0.0577496704179786,
+      "dac_online": true,
+      "dac_power_kw": 69.29960450157432,
+      "day": 0,
+      "electrolyser_efficiency": 0.0,
+      "electrolyser_load_frac": 0.0,
+      "electrolyser_online": false,
+      "electrolyser_power_kw": 0.0,
+      "electrolyser_temperature_c": 22.0,
+      "energy_curtailed_kwh": 720.0617694939966,
+      "energy_produced_kwh": 24606.034361741175,
+      "h2_capacity_kg": 2000.0,
+      "h2_fill": 0.2923691479178138,
+      "h2_level_kg": 584.7382958356277,
+      "h2_produced_total_kg": 351.53505156710315,
+      "h2_production_kg_h": 0.0,
+      "health": {
+        "battery": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "ch4_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "co2_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "dac": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "electrolyser": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "h2_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "methanator": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "solar": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        }
+      },
+      "methanator_load_frac": 0.00189569374548834,
+      "methanator_online": true,
+      "methanator_power_kw": 0.3412248741879012,
+      "plant_status": "normal",
+      "solar_available_kw": 146.34752139198682,
+      "solar_curtailed_kw": 63.52118974214946,
+      "solar_output_factor": 0.686261421248619,
+      "solar_potential_kw": 213.25331260165356,
+      "solar_to_battery_kw": 13.185502274075134,
+      "solar_to_dac_kw": 69.29960450157432,
+      "solar_to_electrolyser_kw": 0.0,
+      "solar_to_methanator_kw": 0.3412248741879012,
+      "step": 800,
+      "time_h": 19.333333333333332,
+      "time_of_day_h": 19.333333333333332,
+      "time_s": 69600.0
+    },
+    {
+      "action": {
+        "battery_share": 0.10083577368569273,
+        "battery_support_kw": 0.0,
+        "dac_share": 0.5299668598721553,
+        "electrolyser_share": 0.0,
+        "methanator_share": 0.0026095080395375854
+      },
+      "battery_capacity_kwh": 8000.0,
+      "battery_energy_kwh": 5011.729784822999,
+      "battery_power_kw": 13.185502274075134,
+      "battery_soc": 0.6264662231028749,
+      "battery_to_electrolyser_kw": 0.0,
+      "ch4_capacity_kg": 3000.0,
+      "ch4_fill": 0.1376630628155162,
+      "ch4_level_kg": 412.9891884465486,
+      "ch4_produced_total_kg": 696.8182269247606,
+      "ch4_production_kg_h": 0.28435406182325096,
+      "clock": "D1 19:21",
+      "co2_capacity_kg": 6000.0,
+      "co2_capture_kg_h": 34.64980225078716,
+      "co2_captured_total_kg": 1911.1699521059722,
+      "co2_fill": 0.1340316776243418,
+      "co2_level_kg": 804.1900657460507,
+      "dac_load_frac": 0.0577496704179786,
+      "dac_online": true,
+      "dac_power_kw": 69.29960450157432,
+      "day": 0,
+      "electrolyser_efficiency": 0.0,
+      "electrolyser_load_frac": 0.0,
+      "electrolyser_online": false,
+      "electrolyser_power_kw": 0.0,
+      "electrolyser_temperature_c": 22.0,
+      "energy_curtailed_kwh": 720.8606997519033,
+      "energy_produced_kwh": 24608.213730859912,
+      "h2_capacity_kg": 2000.0,
+      "h2_fill": 0.2923679631092229,
+      "h2_level_kg": 584.7359262184458,
+      "h2_produced_total_kg": 351.53505156710315,
+      "h2_production_kg_h": 0.0,
+      "health": {
+        "battery": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "ch4_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "co2_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "dac": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "electrolyser": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "h2_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "methanator": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "solar": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        }
+      },
+      "methanator_load_frac": 0.0018956937454883396,
+      "methanator_online": true,
+      "methanator_power_kw": 0.34122487418790115,
+      "plant_status": "normal",
+      "solar_available_kw": 130.76214712424013,
+      "solar_curtailed_kw": 47.93581547440277,
+      "solar_output_factor": 0.674459807273929,
+      "solar_potential_kw": 193.8768562840864,
+      "solar_to_battery_kw": 13.185502274075134,
+      "solar_to_dac_kw": 69.29960450157432,
+      "solar_to_electrolyser_kw": 0.0,
+      "solar_to_methanator_kw": 0.34122487418790115,
+      "step": 801,
+      "time_h": 19.35,
+      "time_of_day_h": 19.35,
+      "time_s": 69660.0
+    },
+    {
+      "action": {
+        "battery_share": 0.1111949305137231,
+        "battery_support_kw": 0.0,
+        "dac_share": 0.5844119205327393,
+        "electrolyser_share": 0.0,
+        "methanator_share": 0.0028775905070737217
+      },
+      "battery_capacity_kwh": 8000.0,
+      "battery_energy_kwh": 5011.940752859385,
+      "battery_power_kw": 13.185502274075134,
+      "battery_soc": 0.6264925941074231,
+      "battery_to_electrolyser_kw": 0.0,
+      "ch4_capacity_kg": 3000.0,
+      "ch4_fill": 0.1376646425603041,
+      "ch4_level_kg": 412.99392768091235,
+      "ch4_produced_total_kg": 696.8229661591242,
+      "ch4_production_kg_h": 0.28435406182325096,
+      "clock": "D1 19:22",
+      "co2_capacity_kg": 6000.0,
+      "co2_capture_kg_h": 34.64980225078716,
+      "co2_captured_total_kg": 1911.747448810152,
+      "co2_fill": 0.13412575492595502,
+      "co2_level_kg": 804.7545295557302,
+      "dac_load_frac": 0.0577496704179786,
+      "dac_online": true,
+      "dac_power_kw": 69.29960450157432,
+      "day": 0,
+      "electrolyser_efficiency": 0.0,
+      "electrolyser_load_frac": 0.0,
+      "electrolyser_online": false,
+      "electrolyser_power_kw": 0.0,
+      "electrolyser_temperature_c": 22.0,
+      "energy_curtailed_kwh": 721.4565953356314,
+      "energy_produced_kwh": 24610.190065304472,
+      "h2_capacity_kg": 2000.0,
+      "h2_fill": 0.29236677830063196,
+      "h2_level_kg": 584.7335566012639,
+      "h2_produced_total_kg": 351.53505156710315,
+      "h2_production_kg_h": 0.0,
+      "health": {
+        "battery": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "ch4_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "co2_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "dac": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "electrolyser": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "h2_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "methanator": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "solar": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        }
+      },
+      "methanator_load_frac": 0.0018956937454883396,
+      "methanator_online": true,
+      "methanator_power_kw": 0.34122487418790115,
+      "plant_status": "normal",
+      "solar_available_kw": 118.58006667352382,
+      "solar_curtailed_kw": 35.75373502368646,
+      "solar_output_factor": 0.6795517292662105,
+      "solar_potential_kw": 174.4974835125035,
+      "solar_to_battery_kw": 13.185502274075134,
+      "solar_to_dac_kw": 69.29960450157432,
+      "solar_to_electrolyser_kw": 0.0,
+      "solar_to_methanator_kw": 0.34122487418790115,
+      "step": 802,
+      "time_h": 19.366666666666667,
+      "time_of_day_h": 19.366666666666667,
+      "time_s": 69720.0
+    },
+    {
+      "action": {
+        "battery_share": 0.12667253401948428,
+        "battery_support_kw": 0.0,
+        "dac_share": 0.6657582188599802,
+        "electrolyser_share": 0.0,
+        "methanator_share": 0.003278132192874161
+      },
+      "battery_capacity_kwh": 8000.0,
+      "battery_energy_kwh": 5012.15172089577,
+      "battery_power_kw": 13.185502274075134,
+      "battery_soc": 0.6265189651119712,
+      "battery_to_electrolyser_kw": 0.0,
+      "ch4_capacity_kg": 3000.0,
+      "ch4_fill": 0.13766622230509204,
+      "ch4_level_kg": 412.9986669152761,
+      "ch4_produced_total_kg": 696.8277053934879,
+      "ch4_production_kg_h": 0.28435406182325096,
+      "clock": "D1 19:23",
+      "co2_capacity_kg": 6000.0,
+      "co2_capture_kg_h": 34.64980225078716,
+      "co2_captured_total_kg": 1912.3249455143318,
+      "co2_fill": 0.13421983222756828,
+      "co2_level_kg": 805.3189933654097,
+      "dac_load_frac": 0.0577496704179786,
+      "dac_online": true,
+      "dac_power_kw": 69.29960450157432,
+      "day": 0,
+      "electrolyser_efficiency": 0.0,
+      "electrolyser_load_frac": 0.0,
+      "electrolyser_online": false,
+      "electrolyser_power_kw": 0.0,
+      "electrolyser_temperature_c": 22.0,
+      "energy_curtailed_kwh": 721.8110106240102,
+      "energy_produced_kwh": 24611.924919453682,
+      "h2_capacity_kg": 2000.0,
+      "h2_fill": 0.292365593492041,
+      "h2_level_kg": 584.731186984082,
+      "h2_produced_total_kg": 351.53505156710315,
+      "h2_production_kg_h": 0.0,
+      "health": {
+        "battery": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "ch4_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "co2_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "dac": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "electrolyser": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "h2_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "methanator": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "solar": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        }
+      },
+      "methanator_load_frac": 0.0018956937454883396,
+      "methanator_online": true,
+      "methanator_power_kw": 0.34122487418790115,
+      "plant_status": "normal",
+      "solar_available_kw": 104.09124895257081,
+      "solar_curtailed_kw": 21.26491730273345,
+      "solar_output_factor": 0.6710564610028997,
+      "solar_potential_kw": 155.11548580726804,
+      "solar_to_battery_kw": 13.185502274075134,
+      "solar_to_dac_kw": 69.29960450157432,
+      "solar_to_electrolyser_kw": 0.0,
+      "solar_to_methanator_kw": 0.34122487418790115,
+      "step": 803,
+      "time_h": 19.383333333333333,
+      "time_of_day_h": 19.383333333333333,
+      "time_s": 69780.0
+    },
+    {
+      "action": {
+        "battery_share": 0.14858323228016188,
+        "battery_support_kw": 0.0,
+        "dac_share": 0.7809152066073275,
+        "electrolyser_share": 0.0,
+        "methanator_share": 0.003845154601422735
+      },
+      "battery_capacity_kwh": 8000.0,
+      "battery_energy_kwh": 5012.362688932156,
+      "battery_power_kw": 13.185502274075132,
+      "battery_soc": 0.6265453361165195,
+      "battery_to_electrolyser_kw": 0.0,
+      "ch4_capacity_kg": 3000.0,
+      "ch4_fill": 0.13766780204987994,
+      "ch4_level_kg": 413.00340614963983,
+      "ch4_produced_total_kg": 696.8324446278516,
+      "ch4_production_kg_h": 0.28435406182325096,
+      "clock": "D1 19:24",
+      "co2_capacity_kg": 6000.0,
+      "co2_capture_kg_h": 34.64980225078716,
+      "co2_captured_total_kg": 1912.9024422185116,
+      "co2_fill": 0.13431390952918154,
+      "co2_level_kg": 805.8834571750892,
+      "dac_load_frac": 0.0577496704179786,
+      "dac_online": true,
+      "dac_power_kw": 69.29960450157432,
+      "day": 0,
+      "electrolyser_efficiency": 0.0,
+      "electrolyser_load_frac": 0.0,
+      "electrolyser_online": false,
+      "electrolyser_power_kw": 0.0,
+      "electrolyser_temperature_c": 22.0,
+      "energy_curtailed_kwh": 721.9095971408226,
+      "energy_produced_kwh": 24613.403944831327,
+      "h2_capacity_kg": 2000.0,
+      "h2_fill": 0.29236440868345004,
+      "h2_level_kg": 584.7288173669001,
+      "h2_produced_total_kg": 351.53505156710315,
+      "h2_production_kg_h": 0.0,
+      "health": {
+        "battery": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "ch4_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "co2_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "dac": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "electrolyser": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "h2_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "methanator": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "solar": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        }
+      },
+      "methanator_load_frac": 0.0018956937454883396,
+      "methanator_online": true,
+      "methanator_power_kw": 0.34122487418790115,
+      "plant_status": "normal",
+      "solar_available_kw": 88.74152265858062,
+      "solar_curtailed_kw": 5.915191008743264,
+      "solar_output_factor": 0.6538036373172668,
+      "solar_potential_kw": 135.7311547282164,
+      "solar_to_battery_kw": 13.185502274075132,
+      "solar_to_dac_kw": 69.29960450157432,
+      "solar_to_electrolyser_kw": 0.0,
+      "solar_to_methanator_kw": 0.34122487418790115,
+      "step": 804,
+      "time_h": 19.4,
+      "time_of_day_h": 19.4,
+      "time_s": 69840.0
+    },
+    {
+      "action": {
+        "battery_share": 0.08001844862646157,
+        "battery_support_kw": 0.0,
+        "dac_share": 0.9154738424341633,
+        "electrolyser_share": 0.0,
+        "methanator_share": 0.004507708939375191
+      },
+      "battery_capacity_kwh": 8000.0,
+      "battery_energy_kwh": 5012.459604808251,
+      "battery_power_kw": 6.057242255987362,
+      "battery_soc": 0.6265574506010314,
+      "battery_to_electrolyser_kw": 0.0,
+      "ch4_capacity_kg": 3000.0,
+      "ch4_fill": 0.13766938179466787,
+      "ch4_level_kg": 413.00814538400357,
+      "ch4_produced_total_kg": 696.8371838622153,
+      "ch4_production_kg_h": 0.284354061823251,
+      "clock": "D1 19:25",
+      "co2_capacity_kg": 6000.0,
+      "co2_capture_kg_h": 34.64980225078716,
+      "co2_captured_total_kg": 1913.4799389226914,
+      "co2_fill": 0.1344079868307948,
+      "co2_level_kg": 806.4479209847688,
+      "dac_load_frac": 0.0577496704179786,
+      "dac_online": true,
+      "dac_power_kw": 69.29960450157432,
+      "day": 0,
+      "electrolyser_efficiency": 0.0,
+      "electrolyser_load_frac": 0.0,
+      "electrolyser_online": false,
+      "electrolyser_power_kw": 0.0,
+      "electrolyser_temperature_c": 22.0,
+      "energy_curtailed_kwh": 721.9095971408226,
+      "energy_produced_kwh": 24614.665579358523,
+      "h2_capacity_kg": 2000.0,
+      "h2_fill": 0.2923632238748591,
+      "h2_level_kg": 584.7264477497182,
+      "h2_produced_total_kg": 351.53505156710315,
+      "h2_production_kg_h": 0.0,
+      "health": {
+        "battery": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "ch4_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "co2_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "dac": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "electrolyser": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "h2_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "methanator": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "solar": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        }
+      },
+      "methanator_load_frac": 0.00189569374548834,
+      "methanator_online": true,
+      "methanator_power_kw": 0.3412248741879012,
+      "plant_status": "normal",
+      "solar_available_kw": 75.69807163174958,
+      "solar_curtailed_kw": 0.0,
+      "solar_output_factor": 0.6506357261140256,
+      "solar_potential_kw": 116.34478187028313,
+      "solar_to_battery_kw": 6.057242255987362,
+      "solar_to_dac_kw": 69.29960450157432,
+      "solar_to_electrolyser_kw": 0.0,
+      "solar_to_methanator_kw": 0.3412248741879012,
+      "step": 805,
+      "time_h": 19.416666666666668,
+      "time_of_day_h": 19.416666666666668,
+      "time_s": 69900.0
+    },
+    {
+      "action": {
+        "battery_share": 4.7766525006472333e-17,
+        "battery_support_kw": 0.0,
+        "dac_share": 0.9951002181156294,
+        "electrolyser_share": 0.0,
+        "methanator_share": 0.004899781884370564
+      },
+      "battery_capacity_kwh": 8000.0,
+      "battery_energy_kwh": 5012.459604808251,
+      "battery_power_kw": 2.942091015256665e-15,
+      "battery_soc": 0.6265574506010314,
+      "battery_to_electrolyser_kw": 0.0,
+      "ch4_capacity_kg": 3000.0,
+      "ch4_fill": 0.1376707789846162,
+      "ch4_level_kg": 413.01233695384855,
+      "ch4_produced_total_kg": 696.8413754320602,
+      "ch4_production_kg_h": 0.25149419069754225,
+      "clock": "D1 19:26",
+      "co2_capacity_kg": 6000.0,
+      "co2_capture_kg_h": 30.645681369968216,
+      "co2_captured_total_kg": 1913.9907002788575,
+      "co2_fill": 0.13449119258731018,
+      "co2_level_kg": 806.9471555238612,
+      "dac_load_frac": 0.0510761356166137,
+      "dac_online": true,
+      "dac_power_kw": 61.29136273993644,
+      "day": 0,
+      "electrolyser_efficiency": 0.0,
+      "electrolyser_load_frac": 0.0,
+      "electrolyser_online": false,
+      "electrolyser_power_kw": 0.0,
+      "electrolyser_temperature_c": 22.0,
+      "energy_curtailed_kwh": 721.9095971408226,
+      "energy_produced_kwh": 24615.69213195467,
+      "h2_capacity_kg": 2000.0,
+      "h2_fill": 0.29236217598239783,
+      "h2_level_kg": 584.7243519647957,
+      "h2_produced_total_kg": 351.53505156710315,
+      "h2_production_kg_h": 0.0,
+      "health": {
+        "battery": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "ch4_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "co2_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "dac": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "electrolyser": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "h2_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "methanator": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "solar": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        }
+      },
+      "methanator_load_frac": 0.0016766279379836148,
+      "methanator_online": true,
+      "methanator_power_kw": 0.30179302883705067,
+      "plant_status": "normal",
+      "solar_available_kw": 61.59315576877349,
+      "solar_curtailed_kw": 2.942091015256665e-15,
+      "solar_output_factor": 0.6352648337260541,
+      "solar_potential_kw": 96.95665885912138,
+      "solar_to_battery_kw": 2.942091015256665e-15,
+      "solar_to_dac_kw": 61.29136273993644,
+      "solar_to_electrolyser_kw": 0.0,
+      "solar_to_methanator_kw": 0.30179302883705067,
+      "step": 806,
+      "time_h": 19.433333333333334,
+      "time_of_day_h": 19.433333333333334,
+      "time_s": 69960.0
+    },
+    {
+      "action": {
+        "battery_share": 0.0,
+        "battery_support_kw": 0.0,
+        "dac_share": 0.9951002181156294,
+        "electrolyser_share": 0.0,
+        "methanator_share": 0.004899781884370564
+      },
+      "battery_capacity_kwh": 8000.0,
+      "battery_energy_kwh": 5012.459604808251,
+      "battery_power_kw": 2.7755575615628914e-17,
+      "battery_soc": 0.6265574506010314,
+      "battery_to_electrolyser_kw": 0.0,
+      "ch4_capacity_kg": 3000.0,
+      "ch4_fill": 0.13767187023495744,
+      "ch4_level_kg": 413.0156107048723,
+      "ch4_produced_total_kg": 696.8446491830839,
+      "ch4_production_kg_h": 0.19642506142431118,
+      "clock": "D1 19:27",
+      "co2_capacity_kg": 6000.0,
+      "co2_capture_kg_h": 23.935263986774483,
+      "co2_captured_total_kg": 1914.3896213453038,
+      "co2_fill": 0.1345561789624987,
+      "co2_level_kg": 807.3370737749922,
+      "dac_load_frac": 0.03989210664462414,
+      "dac_online": true,
+      "dac_power_kw": 47.87052797354897,
+      "day": 0,
+      "electrolyser_efficiency": 0.0,
+      "electrolyser_load_frac": 0.0,
+      "electrolyser_online": false,
+      "electrolyser_power_kw": 0.0,
+      "electrolyser_temperature_c": 22.0,
+      "energy_curtailed_kwh": 721.9095971408226,
+      "energy_produced_kwh": 24616.49390258879,
+      "h2_capacity_kg": 2000.0,
+      "h2_fill": 0.29236135754464193,
+      "h2_level_kg": 584.7227150892838,
+      "h2_produced_total_kg": 351.53505156710315,
+      "h2_production_kg_h": 0.0,
+      "health": {
+        "battery": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "ch4_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "co2_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "dac": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "electrolyser": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "h2_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "methanator": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "solar": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        }
+      },
+      "methanator_load_frac": 0.0013095004094954078,
+      "methanator_online": true,
+      "methanator_power_kw": 0.23571007370917338,
+      "plant_status": "normal",
+      "solar_available_kw": 48.10623804725814,
+      "solar_curtailed_kw": 0.0,
+      "solar_output_factor": 0.6201888699793181,
+      "solar_potential_kw": 77.56707734671596,
+      "solar_to_battery_kw": 2.7755575615628914e-17,
+      "solar_to_dac_kw": 47.87052797354897,
+      "solar_to_electrolyser_kw": 0.0,
+      "solar_to_methanator_kw": 0.23571007370917338,
+      "step": 807,
+      "time_h": 19.45,
+      "time_of_day_h": 19.45,
+      "time_s": 70020.0
+    },
+    {
+      "action": {
+        "battery_share": 4.0152565279617963e-17,
+        "battery_support_kw": 0.0,
+        "dac_share": 0.9951002181156294,
+        "electrolyser_share": 0.0,
+        "methanator_share": 0.0048997818843705635
+      },
+      "battery_capacity_kwh": 8000.0,
+      "battery_energy_kwh": 5012.459604808251,
+      "battery_power_kw": 1.4710455076283324e-15,
+      "battery_soc": 0.6265574506010314,
+      "battery_to_electrolyser_kw": 0.0,
+      "ch4_capacity_kg": 3000.0,
+      "ch4_fill": 0.13767270130151746,
+      "ch4_level_kg": 413.01810390455233,
+      "ch4_produced_total_kg": 696.847142382764,
+      "ch4_production_kg_h": 0.14959198080221606,
+      "clock": "D1 19:28",
+      "co2_capacity_kg": 6000.0,
+      "co2_capture_kg_h": 18.228445621157313,
+      "co2_captured_total_kg": 1914.6934287723232,
+      "co2_fill": 0.13460567081714855,
+      "co2_level_kg": 807.6340249028914,
+      "dac_load_frac": 0.030380742701928854,
+      "dac_online": true,
+      "dac_power_kw": 36.456891242314626,
+      "day": 0,
+      "electrolyser_efficiency": 0.0,
+      "electrolyser_load_frac": 0.0,
+      "electrolyser_online": false,
+      "electrolyser_power_kw": 0.0,
+      "electrolyser_temperature_c": 22.0,
+      "energy_curtailed_kwh": 721.9095971408226,
+      "energy_produced_kwh": 24617.104509282446,
+      "h2_capacity_kg": 2000.0,
+      "h2_fill": 0.2923607342447219,
+      "h2_level_kg": 584.7214684894439,
+      "h2_produced_total_kg": 351.53505156710315,
+      "h2_production_kg_h": 0.0,
+      "health": {
+        "battery": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "ch4_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "co2_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "dac": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "electrolyser": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "h2_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "methanator": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "solar": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        }
+      },
+      "methanator_load_frac": 0.0009972798720147735,
+      "methanator_online": true,
+      "methanator_power_kw": 0.17951037696265923,
+      "plant_status": "normal",
+      "solar_available_kw": 36.63640161927729,
+      "solar_curtailed_kw": 1.4710455076283324e-15,
+      "solar_output_factor": 0.6297475664866562,
+      "solar_potential_kw": 58.176329006987245,
+      "solar_to_battery_kw": 1.4710455076283324e-15,
+      "solar_to_dac_kw": 36.456891242314626,
+      "solar_to_electrolyser_kw": 0.0,
+      "solar_to_methanator_kw": 0.17951037696265923,
+      "step": 808,
+      "time_h": 19.466666666666665,
+      "time_of_day_h": 19.466666666666665,
+      "time_s": 70080.0
+    },
+    {
+      "action": {
+        "battery_share": 9.668430870796668e-17,
+        "battery_support_kw": 0.0,
+        "dac_share": 0.9951002181156293,
+        "electrolyser_share": 0.0,
+        "methanator_share": 0.0048997818843705635
+      },
+      "battery_capacity_kwh": 8000.0,
+      "battery_energy_kwh": 5012.459604808251,
+      "battery_power_kw": 2.4424906541753444e-15,
+      "battery_soc": 0.6265574506010314,
+      "battery_to_electrolyser_kw": 0.0,
+      "ch4_capacity_kg": 3000.0,
+      "ch4_fill": 0.13767327436127377,
+      "ch4_level_kg": 413.01982308382134,
+      "ch4_produced_total_kg": 696.848861562033,
+      "ch4_production_kg_h": 0.10315075613959336,
+      "clock": "D1 19:29",
+      "co2_capacity_kg": 6000.0,
+      "co2_capture_kg_h": 12.56937664030171,
+      "co2_captured_total_kg": 1914.9029183829948,
+      "co2_fill": 0.13463979779509555,
+      "co2_level_kg": 807.8387867705733,
+      "dac_load_frac": 0.02094896106716952,
+      "dac_online": true,
+      "dac_power_kw": 25.13875328060342,
+      "day": 0,
+      "electrolyser_efficiency": 0.0,
+      "electrolyser_load_frac": 0.0,
+      "electrolyser_online": false,
+      "electrolyser_power_kw": 0.0,
+      "electrolyser_temperature_c": 22.0,
+      "energy_curtailed_kwh": 721.9095971408226,
+      "energy_produced_kwh": 24617.525551518913,
+      "h2_capacity_kg": 2000.0,
+      "h2_fill": 0.2923603044499047,
+      "h2_level_kg": 584.7206088998093,
+      "h2_produced_total_kg": 351.53505156710315,
+      "h2_production_kg_h": 0.0,
+      "health": {
+        "battery": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "ch4_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "co2_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "dac": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "electrolyser": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "h2_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "methanator": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "solar": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        }
+      },
+      "methanator_load_frac": 0.000687671707597289,
+      "methanator_online": true,
+      "methanator_power_kw": 0.12378090736751202,
+      "plant_status": "normal",
+      "solar_available_kw": 25.262534187970935,
+      "solar_curtailed_kw": 0.0,
+      "solar_output_factor": 0.6513529970600442,
+      "solar_potential_kw": 38.78470553140348,
+      "solar_to_battery_kw": 2.4424906541753444e-15,
+      "solar_to_dac_kw": 25.13875328060342,
+      "solar_to_electrolyser_kw": 0.0,
+      "solar_to_methanator_kw": 0.12378090736751202,
+      "step": 809,
+      "time_h": 19.483333333333334,
+      "time_of_day_h": 19.483333333333334,
+      "time_s": 70140.0
+    },
+    {
+      "action": {
+        "battery_share": 3.557551549824606e-17,
+        "battery_support_kw": 0.0,
+        "dac_share": 0.9951002181156294,
+        "electrolyser_share": 0.0,
+        "methanator_share": 0.0048997818843705635
+      },
+      "battery_capacity_kwh": 8000.0,
+      "battery_energy_kwh": 5012.459604808251,
+      "battery_power_kw": 4.510281037539698e-16,
+      "battery_soc": 0.6265574506010314,
+      "battery_to_electrolyser_kw": 0.0,
+      "ch4_capacity_kg": 3000.0,
+      "ch4_fill": 0.137673561952345,
+      "ch4_level_kg": 413.020685857035,
+      "ch4_produced_total_kg": 696.8497243352467,
+      "ch4_production_kg_h": 0.05176639282113056,
+      "clock": "D1 19:30",
+      "co2_capacity_kg": 6000.0,
+      "co2_capture_kg_h": 6.307964313882981,
+      "co2_captured_total_kg": 1915.0080511215594,
+      "co2_fill": 0.13465692448046673,
+      "co2_level_kg": 807.9415468828004,
+      "dac_load_frac": 0.010513273856471635,
+      "dac_online": true,
+      "dac_power_kw": 12.615928627765962,
+      "day": 0,
+      "electrolyser_efficiency": 0.0,
+      "electrolyser_load_frac": 0.0,
+      "electrolyser_online": false,
+      "electrolyser_power_kw": 0.0,
+      "electrolyser_temperature_c": 22.0,
+      "energy_curtailed_kwh": 721.9095971408226,
+      "energy_produced_kwh": 24617.7368523239,
+      "h2_capacity_kg": 2000.0,
+      "h2_fill": 0.29236008875660124,
+      "h2_level_kg": 584.7201775132025,
+      "h2_produced_total_kg": 351.53505156710315,
+      "h2_production_kg_h": 0.0,
+      "health": {
+        "battery": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "ch4_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "co2_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "dac": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "electrolyser": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "h2_tank": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "methanator": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        },
+        "solar": {
+          "degradation": 0.0,
+          "offline": false,
+          "status": "nominal"
+        }
+      },
+      "methanator_load_frac": 0.00034510928547420376,
+      "methanator_online": true,
+      "methanator_power_kw": 0.06211967138535667,
+      "plant_status": "normal",
+      "solar_available_kw": 12.67804829915132,
+      "solar_curtailed_kw": 4.510281037539698e-16,
+      "solar_output_factor": 0.6537604330712197,
+      "solar_potential_kw": 19.392498624599682,
+      "solar_to_battery_kw": 4.510281037539698e-16,
+      "solar_to_dac_kw": 12.615928627765962,
+      "solar_to_electrolyser_kw": 0.0,
+      "solar_to_methanator_kw": 0.06211967138535667,
+      "step": 810,
+      "time_h": 19.5,
+      "time_of_day_h": 19.5,
+      "time_s": 70200.0
+    }
+  ],
+  "observed_available_solar_kwh": 24.738932903361682,
+  "observed_battery_change_kwh": 1.9956282035655022,
+  "planned_battery_change_kwh": 3.164520545778032,
+  "planned_charge_input_kwh": 3.2963755685187834,
+  "planned_first_step": {
+    "battery_charging": true,
+    "battery_energy_end_kwh": 5013.628497150464,
+    "battery_support_kw": 0.0,
+    "ch4_end_kg": 413.031841555822,
+    "ch4_produced_kg": 0.07108851545581274,
+    "co2_captured_kg": 8.66245056269679,
+    "co2_end_kg": 809.2702400331668,
+    "cold_start": false,
+    "delivered_kg": 0.0,
+    "electrolyser_productive_kw": 0.0,
+    "electrolyser_startup_kw": 0.0,
+    "forecast_solar_kw": 82.82633164983673,
+    "h2_end_kg": 584.7145996638093,
+    "h2_produced_kg": 0.0,
+    "index": 0,
+    "running": false,
+    "solar_curtailed_kw": 0.0,
+    "solar_to_battery_kw": 13.185502274075134,
+    "solar_to_dac_kw": 69.29960450157432,
+    "solar_to_electrolyser_kw": 0.0,
+    "solar_to_methanator_kw": 0.34122487418790115,
+    "warmup": false
+  },
+  "schema": "plant-beta-public-mismatch-decomposition-v1",
+  "seed": 9100001,
+  "solar_forecast_minus_observation_kwh": -4.0323499909025,
+  "solver_calls": 0,
+  "source_archive_sha256": "5d2916a938cd84c34b516696910b152a481595ee475f746c6825ca15c4f936dd"
+}

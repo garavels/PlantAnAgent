@@ -12,7 +12,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from numbers import Integral, Real
 from typing import Any, Sequence
 
@@ -23,6 +23,7 @@ from .weather import FORECAST_WINDOWS_H, PublicForecastIssueV2
 SECONDS_PER_HOUR = 3_600.0
 HOURS_PER_DAY = 24.0
 FORECAST_PROJECTION_VERSION = "issued-mean-clear-sky-scaled-v2"
+P10_FORECAST_PROJECTION_VERSION = "issued-band-p10-clear-sky-scaled-v1"
 FORECAST_TRAJECTORY_DOMAIN = "service-mpc-forecast-trajectory-v1"
 PUBLIC_FORECAST_ISSUE_DOMAIN = "service-mpc-public-forecast-issue-v1"
 DEFAULT_ENERGY_TOLERANCE = 1e-12
@@ -195,7 +196,10 @@ class MPCForecastTrajectoryV1:
     bands: tuple[MPCForecastBandV1, ...]
 
     def __post_init__(self) -> None:
-        if self.projection_version != FORECAST_PROJECTION_VERSION:
+        if self.projection_version not in (
+            FORECAST_PROJECTION_VERSION,
+            P10_FORECAST_PROJECTION_VERSION,
+        ):
             raise ValueError("forecast projection version is unsupported")
         if (
             not isinstance(self.source_issue_sha256, str)
@@ -539,6 +543,43 @@ def project_issued_mean_solar(
         available_kw=power,
         interval_band_names=tuple(band_names),
         bands=tuple(audits),
+    )
+
+
+def project_issued_p10_solar(
+    forecast: PublicForecastIssueV2,
+    *,
+    boundary_time_s: float,
+    config: PlantConfig,
+    interval_s: float,
+    energy_tolerance: float = DEFAULT_ENERGY_TOLERANCE,
+) -> MPCForecastTrajectoryV1:
+    """Reconstruct band-p10 energy; no interval/joint coverage is implied.
+
+    Reuse the exact energy integration, but retain the original full issue digest
+    and a distinct statistic version. The temporary means are band averages of
+    the chosen lower-energy scenario, never a replacement public issuance.
+    """
+    if not isinstance(forecast, PublicForecastIssueV2):
+        raise TypeError("forecast must be a PublicForecastIssueV2")
+    lower_issue = replace(
+        forecast,
+        windows=tuple(
+            replace(window, mean_peak_power_fraction=window.p10_peak_power_fraction)
+            for window in forecast.windows
+        ),
+    )
+    lower = project_issued_mean_solar(
+        lower_issue,
+        boundary_time_s=boundary_time_s,
+        config=config,
+        interval_s=interval_s,
+        energy_tolerance=energy_tolerance,
+    )
+    return replace(
+        lower,
+        projection_version=P10_FORECAST_PROJECTION_VERSION,
+        source_issue_sha256=public_forecast_issue_sha256(forecast),
     )
 
 

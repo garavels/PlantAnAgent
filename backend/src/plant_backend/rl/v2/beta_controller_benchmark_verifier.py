@@ -109,6 +109,8 @@ from .market import (
 from .metrics import EpisodeMetricsV2
 from .mpc_execution import SERVICE_MPC_OBSERVATION_DOMAIN
 from .mpc_forecast import project_issued_mean_solar
+from .beta_mpc_uncertainty import project_beta_mpc_solar
+from .beta_mpc_schema import BETA_MPC_MEAN_POLICY, BETA_MPC_UNCERTAINTY_POLICY
 from .mpc_schema import (
     MODEL_BALANCE_TOLERANCE,
     MPCDeliveryTargetV1,
@@ -1367,6 +1369,10 @@ def _parse_beta_settings(raw: object) -> BetaMPCSettingsV1:
     payload = _mapping("beta MPC settings", raw)
     solver = _mapping("beta MPC solver options", payload.get("solver_options"))
     settings = BetaMPCSettingsV1(
+        uncertainty_policy=_text(
+            "beta MPC uncertainty policy",
+            payload.get("uncertainty_policy", BETA_MPC_MEAN_POLICY),
+        ),
         task_horizon_h=_number("beta MPC task horizon", payload.get("task_horizon_h")),
         planning_horizon_h=_number(
             "beta MPC planning horizon", payload.get("planning_horizon_h")
@@ -2623,12 +2629,11 @@ def _verify_beta_plan(
     forecast = boundary.plant.forecast
     if forecast is None:  # pragma: no cover - beta observation decoder requires it
         raise ValueError("E-beta boundary omitted its public weather issue")
-    weather_projection = project_issued_mean_solar(
+    weather_projection = project_beta_mpc_solar(
         forecast,
         boundary_time_s=boundary.plant.state.boundary.time_s,
         config=config.plant,
-        interval_s=settings.interval_s,
-        energy_tolerance=settings.energy_reconstruction_tolerance,
+        settings=settings,
     )
     if plan.get("weather_projection_sha256") != weather_projection.sha256:
         raise ValueError("E-beta weather projection differs from public forecast")
@@ -2844,6 +2849,11 @@ def _verify_beta_plan(
         beta_task_sha256=config.beta_task.sha256,
         cycle_return=cycle_return,
         selected_solution_vector=selected_solution,
+        reserve_evidence_json=(
+            canonical_json(model.metadata()["uncertainty_policy"])
+            if "uncertainty_policy" in model.metadata()
+            else None
+        ),
     )
     _exact("E-beta typed plan", plan, typed_plan.to_dict())
     witness = _beta_plan_solution_witness(
@@ -3813,6 +3823,7 @@ def _verify_normal_arm(
         descriptor = _mapping("E-beta controller descriptor", run["controller"])
         beta_settings = _parse_beta_settings(descriptor.get("settings"))
         canonical_beta_settings = BetaMPCSettingsV1(
+            uncertainty_policy=BETA_MPC_UNCERTAINTY_POLICY,
             task_horizon_h=config.episode.horizon_h,
             planning_horizon_h=min(24.0, config.episode.horizon_h),
             interval_s=config.episode.decision_interval_s,

@@ -36,6 +36,7 @@ from plant_backend.rl.v2.config import EpisodeConfigV2
 from plant_backend.rl.v2.economic_mpc_model import economic_delivery_lock_row
 from plant_backend.rl.v2.economics import ch4_equivalent_inventory_kg
 from plant_backend.rl.v2.mpc_forecast import project_issued_mean_solar
+from plant_backend.rl.v2.beta_mpc_uncertainty import project_beta_mpc_solar
 from plant_backend.rl.v2.mpc_schema import domain_sha256
 from plant_backend.rl.v2.policy_setpoint_controller import (
     NormalizedSetpointPolicyControllerV1,
@@ -352,12 +353,11 @@ def _selected_solution_digest(report: dict[str, Any], vector: list[float]) -> st
     settings = controller.settings
     forecast = boundary.plant.forecast
     assert forecast is not None
-    weather_projection = project_issued_mean_solar(
+    weather_projection = project_beta_mpc_solar(
         forecast,
         boundary_time_s=boundary.plant.state.boundary.time_s,
         config=config.plant,
-        interval_s=settings.interval_s,
-        energy_tolerance=settings.energy_reconstruction_tolerance,
+        settings=settings,
     )
     price_projection = project_beta_mpc_prices(
         boundary.market,

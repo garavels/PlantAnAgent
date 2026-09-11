@@ -442,6 +442,7 @@ def _real_beta_economic_controller(
         task_horizon_h=config.episode.horizon_h,
         planning_horizon_h=min(24.0, config.episode.horizon_h),
         interval_s=config.episode.decision_interval_s,
+        uncertainty_policy=schema_module.BETA_MPC_UNCERTAINTY_POLICY,
     )
     controller = controller_type(
         settings=settings,

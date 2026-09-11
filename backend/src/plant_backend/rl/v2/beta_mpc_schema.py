@@ -11,6 +11,7 @@ means are used thereafter.
 from __future__ import annotations
 
 import math
+import json
 from dataclasses import dataclass
 from numbers import Integral, Real
 from typing import Any, ClassVar
@@ -23,7 +24,8 @@ from .economic_mpc_schema import (
     EconomicMPCStageSolveV1,
 )
 from .market import PublicPriceForecastIssueV1
-from .mpc_schema import domain_sha256, require_sha256
+from .mpc_forecast import P10_FORECAST_PROJECTION_VERSION
+from .mpc_schema import canonical_json, domain_sha256, require_sha256
 from .setpoint_command import ProcessSetpointCommandV1
 from .setpoint_control import ProcessSetpointTargetsV1
 
@@ -31,6 +33,8 @@ from .setpoint_control import ProcessSetpointTargetsV1
 BETA_MPC_SCHEMA_VERSION = 1
 BETA_MPC_CONTROLLER_ID = "cyclic-market-economic-mpc-v1"
 BETA_MPC_MODEL_VERSION = "cyclic-return-economic-mpc-v2"
+BETA_MPC_UNCERTAINTY_POLICY = "public-p10-early-reserves-v1"
+BETA_MPC_MEAN_POLICY = "issued-mean-v1"
 BETA_MPC_OBJECTIVE_VERSION = "cycle-feasible-service-then-eur-v1"
 BETA_MPC_PRICE_PROJECTION_VERSION = "current-then-issued-hourly-mean-v1"
 BETA_MPC_SETTINGS_DOMAIN = "cyclic-market-beta-mpc-settings-v1"
@@ -101,6 +105,7 @@ class BetaMPCSettingsV1(EconomicMPCSettingsV1):
 
     task_horizon_h: float = 168.0
     planning_horizon_h: float = 24.0
+    uncertainty_policy: str = BETA_MPC_MEAN_POLICY
 
     schema_version: ClassVar[int] = BETA_MPC_SCHEMA_VERSION
     controller_id: ClassVar[str] = BETA_MPC_CONTROLLER_ID
@@ -112,6 +117,11 @@ class BetaMPCSettingsV1(EconomicMPCSettingsV1):
 
     def __post_init__(self) -> None:
         EconomicMPCSettingsV1.__post_init__(self)
+        if self.uncertainty_policy not in (
+            BETA_MPC_MEAN_POLICY,
+            BETA_MPC_UNCERTAINTY_POLICY,
+        ):
+            raise ValueError("unsupported beta MPC uncertainty policy")
         if not math.isclose(
             float(self.planning_horizon_h), 24.0, rel_tol=0.0, abs_tol=1e-12
         ):
@@ -161,6 +171,25 @@ class BetaMPCSettingsV1(EconomicMPCSettingsV1):
                 "model_mismatch_declaration": BETA_MPC_MODEL_MISMATCH_DECLARATION,
             }
         )
+        if self.uncertainty_policy == BETA_MPC_UNCERTAINTY_POLICY:
+            body.update(
+                {
+                    "uncertainty_policy": self.uncertainty_policy,
+                    "forecast_projection_version": P10_FORECAST_PROJECTION_VERSION,
+                    "forecast_statistic": "issued_band_p10",
+                    "weather_forecast_statistic": "current public issued band p10",
+                    "held_target_power_assumption": "minimum physics-sampled clear-sky power scaled by the band-p10 scenario",
+                    "resource_buffer_capacity_fraction": 0.01,
+                    "restoration_lead_h": 2.0,
+                    "buffer_after_deadline": "min(requested buffer, observed positive surplus)",
+                    "uncertainty_guarantee": "no interval or joint probability guarantee",
+                    "model_mismatch_declaration": BETA_MPC_MODEL_MISMATCH_DECLARATION.replace(
+                        "Solar uses the current issued-mean weather projection.",
+                        "Solar uses current public band p10 with early resource buffers; "
+                        "band quantiles are not joint or interval probability guarantees.",
+                    ),
+                }
+            )
         return body
 
     @property
@@ -418,9 +447,17 @@ class BetaMPCPlanV1(EconomicMPCPlanV1):
     beta_task_sha256: str
     cycle_return: BetaMPCCycleReturnV1
     selected_solution_vector: tuple[float, ...]
+    reserve_evidence_json: str | None = None
 
     def __post_init__(self) -> None:
         EconomicMPCPlanV1.__post_init__(self)
+        if self.reserve_evidence_json is not None:
+            evidence = json.loads(self.reserve_evidence_json)
+            if (
+                not isinstance(evidence, dict)
+                or canonical_json(evidence) != self.reserve_evidence_json
+            ):
+                raise ValueError("reserve evidence must be a canonical object")
         if not isinstance(self.price_projection, BetaMPCPriceProjectionV1):
             raise TypeError("price_projection must be BetaMPCPriceProjectionV1")
         for name in (
@@ -463,6 +500,8 @@ class BetaMPCPlanV1(EconomicMPCPlanV1):
 
     def body(self) -> dict[str, Any]:
         body = EconomicMPCPlanV1.body(self)
+        if self.reserve_evidence_json is not None:
+            body["uncertainty_policy"] = json.loads(self.reserve_evidence_json)
         body.update(
             {
                 "schema_version": BETA_MPC_SCHEMA_VERSION,

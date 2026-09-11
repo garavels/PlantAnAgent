@@ -7872,3 +7872,40 @@ after the restoration deadline. These values are declared before the revised
 controller is run; no parameter search is authorized. Existing mean-policy
 behavior and negative evidence remain reproducible. Focused tests and three
 bounded fixture seeds are specified; no registered execution is opened.
+
+The retained minute ledger corrects the earlier weather-error interpretation:
+available PV was 24.7389 kWh versus 20.7066 kWh forecast, but 7.9821 kWh was
+curtailed. The held charging ceiling discarded surplus early, then falling
+sunlight starved charging late. Accepted PV is not available PV. Applied battery
+flows reconcile within 2.9e-12 kWh. The compact 16-boundary fixture preserves
+the original archive digest and proves this decomposition without a reset.
+Before running the revised controller, the scope was extended to constrain
+constant solar allocations by the minimum public physics-sampled daylight
+envelope within each interval, scaled by the current band-p10 scenario.
+
+The implementation now retains mean-policy defaults for explicit historical
+construction and selects `public-p10-early-reserves-v1` in the product and study
+factory. Public issue hashes, separate p10 projection identity, fixed buffers,
+daylight deadline, spendable observed surpluses and constant-power constraints
+are reconstructed by the detached verifier. Original daily return rows and
+task tolerances remain unchanged; no fallback or slack was added.
+
+The initial 25-case mean-policy/model/projection gate passed. A new buffer test
+initially used exact equality for a floating-point difference; 15 other cases
+passed, and its assertion now uses a 1e-12 arithmetic tolerance without altering
+controller or settlement tolerances. The broader gate had 115 passes, one stale
+mean-projection test-helper failure, and 32 failures/errors due to sandbox-denied
+CPU identity. The helper now reconstructs the declared policy. The 45-case
+targeted rerun with real CPU identity passes in 331.62 seconds, including every
+affected case, complete physical/latency reconstruction and tamper rejection.
+Strict mypy passes all ten changed source/tool modules. Product API tests,
+compilation, unchanged simulator/frontend/lock and upstream protocol checks pass.
+No full-week revised controller or registered policy has run at this point.
+
+The final 17-case uncertainty/schema/roundoff regression passes in 3.24 seconds.
+The revised descriptor explicitly identifies band-p10 projection and the sampled
+constant-power assumption. The bounded fixture launcher binds this scope, clean
+source, fixed three-seed order and exclusive external destinations, and reopens
+the physical/timing archives in the parent. Final typing and whitespace checks
+pass. The implementation is committed before the three authorized full-week
+fixtures; their outcomes remain unknown at this checkpoint.

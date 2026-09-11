@@ -16,6 +16,7 @@ from .beta_mpc_schema import (
     BETA_MPC_CONTROLLER_ID,
     BETA_MPC_DECISION_SCHEMA,
     BETA_MPC_MODEL_MISMATCH_DECLARATION,
+    BETA_MPC_UNCERTAINTY_POLICY,
     DEFAULT_BETA_MPC_SETTINGS_V1,
     BetaMPCCycleReturnV1,
     BetaMPCDecisionEvidenceV1,
@@ -28,7 +29,7 @@ from .beta_mpc_schema import (
 from .beta_mpc_solver import solve_beta_mpc_model
 from .economics import EconomicAssumptionsV1, ch4_equivalent_inventory_kg
 from .mpc_execution import public_observation_sha256
-from .mpc_forecast import project_issued_mean_solar
+from .beta_mpc_uncertainty import project_beta_mpc_solar
 from .setpoint_command import issue_process_setpoint_command
 from .setpoint_control import ProcessSetpointTargetsV1
 
@@ -102,7 +103,7 @@ class CyclicMarketEconomicMPCControllerV1:
         return tuple(self._events)
 
     def to_dict(self) -> dict[str, object]:
-        return {
+        body: dict[str, object] = {
             "id": self.id,
             "label": self.label,
             "description": self.description,
@@ -119,6 +120,18 @@ class CyclicMarketEconomicMPCControllerV1:
             "source_schema": BETA_MPC_DECISION_SCHEMA,
             "model_mismatch_declaration": BETA_MPC_MODEL_MISMATCH_DECLARATION,
         }
+        if self.settings.uncertainty_policy == BETA_MPC_UNCERTAINTY_POLICY:
+            body["description"] = (
+                "Economic MPC with public band-p10 solar, early inventory "
+                "buffers and four unchanged hard daily returns."
+            )
+            body["information_set"] = self.information_set.replace(
+                "issued-mean solar", "band-p10 solar"
+            )
+            body["model_mismatch_declaration"] = self.settings.body()[
+                "model_mismatch_declaration"
+            ]
+        return body
 
     def descriptor(self) -> dict[str, object]:
         return self.to_dict()
@@ -447,12 +460,11 @@ class CyclicMarketEconomicMPCControllerV1:
         assert plant.forecast is not None
         physical_sha = public_observation_sha256(plant)
         cycle_sha = beta_cycle_observation_sha256(observation.cycle)
-        weather_projection = project_issued_mean_solar(
+        weather_projection = project_beta_mpc_solar(
             plant.forecast,
             boundary_time_s=plant.state.boundary.time_s,
             config=config,
-            interval_s=self.settings.interval_s,
-            energy_tolerance=self.settings.energy_reconstruction_tolerance,
+            settings=self.settings,
         )
         price_projection = project_beta_mpc_prices(
             observation.market,

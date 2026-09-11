@@ -20,6 +20,7 @@ from .economic_mpc_solver import (
     _economic_mpc_plan_values_from_solve_result,
     solve_economic_mpc_stages,
 )
+from .mpc_schema import canonical_json
 
 
 def solve_beta_mpc_model(
@@ -76,6 +77,11 @@ def solve_beta_mpc_model(
             beta_task_sha256=model.beta_task_sha256,
             cycle_return=model.cycle_return,
             selected_solution_vector=solved.economic_solution,
+            reserve_evidence_json=(
+                canonical_json(model.metadata()["uncertainty_policy"])
+                if "uncertainty_policy" in model.metadata()
+                else None
+            ),
         )
     except (EconomicMPCPlanError, TypeError, ValueError) as exc:
         raise BetaMPCPlanError(

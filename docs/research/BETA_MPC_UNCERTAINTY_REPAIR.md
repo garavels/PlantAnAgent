@@ -51,3 +51,23 @@ closed. Their 3-family × 5-seed design, protected seeds, costs, simulator, guar
 and task tolerances are unchanged. Fixture success cannot establish PPO value or
 commission readiness. Any later repair or capacity run requires a separately
 recorded scope and retains these results.
+
+## Public-record diagnosis, before revised-controller execution
+
+The saved final interval had 20.706582912459183 kWh forecast PV and
+24.73893290336855 kWh measured cumulative PV. It curtailed 7.982075663316323 kWh;
+16.756857240052227 kWh was accepted by equipment. Accepted energy is not available
+PV and must not be used as a weather-only forecast-error measurement. The fixed
+13.1855 kW charging ceiling curtailed surplus early in the interval, while falling
+sunlight later could not supply all fixed targets. Applied charging was 2.0787794
+kWh rather than the planned 3.2963756 kWh. The battery balance reconstructed from
+applied charge/discharge differs by only 2.9e-12 kWh from its measured change.
+
+This identifies interval-average versus fixed-target execution as a material
+mechanism. Before any revised-controller run, the scope additionally fixes a
+per-interval constant-power deliverability constraint. Total solar allocations
+cannot exceed the minimum public clear-sky envelope at the interval's actual
+physics sample times, scaled by that interval's p10 scenario resource factor.
+The remaining band-p10 average energy is explicitly planned as curtailment.
+Original forecast band energy and issue identity remain intact. This is still a
+conservative scenario, not a guarantee against within-band cloud variation.
