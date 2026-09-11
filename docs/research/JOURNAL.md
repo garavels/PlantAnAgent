@@ -7689,3 +7689,29 @@ CLI help, whitespace and unchanged-lock checks pass. No real model or plant was
 executed by this gate; the memory-limit check used a separate disposable process
 with a one-byte test cap. The next action is the fixed full-geometry fixture
 measurement at the clean committed revision, within the recorded bounds.
+
+The fixture protocol/launcher was committed at clean `17331fe`. An initial command
+mistyped the destination with 13 revision digits. The fixed-path guard rejected
+it before root creation or child launch; terminal exit and root absence were
+verified before correcting the path. The one four-arm fixture then ran at
+`/private/tmp/plantanagent-study-capacity-17331fe5b89a/` and closed normally.
+Its report-domain SHA is
+`4c10df0a87beb258d7dc6625229d259641158e63020dc39361e7b07ca796c56a`;
+raw SHA is `2a9fc73241ad4b4568938558b86bbbe182dea95fa611f27ff3ed342b96e81986`.
+
+H and the untrained zero-action proxy completed 672 decisions / 10,080 minutes,
+with 1.486/1.526 GiB peak RSS and 11,409,255/11,628,605 stored physical bytes.
+Both were cycle-infeasible; this is no controller-performance success. M24 stopped
+after 36 decisions at its explicit unsupported degraded/offline DAC boundary.
+E-beta stopped after 52 decisions because its selected plan failed independent
+hard battery-return validation. All four child exits were zero because the
+producer correctly retained and verified those controller-failure prefixes; no
+timeout/log/RSS cap or fallback occurred. Prefixes do not establish full-week
+capacity, so the complete study capacity gate remains open. Compact evidence and
+the full failure account are retained in `results/v2_study_capacity_17331fe.*`.
+
+The next read-only diagnosis inspects E-beta's retained failing fixture boundary
+and its existing model/plan validation contracts. Hypothesis: the rejection may
+be a solver/validator numerical-boundary mismatch rather than an execution
+resource limit. No controller, cycle tolerance or solver setting will be changed
+to pass this capacity fixture, and no actor or protected seed is being rerun.

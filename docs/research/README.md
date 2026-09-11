@@ -341,7 +341,9 @@ fallback behavior.
   freezes the full 168-hour/15-minute implementation capacity check: one shared
   fixture seed, four sequential arms, an untrained fixed-policy proxy, bounded
   time/storage and a sampled memory stop. Its launcher passes 26 reset-free cases.
-  No capacity result or registered execution authorization has yet been produced.
+  The [one retained result](results/v2_study_capacity_17331fe.md) has complete H
+  and fixed-policy observations but incomplete M24/E-beta executions. Complete
+  stage capacity remains unadmitted; no registered execution was authorized.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

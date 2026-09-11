@@ -1,0 +1,329 @@
+{
+  "all_full_geometry_completed": false,
+  "capacity_admitted": false,
+  "fixture_seed": 9100001,
+  "identity": {
+    "protocol_raw_sha256": "7f2ba3822f722a0edc30ca0ac0622a4f63f9bb9db97377143c44c59f6e58e74d",
+    "source": {
+      "dependency_lock_sha256": "080d96275581ebbec1b2c27b354ea54e3e66419bfaadb034896da1fd22b228dd",
+      "git_revision": "17331fe5b89a8e30769cdd656a826683071dae29",
+      "runtime": {
+        "gymnasium": "1.3.0",
+        "numpy": "2.5.2",
+        "plant_sim": {
+          "module_sha256": "5a5e58526aef0787065afeaeda52d7c00430240a1902ba6da3b808c6592f6b16",
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/simulator/src/plant_sim/__init__.py",
+          "version": "0.5.2"
+        },
+        "python": "3.12.7",
+        "scipy": "1.18.1",
+        "stable_baselines3": "2.9.0"
+      },
+      "worktree_clean": true,
+      "worktree_status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "registered_execution_authorized": false,
+  "report": {
+    "path": "/private/tmp/plantanagent-study-capacity-17331fe5b89a/report.json",
+    "raw_sha256": "2a9fc73241ad4b4568938558b86bbbe182dea95fa611f27ff3ed342b96e81986",
+    "sha256": "4c10df0a87beb258d7dc6625229d259641158e63020dc39361e7b07ca796c56a"
+  },
+  "result_claim": null,
+  "rows": [
+    {
+      "arm": "H",
+      "arm_archive": {
+        "file": {
+          "allocated_bytes": 11501568,
+          "logical_bytes": 11409255,
+          "path": "/private/tmp/plantanagent-study-capacity-17331fe5b89a/cells/H/evidence/synthetic-arm.json.gz",
+          "sha256": "2f35f88856b23c13270e5167ec3f38fea155fd1b6a4efa338aaf804417f57b30"
+        },
+        "schema": "plant-beta-constrained-rl-study-canonical-json-gzip-v1",
+        "uncompressed_bytes": 109386617,
+        "uncompressed_sha256": "1a673a0e46f3de880bb79d36a60acc28f5fe9986d8da91cb95348cf390b1f788"
+      },
+      "classification": {
+        "completed_decisions": 672,
+        "execution_complete": true,
+        "expected_decisions": 672,
+        "failure": null,
+        "physical_steps": 10080,
+        "status": "complete_cycle_infeasible"
+      },
+      "failure_codes": [],
+      "full_geometry_completed": true,
+      "inventory_sha256": "43437bdbab66f818bb1c7731247ea35d9fa07cd167c00673ac2b39e3f2e8a497",
+      "logs": {
+        "stderr": {
+          "allocated_bytes": 0,
+          "logical_bytes": 0,
+          "path": "/private/tmp/plantanagent-study-capacity-17331fe5b89a/logs/H.stderr.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "allocated_bytes": 0,
+          "logical_bytes": 0,
+          "path": "/private/tmp/plantanagent-study-capacity-17331fe5b89a/logs/H.stdout.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "measurement_sha256": "5a5363af41960aa7584265c24454d88394a07f2f425a95114b087687f4da4c93",
+      "process": {
+        "child_system_cpu_ns": 2079266000,
+        "child_user_cpu_ns": 61871577000,
+        "command": [
+          "/Users/filippogombac/Developer/GitHub/PlantAnAgent/.venv/bin/python3",
+          "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/tools/study_capacity_fixture.py",
+          "child",
+          "/private/tmp/plantanagent-study-capacity-17331fe5b89a",
+          "--arm",
+          "H"
+        ],
+        "exit_code": 0,
+        "started": true,
+        "termination_signal": null,
+        "timeout_seconds": 600,
+        "wall_elapsed_ns": 64311542625
+      },
+      "process_peak_rss_bytes": 1595736064,
+      "producer_and_reconstruction_elapsed_ns": 63227999042,
+      "retained_allocated_bytes": 11575296,
+      "timing_archive": {
+        "file": {
+          "allocated_bytes": 57344,
+          "logical_bytes": 54789,
+          "path": "/private/tmp/plantanagent-study-capacity-17331fe5b89a/cells/H/evidence/synthetic-latency.json.gz",
+          "sha256": "e412a9e1410add842d27dc7313c6e417abd4fe01620623094bb633f765e434d7"
+        },
+        "schema": "plant-beta-constrained-rl-study-canonical-json-gzip-v1",
+        "uncompressed_bytes": 384485,
+        "uncompressed_sha256": "a63f45774a86a85de82fcaa9ecd86fdf0097e986033d354decd4581e4f83add2"
+      }
+    },
+    {
+      "arm": "M24",
+      "arm_archive": {
+        "file": {
+          "allocated_bytes": 1609728,
+          "logical_bytes": 1608962,
+          "path": "/private/tmp/plantanagent-study-capacity-17331fe5b89a/cells/M24/evidence/synthetic-arm.json.gz",
+          "sha256": "ad5299d0864c558d8a6cfe96db4aba0a99facace3b48bac43cc1c8dbfb1081f8"
+        },
+        "schema": "plant-beta-constrained-rl-study-canonical-json-gzip-v1",
+        "uncompressed_bytes": 14616419,
+        "uncompressed_sha256": "460e9b3d1a82e513cf47e02d4cedda9b1b16507e15ea7769868b0d45b2ac5ce7"
+      },
+      "classification": {
+        "completed_decisions": 36,
+        "execution_complete": false,
+        "expected_decisions": 672,
+        "failure": {
+          "exception_type": "ServiceMPCInputError",
+          "message": "service MPC V1 does not model degraded/offline dac",
+          "phase": "m24_controller_compute"
+        },
+        "physical_steps": 540,
+        "status": "execution_failed"
+      },
+      "failure_codes": [],
+      "full_geometry_completed": false,
+      "inventory_sha256": "5bfcd35dedc653ce33c6b7eff2e0ae8038bedc6cef6bde2935dfa1704594c773",
+      "logs": {
+        "stderr": {
+          "allocated_bytes": 0,
+          "logical_bytes": 0,
+          "path": "/private/tmp/plantanagent-study-capacity-17331fe5b89a/logs/M24.stderr.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "allocated_bytes": 8192,
+          "logical_bytes": 5256,
+          "path": "/private/tmp/plantanagent-study-capacity-17331fe5b89a/logs/M24.stdout.log",
+          "sha256": "3f3e1768c6e079c9b9bb49672b63d39953551b190166fa1b508573a51175f413"
+        }
+      },
+      "measurement_sha256": "457e0845a9c65a7b2b749258e74ab1a3bc3d55918deebb9f37080cfad568814e",
+      "process": {
+        "child_system_cpu_ns": 2417042000,
+        "child_user_cpu_ns": 56712149000,
+        "command": [
+          "/Users/filippogombac/Developer/GitHub/PlantAnAgent/.venv/bin/python3",
+          "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/tools/study_capacity_fixture.py",
+          "child",
+          "/private/tmp/plantanagent-study-capacity-17331fe5b89a",
+          "--arm",
+          "M24"
+        ],
+        "exit_code": 0,
+        "started": true,
+        "termination_signal": null,
+        "timeout_seconds": 600,
+        "wall_elapsed_ns": 55028025333
+      },
+      "process_peak_rss_bytes": 597884928,
+      "producer_and_reconstruction_elapsed_ns": 53919913667,
+      "retained_allocated_bytes": 1630208,
+      "timing_archive": {
+        "file": {
+          "allocated_bytes": 8192,
+          "logical_bytes": 6254,
+          "path": "/private/tmp/plantanagent-study-capacity-17331fe5b89a/cells/M24/evidence/synthetic-latency.json.gz",
+          "sha256": "7c73d2c71d40db7f8d15162a2bc0ef9935ebfac88af1f3a9987977495005604b"
+        },
+        "schema": "plant-beta-constrained-rl-study-canonical-json-gzip-v1",
+        "uncompressed_bytes": 28682,
+        "uncompressed_sha256": "7a028483ff7b98e47e22520336c9c705f182be7bf0b1e9f79448943af5a84fee"
+      }
+    },
+    {
+      "arm": "E-beta",
+      "arm_archive": {
+        "file": {
+          "allocated_bytes": 1630208,
+          "logical_bytes": 1626242,
+          "path": "/private/tmp/plantanagent-study-capacity-17331fe5b89a/cells/E-beta/evidence/synthetic-arm.json.gz",
+          "sha256": "92393363413f900f9d49d27cd78a939144444114ced148bebe210b26554f295b"
+        },
+        "schema": "plant-beta-constrained-rl-study-canonical-json-gzip-v1",
+        "uncompressed_bytes": 15313263,
+        "uncompressed_sha256": "0f14b598ac784e4a4f41790ceb47328c6975020548f2728310be0eb17da0665a"
+      },
+      "classification": {
+        "completed_decisions": 52,
+        "execution_complete": false,
+        "expected_decisions": 672,
+        "failure": {
+          "exception_type": "BetaMPCPlanError",
+          "message": "beta-MPC selected plan failed independent validation: plan violates hard battery cycle return",
+          "phase": "e-beta_controller_compute"
+        },
+        "physical_steps": 780,
+        "status": "execution_failed"
+      },
+      "failure_codes": [],
+      "full_geometry_completed": false,
+      "inventory_sha256": "4ce236d80025fe94268da6d9a6da8d80d08242123d9f8aab55db3373c3260589",
+      "logs": {
+        "stderr": {
+          "allocated_bytes": 0,
+          "logical_bytes": 0,
+          "path": "/private/tmp/plantanagent-study-capacity-17331fe5b89a/logs/E-beta.stderr.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "allocated_bytes": 0,
+          "logical_bytes": 0,
+          "path": "/private/tmp/plantanagent-study-capacity-17331fe5b89a/logs/E-beta.stdout.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "measurement_sha256": "f332de030a37e2e8146d75ee59ad15cccb543647f0c7fda9440fbbaada441f1a",
+      "process": {
+        "child_system_cpu_ns": 1998995000,
+        "child_user_cpu_ns": 32848863000,
+        "command": [
+          "/Users/filippogombac/Developer/GitHub/PlantAnAgent/.venv/bin/python3",
+          "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/tools/study_capacity_fixture.py",
+          "child",
+          "/private/tmp/plantanagent-study-capacity-17331fe5b89a",
+          "--arm",
+          "E-beta"
+        ],
+        "exit_code": 0,
+        "started": true,
+        "termination_signal": null,
+        "timeout_seconds": 600,
+        "wall_elapsed_ns": 30299405833
+      },
+      "process_peak_rss_bytes": 567869440,
+      "producer_and_reconstruction_elapsed_ns": 29192928500,
+      "retained_allocated_bytes": 1650688,
+      "timing_archive": {
+        "file": {
+          "allocated_bytes": 8192,
+          "logical_bytes": 7755,
+          "path": "/private/tmp/plantanagent-study-capacity-17331fe5b89a/cells/E-beta/evidence/synthetic-latency.json.gz",
+          "sha256": "088f2d9503d71c76490991669a19d40c94ea575cbc03d8c17491cd812f5e43b7"
+        },
+        "schema": "plant-beta-constrained-rl-study-canonical-json-gzip-v1",
+        "uncompressed_bytes": 37801,
+        "uncompressed_sha256": "2f6b84c33e767ad5a7b8c10332bc2179787a6fbdae1d9d93d47063a02a4975d1"
+      }
+    },
+    {
+      "arm": "PPO",
+      "arm_archive": {
+        "file": {
+          "allocated_bytes": 12496896,
+          "logical_bytes": 11628605,
+          "path": "/private/tmp/plantanagent-study-capacity-17331fe5b89a/cells/PPO/evidence/synthetic-arm.json.gz",
+          "sha256": "100cc3d106191708ee3c19cb657e1d91a7224148e14367c18c1eb7bd6008d47c"
+        },
+        "schema": "plant-beta-constrained-rl-study-canonical-json-gzip-v1",
+        "uncompressed_bytes": 110003802,
+        "uncompressed_sha256": "8f3fbaac0c28bf3ed08ce28d22a8b78489ab592e8fe44f8ff2f7e9b11dc2dce9"
+      },
+      "classification": {
+        "completed_decisions": 672,
+        "execution_complete": true,
+        "expected_decisions": 672,
+        "failure": null,
+        "physical_steps": 10080,
+        "status": "complete_cycle_infeasible"
+      },
+      "failure_codes": [],
+      "full_geometry_completed": true,
+      "inventory_sha256": "adf2973cde5d178831229de44dcf46f867744f2c60c9c490f0161bdb083f636c",
+      "logs": {
+        "stderr": {
+          "allocated_bytes": 0,
+          "logical_bytes": 0,
+          "path": "/private/tmp/plantanagent-study-capacity-17331fe5b89a/logs/PPO.stderr.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stdout": {
+          "allocated_bytes": 0,
+          "logical_bytes": 0,
+          "path": "/private/tmp/plantanagent-study-capacity-17331fe5b89a/logs/PPO.stdout.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      },
+      "measurement_sha256": "706f49455befede2eab7feb7b480b971c2b8fe57c97144ad6501d62fcf7d9e97",
+      "process": {
+        "child_system_cpu_ns": 2000071000,
+        "child_user_cpu_ns": 62931163000,
+        "command": [
+          "/Users/filippogombac/Developer/GitHub/PlantAnAgent/.venv/bin/python3",
+          "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/tools/study_capacity_fixture.py",
+          "child",
+          "/private/tmp/plantanagent-study-capacity-17331fe5b89a",
+          "--arm",
+          "PPO"
+        ],
+        "exit_code": 0,
+        "started": true,
+        "termination_signal": null,
+        "timeout_seconds": 600,
+        "wall_elapsed_ns": 65282063834
+      },
+      "process_peak_rss_bytes": 1639038976,
+      "producer_and_reconstruction_elapsed_ns": 64185436292,
+      "retained_allocated_bytes": 12627968,
+      "timing_archive": {
+        "file": {
+          "allocated_bytes": 102400,
+          "logical_bytes": 99909,
+          "path": "/private/tmp/plantanagent-study-capacity-17331fe5b89a/cells/PPO/evidence/synthetic-latency.json.gz",
+          "sha256": "1345e4f47ed9b9617b83406da635e167f893245aedde7ca142c4035f918f28f8"
+        },
+        "schema": "plant-beta-constrained-rl-study-canonical-json-gzip-v1",
+        "uncompressed_bytes": 657418,
+        "uncompressed_sha256": "0b16e6aa2f6e51b143a76496b986787f851fffa24749143f28facaca8763615e"
+      }
+    }
+  ],
+  "schema": "plant-beta-constrained-rl-study-capacity-summary-v1",
+  "sha256": "189ac59f5b4f6090c2e625f6d609387a4670e4f2779ca51b81ac131f05c989ea"
+}
