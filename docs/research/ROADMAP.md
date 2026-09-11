@@ -2,6 +2,14 @@
 
 ## Product and research thesis
 
+PPO readiness build, 2026-09-11: the unified workspace now has a Learning panel
+and offline production-admitted training/stage exporters. The fixed PI-101
+presentation adapter is fixture-tested; no registered policy is available yet.
+The user authorized Lexar storage, whose production I/O probe passed. The
+[launch plan](PPO_LAUNCH_PLAN.md) retains strict research E-beta and explicitly
+allows a negative development result. A new complete clean gate and exact
+execution approval are the next launch steps; no protected seed has been opened.
+
 Submission priority update, 2026-09-11: the user requires executed PPO training
 and inspectable learned-controller evidence in the commission submission.
 [COMMISSION_SUBMISSION_SCOPE.md](COMMISSION_SUBMISSION_SCOPE.md) makes the

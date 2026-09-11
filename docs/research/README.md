@@ -12,6 +12,12 @@ fallback behavior.
 
 ## Files
 
+- [`PPO_LAUNCH_PLAN.md`](PPO_LAUNCH_PLAN.md) defines the fixed 15-policy launch,
+  Lexar storage proposal, retained comparator risk, source-freeze checks and
+  closed-custody product export/replay workflow. Training remains unopened.
+- [`PPO_READINESS_BUILD.md`](PPO_READINESS_BUILD.md) records the prospective scope
+  for the Learning panel, admitted evidence exports and fixed PPO recording adapter.
+
 - [`COMMISSION_SUBMISSION_SCOPE.md`](COMMISSION_SUBMISSION_SCOPE.md) records the
   current submission objective: the unified product plus executed PPO training,
   gated evaluation and inspectable policy evidence. It preserves the full

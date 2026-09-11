@@ -1,0 +1,152 @@
+{
+  "archive_implementation_changed": false,
+  "campaign_root_created": false,
+  "chosen_campaign_root": "/Volumes/Lexar/PlantAnAgentResearch/registered-beta-v1",
+  "compression_probe": {
+    "purpose": "read-only lossless recompression of saved fixture evidence; no plant/model execution",
+    "rows": [
+      {
+        "arm": "H",
+        "decoded_bytes": 109386649,
+        "decoded_sha256": "ca5f49788b1331cc142529f1d2ff6e3ed3393a3c90ef734c098d0e69faf1ae4a",
+        "levels": [
+          {
+            "bytes": 7844757,
+            "compression_seconds": 0.6930036670528352,
+            "level": 6,
+            "lossless": true
+          },
+          {
+            "bytes": 7271437,
+            "compression_seconds": 1.4159519169479609,
+            "level": 9,
+            "lossless": true
+          }
+        ],
+        "original_bytes": 11406113,
+        "source_path": "/private/tmp/plantanagent-study-capacity-cfa16a670d68/cells/H/evidence/synthetic-arm.json.gz",
+        "source_sha256": "f48bf3672e5811d793b909114db75f4e6f9bec0416fabc6d87bcebadb5aed26f"
+      },
+      {
+        "arm": "M24",
+        "decoded_bytes": 14616421,
+        "decoded_sha256": "c71b3fea3905a87d65a63f2fc67f6949f416dbbeef7120d5773a820caad504a4",
+        "levels": [
+          {
+            "bytes": 1026303,
+            "compression_seconds": 0.10000337497331202,
+            "level": 6,
+            "lossless": true
+          },
+          {
+            "bytes": 943843,
+            "compression_seconds": 0.2269544170703739,
+            "level": 9,
+            "lossless": true
+          }
+        ],
+        "original_bytes": 1606197,
+        "source_path": "/private/tmp/plantanagent-study-capacity-cfa16a670d68/cells/M24/evidence/synthetic-arm.json.gz",
+        "source_sha256": "9f1bdbe049e5c8128725cf879cdb607998cca1649d9dd022984e9957f52a49fa"
+      },
+      {
+        "arm": "E-beta",
+        "decoded_bytes": 15803974,
+        "decoded_sha256": "a102534395f7686206a00b42d1a874410d3a4600044f111c76d7feec51908714",
+        "levels": [
+          {
+            "bytes": 1267694,
+            "compression_seconds": 0.1026806659065187,
+            "level": 6,
+            "lossless": true
+          },
+          {
+            "bytes": 1191252,
+            "compression_seconds": 0.22903024998959154,
+            "level": 9,
+            "lossless": true
+          }
+        ],
+        "original_bytes": 1678155,
+        "source_path": "/private/tmp/plantanagent-study-capacity-cfa16a670d68/cells/E-beta/evidence/synthetic-arm.json.gz",
+        "source_sha256": "5d2916a938cd84c34b516696910b152a481595ee475f746c6825ca15c4f936dd"
+      },
+      {
+        "arm": "PPO",
+        "decoded_bytes": 110003801,
+        "decoded_sha256": "8de144c099592b6f39b9e71fd9f20cc6d07089de255a367a874bb7ccf2af2fae",
+        "levels": [
+          {
+            "bytes": 7965963,
+            "compression_seconds": 0.6988854999653995,
+            "level": 6,
+            "lossless": true
+          },
+          {
+            "bytes": 7386834,
+            "compression_seconds": 1.4807827920885757,
+            "level": 9,
+            "lossless": true
+          }
+        ],
+        "original_bytes": 11635665,
+        "source_path": "/private/tmp/plantanagent-study-capacity-cfa16a670d68/cells/PPO/evidence/synthetic-arm.json.gz",
+        "source_sha256": "1efb982878e988eb94588f2a059ae2bf27eaaaeab0bbb60c84a3dfd7854ac541"
+      }
+    ]
+  },
+  "date": "2026-09-11",
+  "environment_resets": 0,
+  "evaluation_proposal_filesystem_reserve_bytes": 4294967296,
+  "optimizer_steps": 0,
+  "registered_seeds_opened": false,
+  "schema": "plant-ppo-readiness-storage-v1",
+  "storage": {
+    "all_passed": true,
+    "checks": [
+      {
+        "check": "exclusive_directory_and_fsync",
+        "passed": true
+      },
+      {
+        "allocated_bytes": 262144,
+        "check": "exclusive_file_publication_and_readback",
+        "logical_bytes": 76,
+        "passed": true
+      },
+      {
+        "check": "duplicate_publication_rejected",
+        "passed": true
+      },
+      {
+        "after": [
+          16777237,
+          2272616,
+          33216,
+          1,
+          76,
+          1789131829160000000,
+          1789131829160000000
+        ],
+        "before": [
+          16777237,
+          2272610,
+          33216,
+          1,
+          76,
+          1789131829150000000,
+          1789131829150000000
+        ],
+        "check": "identical_byte_replacement_changes_identity",
+        "passed": true
+      },
+      {
+        "check": "production_archive_roundtrip",
+        "passed": true
+      }
+    ],
+    "filesystem": "ExFAT",
+    "free_bytes": 350687854592,
+    "root": "/Volumes/Lexar/PlantAnAgentResearch/readiness-storage-probe-5874d4c9937d"
+  }
+}

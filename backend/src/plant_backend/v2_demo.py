@@ -13,7 +13,7 @@ import uuid
 from collections import deque
 from copy import deepcopy
 from threading import Lock
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
@@ -22,6 +22,9 @@ from .demo_projection import boundary_events, forecast_view, weather_view
 from .rl.v2 import beta_spaces
 from .rl.v2.beta_env import PlantCyclicMarketEnvV2Beta
 from .rl.v2.setpoint_controllers import LegacyHeuristicSetpointControllerV1
+
+if TYPE_CHECKING:
+    from .rl.policies import LoadedPolicy
 
 FIXTURE_SEED = 9_000_034
 HISTORY_LIMIT = 673
@@ -71,7 +74,8 @@ class V2DemoSession:
         self._lock = Lock()
         self._environment: PlantCyclicMarketEnvV2Beta | None = None
         self._controller: Any = None
-        self._controller_id: ControllerId = "H"
+        self._controller_id: Literal["H", "MPC", "PPO"] = "H"
+        self._policy_identity: dict[str, Any] | None = None
         self._run_id = ""
         self._revision = 0
         self._status = "ready"
@@ -113,6 +117,41 @@ class V2DemoSession:
         except Exception:
             environment.close()
             raise
+        self._install(environment, controller, controller_id)
+
+    def reset_ppo(
+        self, loaded: LoadedPolicy, identity: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Offline projection adapter; caller must admit custody before this reset.
+
+        This method grants no research authority and is not exposed over HTTP.
+        The fixed recording producer supplies an already-admitted final policy.
+        """
+        from .rl.v2.policy_setpoint_controller import (
+            NormalizedSetpointPolicyControllerV1,
+        )
+
+        with self._lock:
+            environment = PlantCyclicMarketEnvV2Beta()
+            try:
+                controller = NormalizedSetpointPolicyControllerV1.from_environment(
+                    loaded, environment
+                )
+                environment.reset(seed=FIXTURE_SEED)
+                controller.reset()
+            except Exception:
+                environment.close()
+                raise
+            self._install(environment, controller, "PPO", identity)
+            return self._view()
+
+    def _install(
+        self,
+        environment: PlantCyclicMarketEnvV2Beta,
+        controller: Any,
+        controller_id: Literal["H", "MPC", "PPO"],
+        policy_identity: dict[str, Any] | None = None,
+    ) -> None:
         if self._committed is not None:
             self._archives.append(self._recording())
         if self._environment is not None:
@@ -120,6 +159,7 @@ class V2DemoSession:
         self._environment = environment
         self._controller = controller
         self._controller_id = controller_id
+        self._policy_identity = deepcopy(policy_identity)
         self._run_id = str(uuid.uuid4())
         self._revision = 0
         self._status = "ready"
@@ -368,7 +408,11 @@ class V2DemoSession:
             ("ch4", "Methane", "kg", state.ch4_level_kg, cycle.ch4_margin_kg),
         )
         return {
-            "operating_policy": "inventory-targets-v1",
+            **(
+                {"operating_policy": "inventory-targets-v1"}
+                if self._controller_id != "PPO"
+                else {}
+            ),
             "state": state.to_dict(),
             "weather": weather_view(state.to_dict(), elapsed),
             "commitment": (
@@ -491,13 +535,18 @@ class V2DemoSession:
                 "error": self._error,
                 "controller": {
                     "id": self._controller_id,
-                    "label": (
-                        "Reactive heuristic"
-                        if self._controller_id == "H"
-                        else "Economic MPC"
-                    ),
-                    "uses_forecast": self._controller_id == "MPC",
+                    "label": {
+                        "H": "Reactive heuristic",
+                        "MPC": "Economic MPC",
+                        "PPO": "PPO · PI-Lagrangian · seed 101",
+                    }[self._controller_id],
+                    "uses_forecast": self._controller_id != "H",
                     "policy_id": self._controller.id,
+                    **(
+                        {"checkpoint": self._policy_identity}
+                        if self._policy_identity
+                        else {}
+                    ),
                 },
                 "available_controllers": [
                     {

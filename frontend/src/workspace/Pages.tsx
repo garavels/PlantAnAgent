@@ -533,9 +533,7 @@ export function Planning() {
       <Heading title="Planning">
         <span className="w-tag">
           {d ? `Decision ${time(d.at_hours)} · ` : ""}
-          {w.snapshot!.controller.id === "H"
-            ? "Forecast-blind heuristic"
-            : "Economic MPC · mean forecasts"}
+          {{ H: "Forecast-blind heuristic", MPC: "Economic MPC · mean forecasts", "E-beta": "Research E-beta", PPO: "PPO · public forecasts" }[w.snapshot!.controller.id]}
         </span>
       </Heading>
       <OperatingPlan frame={f} />
@@ -669,7 +667,7 @@ export function Planning() {
             {d?.operation?.mode === "fallback" ? "Heuristic fallback" : d ? "Immediate targets" : "No active plan"}
           </h2>
           <p>
-            {d?.operation?.mode === "fallback" ? "Planner unavailable for this interval. Next planning attempt at the following decision." : d
+            {w.snapshot!.controller.id === "PPO" ? "Policy targets use the public observation. No explicit forward schedule." : d?.operation?.mode === "fallback" ? "Planner unavailable for this interval. Next planning attempt at the following decision." : d
               ? "It does not consume these forecasts or publish a forward schedule. Its requested and applied targets remain fully inspectable below."
               : "Run the economic MPC to inspect a real 24-hour schedule."}
           </p>
@@ -1227,7 +1225,7 @@ export function Evidence() {
             <tr>
               <th>PPO · three families</th>
               <td>Full public beta observation</td>
-              <td>Infrastructure ready; registered study pending</td>
+              <td><Link to="/learning">Training evidence</Link> · offline policy playback</td>
             </tr>
           </tbody>
         </table>
@@ -1306,6 +1304,7 @@ export function Evidence() {
             "Recording checksum":
               w.recording?.sha256 ??
               "Export to seal the current public history",
+            ...(snap.controller.checkpoint ?? {}),
           }).map(([k, v]) => (
             <div key={k}>
               <dt>{k}</dt>

@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { WorkspaceProvider } from "./workspace/WorkspaceProvider";
 import { WorkspaceShell } from "./workspace/WorkspaceShell";
+import { Learning } from "./workspace/Learning";
 import {
   Overview,
   Plant,
@@ -25,6 +26,7 @@ export default function App() {
             <Route path="/deliveries" element={<Deliveries />} />
             <Route path="/economics" element={<Economics />} />
             <Route path="/events" element={<Events />} />
+            <Route path="/learning" element={<Learning />} />
             <Route path="/evidence" element={<Evidence />} />
             <Route path="/v2" element={<Navigate to="/" replace />} />
             <Route

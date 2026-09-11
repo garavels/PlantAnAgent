@@ -79,8 +79,11 @@ The historical M4 Pro sequential training projection is 62.49 hours, with mechan
 1.25x/1.50x scenarios of 78.10/93.71 hours, plus evaluation and verification. These
 are planning estimates. The training admission floor is 5 GiB. The earlier draft
 evaluation storage scenario requires 46.80 GiB before additional training allocation;
-that budget remains unfrozen. A read-only check on 2026-09-11 found 26.22 GiB free
-on the proposed artifact filesystem. The registered root and tracked execution
+that budget remains unfrozen. The user subsequently authorized `/Volumes/Lexar`,
+where about 326.6 GiB is free and production custody I/O checks pass. The new
+proposal keeps all archive caps and increases the filesystem margin to 4 GiB,
+requiring 48.80 GiB for evaluation plus training storage. See
+[PPO_LAUNCH_PLAN.md](PPO_LAUNCH_PLAN.md). The registered root and tracked execution
 authorization remain absent.
 
 This is authorization to prioritize PPO in the submission objective, not the

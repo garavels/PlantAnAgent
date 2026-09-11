@@ -4,6 +4,16 @@ Date: **2026-09-11**
 
 Status: **custody gate passed at `12936c7`; comparator repair has negative fixture results; final source and execution authorization pending**
 
+Latest readiness work: [PPO_LAUNCH_PLAN.md](PPO_LAUNCH_PLAN.md) supersedes the
+local-disk proposal and next-engineering recommendation below. The user authorized
+`/Volumes/Lexar`; its production I/O probe passes and about 326.6 GiB is free.
+The proposed root is `/Volumes/Lexar/PlantAnAgentResearch/registered-beta-v1`.
+The product now has fixture-tested closed-custody exports, a Learning panel and a
+fixed PPO playback producer. Retain the frozen comparator with its explicit
+negative-selection risk. The complete gate in this historical review remains
+at `12936c7`; the fresh implementation gate is recorded separately at its exact
+clean revision. No registered execution has started.
+
 The training and study custody implementation passes the complete repository gate
 at clean `12936c7627940f2ede04405bbbba28603bb8b10f`. No registered policy has
 been trained, selected or evaluated. This review is not an authorization record.

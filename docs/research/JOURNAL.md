@@ -8162,3 +8162,89 @@ also required matching its actual line wrapping before application. The correcte
 patches preserve the journal and clarify the historical E-beta product statement.
 No software behavior changed; validation checks the diff
 and frozen protocol/dependency hashes rather than rerunning unrelated tests.
+
+### PPO launch readiness: prospective implementation scope (2026-09-11)
+
+The user requests a correctly working system ready to train PPO. The bounded
+[PPO readiness build](PPO_READINESS_BUILD.md) fixes the remaining public evidence
+and recording interfaces before checkpoint provenance freezes the whole source.
+Hypothesis: the existing admitted training ledgers and four-target policy adapter
+can populate the unified product without exposing live campaign outcomes or
+changing the learner, task or comparator. The future presentation policy is fixed
+prospectively to PI-Lagrangian seed 101 on fixture 9,000,034; no replacement or
+winner claim is allowed. Execution of that rehearsal is not part of this build.
+
+A read-only compression probe may use already-saved capacity archives to assess
+storage savings; it creates no new controller outcome. Research E-beta's opening
+infeasibility and the product MPC's shortfalls/deficits remain retained. The final
+checks must establish a new clean implementation gate. Registered seeds, campaign
+root and canonical training execution authorization remain unopened/absent.
+
+### PPO readiness interfaces, negative outcomes and Lexar storage (2026-09-11)
+
+Implemented the prospective build without changing any frozen task, family,
+optimizer seed, reward, comparator, selection gate, protocol bytes or lockfile.
+The Learning panel uses the established product styles and separates training
+from operating panels. It displays all 15 admitted/failed slots, rollout objective
+sums, resource costs, multiplier and cost-value diagnostics. Future stage exports
+reconstruct the complete production study and retain every actor's 32 slots,
+execution/safety/cycle counts, ineligible pairs, failures and frozen selection.
+Public file checksums are explicitly distinguished from the exporter performing
+fresh source/custody admission. The HTTP runtime never reads training logs or
+loads policies; import also succeeds with Torch and SB3 unavailable.
+
+The offline producer fixes PI-Lagrangian optimizer seed 101 and fixture 9,000,034
+before outcomes. It uses the existing normalized four-target adapter, minute
+physics and guard; no explicit forward plan is invented. Policy/task mismatch
+fails before reset. The producer requires closed production training admission,
+retains one exclusive attempt, stopped prefixes and no fallback/replacement, and
+quarantines a trajectory if post-run custody rechecking fails. Its execution is
+not part of this readiness build. H/MPC remain the HTTP controller choices.
+An integration defect was found and fixed: attempt-marker JSON files consumed
+the recording catalog's eight-entry cap before filtering and could hide a newly
+saved PPO recording. Filtering now precedes the cap.
+
+Initial public-export tests: 12 passed, 3 failed. Two failures exposed an omitted
+valid training campaign status (`failed`); that status is now accepted and retained.
+The third was a test assumption: the existing synthetic process-failure fixture
+fails a later slot, not the fixed first policy. The no-substitution test now
+explicitly supplies a failed first slot. Initial typing found two nullable-map
+annotation errors, subsequently repaired. The combined affected-surface gate
+then passed **54 tests in 105.89 seconds**, with the existing Starlette/httpx
+deprecation warning. The expanded recording tests passed **6 tests in 12.60
+seconds**; expanded evaluation projections passed **9 tests in 26.32 seconds**.
+Frontend production build/lint passed; the pre-existing 3D bundle-size warning is
+retained. Browser inspection shows the Learning pending and held-out sealed
+states in the unchanged visual identity. The stopped local preview servers were
+restarted for this check. No synthetic curves were published as product evidence.
+
+A read-only recompression probe authenticated and decoded all four saved
+`cfa16a6` capacity archives. Gzip level 6 reduced the full H/fixed-PPO archive
+sizes from 11,406,113/11,635,665 to 7,844,757/7,965,963 bytes; level 9 produced
+7,271,437/7,386,834 bytes. Both decoded byte streams match exactly. The incomplete
+M24/E-beta archives are retained too. No controller or optimizer ran, no saved
+archive was rewritten, and the production archive format remains unchanged.
+
+The user explicitly authorized use of `/Volumes/Lexar`. Read-only inspection
+found ExFAT, 256 KiB allocation units and 350,689,951,744 free bytes before the
+probe. The production custody/archive functions passed exclusive mkdir and
+file/directory fsync, regular readback, duplicate rejection, identical-byte
+replacement identity change and compressed archive roundtrip. Probe artifacts
+remain in the task-owned `PlantAnAgentResearch/readiness-storage-probe-5874d4c9937d`
+directory. No existing user data was changed. The compact
+[storage evidence](results/v2_ppo_readiness_storage_20260911.json) retains all
+measurements. New proposed root:
+`/Volumes/Lexar/PlantAnAgentResearch/registered-beta-v1`, still absent.
+The evaluation proposal retains existing caps and raises its filesystem margin
+from 2 to 4 GiB, for a 48.80 GiB two-stage opening reserve plus training artifacts.
+This is sufficient storage, not a new full-stage capacity measurement.
+
+The [launch plan](PPO_LAUNCH_PLAN.md) makes the scientific decision explicit:
+retain research E-beta's three opening infeasibilities and accept the risk that
+its failure prevents every primary development score; product MPC is no
+substitute. Negative development leaves held-out sealed. The next gate is the
+complete repository/static/frontend check on the clean implementation and a
+read-only packet binding exact source, host, protocols, all 15 configs and root.
+No canonical authorization, campaign root, registered reset or policy rehearsal
+has been created or executed. Final clean-gate evidence is retained outside
+tracked source so the checked revision can remain the later authorization parent.

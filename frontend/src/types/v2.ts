@@ -8,7 +8,7 @@ export interface V2DemoSnapshot {
   mode: "interactive_fixture";
   status: "ready" | "complete" | "failed";
   error: string | null;
-  controller: { id: "H" | "MPC" | "E-beta"; label: string; uses_forecast: boolean; policy_id?: string };
+  controller: { id: "H" | "MPC" | "E-beta" | "PPO"; label: string; uses_forecast: boolean; policy_id?: string; checkpoint?: Record<string, string | number> };
   available_controllers: {
     id: "H" | "MPC" | "E-beta";
     label: string;

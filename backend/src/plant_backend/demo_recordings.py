@@ -104,9 +104,9 @@ def _read(path: Path) -> dict[str, Any]:
 
 def catalog() -> list[dict[str, Any]]:
     results = []
-    for path in sorted(RECORDING_ROOT.glob("*.json"))[:8]:
-        if not _ID.fullmatch(path.stem):
-            continue
+    for path in sorted(
+        p for p in RECORDING_ROOT.glob("*.json") if _ID.fullmatch(p.stem)
+    )[:8]:
         try:
             results.append(summarize(_read(path), "saved"))
         except (ValueError, KeyError, TypeError, OSError):

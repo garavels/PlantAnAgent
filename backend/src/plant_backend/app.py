@@ -31,6 +31,8 @@ from .hepa.api import configure as configure_hepa
 from .hepa.api import router as hepa_router
 from .orchestration import Broadcaster, PlantRuntime, SimulationClock
 from .v2_demo import router as v2_demo_router
+from .ppo_evidence import router as ppo_evidence_router
+from .ppo_evaluation import router as ppo_evaluation_router
 
 #: Seconds without an update before the stream sends a keepalive comment.
 KEEPALIVE_S = 15.0
@@ -49,7 +51,9 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
         await clock.stop()
 
 
-app = FastAPI(title="Plant An Agent -- control backend", version="0.6.0", lifespan=lifespan)
+app = FastAPI(
+    title="Plant An Agent -- control backend", version="0.6.0", lifespan=lifespan
+)
 
 # V9: event forecasting, advisory only. The router is read-only and never touches the
 # controller; with no checkpoint configured its routes answer "unavailable" and the
@@ -60,6 +64,8 @@ configure_hepa(lambda: list(runtime.session.history))
 # Separate, explicitly fixture-only V2 inspection. Importing the router does not
 # construct/reset a V2 environment or attach it to the historical V1 clock.
 app.include_router(v2_demo_router)
+app.include_router(ppo_evidence_router)
+app.include_router(ppo_evaluation_router)
 
 # Dev only: the Vite dev server proxies /api, but allow direct calls too.
 app.add_middleware(
@@ -347,13 +353,17 @@ def get_agent_trace(
 ) -> dict[str, Any]:
     """The operational trace, whole or for one run. Never chain-of-thought."""
     agent_trace = runtime.supervisor.trace
-    entries = agent_trace.entries_for_run(run) if run is not None else agent_trace.recent(limit)
+    entries = (
+        agent_trace.entries_for_run(run)
+        if run is not None
+        else agent_trace.recent(limit)
+    )
     return {"trace": entries, "incidents": agent_trace.incidents()}
 
 
 @app.post("/api/agent/investigate")
 async def post_agent_investigate() -> dict[str, Any]:
-    """"Investigate current plant": one supervisor run, now, on demand."""
+    """ "Investigate current plant": one supervisor run, now, on demand."""
     incident = await runtime.supervisor.investigate()
     return {"incident": incident.to_dict(), **_publish(runtime.payload())}
 

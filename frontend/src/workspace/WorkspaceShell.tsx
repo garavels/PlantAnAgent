@@ -11,6 +11,7 @@ const PANELS = [
   ["/deliveries", "Deliveries & resources", "◫"],
   ["/economics", "Economics", "€"],
   ["/events", "Events", "≡"],
+  ["/learning", "Learning", "∿"],
   ["/evidence", "Evidence", "◇"],
 ] as const;
 export function WorkspaceShell({ children }: { children: ReactNode }) {
@@ -97,7 +98,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
               {frame ? time(frame.clock.elapsed_hours) : "Connecting…"}
             </strong>
             <span>
-              {snapshot?.controller.id === "H" ? "Heuristic" : "Economic MPC"}
+              {snapshot?.controller.label ?? "Connecting…"}
             </span>
           </div>
         </header>
