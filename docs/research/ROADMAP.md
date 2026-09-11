@@ -218,8 +218,12 @@ equipment consequences.
   now reopens the complete training verifier and admitted endpoint ledgers while preserving
   failed slots and original source/host/file identity. Lossless gzip evidence storage has
   exclusive publication and strict stored/decoded limits. Their combined custody/analysis
-  regression passes 291 tests. Registered evaluation/hardware authority, stage capacity,
-  per-arm checkpoint binding, stage execution and detached custody remain build gates before
+  regression passes 291 tests. A single-arm engine now matches all four historical deterministic
+  results with one environment/reset, and its fixture-only compressed evidence verifier retains
+  failures while rejecting protected scope. Explicit budget arithmetic covers every slot and
+  both stages; the combined execution/timing/archive/budget/campaign regression passes 251 tests.
+  Registered evaluation/hardware authority, measured stage capacity, per-arm claim/checkpoint
+  binding, campaign orchestration and complete detached custody remain build gates before
   requesting the study.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.

@@ -19,6 +19,7 @@ from .contract import (
 )
 from .latency import latency_contract
 from .operational import operational_contract
+from .execution_budget import execution_contract
 
 SCHEMA = PREFIX + "registry-v1"
 STAGES = ("development", "heldout")
@@ -118,6 +119,7 @@ def stage_registry(training_root: Path | str, stage: str) -> dict[str, Any]:
             "operational_contract_sha256": operational_contract()["sha256"],
             "latency_contract_sha256": latency_contract()["sha256"],
             "archive_schema": ARCHIVE_SCHEMA,
+            "execution_contract_sha256": execution_contract()["sha256"],
             "training_root": str(root),
             "stage_root": str(stage_root),
             "episode_seeds": seeds,
@@ -125,8 +127,11 @@ def stage_registry(training_root: Path | str, stage: str) -> dict[str, Any]:
             "cells": cells,
             "registry_path": str(stage_root / "registry.json"),
             "authorization_path": str(stage_root / "authorization.json"),
+            "authorization_input_path": str(
+                stage_root.with_name(stage_root.name + ".authorization.json")
+            ),
             "opening_claim_path": str(stage_root / "opened.json"),
-            "report_path": str(stage_root / "report.json"),
+            "report_path": str(stage_root / "report.json.gz"),
             "verification_path": str(stage_root / "verification.json"),
             "claim_boundary": "fixed identities only; no reset, execution, stage or checkpoint authorization",
         }

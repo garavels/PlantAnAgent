@@ -326,8 +326,13 @@ fallback behavior.
   The production training-input bridge now reopens full training custody and admitted endpoint
   ledgers, with all-slot failure accounting and stable source/host/file checks. Bounded lossless
   gzip storage preserves exact canonical evidence bytes and consumes each destination once.
-  Their combined custody/analysis regression passes 291 tests. Stage authority and capacity,
-  per-arm checkpoint binding, execution and detached campaign custody remain required.
+  Their combined custody/analysis regression passes 291 tests. The single-arm engine now uses
+  one environment/reset and matches all four historical deterministic results. Its fixture
+  producer and compressed physical/timing verifier retain failures and reject protected scope;
+  explicit execution-budget arithmetic covers all slots and both stages. The combined new
+  execution/historical timing/archive/budget/campaign regression passes 251 tests.
+  Production stage authority, capacity, registered per-arm custody and complete detached
+  campaign reconstruction remain required.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

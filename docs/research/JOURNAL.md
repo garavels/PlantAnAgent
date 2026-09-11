@@ -7516,3 +7516,69 @@ reset, sealed registered log inspected or experiment started. The latest complet
 clean repository gate remains `ad6ad1e`; this milestone is an intermediate
 implementation gate. Production stage authorization, storage capacity, single-arm
 execution and detached development/held-out reconstruction remain next.
+
+### Independent single-arm study execution
+
+The previous goal turn made verified progress at clean `a0d246c`: the complete
+training-input bridge, compressed archive storage, final 33-case bridge and
+16-case registry checks. Hypothesis: the existing private physics/timing runners
+can execute one environment and one reset per actor without the old helper's
+four simultaneous resets, preserving deterministic evidence exactly. This is
+necessary to retain baselines once and give all 576 stage slots separate custody.
+The build contract now states this execution boundary before implementation.
+Only non-registered tasks and fixture seeds may exercise the new public fixture
+entry point; production stage authority remains unopened.
+
+Implemented a one-environment execution engine using the unchanged private
+physics/timing runners, and a fixture-only exclusive producer plus complete
+compressed physical/timing verifier. The public fixture producer also checks
+checkpoint-declared scope before environment construction, closing registered
+checkpoint substitution through an otherwise fixture-labelled task. Initial
+strict typing identified two imports accessed through a module that did not
+export them; direct controller imports fixed this without behavioral changes.
+All three initial implementation modules pass strict typing.
+
+The first single-arm/compressed integration gate passed **29 tests in 187.74
+seconds**, with permitted CPU metadata reads and successful exit. Every arm's
+physical/economic digest matches the unchanged four-arm reference. Each actor
+has one environment and one reset; PPO has exactly 1,000 pre-reset warm-ups.
+Reconstruction, retained warm-up/controller failures, protected task/seed scope,
+rehashed archive references and identical-byte replacement are covered. Existing
+native HiGHS cleanup text remains. No trained policy or protected seed was used.
+
+The next authority boundary now has fixed external input/copy and compressed
+report destinations. Added exact budget arithmetic for all 576 slots, a single
+PPO profile shared across the 15 policies, both stages' initial storage reserve,
+logs and control-document allowances. Budget values must be explicit and frozen
+before development; the arithmetic does not measure capacity or authorize a
+stage. Evidence-limit types reside in the pure budget module so reading a
+registry does not import the physical execution layer. The initial combined
+budget/campaign arithmetic checks completed before adding the external authority
+input itself to the conservative five-document storage allowance. Final combined
+physical, historical latency, budget and registry regression follows.
+
+The initial budget/campaign arithmetic gate passed **97 tests in 33.87 seconds**;
+after including the external authority input in the storage bound, all **43
+budget cases passed in 0.45 seconds**. Added three rejection cases for invalid
+actor/checkpoint combinations before destination consumption or execution.
+
+The final combined new single-arm, historical latency, archive, budget and
+campaign regression passed **251 tests in 331.79 seconds**, with successful exit
+and the existing native HiGHS cleanup text. All five changed source modules pass
+strict typing; Black checks seven Python files, and compilation/whitespace/lock
+checks pass. Both upstream protocol hashes remain unchanged and the tracked
+registered training authorization remains absent. The single-arm fixture uses
+only 9,000,000-series seeds and an untrained fixed policy; its 24-hour/hourly
+geometry is not a capacity measurement for the 168-hour/15-minute study. No
+registered checkpoint, protected reset or long experiment was opened.
+
+The next production work is the external stage-authority admission, durable
+opening and per-cell claims, fixed sequential child orchestration, and complete
+detached reconstruction through the trained-checkpoint bridge. The private
+single-arm engine is ready for that enclosure; it does not itself authorize a
+registered reset. Stage capacity, the final complete clean release gate and
+later explicit authorization remain required. V1 and the product interface are
+unchanged, and the overall goal remains active.
+
+The execution-contract digest is
+`617689e17b528adc73addb4f67ac85f40c60cfd5b190bcbb3de6c780c9594371`.

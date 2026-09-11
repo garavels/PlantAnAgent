@@ -232,6 +232,40 @@ def synthetic_latency_evidence(
     raw = io.read_regular(target)
     admitted = arm_evidence.verify_synthetic_arm_file(target)
     envelope = decode(raw)
+    before, after, result = _project_latency(
+        envelope, admitted, measurement, host_before, host_after
+    )
+    report = authenticate(
+        {
+            "schema": SCHEMA,
+            "latency_contract_sha256": latency_contract()["sha256"],
+            "arm_file": admitted["file"],
+            "arm_envelope_sha256": admitted["envelope_sha256"],
+            "host_before": before,
+            "host_after": after,
+            "measurement": dict(measurement),
+            "result": result,
+            "claim_boundary": CLAIM_BOUNDARY,
+            "result_claim": None,
+        }
+    )
+    if (
+        io.file_record(target) != admitted["file"]
+        or io.read_regular(target) != raw
+        or arm_evidence.file_stamp(target) != stamp
+    ):
+        raise ValueError("physical arm changed during latency admission")
+    return report
+
+
+def _project_latency(
+    envelope: Mapping[str, Any],
+    admitted: Mapping[str, Any],
+    measurement: Mapping[str, Any],
+    host_before: Mapping[str, Any],
+    host_after: Mapping[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
+    """Shared projection, only after the caller reconstructs the physical arm."""
     before, after = validate_latency_host(host_before), validate_latency_host(
         host_after
     )
@@ -259,27 +293,7 @@ def synthetic_latency_evidence(
         == before["machine"]["torch_interop_threads"]
         == 1,
     )
-    report = authenticate(
-        {
-            "schema": SCHEMA,
-            "latency_contract_sha256": latency_contract()["sha256"],
-            "arm_file": admitted["file"],
-            "arm_envelope_sha256": admitted["envelope_sha256"],
-            "host_before": before,
-            "host_after": after,
-            "measurement": dict(measurement),
-            "result": result,
-            "claim_boundary": CLAIM_BOUNDARY,
-            "result_claim": None,
-        }
-    )
-    if (
-        io.file_record(target) != admitted["file"]
-        or io.read_regular(target) != raw
-        or arm_evidence.file_stamp(target) != stamp
-    ):
-        raise ValueError("physical arm changed during latency admission")
-    return report
+    return before, after, result
 
 
 def verify_synthetic_latency_file(path: Path | str) -> dict[str, Any]:

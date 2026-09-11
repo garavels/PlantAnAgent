@@ -355,3 +355,68 @@ four changed source modules; Black checks all seven Python files. Compilation,
 whitespace, unchanged-lock and both frozen protocol digest checks pass. These
 remain intermediate implementation gates; full stage closure and the final clean
 repository release are still pending.
+
+## Single-arm execution connection
+
+The study executes one environment per claimed actor/episode, with exactly one
+reset. Baselines require no policy artifact and cannot reset extra comparison
+arms. A PPO child admits its checkpoint against that environment before its
+1,000 deterministic warm-ups and before reset. Controller construction and
+reset must not advance physics. The retained inner result uses the existing
+minute dispatcher, guard and arm runner, followed by the standalone digest.
+Failures after checkpoint admission retain preflight or observed-prefix evidence;
+checkpoint loading/publication failures remain failed process attempts.
+
+The implementation is first exercised through a separate fixture-only entry
+point: non-registered tasks, exact fixture seeds, external exclusive destinations,
+no source/host/controller/policy dependency hooks. It cannot open a registered
+stage. Compressed physical and timing files retain their original canonical
+envelope bytes and independent file identities. A detached reader reconstructs
+both complete physical witnesses and timing, then rechecks the entire pair.
+Registered invocation still requires the enclosing stage authority and one-use
+child-claim path; the private execution engine is not an authorization boundary.
+
+The initial single-arm/compressed fixture gate passed **29 tests in 187.74
+seconds**. All four arms match the original four-arm runner's deterministic
+physical/economic digest and use exactly one environment/reset; PPO completes
+1,000 warm-ups before reset. Detached checks never construct a plant or policy.
+They reject rehashed physical/timing/host/reference changes, protected scope and
+identical archive replacement. Failed warm-up retains its attempted call with
+zero resets; a failed controller retains the attempted timing and initialized
+physical prefix. This uses a fixed untrained policy and fixture seeds only.
+
+## Stage authority destinations and execution budget
+
+The external input authority is the deterministic sibling
+`<training-root>.<stage>-v1.authorization.json`; the unopened stage root receives
+an immutable copy when its opening is consumed. The report destination is
+`report.json.gz`, with a compact `verification.json` verdict. Constructing these
+paths creates no files and grants no authority.
+
+The source execution contract fixes one sequential child and one attempt/reset
+per cell. Its budget representation requires explicit timeout, log, decoded and
+stored archive limits, report limits and a filesystem reserve; it has no default
+study run values. H/M24/E-beta may have different physical evidence limits, while
+all 15 PPO actors share exactly one profile. Limits are registered before
+development and must remain unchanged for held-out execution. No limit may be
+selected from development or held-out outcomes.
+
+Mechanical reservation retains all 576 physical/timing allowances, both capped
+logs for every cell, two 64 KiB cell control documents, five 8 MiB root/authority
+documents, the compressed report and the filesystem reserve. Development opening
+requires room for both stages; held-out opening requires the remaining stage.
+The sum of child timeouts is reported separately and excludes parent admission,
+verification and publication. These bounds are not measured wall-clock or storage
+capacity. Final capacity evidence and explicit stage authority remain required.
+
+The final combined single-arm, compressed evidence, historical latency, archive,
+budget and campaign regression passed **251 tests in 331.79 seconds**, with
+successful exit. This includes three additional actor/checkpoint scope guards.
+The budget arithmetic has **43 cases**, including a manually expanded reservation
+oracle, all-family shared PPO limits, inclusive control caps, noncoercing values
+and rehashed budget/authority substitutions. Strict typing passes all five
+changed source modules, Black checks seven Python files, and compilation,
+whitespace, unchanged-lock and frozen upstream protocol checks pass. No capacity
+measurement or production authority is inferred from these fixture results.
+The source execution-contract digest is
+`617689e17b528adc73addb4f67ac85f40c60cfd5b190bcbb3de6c780c9594371`.
