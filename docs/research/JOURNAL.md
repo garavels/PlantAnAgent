@@ -7715,3 +7715,22 @@ and its existing model/plan validation contracts. Hypothesis: the rejection may
 be a solver/validator numerical-boundary mismatch rather than an execution
 resource limit. No controller, cycle tolerance or solver setting will be changed
 to pass this capacity fixture, and no actor or protected seed is being rerun.
+
+### E-beta terminal-return numerical diagnosis
+
+At documentation-only `9f16e3f`, one saved-public-boundary model reconstruction
+used the unchanged implementation and two existing solver stages; no environment
+or controller was constructed. Both stages were optimal. The economic battery
+terminal value was two ULPs (`1.8189894035458565e-12` kWh) below its hard minimum,
+reproducing the strict plan rejection. The original failed candidate was not
+archived; this is a retained reproduction, not its exact retrospective residual.
+The external diagnosis report raw SHA is
+`4af1b7e0dfd06af838b8aae39774295a2bf13bd09f3e477f748510296b1f8d2b`.
+
+The diagnosis document now records a separate pre-training implementation scope:
+duplicate the four existing singleton return rows as explicit terminal variable
+lower bounds, intersect stronger existing bounds, retain all rows and reuse the
+unchanged economic canonicalizer/residual audits. The beta model version changes
+to bind this representation. No task/solver tolerance, objective or feasible
+region changes. Fixed saved-vector tests and existing regressions will validate
+the repair; no capacity actor, plant trajectory or protected seed is rerun.
