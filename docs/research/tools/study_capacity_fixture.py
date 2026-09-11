@@ -39,8 +39,9 @@ from plant_backend.rl.v2.training.custody_validation import exact
 from plant_backend.rl.v2.training.registered_contract import registered_config
 from plant_backend.rl.v2.training.config import ControllerNeutralTrainingConfigV1
 
-SCHEMA = "plant-beta-constrained-rl-study-capacity-fixture-v1"
-PROTOCOL = "docs/research/CONSTRAINED_RL_STUDY_CAPACITY_FIXTURE.md"
+SCHEMA = "plant-beta-constrained-rl-study-capacity-return-bounds-fixture-v1"
+PROTOCOL = "docs/research/CONSTRAINED_RL_STUDY_CAPACITY_RETURN_BOUNDS_FIXTURE.md"
+ORIGINAL_PROTOCOL = "docs/research/CONSTRAINED_RL_STUDY_CAPACITY_FIXTURE.md"
 ARMS = ("H", "M24", "E-beta", "PPO")
 SEED = 9_100_001
 TIMEOUT = 600
@@ -74,6 +75,9 @@ def _capacity_identity() -> dict[str, Any]:
     return {
         "protocol_raw_sha256": hashlib.sha256(
             (repository_root() / PROTOCOL).read_bytes()
+        ).hexdigest(),
+        "original_protocol_raw_sha256": hashlib.sha256(
+            (repository_root() / ORIGINAL_PROTOCOL).read_bytes()
         ).hexdigest(),
         "source": benchmark._source_provenance(require_clean=True),
     }

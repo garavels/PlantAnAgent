@@ -1,6 +1,7 @@
 """Bounds/configuration for the fixture probe; no protected execution or training."""
 
 from copy import deepcopy
+import hashlib
 import importlib.util
 from pathlib import Path
 import subprocess
@@ -86,6 +87,36 @@ def test_task_preserves_entire_registered_physical_surface(tmp_path: Path) -> No
     assert probe.TIMEOUT == 600
     assert probe.ROOT_FLOOR == 8 * 1024**3
     assert probe.RSS_LIMIT == 12 * 1024**3
+
+
+def test_capacity_identity_binds_both_frozen_protocol_documents(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    for name, content in (
+        (probe.PROTOCOL, b"new bounded numerical repair scope"),
+        (probe.ORIGINAL_PROTOCOL, b"original negative fixture scope"),
+    ):
+        destination = tmp_path / name
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes(content)
+    monkeypatch.setattr(probe, "repository_root", lambda: tmp_path)
+    monkeypatch.setattr(
+        probe.benchmark, "_source_provenance", lambda **_: {"fixture": True}
+    )
+    identity = probe._capacity_identity()
+    assert identity == {
+        "protocol_raw_sha256": hashlib.sha256(
+            b"new bounded numerical repair scope"
+        ).hexdigest(),
+        "original_protocol_raw_sha256": hashlib.sha256(
+            b"original negative fixture scope"
+        ).hexdigest(),
+        "source": {"fixture": True},
+    }
+    assert (
+        probe.SCHEMA
+        == "plant-beta-constrained-rl-study-capacity-return-bounds-fixture-v1"
+    )
 
 
 def test_revision_has_one_destination_and_must_be_a_full_object_id() -> None:

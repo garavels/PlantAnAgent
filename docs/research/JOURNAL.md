@@ -7753,3 +7753,20 @@ unchanged. Training authorization is still absent. The original negative capacit
 result is not superseded; no full-week actor or protected seed was rerun. A new
 separately scoped capacity check, concrete stage budgets and complete clean
 repository release gate remain before the training-authorization packet.
+
+### Separately scoped capacity check after the numerical repair
+
+The numerical repair is committed at `9c76d9a`. Before execution, a separate
+capacity scope now fixes the same fixture seed, all four actors and all original
+limits. Its distinct schema and both raw protocol hashes are bound by the thin
+launcher. Hypothesis: exposing equivalent terminal bounds removes the observed
+numerical rejection and either permits a full E-beta capacity observation or
+reveals another retained failure. M24's known modeling limitation is unchanged;
+its actor will not be removed or replaced. The original negative report remains
+authoritative for its own attempt. This scope opens no registered experiment,
+policy optimization or protected seed and does not authorize training.
+
+All **27 reset-free launcher checks pass in 0.76 seconds**, including explicit
+binding of the original and repair scopes. Strict typing and Black pass; the
+original capacity protocol, task/learning protocols and dependency lock remain
+unchanged. The new source/protocol will be committed before the bounded run.
