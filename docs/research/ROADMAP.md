@@ -212,8 +212,11 @@ equipment consequences.
   pipeline timing is instrumented and independently cross-checked against physical fixtures;
   its combined regression passes 239 tests. Complete operational and training diagnostic
   representations are implemented; their arithmetic/physical/legacy arm-pair regression passes
-  158 tests. Registered evaluation/hardware authority, checkpoint binding and detached stage
-  custody remain build gates before requesting the study.
+  158 tests. The exact stage registry and full aggregate calculation now compose selection,
+  matched secondary pairs, sensitivity, pooled latency and all ten held-out clauses; their
+  combined campaign/arm/timing regression passes 210 tests. Registered evaluation/hardware
+  authority, checkpoint binding, stage execution and detached custody remain build gates before
+  requesting the study.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.
 

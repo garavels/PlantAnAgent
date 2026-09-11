@@ -252,3 +252,61 @@ artifact/state attestation before supplying the rollout records.
 Strict typing of all four changed source modules, formatting of all six changed
 Python files, compilation and whitespace checks pass; the lockfile is unchanged.
 The complete clean repository release gate remains separate and pending.
+
+## Fixed campaign registry and aggregate report
+
+Each stage has 576 slots in episode-major order: H, M24, E-beta, then the 15
+policies in the frozen family/optimizer order for each of the 32 episode seeds.
+Each baseline is executed once per episode and referenced across comparisons.
+Training failures retain all 32 corresponding policy slots as unexecuted, with
+their custody reason. Missing, failed and rejected arms cannot disappear from
+the registry or acquire an aggregate through a surviving subset. Registry
+construction is read-only and grants no permission to instantiate/reset a plant.
+
+Development and held-out evidence roots are deterministic siblings of the
+training root, with suffixes `.development-v1` and `.heldout-v1`. Their registry,
+authority, opening claim, cell claims/terminals, raw arm/timing files and exclusive
+report destinations are fixed before opening. The training root's closed layout
+is preserved. Stage storage and time limits require their own registered budget;
+the training-only 5 GiB minimum is not a study-evidence capacity allowance.
+
+Primary aggregates use independently gated policy/E-beta pairs. Secondary
+PI/scalar and I/scalar aggregates independently gate the actual two policies at
+the identical optimizer/episode identifiers. They do not require E-beta to
+succeed, and they do not subtract two primary vectors whose eligibility might
+omit a valid secondary pair. Every complete secondary vector enters the same
+equal-policy family estimator and hierarchical bootstrap. Incomplete vectors
+remain null with all missing indices. No champion-to-champion contrast is
+substituted for this matched-seed estimand.
+
+Development selection is computed once from primary vectors. Held-out analysis
+uses those frozen choices and cannot reselect from held-out values. All sixteen
+coefficient settings are aggregated with the same all-32 rule, retaining every
+per-episode and aggregate sign reversal from the default setting. Latency pools
+all admitted raw samples in each channel across all 32 slots; it never averages
+episode percentiles. Missing measurements and unsuccessful calls remain visible.
+The ten held-out clauses are individually reported, with missing evidence
+preventing success. Numerical clause calculations do not grant stage authority
+or issue the restricted simulated-controller claim; the detached production
+stage verifier must first reconstruct custody, identities and every source.
+
+The registry and aggregate calculation are implemented in `study/registry.py`
+and `study/campaign_analysis.py`. The physical/latency/campaign regression passed
+**210 tests in 345.49 seconds**. The final campaign arithmetic suite passed **52
+tests in 33.44 seconds**, including an additional check that the five PI rows
+have distinct exact identities and that the frozen champion is their unchanged
+member. Frozen identities are required for held-out success, and the development
+identity condition includes registered hardware. All calculations retain a null
+production claim; constructing a registry or satisfying numerical conditions
+does not open either stage.
+
+The remaining production connection must independently reopen training custody
+and registered artifacts, bind each cell's physical/timing files to the exact
+registry, execute through durable one-use claims, and reconstruct the complete
+aggregate from those sources. Hardware admission must preserve the separate
+training and evaluation thread contracts; changing the training verifier's host
+requirements is not an acceptable shortcut to evaluation's Torch 1/1 setting.
+Stage authority and evidence must remain outside Git so the admitted training
+source/runtime identity stays unchanged through both evaluation stages. A final
+clean repository gate and concrete execution/storage budget precede explicit
+authorization; no registered training or stage authorization currently exists.

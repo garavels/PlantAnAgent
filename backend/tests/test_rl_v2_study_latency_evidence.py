@@ -159,6 +159,10 @@ def test_all_arms_reconstruct_timing_and_physics(
         is False
     )
     assert result["result_claim"] is None
+    assert result["arm_envelope_sha256"] == measured["envelopes"][arm]["sha256"]
+    assert result["host_sha256"] == measured["reports"][arm]["host_before"]["sha256"]
+    for name, samples in result["channel_samples_ns"].items():
+        assert latency.latency_summary(samples) == result["channels"][name]
     assert result["channels"]["dispatcher"]["sample_count"] == run["physical_steps"]
     assert set(result["channels"]) == {
         "controller",
@@ -213,6 +217,9 @@ def test_timing_cannot_be_substituted_for_another_physical_call(
         "schema",
         "claim",
         "contract",
+        "raw_samples",
+        "projected_host",
+        "projected_arm",
     ],
 )
 def test_detached_rejects_rehashed_report_mutations(
@@ -236,6 +243,15 @@ def test_detached_rejects_rehashed_report_mutations(
         report["result_claim"] = "registered-pass"
     elif defect == "contract":
         report["latency_contract_sha256"] = "0" * 64
+    elif defect == "raw_samples":
+        report["result"]["channel_samples_ns"]["inference"][0] += 1
+        report["result"]["channels"]["inference"] = latency.latency_summary(
+            report["result"]["channel_samples_ns"]["inference"]
+        )
+    elif defect == "projected_host":
+        report["result"]["host_sha256"] = "0" * 64
+    elif defect == "projected_arm":
+        report["result"]["arm_envelope_sha256"] = "0" * 64
     path = tmp_path.resolve() / timing.FILENAME
     io.publish_json(path, authenticate(report))
     with pytest.raises(ValueError):

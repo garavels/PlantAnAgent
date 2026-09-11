@@ -7382,3 +7382,66 @@ checks all six changed Python files, compilation and whitespace checks pass, and
 `uv.lock` is unchanged. The registered training authorization remains absent.
 These are intermediate implementation gates, not a complete clean release or a
 registered controller result.
+
+### Fixed study registry and complete aggregate calculation
+
+Hypothesis: the preregistered study can be composed from the independently
+verified arm, timing and training layers while retaining every one of its 576
+stage slots and preserving the distinct primary and matched-secondary estimands.
+The build contract now fixes episode-major H/M24/E-beta/15-policy order and
+deterministic development/held-out sibling roots; the read-only registry does
+not open a stage or alter the training root. Future stage storage/time budgets
+remain distinct from the training-only 5 GiB floor.
+
+The audit identified a real integration risk: subtracting two E-beta-relative
+vectors would suppress a valid policy/scalar comparison whenever E-beta failed.
+The existing physical comparison kernel now supports the explicit matched-scalar
+comparator with its own labels and gate; it cannot emit E-beta-labelled
+sensitivity for that secondary pair. Historical default pair semantics remain
+unchanged. Complete primary and secondary vectors separately feed the frozen
+equal-policy family estimator and hierarchical bootstrap.
+
+Implemented aggregate composition for all 18 actors, 15 final policy identities,
+all 32 episode slots, original operational scorecards, every policy/family
+coefficient setting and sign reversal, fixed development selection, frozen
+held-out choices, five opening conditions and the ten held-out clauses. Missing
+or unadmitted policies have no value vector, and all skipped slots retain their
+training custody reason. Complete source verification, registered hardware and
+publication facts remain explicit inputs from the future detached stage layer;
+this calculation has a null result claim and never authorizes execution.
+
+The timing projection now retains all raw channel samples plus the independently
+verified arm-envelope and host digests. Campaign latency pools actual samples
+across the 32 slots, including failed calls, rather than averaging episode
+percentiles. Raw samples and projected identities remain reconstructed from the
+sealed timing and physical files, with new rehashed-substitution cases.
+
+The initial **46 reset-free campaign/registry tests passed in 26.99 seconds**,
+including complete synthetic composition, independent secondary pairs, frozen
+choices, all ten negative clauses, exact identities and unequal-size latency
+pools. These are explicitly arithmetic fixtures, not physical controller results.
+Five additional cases cover complete training failure/missingness and malformed
+held-out choices. Initial mypy errors were heterogeneous JSON container
+annotations, corrected without altering calculations; strict typing now passes
+all five changed source modules. The combined physical/latency/campaign regression
+is pending. No registered checkpoint, study reset, sealed log or authorization
+was opened, and the product interface is unchanged.
+
+The combined campaign, standalone arm/pair and latency regression passed **210
+tests in 345.49 seconds**, with successful process exit and permitted CPU metadata
+reads for the existing timing fixtures. The three added timing cases reject
+substituted raw samples (even with recomputed percentiles), projected host and
+projected arm digests. The unchanged primary pair behavior and the independent
+matched-scalar gate both pass their regressions.
+
+Final review made the aggregate's already-required source prerequisites explicit:
+held-out success requires frozen identities; its five PI inputs must have the
+exact distinct optimizer identities, and its champion must be their unchanged
+member. The development identity condition also requires registered hardware.
+These arithmetic-only changes and the added identity case pass the final **52
+campaign tests in 33.44 seconds**. Formatting of all seven changed Python files,
+compilation, whitespace and unchanged-lock checks pass. Final strict typing
+passes all five changed source modules. Production stage execution, external authority,
+registered checkpoint binding and full detached stage reconstruction remain the
+next build work. The overall readiness goal remains active; no study result or
+training authorization is claimed by this milestone.

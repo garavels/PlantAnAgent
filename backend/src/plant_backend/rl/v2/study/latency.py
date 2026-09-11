@@ -465,5 +465,6 @@ def reconstruct_latency(raw: Mapping[str, Any]) -> dict[str, Any]:
         "warmup_output_count": len(actions),
         "decision_count": len(rows),
         **counts,
+        "channel_samples_ns": deepcopy(channels),
         "channels": {key: latency_summary(values) for key, values in channels.items()},
     }

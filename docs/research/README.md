@@ -319,7 +319,11 @@ fallback behavior.
   with 239 passing latency/evaluation/verifier regression cases. Operational and training
   scorecards now retain all episode/policy slots, resource returns, failures, censored outage
   recovery and clustered strata; 158 arithmetic/physical/legacy arm-pair cases pass.
-  Registered checkpoint/stage binding and detached campaign custody remain required.
+  The fixed 576-slot registry and aggregate development/held-out calculation are implemented,
+  including independently gated scalar comparisons, frozen choices, all sensitivity settings,
+  pooled call latency and the ten held-out clauses. The combined campaign/arm/timing regression
+  passes 210 tests, with 52 final campaign arithmetic cases after identity tightening.
+  Registered checkpoint/stage binding, execution and detached campaign custody remain required.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

@@ -204,6 +204,12 @@ def bind_latency_to_verified_run(
     result["channels"]["solver"] = latency_summary(
         [value for group in solver for value in group]
     )
+    result["channel_samples_ns"]["dispatcher"] = [
+        value for group in dispatcher for value in group
+    ]
+    result["channel_samples_ns"]["solver"] = [
+        value for group in solver for value in group
+    ]
     inference = result["channels"]["inference"]
     result["observed_inference_p99_within_limit"] = (
         None if inference["p99"] is None else inference["p99"] <= INFERENCE_LIMIT_NS
@@ -246,6 +252,8 @@ def synthetic_latency_evidence(
     result = bind_latency_to_verified_run(measurement, envelope["run"])
     result.update(
         source_evidence_verified=True,
+        host_sha256=before["sha256"],
+        arm_envelope_sha256=admitted["envelope_sha256"],
         registered_concurrency_verified=False,
         torch_single_thread=before["machine"]["torch_intraop_threads"]
         == before["machine"]["torch_interop_threads"]

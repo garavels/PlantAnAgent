@@ -37,9 +37,14 @@ FIELDS = frozenset(
 
 
 def _comparison(
-    policy: dict[str, Any] | None, baseline: dict[str, Any] | None
+    policy: dict[str, Any] | None,
+    baseline: dict[str, Any] | None,
+    *,
+    comparator: str = "e_beta",
 ) -> dict[str, Any]:
-    arms = {"policy": policy, "e_beta": baseline}
+    if comparator not in {"e_beta", "scalar_ppo"}:
+        raise ValueError("study comparator must be E-beta or matched scalar PPO")
+    arms = {"policy": policy, comparator: baseline}
     checks = {}
     for name, evidence in arms.items():
         checks[f"{name}_evidence_present"] = evidence is not None
@@ -112,10 +117,11 @@ def _comparison(
             policy["economic_metrics"]["net_operating_value_eur"]
             - baseline["economic_metrics"]["net_operating_value_eur"]
         )
-        sensitivity = rescore_pair(
-            policy["economic_metrics"]["components_eur"],
-            baseline["economic_metrics"]["components_eur"],
-        )
+        if comparator == "e_beta":
+            sensitivity = rescore_pair(
+                policy["economic_metrics"]["components_eur"],
+                baseline["economic_metrics"]["components_eur"],
+            )
     return {
         "checks": checks,
         "exclusion_reasons": [name for name, passed in checks.items() if not passed],
