@@ -1,6 +1,14 @@
 # Registered training custody build
 
-Status: **custody implementation validated at `ad6ad1e`; study preparation in progress; registered training closed**
+Status: **training and study implementation validated at `12936c7`; final readiness review open; registered training closed**
+
+The latest complete clean gate passes **3,002 Python tests**, strict typing of
+36 changed source modules, Black on 57 changed Python files, compilation, CLI
+help/import and frontend build/lint. The
+[readiness review](TRAINING_READINESS_REVIEW.md) records exact report recovery,
+host/root/budget proposals and the remaining comparator, capacity and storage
+decisions. Earlier `ad6ad1e` references below retain the original custody milestone;
+the current gate also covers the subsequently implemented study stages.
 
 The unchanged custody protocol and inherited status edits were committed as `8c3d535`
 before this implementation. Its raw SHA-256 is
@@ -21,7 +29,7 @@ The three families, five optimizer seeds, plant task, learning budgets and seed 
 | Production/synthetic separation | Implemented; separate report paths and schema rejection before dependency access | Passed clean gate at `ad6ad1e` |
 | Detached verification and post-publication gate | Implemented; independent reconstruction and mandatory fresh-process invocation, including recapture failure | Passed clean gate at `ad6ad1e` |
 | Protected seed isolation and full release gate | No protected reset or optimizer step used during this build | 2,285 Python tests and complete static/frontend gate passed at `ad6ad1e` |
-| Development analysis and campaign schema binding | Numerical statistics, selection and sensitivity kernels implemented; 82 reset-free tests pass | Verified pairwise input binding, scorecards/latency, stage custody and detached development/held-out verifiers |
+| Development analysis and campaign schema binding | Pairwise input binding, scorecards/latency, stage custody and detached development/held-out verifiers implemented | Included in the complete clean gate at `12936c7`; capacity and later authority remain separate |
 
 The generic registered `train()` entry point now requires a one-use permission delivered by
 the live campaign parent. It reauthenticates the tracked authorization, complete config
@@ -79,14 +87,15 @@ campaign admission floor remain visible planning constraints, not execution appr
 
 ## Work still required before requesting the study
 
-Close the development-analysis build required by the post-capacity audit, tracked in
-[`CONSTRAINED_RL_STUDY_ANALYSIS_BUILD.md`](CONSTRAINED_RL_STUDY_ANALYSIS_BUILD.md). Its numerical
-kernels are implemented; they confer no verified arm eligibility or stage authorization. The campaign runner
-and detached verifier passed their complete clean release gate at
-`ad6ad1e85a0269f592d42b7c9edcd6c64f2c0579`: 2,285 Python tests, strict typing of all 17 changed
-source modules, Black on all 29 changed Python files, compilation, CLI help/import,
-Git whitespace and lock cleanliness, and frontend production build/lint. This does not admit
-any later implementation revision or authorize training.
+The development-analysis and stage-custody build required by the post-capacity
+audit is implemented, tracked in
+[`CONSTRAINED_RL_STUDY_ANALYSIS_BUILD.md`](CONSTRAINED_RL_STUDY_ANALYSIS_BUILD.md).
+The original training milestone passed 2,285 tests at `ad6ad1e`; the complete
+training/study implementation now passes 3,002 tests and static/frontend checks
+at `12936c7`. Neither gate confers policy eligibility or stage authorization.
+Resolve the comparator, evaluation capacity and storage decisions in the
+[readiness review](TRAINING_READINESS_REVIEW.md) before freezing the final
+implementation and requesting execution approval.
 
 The current registered policy loader requires the exact training source/runtime identity.
 Consequently selection, sensitivity, uncertainty, latency registration and independent

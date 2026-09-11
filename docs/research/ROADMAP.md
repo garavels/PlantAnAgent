@@ -225,9 +225,14 @@ equipment consequences.
   External evaluation/hardware authority, per-arm claim/checkpoint binding, sequential child
   orchestration and complete detached custody are now implemented. Reset-free fixtures cover
   all 576 slots, failure retention, aborts and substituted inputs/reports. The physical-wrapper,
-  standalone-arm and historical-admission regression passes 196 tests. Measured stage
-  capacity, the final complete clean release gate and explicit later execution
-  authorization remain required before requesting the study.
+  standalone-arm and historical-admission regression passes 196 tests. The complete
+  clean implementation gate now passes 3,002 Python tests and static/frontend checks
+  at `12936c7`. The exact historical capacity report has been recovered with both
+  frozen hashes; the original checkpoints/logs remain absent. The
+  [readiness review](TRAINING_READINESS_REVIEW.md) retains the E-beta sunset
+  infeasibility, incomplete MPC capacity and draft evaluation storage gap. The
+  comparator decision, measured stage capacity, final source freeze and explicit
+  later execution authorization remain open.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.
 

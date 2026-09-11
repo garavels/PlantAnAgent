@@ -1,6 +1,13 @@
 # Constrained-RL study analysis build
 
-Status: **outcome-blind implementation contract; no study execution authorized**
+Status: **implementation validated at clean `12936c7`; capacity and execution authority pending**
+
+The complete repository gate passes **3,002 Python tests** plus strict touched-
+module typing, formatting, compilation, CLI imports/help and frontend build/lint.
+The [readiness review](TRAINING_READINESS_REVIEW.md) separates that completed
+software gate from the remaining comparator decision, capacity evidence and
+storage allocation. Sections below retain the chronological implementation
+milestones; their earlier incomplete-layer statements describe those revisions.
 
 This build implements the development, sensitivity and held-out analysis sections of
 `CONSTRAINED_RL_BETA_PROTOCOL.md`. The task, three families, five optimizer seeds, seed

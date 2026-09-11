@@ -303,6 +303,12 @@ fallback behavior.
   how to close the audited gaps in exact task identity, 3-by-5 order, durable attempt/log/output
   custody, checkpoint admission, and detached campaign verification. It permits fixture tests only
   and is not a training authorization.
+- [`TRAINING_READINESS_REVIEW.md`](TRAINING_READINESS_REVIEW.md) records the latest
+  complete clean implementation gate at `12936c7`: 3,002 Python tests and
+  static/frontend checks. It retains exact historical capacity-report recovery,
+  the proposed persistent training root/host, explicit time/storage limits and
+  the unresolved comparator and evaluation-capacity decisions. Its compact
+  evidence is descriptive and grants no execution authority.
 - [`REGISTERED_TRAINING_CUSTODY_BUILD.md`](REGISTERED_TRAINING_CUSTODY_BUILD.md)
   tracks custody implementation, fixture evidence and remaining admission gates. The generic
   registered learner requires authenticated campaign custody. The runner and detached verifier

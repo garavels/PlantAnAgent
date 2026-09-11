@@ -7799,3 +7799,65 @@ controller-design scope, not another tolerance patch or a silent capacity retry.
 No stage budget, complete clean release claim or registered training authority
 follows. All 15 registered tasks, protected seeds, V1 and the product interface
 remain unchanged; the overall training-readiness goal is still active.
+
+### Complete implementation gate and recovered capacity report
+
+Hypothesis: the missing historical capacity report can be restored without a
+new experiment if existing evidence reproduces its exact frozen bytes. Scoped
+inspection found the original temporary capacity root present but containing
+zero regular files; the cause of removal is unknown. A historical tool response
+retained the empirical report fields but projected only part of the static cell
+contract. The first reconstructed candidate failed both frozen hashes and was
+not admitted. Restoring the six omitted static fields through the unchanged
+deterministic `_cell_contract()` and canonical serialization produced the exact
+17,380-byte original: raw SHA
+`3b9074824c6e81733e18653fd87e0a470e51c478183ed1a0a656f3589c4851fa`,
+domain SHA `78b6c1f067d88aa43b672e42dd94c41d37ff9444e3963a2ebcb47f85933d9c3e`.
+No empirical values were substituted, no sealed outcome log was inspected and
+no environment/reset/model/optimizer was constructed for recovery.
+
+The exact report and a recovery record were published exclusively outside Git
+under `/Users/filippogombac/Developer/PlantAnAgentResearchArtifacts/capacity-4f505b8/`.
+Production regular-file reading, both hashes, the complete static contract and
+campaign-projection arithmetic pass. Fresh host identity exactly matches the
+recorded capacity host. Original checkpoints and logs remain absent, so there
+is no claim of fresh detached verification of that complete historical artifact
+set. The report-bound training admission prerequisite is recoverable; no new
+capacity run is needed merely to replace the missing report.
+
+The complete Python gate ran with source held clean at
+`12936c7627940f2ede04405bbbba28603bb8b10f` and finished with **3,002 passing
+tests, one existing FastAPI/Starlette deprecation warning, in 2,037.91 seconds**.
+Process exit was zero; the existing native HiGHS cleanup text was retained.
+Strict mypy passes all 36 source modules changed since `ad6ad1e`; Black checks
+all 57 changed Python files. Compilation, CLI help/imports, whitespace, all 15
+registered task identities, unchanged lock and frontend production build/lint
+pass. The frontend retains its existing large-bundle warning. No repository
+file changed until every running gate process had closed.
+
+`TRAINING_READINESS_REVIEW.md` now separates that completed software gate from
+unresolved scientific and execution readiness. The exact recovered report,
+proposed new persistent training root and frozen 15-policy time/log/storage
+limits are explicit. One unfrozen stage-budget scenario reconstructs through
+the production budget parser: 22.40 GiB per stage, 46.80 GiB required at
+development opening. The selected volume had 25.17 GiB free at 05:38 UTC on
+September 11, leaving 21.64 GiB to obtain before further training allocation.
+Neither a storage reservation nor a stage capacity claim is inferred. Full-week
+MPC measurements remain incomplete, and all prior negative attempts are retained.
+
+The review recommends settling E-beta's forecast/model-error reserve behavior
+before final source freeze. Preserving the baseline is a valid alternative with
+the all-32 eligibility risk accepted explicitly; fixture failure does not prove
+failure on unopened development seeds. No strategy change, protocol amendment,
+capacity retry, source-freeze approval or production authority is created here.
+The compact review evidence raw SHA is
+`6a846d800613434126b654f5e36d93965492494c11bfabb42092cd9be437166f`.
+This documentation commit records the gate at `12936c7`, not a new full-suite
+run at its own revision. Final comparator/capacity/storage decisions and explicit
+training approval remain; the overall goal is active and this turn made progress.
+
+The final documentation check passes whitespace, review-link existence, compact
+evidence raw digest and exact budget reconstruction. Both frozen upstream protocol
+hashes and `uv.lock` remain unchanged. The proposed training root and tracked
+training authorization are still absent. No second full-suite run was warranted
+for this documentation-only record.
