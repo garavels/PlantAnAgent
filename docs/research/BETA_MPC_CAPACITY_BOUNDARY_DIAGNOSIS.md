@@ -71,3 +71,19 @@ deficit), physical balances, actual solver and detached evidence tests must pass
 No alpha/service-MPC behavior, plant dynamics, task tolerance, learning rule,
 optimizer seed or budget is changed. A new capacity attempt is outside this
 repair scope and must remain separately declared with the original failure linked.
+
+## Repair validation
+
+The five saved-vector cases pass without environment construction or optimization.
+The combined beta/alpha MPC, benchmark, detached verifier and standalone-arm
+regression passes **219 tests in 637.47 seconds**. Strict typing passes both
+changed source modules; Black checks all three changed Python files. All 15
+registered configurations still match the original task-template digest; both
+upstream protocol hashes are unchanged and the training authorization is absent.
+The simulator, frontend and dependency lock are unchanged. This is a targeted
+implementation gate, not a new complete clean repository gate or capacity result.
+
+The compact saved-input/vector test fixture is 47,887 bytes, with raw SHA-256
+`bdd8a4c6b6e32da87afe0feaad213cfa923b80486e3457f83baa7f267626874e`.
+It contains fixture public inputs and fixed responses, not a policy checkpoint.
+Full original capacity archives and the numerical diagnosis remain outside Git.

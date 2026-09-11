@@ -46,6 +46,11 @@ weaken a cycle constraint, change controller behavior or rerun this fixture to
 manufacture capacity completion. Any subsequent repair/probe needs its own
 explicit scope and retained link to this negative result.
 
+The subsequent [saved-boundary diagnosis](../BETA_MPC_CAPACITY_BOUNDARY_DIAGNOSIS.md)
+reproduced a two-ULP battery deficit and records an equivalent-bound numerical
+repair with 219 passing targeted tests. It does not rerun or supersede this
+capacity result and supplies no new full-week observation.
+
 Training capacity at `4f505b8` is unchanged. The stage budget, complete clean
 release gate and explicit training authorization remain open. No registered
 training, development/held-out reset, selection or deployment occurred.

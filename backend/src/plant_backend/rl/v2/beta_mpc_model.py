@@ -332,7 +332,15 @@ class BetaMPCModelV1:
 
     @property
     def variable_lower(self) -> tuple[float, ...]:
-        return self.economic_model.variable_lower
+        # The singleton return rows are also exact variable bounds. Exposing
+        # them here lets the shared solver canonicalize boundary roundoff before
+        # strict plan validation, without enlarging the feasible region or its
+        # tolerances. Retain a stronger physical reserve when one exists.
+        lower = list(self.economic_model.variable_lower)
+        for resource in self.cycle_return.resources:
+            index = self.group(_RESOURCE_GROUPS[resource.resource])[-1]
+            lower[index] = max(lower[index], resource.required_minimum)
+        return tuple(lower)
 
     @property
     def variable_upper(self) -> tuple[float, ...]:

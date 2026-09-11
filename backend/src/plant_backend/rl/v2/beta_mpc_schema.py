@@ -30,7 +30,7 @@ from .setpoint_control import ProcessSetpointTargetsV1
 
 BETA_MPC_SCHEMA_VERSION = 1
 BETA_MPC_CONTROLLER_ID = "cyclic-market-economic-mpc-v1"
-BETA_MPC_MODEL_VERSION = "cyclic-return-economic-mpc-v1"
+BETA_MPC_MODEL_VERSION = "cyclic-return-economic-mpc-v2"
 BETA_MPC_OBJECTIVE_VERSION = "cycle-feasible-service-then-eur-v1"
 BETA_MPC_PRICE_PROJECTION_VERSION = "current-then-issued-hourly-mean-v1"
 BETA_MPC_SETTINGS_DOMAIN = "cyclic-market-beta-mpc-settings-v1"

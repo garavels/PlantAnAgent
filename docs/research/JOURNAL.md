@@ -7734,3 +7734,22 @@ unchanged economic canonicalizer/residual audits. The beta model version changes
 to bind this representation. No task/solver tolerance, objective or feasible
 region changes. Fixed saved-vector tests and existing regressions will validate
 the repair; no capacity actor, plant trajectory or protected seed is rerun.
+
+The repair is implemented in the beta model only: four explicit terminal lower
+bounds intersect their original physical bounds, and the beta model identity is
+now `cyclic-return-economic-mpc-v2`. The shared solver and strict plan validator
+are unchanged. A 47,887-byte public-input/fixed-vector fixture retains the
+reproduction and its source-report digest. All **five new reset-free cases pass
+in 0.54 seconds**: correction of the original deficit, interior-value preservation,
+material-infeasibility rejection, all-four-bound equivalence and preservation of
+a stronger physical reserve.
+
+The combined beta/alpha MPC, benchmark, detached verifier and standalone-arm gate
+passes **219 tests in 637.47 seconds**, with successful process exit and the
+existing native HiGHS cleanup text. Strict typing passes both source modules;
+Black checks all three changed Python files. All 15 registered task identities,
+both upstream protocol hashes, dependency lock, simulator and frontend are
+unchanged. Training authorization is still absent. The original negative capacity
+result is not superseded; no full-week actor or protected seed was rerun. A new
+separately scoped capacity check, concrete stage budgets and complete clean
+repository release gate remain before the training-authorization packet.
