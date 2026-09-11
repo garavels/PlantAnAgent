@@ -8248,3 +8248,86 @@ read-only packet binding exact source, host, protocols, all 15 configs and root.
 No canonical authorization, campaign root, registered reset or policy rehearsal
 has been created or executed. Final clean-gate evidence is retained outside
 tracked source so the checked revision can remain the later authorization parent.
+
+
+### PPO clean release gate completed (2026-09-11)
+
+Clean implementation b5ea55e9c12571574f3452a6d145c6b8d51c2d87, tree
+3d7a128e00fdd7ac4c5c0d9592edaffdb2da768e: 3,052 Python tests passed
+in 2,227.36 seconds. Strict typing passed for 20 changed source/tool files;
+Black passed for 32 Python files. Compilation, registered/study/export CLI
+checks, frontend production build/lint and whitespace checks passed. The
+worktree stayed clean and unchanged throughout. Existing Starlette/httpx,
+frontend bundle-size and HiGHS diagnostic output are retained, not suppressed.
+
+The exact gate, command arguments, log hashes and launch proposal are in
+/Volumes/Lexar/PlantAnAgentResearch/readiness-b5ea55e/.
+Release-gate SHA-256:
+e45a08c92c306df8d11d1cf4ef2306e9679097d017495759ed84c921438e07b2.
+Launch-proposal SHA-256:
+2f0aeda94ecc7f37b31f9b46fbae69f343343b00a007044f1f86cfe834cf3be9.
+The fixed 15-policy matrix, protocol/task/lock identities, host and sufficient
+Lexar reserve have been checked. Research E-beta's negative fixture results and
+risk of ineligible development remain explicit. No registered training,
+protected evaluation, canonical authorization or campaign root was created.
+
+This entry is retained alongside the checked implementation's external evidence
+so the source stays unchanged. It can be appended to the tracked journal in the
+later permitted authorization/status-only commit, whose sole parent must be the
+explicitly approved implementation. Readiness is complete; multi-day training
+requires the separately scoped execution approval in the frozen custody protocol.
+
+
+## 2026-09-11 — Separate one-policy pilot before the full registered matrix
+
+The user explicitly requested: “Let's start by training one policy on one seed
+and see what happens.” This prospectively changes the immediate execution scope
+to one exploratory policy. The original 15-cell protocol and all protected seed
+domains remain intact. No canonical registered authorization is created.
+
+Hypothesis: the existing PI-Lagrangian learner may improve delivery/economic
+behavior or resource-return costs from its initialization within the existing
+1,048,576-transition budget. This is uncertain; an unchanged or worse policy,
+physical diagnostics, missed deliveries and every resource deficit remain results.
+One seed cannot establish training robustness or superiority to MPC.
+
+The [pilot specification](PPO_SINGLE_POLICY_PILOT.md) fixes optimizer seed 101,
+four production beta environments, training episode seeds 9,500,000–9,501,563,
+the original learner/task settings, an external Lexar root, a 10-hour training
+cap, and fixed post-training comparisons with initialization and H on four
+other nonprotected scenarios. A separate runner composes the existing learner
+and allocator without modifying any production fixture/registered validator,
+checkpoint format, simulator, guard, reward, configuration or frontend. The
+long pilot has its own format; it is neither a bounded fixture checkpoint nor
+registered evidence. A one-use root and child attempt markers prevent retries;
+source/runtime/host rechecks, bounded subprocess logs, completed rollout records,
+reopened final model evidence and explicit failure reports retain custody.
+
+Initial pilot tests: 8 passed, 1 failed. The new untrained-policy export included
+the attached cost critic, which the generic SB3 policy constructor cannot restore.
+The runner now saves initial tensor weights and restores them strictly into a
+copy of the final model's identical policy architecture. The trained constrained
+checkpoint had already reopened correctly. The repaired focused suite passed
+9 tests. Expanded export and real full-week H fixtures then found a JSON boundary
+issue: serialized tuples become lists, so direct Python object comparison rejected
+an equivalent task. Pilot specification/task admission now compares canonical
+JSON bytes. Two accompanying roundtrip test assertions were corrected to compare
+canonical bytes too. Initial strict typing also caught callback and beta-environment
+type narrowing issues, subsequently addressed. No production pilot reset or
+optimizer step has occurred during these tests; real-learning fixtures use
+9,990,000-series seeds and tiny budgets.
+
+The final pilot gate is deliberately scoped to the isolated runner and its
+production constrained-training, allocator, configuration and provenance
+dependencies. The prior complete 3,052-test gate is inherited evidence, not a
+new full-suite result. The exact clean-source gate, subsequent launch receipt
+and final outcome will be retained outside Git while the pilot is active.
+
+The repaired expanded pilot suite passed **10 tests in 28.63 seconds**. Strict
+typing passed for the isolated runner. Two additional admission/attempt tests
+passed in 1.75 seconds: a real provenance/plan JSON roundtrip rejects mutated
+gate bytes, and a repeated child refuses its consumed attempt before training.
+A full 168-hour H integration fixture completed and serialized all seven daily
+settlements; its seed is separate from the pilot scenarios and no comparative
+performance result was inspected. Final clean-commit regression evidence follows
+outside tracked source.

@@ -2,13 +2,24 @@
 
 ## Product and research thesis
 
+Immediate execution update, 2026-09-11: the user requested one policy/one optimizer
+seed before committing to the full matrix. The separate
+[single-policy pilot](PPO_SINGLE_POLICY_PILOT.md) fixes PI-Lagrangian seed 101,
+1,048,576 transitions on nonprotected seeds and four descriptive scenarios against
+the saved untrained policy and H. The original 15-cell study, task, comparator and
+selection protocols remain unchanged. Pilot results cannot enter its registered
+evaluation or its product evidence exporter. This is the immediate priority;
+the full campaign is deferred, not silently reduced or already launched.
+
 PPO readiness build, 2026-09-11: the unified workspace now has a Learning panel
 and offline production-admitted training/stage exporters. The fixed PI-101
 presentation adapter is fixture-tested; no registered policy is available yet.
 The user authorized Lexar storage, whose production I/O probe passed. The
 [launch plan](PPO_LAUNCH_PLAN.md) retains strict research E-beta and explicitly
-allows a negative development result. A new complete clean gate and exact
-execution approval are the next launch steps; no protected seed has been opened.
+allows a negative development result. The subsequent complete clean gate at
+`b5ea55e` passed 3,052 Python tests and scoped static/frontend checks. Exact
+execution approval remains required for that full campaign; no protected seed
+has been opened.
 
 Submission priority update, 2026-09-11: the user requires executed PPO training
 and inspectable learned-controller evidence in the commission submission.

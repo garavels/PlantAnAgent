@@ -12,6 +12,10 @@ fallback behavior.
 
 ## Files
 
+- [`PPO_SINGLE_POLICY_PILOT.md`](PPO_SINGLE_POLICY_PILOT.md) freezes the subsequently
+  user-authorized exploratory PI-Lagrangian seed-101 run and fixed descriptive
+  checks. It uses a separate identity and nonprotected episode seeds. The original
+  15-policy registered study remains unopened.
 - [`PPO_LAUNCH_PLAN.md`](PPO_LAUNCH_PLAN.md) defines the fixed 15-policy launch,
   Lexar storage proposal, retained comparator risk, source-freeze checks and
   closed-custody product export/replay workflow. Training remains unopened.
