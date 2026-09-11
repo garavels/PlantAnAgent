@@ -314,6 +314,8 @@ fallback behavior.
   tests. Standalone physical evidence and pairwise admission have 79 synthetic integration and
   adversarial tests; the combined analysis/legacy-verifier regression passes 204 tests. Registered
   checkpoint/stage binding, scorecards/latency and detached campaign custody remain pending.
+  Historical beta evaluation routes now reject registered tasks/checkpoints and protected study
+  seeds before execution; the route-closure and compatibility regression passes 119 tests.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

@@ -7248,3 +7248,29 @@ be closed or connected to the fixed admitted stage runner, including direct
 protected reset was used to establish this finding. Remaining work also includes
 all-32/all-15 registry binding, latency/scorecards, source-bound external stage
 authority and detached campaign reconstruction. Training authorization is absent.
+
+## 2026-09-11 — Registered evaluation route closure
+
+Commit `dd6f18b` completed the standalone synthetic arm/pair milestone and leaves
+the overall study goal active. The next hypothesis is that historical public
+beta evaluation entry points can be closed before any reset without changing
+V1, unregistered fixture behavior, checkpoint loading used by training custody,
+or historical evidence verification. A shared rejection-only boundary now refuses
+registered task/checkpoint declarations and the frozen training, development and
+held-out seed domains in historical beta evaluation routes. It does not grant
+stage permission, add a bypass flag, or authorize any protected execution. Both
+paired front doors and direct policy/heuristic/cell execution paths are covered;
+the admitted study runner will use fixed private arm execution instead. This
+change is being tested with forbidden construction/reset/load sentinels only.
+
+All **73** new rejection tests passed in 0.19 seconds. They cover all three
+families and five optimizer identifiers, each protected range boundary, every
+public execution route, both legacy loaders/readmission paths, fixture-config
+substitution for a registered checkpoint, beta-environment relabelling, ambiguous
+seed types and empty seed batches. No plant constructor/reset or policy/metadata
+loader is permitted in these tests; registered configurations are inspected only
+as source-defined values. The combined route-closure, historical benchmark,
+policy-integration and CLI regression passed **119 tests in 7.74 seconds**, with
+successful exit and existing native HiGHS cleanup diagnostics. Strict mypy passed
+all three changed source modules. The registered training loader remains separate
+and unchanged. No registered run or protected evaluation was executed.

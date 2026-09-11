@@ -18,6 +18,7 @@ from numpy.typing import NDArray
 from .. import checkpoints
 from ..policies import LoadedPolicy, load_policy
 from .beta_env import PlantCyclicMarketEnvV2Beta
+from .beta_spaces import ENVIRONMENT_ID as BETA_ENVIRONMENT_ID
 from .economic_env import PlantEconomicSetpointEnvV2
 from .mpc_schema import domain_sha256
 from .policy_setpoint_controller import (
@@ -29,6 +30,7 @@ from .policy_setpoint_controller import (
 )
 from .setpoint_controllers import LegacyHeuristicSetpointControllerV1
 from .setpoint_env import PlantSetpointEnvV2
+from .study.legacy_admission import require_legacy_evaluation_scope
 from .training.config import (
     BETA_REGISTERED_RUN_KIND,
     ControllerNeutralTrainingConfigV1,
@@ -112,6 +114,12 @@ def _preflight_loaded_policy_task(
 
     if not isinstance(loaded, LoadedPolicy):
         raise TypeError("loaded must be LoadedPolicy")
+    require_legacy_evaluation_scope(
+        config.environment_id, training_config=config.to_dict()
+    )
+    require_legacy_evaluation_scope(
+        loaded.metadata.environment_id, training_config=loaded.metadata.training_config
+    )
     environment = make_env(config)
     try:
         contract = policy_contract_for_environment(environment)
@@ -233,6 +241,17 @@ def execute_policy_episode(
 ) -> dict[str, Any]:
     """Run deterministic checkpoint inference with complete common-door evidence."""
 
+    if isinstance(environment, PlantCyclicMarketEnvV2Beta):
+        require_legacy_evaluation_scope(
+            BETA_ENVIRONMENT_ID,
+            seeds=(seed,),
+            training_config=loaded.metadata.training_config,
+        )
+    require_legacy_evaluation_scope(
+        loaded.metadata.environment_id,
+        training_config=loaded.metadata.training_config,
+        seeds=(seed,),
+    )
     observation, _ = environment.reset(seed=seed)
     controller = NormalizedSetpointPolicyControllerV1.from_environment(
         loaded,
@@ -316,6 +335,8 @@ def execute_heuristic_episode(
 ) -> dict[str, Any]:
     """Run the transparent heuristic through the identical generic command door."""
 
+    if isinstance(environment, PlantCyclicMarketEnvV2Beta):
+        require_legacy_evaluation_scope(BETA_ENVIRONMENT_ID, seeds=(seed,))
     environment.reset(seed=seed)
     controller = LegacyHeuristicSetpointControllerV1()
     controller.reset()
@@ -383,6 +404,9 @@ def compare_policy_to_heuristic(
     """Pair both arms on exact exogenous episodes and report, never rank, outcomes."""
 
     seed_values = _validated_seeds(seeds)
+    require_legacy_evaluation_scope(
+        config.environment_id, training_config=config.to_dict(), seeds=seed_values
+    )
     loaded = _preflight_loaded_policy_task(loaded, config)
     runs: list[dict[str, Any]] = []
     for seed in seed_values:
@@ -448,6 +472,9 @@ def load_policy_for_task(
     path: Path | str,
     config: ControllerNeutralTrainingConfigV1,
 ) -> LoadedPolicy:
+    require_legacy_evaluation_scope(
+        config.environment_id, training_config=config.to_dict()
+    )
     environment = make_env(config)
     try:
         return load_policy(

@@ -55,6 +55,7 @@ from .policy_setpoint_controller import (
 )
 from .setpoint_command import process_setpoint_boundary_sha256
 from .setpoint_controllers import LegacyHeuristicSetpointControllerV1
+from .study.legacy_admission import require_legacy_evaluation_scope
 from .setpoint_execution import ProcessSetpointIntervalExecutionV1
 from .training.config import (
     BETA_REGISTERED_RUN_KIND,
@@ -510,6 +511,12 @@ def _readmit_policy(
     if not isinstance(loaded, LoadedPolicy):
         raise TypeError("loaded must be LoadedPolicy")
     _assert_beta_task(config)
+    require_legacy_evaluation_scope(
+        config.environment_id, training_config=config.to_dict()
+    )
+    require_legacy_evaluation_scope(
+        loaded.metadata.environment_id, training_config=loaded.metadata.training_config
+    )
     if not loaded.metadata.training_config:
         raise checkpoints.CorruptCheckpointError(
             "beta benchmark checkpoint has no controller-neutral training_config"
@@ -581,6 +588,9 @@ def load_beta_benchmark_policy(
 
     config = load_training_task(checkpoint)
     _assert_beta_task(config)
+    require_legacy_evaluation_scope(
+        config.environment_id, training_config=config.to_dict()
+    )
     environment = _new_beta_environment(config)
     try:
         loaded = load_policy(
@@ -1598,6 +1608,15 @@ def execute_beta_controller_benchmark_cell(
     if isinstance(seed, bool) or not isinstance(seed, Integral) or seed < 0:
         raise ValueError("seed must be a non-negative integer")
     _assert_beta_task(config)
+    require_legacy_evaluation_scope(
+        config.environment_id, training_config=config.to_dict(), seeds=(int(seed),)
+    )
+    if isinstance(loaded, LoadedPolicy):
+        require_legacy_evaluation_scope(
+            loaded.metadata.environment_id,
+            training_config=loaded.metadata.training_config,
+            seeds=(int(seed),),
+        )
     settings = _service_settings(config, service_settings)
     factory = economic_controller_factory or _real_beta_economic_controller
     try:
@@ -1791,6 +1810,9 @@ def evaluate_beta_controller_benchmark(
 
     seed_values = _validated_seeds(seeds)
     _assert_beta_task(config)
+    require_legacy_evaluation_scope(
+        config.environment_id, training_config=config.to_dict(), seeds=seed_values
+    )
     canonical_settings = _service_settings(config, None)
     settings = _service_settings(config, service_settings)
     if require_trained_policy and settings != canonical_settings:

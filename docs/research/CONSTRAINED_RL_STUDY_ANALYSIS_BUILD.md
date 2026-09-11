@@ -118,6 +118,16 @@ Strict typing of the three changed source modules, formatting, compilation, whit
 dependency-lock checks passed. Both frozen upstream protocol hashes are unchanged. This is
 an intermediate implementation regression, not the final clean study release gate.
 
+Historical beta evaluation routes now reject registered task/checkpoint declarations and
+the frozen training/development/held-out seed domains before environment construction,
+policy admission or reset. This includes the paired evaluators, direct policy/heuristic/cell
+execution functions and legacy evaluation loaders. It is a rejection-only boundary with no
+authorization or bypass option; training-custody checkpoint loading and historical evidence
+verification are unchanged. Unregistered fixture and non-beta workflows remain available.
+Seventy-three reset-free rejection cases and the existing benchmark/policy/CLI regressions
+passed together: **119 tests in 7.74 seconds**, plus strict typing on all three changed source
+modules. The fixed admitted study executor and its separate stage authority are still pending.
+
 Training custody is validated at `ad6ad1e`; full study integration remains pending. Its registered
 authorization file is absent. Later training/development/held-out permissions remain separate.
 The final workflow must execute against the admitted training source identity while retaining
