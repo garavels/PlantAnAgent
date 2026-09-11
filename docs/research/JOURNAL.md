@@ -7909,3 +7909,21 @@ source, fixed three-seed order and exclusive external destinations, and reopens
 the physical/timing archives in the parent. Final typing and whitespace checks
 pass. The implementation is committed before the three authorized full-week
 fixtures; their outcomes remain unknown at this checkpoint.
+
+The three authorized fixtures ran once at clean `c5b049b`. All processes exited
+zero and their complete retained prefixes passed detached reconstruction, with
+no timeout/log/memory cap or fallback. They stopped at 72/144/25 decisions;
+seed 9,100,002 also failed its first CH4 settlement. No complete-week or positive
+controller result follows. Report SHA is
+`a2b4bbfd7b53c2b934ea2f4057bb7e789399295603a7954af53279c0eabb3938`.
+Compact results and exact delivery comparisons are retained in
+`results/v2_beta_uncertainty_c5b049b.json`.
+
+The solar/reserve repair passed the original sunset boundary, but the old model
+can withhold methane deliveries to protect predicted reserves. The physical
+settler has no such choice: it always ships min(available, request). For example,
+at decision 71 on the first seed the model expected 41.933 kg while actual shipment
+was 240 kg. The next prospective scope, `BETA_MPC_DELIVERY_MODEL_REPAIR.md`, fixes
+this independently demonstrable model mismatch with exact mandatory settlement,
+preserving every failed attempt and all uncertainty-policy parameters. This is
+part of the user-authorized model repair, not an outcome-based parameter search.
