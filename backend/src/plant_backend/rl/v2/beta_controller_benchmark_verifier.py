@@ -91,7 +91,11 @@ from .boundary import ControlStateV2, IntervalSummaryV2
 from .control import ControllerObservationV2, DeliveryObservation
 from .economic_mpc_schema import EconomicMPCStageSolveV1
 from .economic_mpc_model import economic_delivery_lock_row
-from .economics import ECONOMIC_OBJECTIVE_VERSION, ch4_equivalent_inventory_kg
+from .economics import (
+    ECONOMIC_OBJECTIVE_VERSION,
+    EconomicEpisodeMetricsV1,
+    ch4_equivalent_inventory_kg,
+)
 from .full_day_horizon_codec import (
     decode_mpc_setpoint_run,
     verify_mpc_setpoint_run_semantics,
@@ -156,6 +160,7 @@ from .weather import ForecastWindowV2, PublicForecastIssueV2
 _REPORT_DOMAIN = "cyclic-market-controller-benchmark-evidence-v1"
 _CELL_DOMAIN = "cyclic-market-controller-benchmark-cell-evidence-v1"
 _ARM_DOMAIN = "cyclic-market-controller-benchmark-arm-evidence-v1"
+STUDY_ARM_RESULT_FORMAT = "plant-beta-constrained-rl-study-arm-result-v1"
 _VECTOR_DOMAIN = "rl-policy-observation-vector-v1"
 _CHECKPOINT_METADATA_DOMAIN = "rl-checkpoint-metadata-v1"
 _POLICY_CONTRACT_DOMAIN = "rl-policy-environment-contract-v1"
@@ -2083,6 +2088,37 @@ def _verify_economic_intervals(
             raise ValueError(f"{name}[{index}] cumulative cycle cost differs")
     if list(seen_settlements) != [dict(item) for item in settlements]:
         raise ValueError(f"{name} settlement events differ from arm classification")
+    if not intervals:
+        # A failed attempt before movement must not publish invented value,
+        # service or exposure in the mandatory unfiltered failure scorecard.
+        expected_economic = EconomicEpisodeMetricsV1(
+            initial_ch4_equivalent_kg=initial_ch4_equivalent,
+            initial_battery_energy_kwh=initial_battery_energy,
+            battery_capacity_kwh=battery_capacity,
+        )
+        expected_physical = EpisodeMetricsV2(
+            initial_h2_kg=initial_state.h2_level_kg,
+            initial_co2_kg=initial_state.co2_level_kg,
+            initial_ch4_kg=initial_state.ch4_level_kg,
+            initial_battery_soc=initial_state.battery_soc,
+            initial_battery_energy_kwh=initial_battery_energy,
+            terminal_h2_kg=initial_state.h2_level_kg,
+            terminal_co2_kg=initial_state.co2_level_kg,
+            terminal_ch4_kg=initial_state.ch4_level_kg,
+            terminal_battery_soc=initial_state.battery_soc,
+            terminal_battery_energy_kwh=initial_battery_energy,
+            min_battery_soc=initial_state.battery_soc,
+        )
+        _exact(
+            "zero-interval economic metrics",
+            economic_metrics,
+            expected_economic.to_dict(),
+        )
+        _exact(
+            "zero-interval physical metrics",
+            physical_metrics,
+            expected_physical.to_dict(),
+        )
     if intervals:
         terminal_state = boundaries[-1].plant.state.boundary
         terminal_ch4_equivalent = ch4_equivalent_inventory_kg(
@@ -3302,7 +3338,7 @@ def _verify_arm_classification(
     expected_decisions: int,
     expected_cycle_count: int,
     settlements: Sequence[Mapping[str, Any]],
-    paired_eligible: bool,
+    paired_eligible: bool | None,
     minute_states: Sequence[PlantState],
     derived_out_of_range: int,
     derived_forced_stops: int,
@@ -3437,7 +3473,7 @@ def _verify_arm_classification(
         exclusions.append("hard_safety_failed")
     candidate = execution_complete and cycle_feasible and hard_safety
     eligible = bool(paired_eligible and candidate)
-    if not paired_eligible:
+    if paired_eligible is False:
         exclusions.append("paired_cell_ineligible")
     expected = {
         "status": status,
@@ -3458,26 +3494,46 @@ def _verify_arm_classification(
             )
         ),
     }
-    actual = {key: run.get(key) for key in _CLASSIFICATION_FIELDS}
+    if paired_eligible is None:
+        # The separately versioned study result has no legacy all-four flag.
+        # Its pair gate is reconstructed only after two arms are admitted.
+        expected.pop("value_comparison_eligible")
+    fields = (
+        _CLASSIFICATION_FIELDS - {"value_comparison_eligible"}
+        if paired_eligible is None
+        else _CLASSIFICATION_FIELDS
+    )
+    actual = {key: run.get(key) for key in fields}
     _exact("arm classification", actual, expected)
     return expected
 
 
-def _verify_arm_digest(run: Mapping[str, Any]) -> None:
+def _verify_arm_digest(run: Mapping[str, Any], *, domain: str = _ARM_DOMAIN) -> None:
     supplied = _digest(
         "arm deterministic evidence", run.get("deterministic_evidence_sha256")
     )
     body = cast(dict[str, Any], _timing_free(dict(run)))
     body.pop("deterministic_evidence_sha256", None)
-    if domain_sha256(_ARM_DOMAIN, body) != supplied:
+    if domain_sha256(domain, body) != supplied:
         raise ValueError("arm deterministic evidence digest differs")
 
 
-def _verify_preflight_arm(raw: object, *, arm: str) -> dict[str, Any]:
+def _verify_preflight_arm(
+    raw: object, *, arm: str, standalone: bool = False
+) -> dict[str, Any]:
     run = _mapping(f"preflight {arm} arm", raw)
-    _exact_keys(f"preflight {arm} arm", run, _PREFLIGHT_ARM_FIELDS)
+    fields = (
+        _PREFLIGHT_ARM_FIELDS - {"value_comparison_eligible"}
+        if standalone
+        else _PREFLIGHT_ARM_FIELDS
+    )
+    _exact_keys(f"preflight {arm} arm", run, fields)
     fixed = {
-        "format": BETA_CONTROLLER_BENCHMARK_ARM_FORMAT,
+        "format": (
+            STUDY_ARM_RESULT_FORMAT
+            if standalone
+            else BETA_CONTROLLER_BENCHMARK_ARM_FORMAT
+        ),
         "arm": arm,
         "status": "not_run_preflight_failed",
         "execution_complete": False,
@@ -3500,10 +3556,20 @@ def _verify_preflight_arm(raw: object, *, arm: str) -> dict[str, Any]:
         "economic_metrics": None,
         "cycle_settlements": [],
     }
+    if standalone:
+        fixed.pop("value_comparison_eligible")
     for key, expected in fixed.items():
         if run.get(key) != expected:
             raise ValueError(f"preflight {arm} arm {key} differs")
     evidence = _mapping(f"preflight {arm} evidence", run["evidence"])
+    if standalone:
+        _exact_keys(
+            f"preflight {arm} evidence",
+            evidence,
+            frozenset(
+                {"boundary_ledger", "decisions", "executions", "minute_truth_states"}
+            ),
+        )
     ledger = _mapping(
         f"preflight {arm} boundary ledger", evidence.get("boundary_ledger")
     )
@@ -3518,7 +3584,9 @@ def _verify_preflight_arm(raw: object, *, arm: str) -> dict[str, Any]:
     if evidence.get("minute_truth_states") != []:
         raise ValueError(f"preflight {arm} retained minute truth evidence")
     _verify_failure(run["failure"], name=f"preflight {arm} failure")
-    _verify_arm_digest(run)
+    _verify_arm_digest(
+        run, domain=STUDY_ARM_RESULT_FORMAT if standalone else _ARM_DOMAIN
+    )
     return run
 
 
@@ -3531,17 +3599,28 @@ def _verify_normal_arm(
     manifest_identity: Mapping[str, str],
     manifest: Mapping[str, Any],
     checkpoint: Mapping[str, Any],
-    paired_eligible: bool,
+    paired_eligible: bool | None,
     expected_scipy_version: str,
     highs_versions: set[str],
+    standalone: bool = False,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    if (standalone and paired_eligible is not None) or (
+        not standalone and type(paired_eligible) is not bool
+    ):
+        raise ValueError("arm pairing mode differs from its format")
     run = _mapping(f"{arm} arm", raw)
+    fields = _M24_ARM_FIELDS if arm == SERVICE_MPC_ARM else _GENERIC_ARM_FIELDS
+    if standalone:
+        fields = fields - {"value_comparison_eligible"}
     _exact_keys(
         f"{arm} arm",
         run,
-        _M24_ARM_FIELDS if arm == SERVICE_MPC_ARM else _GENERIC_ARM_FIELDS,
+        fields,
     )
-    if run["format"] != BETA_CONTROLLER_BENCHMARK_ARM_FORMAT or run["arm"] != arm:
+    expected_format = (
+        STUDY_ARM_RESULT_FORMAT if standalone else BETA_CONTROLLER_BENCHMARK_ARM_FORMAT
+    )
+    if run["format"] != expected_format or run["arm"] != arm:
         raise ValueError(f"{arm} arm format/label differs")
     if run["information_profile"] != BETA_CONTROLLER_INFORMATION_PROFILES[arm]:
         raise ValueError(f"{arm} information profile differs")
@@ -4011,7 +4090,9 @@ def _verify_normal_arm(
         derived_out_of_range=derived_out_of_range,
         derived_forced_stops=derived_forced_stops,
     )
-    _verify_arm_digest(run)
+    _verify_arm_digest(
+        run, domain=STUDY_ARM_RESULT_FORMAT if standalone else _ARM_DOMAIN
+    )
     return run, boundary_payloads
 
 

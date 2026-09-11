@@ -311,7 +311,9 @@ fallback behavior.
 - [`CONSTRAINED_RL_STUDY_ANALYSIS_BUILD.md`](CONSTRAINED_RL_STUDY_ANALYSIS_BUILD.md)
   binds numerical representations before study outcomes and tracks the remaining evaluation
   integration. Statistics, family selection and additive sensitivity kernels have 82 reset-free
-  tests; verified input binding, scorecards/latency and detached stage custody remain pending.
+  tests. Standalone physical evidence and pairwise admission have 79 synthetic integration and
+  adversarial tests; the combined analysis/legacy-verifier regression passes 204 tests. Registered
+  checkpoint/stage binding, scorecards/latency and detached campaign custody remain pending.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

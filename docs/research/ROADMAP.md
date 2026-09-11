@@ -206,8 +206,10 @@ equipment consequences.
   custodian existed. The frozen repair now has exact task validation, a durable sequential
   campaign runner, authenticated child launch and detached verification, with synthetic failure
   and tampering coverage. Clean revision `ad6ad1e` passed 2,285 Python tests and the complete
-  static/frontend gate. Development pairwise selection, sensitivity and held-out statistics
-  remain a separate subsequent build gate before requesting the study.
+  static/frontend gate. Numerical selection, sensitivity and held-out statistics are implemented;
+  independently verified standalone arm/pair evidence is fixture-tested. The combined analysis
+  and legacy-verifier regression passes 204 tests. Registered evaluation authority, complete
+  scorecards/latency and detached stage custody remain build gates before requesting the study.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.
 

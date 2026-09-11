@@ -7183,3 +7183,68 @@ study source modules; Black checked the nine new numerical source/test files, co
 Git whitespace checks passed, and the dependency lock is unchanged. This is an intermediate
 implementation regression, not the final clean study release gate. The latter remains required
 after verified input binding and stage execution/verification are complete.
+
+## 2026-09-11 — Standalone arm and pairwise evidence build
+
+The previous turn is classified as progress: commits `ea081f6` and `0051a57` bind and
+implement the numerical core, with 791 passing regression tests. Current HEAD `0051a57`
+is clean. The next hypothesis is that individually sealed, independently verified arm
+evidence can remove the legacy all-four eligibility coupling while retaining its complete
+minute/decision/safety/cycle/accounting checks. The study build document now specifies a new
+inner arm format that removes only the legacy pair-eligibility field/reason; old benchmark
+semantics remain unchanged. Synthetic fixtures will use only the 9,000,000–9,999,999 domain.
+No production seed or policy is opened, and production evaluation admission remains a later
+explicit stage-custody connection, not a consequence of arithmetic or synthetic verification.
+
+The new standalone arm and pair modules now admit only explicitly synthetic,
+external canonical files. Scope checks precede manifest reconstruction; protected
+seeds and registered configurations are rejected. Each arm reuses the complete
+minute/decision/forecast/cycle/accounting verifier. The pair independently reopens
+PPO and E-beta, checks their episode/source/public-information identities and every
+completion, safety, return and service condition, and computes value/sensitivity
+only for an eligible pair. H/M24 remain separately retained context. There is no
+production execution, checkpoint admission or stage-authorization entry point in
+these modules.
+
+Inspection found an existing zero-interval accounting gap: a normal failed arm's
+metrics were not checked when its first controller decision failed. The shared
+verifier now reconstructs exact initial economic and physical metrics for that
+case. This preserves the failure record while rejecting fabricated profit,
+service, terminal inventory or wear in unfiltered scorecards. Historical four-arm
+eligibility semantics remain unchanged; the new inner format/domain omits only
+the historical all-four flag and paired-cell exclusion.
+
+The first new fixture invocation failed before evaluation because its setup used
+an unsupported heuristic-factory argument. The fixture now explicitly intercepts
+the canonical heuristic's compute method within its disposable test context; the
+fixed checkpoint and relaxed-return positive-pair geometry are solely synthetic.
+The corrected suite passed **48 tests in 178.09 seconds**. It proves a valid
+PPO/E-beta pair survives a failed H context arm, and rejects rehashed physical,
+controller, accounting, scope, file and pair-report substitutions. Strict mypy
+passed the three changed source modules. Subsequent cases add every independent
+pair gate, inclusive service tolerance, preflight failure semantics and identical
+file replacement during graph verification; these await the combined regression.
+No study seed, trained/registered policy, sealed log, production outcome or
+registered authorization has been opened or created.
+
+The expanded combined regression passed **204 tests in 331.05 seconds**, with
+successful process exit. This comprises 79 standalone/pair integration/adversarial
+cases, 82 numerical cases and 43 historical benchmark-verifier cases. Native
+HiGHS cleanup text followed the passing summary. The identical-content replacement
+cases prove that inode/stat identity is retained through both arm admission and
+the detached verifier's final graph check. Every independent pair condition and
+all three inclusive 1e-6 kg service comparisons are tested. Strict mypy on all
+three changed source modules, Black on nine source/test files, compilation,
+whitespace and unchanged dependency-lock checks passed. Both frozen upstream
+protocol SHA-256 values remain unchanged. This is an intermediate gate, not a
+new complete clean release claim.
+
+Read-only follow-up inspection identified the next custody connection explicitly:
+`beta_controller_benchmark` and `policy_evaluation` currently admit checkpoint
+eligibility but their public execution functions do not require development/
+held-out stage authority. Before any registered study opening, those routes must
+be closed or connected to the fixed admitted stage runner, including direct
+`execute_policy_episode` and `execute_beta_controller_benchmark_cell` calls. No
+protected reset was used to establish this finding. Remaining work also includes
+all-32/all-15 registry binding, latency/scorecards, source-bound external stage
+authority and detached campaign reconstruction. Training authorization is absent.

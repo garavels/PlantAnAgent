@@ -70,6 +70,24 @@ instantiate a plant, load an admitted policy, inspect an outcome, or consume pro
 
 ## Source and stage boundary
 
+The next evidence layer uses individually sealed arm records so H, M24 and E-beta can be
+retained once per episode and referenced across all policy pairs. Its inner result uses the
+new `plant-beta-constrained-rl-study-arm-result-v1` format/domain. It retains the existing
+complete minute/decision/economic witnesses and own-arm classification, while removing the
+legacy all-four `value_comparison_eligible` field and `paired_cell_ineligible` exclusion.
+The historical benchmark format and its verification semantics remain unchanged.
+
+An arm envelope binds the protocol, numerical contract, stage, episode seed, actor, full task,
+PPO checkpoint descriptor (null for baselines), source provenance, canonical M24 settings,
+manifest identity, audit manifest and complete inner result. Synthetic envelopes and pairs
+have distinct schemas/filenames, fixture-only episode seeds and null production claims.
+Pairwise analysis must independently reverify both referenced arm files, compare source,
+episode identity, initial state and common public issue history, and apply the full
+completion/safety/cycle/service gate before producing a delta or sensitivity result.
+H/M24 outcomes remain outside the primary pair gate. Arithmetic fields cannot substitute for
+the retained physical witnesses. Production study entry points remain closed until stage
+authority, exact registry, checkpoint custody and the complete release gate are connected.
+
 The numerical, family-selection and additive-sensitivity kernels are implemented in
 `backend/src/plant_backend/rl/v2/study/`, with 82 reset-free numeric/adversarial tests.
 The source contract digest is
@@ -84,8 +102,24 @@ return `source_evidence_verified: false` and `result_claim: null`; source-ledger
 production report verification remain separate, incomplete layers. No numerical result is a
 replacement for independently verified physical/minute/cycle evidence or campaign custody.
 
+The standalone arm/pair layer is now implemented for explicit synthetic files only. Its 79
+integration/adversarial cases reconstruct real minute/decision witnesses, demonstrate a valid
+primary pair despite a failed H context arm, cover every independent pair gate and inclusive
+service tolerance, retain failed/missing arms without value, and reject rehashed source/ledger/
+report substitutions and identical file replacement during graph verification. These files
+bind full checkpoint descriptors but do not reopen/admit registered policy artifacts. Their
+verifier results explicitly carry `registered_checkpoint_verified: false` and null production
+claim. Production stage authority, exact registry and training-custody binding remain required.
+
+The shared verifier also checks exact initial economic/physical metrics for zero-interval
+failures; previously that case skipped accounting reconstruction. The combined new evidence,
+numerical and historical benchmark-verifier suites passed **204 tests in 331.05 seconds**.
+Strict typing of the three changed source modules, formatting, compilation, whitespace and
+dependency-lock checks passed. Both frozen upstream protocol hashes are unchanged. This is
+an intermediate implementation regression, not the final clean study release gate.
+
 Training custody is validated at `ad6ad1e`; full study integration remains pending. Its registered
 authorization file is absent. Later training/development/held-out permissions remain separate.
 The final workflow must execute against the admitted training source identity while retaining
 stage evidence outside Git; it cannot edit the loader or report semantics after study outcomes.
-No checkpoint, manifest, forecast, market/outage trace or sealed training log is opened here.
+No registered checkpoint, protected episode manifest/trace or sealed training log is opened.
