@@ -7324,3 +7324,61 @@ private-runner instrumentation preserves legacy serialized arm fields and leaves
 V1 and the product interface unchanged. Production stage authority, full
 operational scorecards, final clean release and explicit later authorization
 remain required; the unchanged overall goal is not complete.
+
+### Operational scorecards and training diagnostics — outcome-blind implementation
+
+Hypothesis: complete physical witnesses can support the mandatory operational
+scorecards without filtering failed arms through economic pair eligibility or
+treating correlated cycles as independent observations. The separate operational
+representation is fixed in `CONSTRAINED_RL_STUDY_ANALYSIS_BUILD.md` before any
+registered training, development opening or held-out opening.
+
+Implemented complete episode/cycle projections from the independently verified
+standalone arm: original physical/economic maps, all additive components, returns
+and deficits, event/exposure rates, exact outage schedules and censored capture
+recovery. An all-32 arithmetic summary retains every missing slot, per-resource
+per-cycle Wilson denominators, all observed deficit identities, observed-prefix
+versus full-episode metric distributions, and episode-clustered outage/market
+strata. The detached synthetic report reopens every referenced physical arm and
+checks actor/task/checkpoint/source consistency and file stability before closing.
+It cannot grant a registered registry, checkpoint or result claim.
+
+Training diagnostics retain the exact 3-family x 5-seed slots, separate completion
+and checkpoint admission, and every admitted endpoint rollout. Cost exposures,
+completed-episode means, multiplier/proportional/integral trajectories, saturation,
+optimizer diagnostics and failures remain explicit. The chain parser checks each
+rollout but does not replace full artifact/state/custody admission. Production
+stage custody must provide those admitted inputs; this arithmetic layer says so.
+
+Initial arithmetic fixtures passed **51 tests in 1.78 seconds**. Strict typing
+found nullable/mixed-dictionary annotations in the new implementation; those
+were corrected, and all four changed source modules passed strict mypy. The
+first new physical/arithmetic plus existing arm/pair regression passed **156
+tests in 336.13 seconds**. It includes real H/M24/E-beta/PPO witnesses, failed H
+before movement, adversarial rehashed reports, source tampering, exact-slot scope
+checks before manifest access, and identical-byte file replacement detection.
+
+Review then separated complete-episode safety from observed-prefix safety and
+changed unobserved cycle values from empty-sum zero to null. An initialized,
+independently verified zero economic prefix remains observed; a preflight failure
+has no economic or safety observation. Two explicit cases cover that distinction;
+the expanded arithmetic suite passed **53 tests in 1.70 seconds**. Final regression
+and typing are pending after these changes. The operational contract digest is
+`97c67d7bbae8fed259ece7ca0bed5710078fcb26a49b77e66c14bbae99f64959`.
+
+No protected seed, registered checkpoint, training campaign or sealed training
+log was opened. V1 and the product interface are unchanged. Both frozen upstream
+protocols are unchanged. Stage authority/registry/execution, full checkpoint
+binding, detached development/held-out closure, final clean release and explicit
+later authorization remain required for the unchanged overall goal.
+
+The final operational/arithmetic/existing arm-pair regression passed **158 tests
+in 332.90 seconds** with successful process exit. A final mypy check found a
+local-name collision between a flattened metric dictionary and a later resource
+list; the local was renamed after the provenance-sensitive tests completed,
+without changing report semantics. Strict mypy now passes all four changed source
+modules. The 53 reset-free arithmetic cases pass again in 1.83 seconds; Black
+checks all six changed Python files, compilation and whitespace checks pass, and
+`uv.lock` is unchanged. The registered training authorization remains absent.
+These are intermediate implementation gates, not a complete clean release or a
+registered controller result.

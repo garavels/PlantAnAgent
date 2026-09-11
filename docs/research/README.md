@@ -316,8 +316,10 @@ fallback behavior.
   Historical beta evaluation routes now reject registered tasks/checkpoints and protected study
   seeds before execution; the route-closure and compatibility regression passes 119 tests.
   Complete warm-up/inference/failure and simulation-pipeline latency evidence is now fixture-tested,
-  with 239 passing latency/evaluation/verifier regression cases. Registered checkpoint/stage
-  binding, full operational scorecards and detached campaign custody remain required.
+  with 239 passing latency/evaluation/verifier regression cases. Operational and training
+  scorecards now retain all episode/policy slots, resource returns, failures, censored outage
+  recovery and clustered strata; 158 arithmetic/physical/legacy arm-pair cases pass.
+  Registered checkpoint/stage binding and detached campaign custody remain required.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

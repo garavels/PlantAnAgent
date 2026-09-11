@@ -183,3 +183,72 @@ permitted CPU metadata reads because sandboxed sysctl returned no CPU identity;
 the admission requirement was not relaxed. These remain fixture and intermediate
 release results. Production stage authority and full operational scorecards remain
 required, followed by the complete clean release gate and explicit authorization.
+
+## Operational scorecard representation
+
+Operational summaries retain every registered episode slot, including missing and
+failed execution, independently of economic pair eligibility. Each fixed cycle
+index and resource reports both verified feasible/32 and feasible/observed
+settlements with Wilson intervals. Missing settlements are not imputed as physical
+failures. Resource feasibility uses the simulator's existing tolerance plus
+`CYCLE_FEASIBILITY_EPSILON`. Deficit distributions use linear min/p25/median/p75/
+p95/max and retain every observed value and its episode/cycle identity. Cycles
+within an episode are never treated as independent binomial trials.
+
+Episode and cycle records retain all additive economic components; complete
+episode records also retain the entire verified physical/economic metric maps.
+Partial execution is explicitly labelled, with observed and expected decisions
+and minutes. Guard correction, unexpected critical/offline, forced-stop and
+invalid-command rates retain their actual count and exposure denominator, with
+null rates at zero exposure; these serially dependent rates have no binomial CI.
+Guard intervention counts are separately retained because multiple corrections
+can occur in one minute. The invalid-command denominator is attempted decisions.
+Safety verified over a complete episode is reported separately from safety of
+an observed prefix; preflight failures have no observed safety trial. Cycles with
+no observed interval retain null economic totals and signals, not invented zero
+outcomes. The initialized episode's verified zero economic prefix is retained.
+
+Natural scheduled outage/no-outage cycle strata include all cycles with known
+manifests, retain episode seed as the cluster, and report complete-cycle value,
+delivery, energy, wear and resource-return summaries. A fresh PCG64 generator
+with seed 20260905 draws the same 32 episode indices for all stratum metrics in
+10,000 replicates. The statistic is the pooled mean of observed complete cycles
+in the stratum; a resample with no observations is undefined, retained in its
+count, and omitted only from the conditional interval. Empty strata have null
+statistics. Calm/volatile/scarcity are analogous episode-level post-opening
+strata; incomplete episode totals remain visible separately from full-horizon
+descriptive summaries. Neither stratum defines a selectable evaluation subset.
+
+Outage recovery is elapsed simulation time from the scheduled outage end to the
+start of the first subsequent minute with CO2 capture greater than 1e-9 kg/h,
+before the next outage or observed execution end. Immediate capture has zero
+delay. This includes deliberate controller idling and is not mechanical repair
+time. Every scheduled outage retains start/end, encountered duration, recovery
+or censoring status (not reached, incomplete outage, resumed, no capture before
+next outage/execution end). No unobserved recovery time is imputed.
+
+Training summaries retain all five optimizer slots per family, separate training
+completion and checkpoint admission rates, and all admitted rollout records.
+Raw/scaled cost exposure, completed-episode cost means (null when absent), reward,
+cost losses, multipliers, proportional/integral state, saturation and optimizer
+diagnostics remain available for each rollout. Saturation fractions use observed
+rollouts and have no independent-trial CI. Arithmetic summaries do not admit a
+checkpoint; production admission must reopen complete training custody and the
+registered artifact before supplying these ledgers.
+
+The operational projection, all-slot summaries, training-ledger diagnostics and
+synthetic detached physical report are implemented. The operational contract
+digest is `97c67d7bbae8fed259ece7ca0bed5710078fcb26a49b77e66c14bbae99f64959`.
+Fifty-three reset-free arithmetic/trajectory cases and 26 physical report cases,
+together with 79 existing arm/pair checks, passed **158 tests in 332.90 seconds**.
+These cover all four controllers, missing and failed arms, complete versus prefix
+safety, unobserved versus initialized-zero economics, strict capture/censoring
+boundaries, independent clustered uncertainty, all-family admission accounting,
+rollout-chain substitutions and rehashed physical/report/file-replacement attacks.
+The synthetic detached report reopens full physical evidence; it does not admit
+a registered checkpoint or production stage registry. Training diagnostics still
+require the production stage verifier to reopen training custody and the complete
+artifact/state attestation before supplying the rollout records.
+Strict typing of all four changed source modules, formatting of all six changed
+Python files, compilation and whitespace checks pass; the lockfile is unchanged.
+The complete clean repository release gate remains separate and pending.

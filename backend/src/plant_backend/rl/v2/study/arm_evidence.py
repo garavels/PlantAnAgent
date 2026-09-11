@@ -31,6 +31,7 @@ from ..training.custody_json import (
     require_envelope,
 )
 from .contract import PREFIX, PROTOCOL_ID, PROTOCOL_SHA256, analysis_contract
+from .operational import episode_scorecard
 
 SCHEMA = PREFIX + "synthetic-arm-evidence-v1"
 FILENAME = "synthetic-arm.json"
@@ -254,6 +255,7 @@ def _verify_fixture_envelope(envelope: dict[str, Any]) -> dict[str, Any]:
     highs_versions: set[str] = set()
     boundaries: list[dict[str, Any]] = []
     identity = None
+    manifest = None
     if raw_run.get("status") == "not_run_preflight_failed":
         if (
             envelope["manifest_identity"] is not None
@@ -334,6 +336,9 @@ def _verify_fixture_envelope(envelope: dict[str, Any]) -> dict[str, Any]:
         },
         "economic_metrics": deepcopy(run["economic_metrics"]),
         "physical_metrics": deepcopy(run["physical_metrics"]),
+        "operational": episode_scorecard(
+            seed=seed, actor=actor, config=config, manifest=manifest, run=run
+        ),
     }
 
 
