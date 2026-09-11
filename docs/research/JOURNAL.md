@@ -7770,3 +7770,32 @@ All **27 reset-free launcher checks pass in 0.76 seconds**, including explicit
 binding of the original and repair scopes. Strict typing and Black pass; the
 original capacity protocol, task/learning protocols and dependency lock remain
 unchanged. The new source/protocol will be committed before the bounded run.
+
+The follow-up fixture ran once at clean `cfa16a6` and closed normally. Its report
+raw SHA is `819e4b499560679c7726abbe805a69511ed10b724bd015d374419802675807ef`;
+domain SHA is `bb83ac37a12146d5834ad2e275a6d5188fe6425667ed6a315e4d9972e012c039`.
+All four child exits were zero with no timeout/log/RSS cap or fallback. H and the
+untrained fixed proxy completed 672 decisions/10,080 minutes and were again
+cycle-infeasible; the proxy also retained forced-stop safety failure. M24 stopped
+after 36 decisions at the same unsupported DAC boundary. E-beta passed decision
+52 but stopped after 54 decisions when the primary service model was infeasible.
+The numerical repair therefore removes the demonstrated roundoff rejection but
+does not establish controller or capacity readiness. Full original and follow-up
+failures remain visible in the compact `results/v2_study_capacity_cfa16a6.*` evidence.
+
+A solver-free reconstruction of E-beta's saved public boundary shows 5012.459604808251
+kWh in the battery against a 5013.628497150464 kWh required minimum and zero issued
+solar energy across the remaining 42 intervals. Even lossless storage of all
+remaining forecast solar leaves a 1.16889234221253 kWh deficit. Its preceding plan
+had placed the terminal battery exactly at the minimum; actual minute operation
+fell short. This explains infeasibility from that boundary, not infeasibility of
+the opening task. No new plant reset, optimizer, solver call or control repair
+was used for this algebraic diagnosis. Its domain SHA is
+`f219e66c576240fa99e78845688259ad182fd2225d9f7a7f9e2574603322f5ea`.
+
+The remaining primary-comparator gap is preservation of feasibility under forecast
+and model error before the production window closes. It needs an explicit future
+controller-design scope, not another tolerance patch or a silent capacity retry.
+No stage budget, complete clean release claim or registered training authority
+follows. All 15 registered tasks, protected seeds, V1 and the product interface
+remain unchanged; the overall training-readiness goal is still active.

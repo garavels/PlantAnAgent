@@ -344,6 +344,14 @@ fallback behavior.
   The [one retained result](results/v2_study_capacity_17331fe.md) has complete H
   and fixed-policy observations but incomplete M24/E-beta executions. Complete
   stage capacity remains unadmitted; no registered execution was authorized.
+- [`BETA_MPC_CAPACITY_BOUNDARY_DIAGNOSIS.md`](BETA_MPC_CAPACITY_BOUNDARY_DIAGNOSIS.md)
+  records the saved-boundary reproduction and versioned equivalent-bound repair
+  of a two-ULP battery-return rejection, with 219 passing targeted tests.
+  The separately frozen [follow-up capacity result](results/v2_study_capacity_cfa16a6.md)
+  passes that boundary but retains E-beta infeasibility after 54 decisions:
+  its battery is 1.16889234221253 kWh short with no issued solar remaining before
+  the cycle deadline. M24 retains its DAC limitation. Primary-comparator readiness,
+  complete capacity, final release and training authorization remain unresolved.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.
