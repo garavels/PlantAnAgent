@@ -337,6 +337,11 @@ fallback behavior.
   tampering. Physical wrapper/standalone-arm/historical-admission regression passes
   196 tests. Measured stage capacity, final complete clean release and explicit later
   execution authorization remain required.
+- [`CONSTRAINED_RL_STUDY_CAPACITY_FIXTURE.md`](CONSTRAINED_RL_STUDY_CAPACITY_FIXTURE.md)
+  freezes the full 168-hour/15-minute implementation capacity check: one shared
+  fixture seed, four sequential arms, an untrained fixed-policy proxy, bounded
+  time/storage and a sampled memory stop. Its launcher passes 26 reset-free cases.
+  No capacity result or registered execution authorization has yet been produced.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

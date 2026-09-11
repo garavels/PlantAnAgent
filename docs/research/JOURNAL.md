@@ -7652,3 +7652,40 @@ training-readiness goal. Measured stage capacity, concrete frozen budgets, the
 complete clean repository release gate and explicit later authorization remain.
 The latest complete clean repository gate is still `ad6ad1e`; no registered
 training, protected evaluation, checkpoint selection or deployment has occurred.
+
+### Full-geometry study capacity fixture
+
+The previous goal turn made verified progress at clean `c0d1dbc`: production
+stage authorization, isolated sequential children and complete detached custody.
+Hypothesis: the existing producer/verifier can provide honest memory, storage and
+execution observations at 168 hours and 15-minute cadence before any registered
+policy is trained. The earlier 24-hour/hourly fixtures cannot establish that:
+M24's lookahead grows from 24 to 96 intervals, and a retained E-beta prefix is not
+a completed week. A read-only check found 29,659,987,968 bytes available; this is
+available space at that moment, not a reserved study allocation.
+
+Frozen `CONSTRAINED_RL_STUDY_CAPACITY_FIXTURE.md` and its thin one-shot tool retain
+all four actors on fixture seed 9,100,001. The entire physical task is unchanged;
+PPO uses an untrained zero-action checkpoint and no optimizer runs. Limits are
+600 seconds per child, 1 MiB per log, 1 GiB/4 GiB stored/decoded physical evidence,
+8 MiB/64 MiB timing, an 8 GiB opening floor and a sampled 12 GiB child RSS stop.
+The source revision determines the sole external destination. These are probe
+bounds, not frozen production stage budgets or trained-inference measurements.
+
+All **25 reset-free launcher/configuration cases passed in 2.42 seconds**. They
+cover the full task identity, rehashed plan/seed/budget/host substitution, consumed
+roots, retained process failures and incomplete prefixes, no continuation after
+interruption, and an actual disposable child which durably records its lowered
+RSS cap and exits with code 73 without allocating a large buffer. Initial strict
+typing found a NumPy sequence annotation mismatch, an inferred heterogeneous row
+list and an untyped source revision used to construct a Path; these are corrected
+with a literal fixed action, explicit row type and source-revision validation.
+No capacity fixture or registered experiment has run yet. The frozen protocol,
+tool and fixture checks will be committed before the bounded capacity run.
+
+The final probe gate passes **26 tests in 0.88 seconds**, including the added
+one-destination/full-object-ID validation. Strict typing, Black, compilation,
+CLI help, whitespace and unchanged-lock checks pass. No real model or plant was
+executed by this gate; the memory-limit check used a separate disposable process
+with a one-byte test cap. The next action is the fixed full-geometry fixture
+measurement at the clean committed revision, within the recorded bounds.
