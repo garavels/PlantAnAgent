@@ -358,6 +358,14 @@ fallback behavior.
   its battery is 1.16889234221253 kWh short with no issued solar remaining before
   the cycle deadline. M24 retains its DAC limitation. Primary-comparator readiness,
   complete capacity, final release and training authorization remain unresolved.
+- [`BETA_MPC_UNCERTAINTY_REPAIR.md`](BETA_MPC_UNCERTAINTY_REPAIR.md) and
+  [`BETA_MPC_DELIVERY_MODEL_REPAIR.md`](BETA_MPC_DELIVERY_MODEL_REPAIR.md) retain
+  the prospective scopes for public-p10/early-reserve scheduling, held-power
+  deliverability and exact mandatory methane shipments. The
+  [implementation result](results/v2_beta_uncertainty_a82f11c.md) preserves both
+  three-seed negative attempts and a reset-free public energy bound. The revised
+  E-beta stops explicitly when its forecast scenario cannot satisfy the hard
+  daily returns; it is not yet ready for comparator freeze or training.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

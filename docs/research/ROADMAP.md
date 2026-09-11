@@ -233,6 +233,15 @@ equipment consequences.
   infeasibility, incomplete MPC capacity and draft evaluation storage gap. The
   comparator decision, measured stage capacity, final source freeze and explicit
   later execution authorization remain open.
+- The user-authorized [E-beta uncertainty/model repair](results/v2_beta_uncertainty_a82f11c.md)
+  is implemented at `a82f11c`: public-p10 forecasts, early spendable resource
+  buffers, held-power constraints and exact mandatory methane delivery. Both
+  three-seed fixture attempts remain negative. With exact deliveries, all three
+  opening forecast scenarios are infeasible even before extra reserves: a public
+  energy bound exceeds issued mean PV. This concerns planning scenarios, not a
+  proof about realized weather or the physical task. Explicit infeasibility
+  handling and task/model feasibility remain the next comparator gate; original
+  task limits, all 15 PPO runs and protected seeds are unchanged and unopened.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.
 

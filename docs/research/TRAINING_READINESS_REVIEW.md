@@ -2,13 +2,23 @@
 
 Date: **2026-09-11**
 
-Status: **implementation gate passed; final source and execution authorization pending**
+Status: **custody gate passed at `12936c7`; comparator repair has negative fixture results; final source and execution authorization pending**
 
 The training and study custody implementation passes the complete repository gate
 at clean `12936c7627940f2ede04405bbbba28603bb8b10f`. No registered policy has
 been trained, selected or evaluated. This review is not an authorization record.
 The three families, five optimizer seeds, task, learning budgets and protected
 seed domains remain unchanged.
+
+The subsequent user-authorized E-beta repair is implemented at `a82f11c`.
+[Its result](results/v2_beta_uncertainty_a82f11c.md) supersedes the comparator
+recommendation below: public p10/early reserves and held-power delivery are
+implemented, and exact mandatory methane settlement exposes an opening
+forecast-scenario energy deficit on all three fixtures. No full-week revised
+comparator run succeeds. The current product's E-beta option also stops at its
+opening decision; focused tests verify that explicit failure. The complete
+repository gate below remains historical and is not claimed for the later
+controller revision. Training remains unopened.
 
 ## Verified implementation
 

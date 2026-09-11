@@ -1,0 +1,1887 @@
+{
+  "registered_execution_authorized": false,
+  "report_raw_sha256": "d776fcad40419b3aa6bfd7257aa6b1527cc6611a3c98a7c4394f0b6ac0802ac8",
+  "report_sha256": "ae2c31f2044f41bfcfb7d0aeb54594cbc385dd9865c9bdc50a35178827748814",
+  "result_claim": null,
+  "root": "/private/tmp/plantanagent-beta-uncertainty-a82f11c44e36",
+  "rows": [
+    {
+      "arm_archive": {
+        "file": {
+          "allocated_bytes": 98304,
+          "logical_bytes": 94393,
+          "path": "/private/tmp/plantanagent-beta-uncertainty-a82f11c44e36/9100001/evidence/synthetic-arm.json.gz",
+          "sha256": "17adaaa8a60e0f580232b7abc3be88fc39d70e1f9a148aad027b808abc4da1e6"
+        },
+        "schema": "plant-beta-constrained-rl-study-canonical-json-gzip-v1",
+        "uncompressed_bytes": 323246,
+        "uncompressed_sha256": "80a3872193e1804e00959a3ea63332ee75a7d8c261f0fd050e515c931effa4cf"
+      },
+      "classification": {
+        "completed_decisions": 0,
+        "cumulative_cycle_constraint_cost": 0.0,
+        "cycle_feasible": false,
+        "cycle_settlements": [],
+        "exclusion_reasons": [
+          "execution_incomplete",
+          "cycle_infeasible_or_unsettled"
+        ],
+        "execution_complete": false,
+        "expected_cycle_count": 7,
+        "expected_decisions": 672,
+        "failure": {
+          "exception_type": "BetaMPCSolveError",
+          "message": "economic-MPC service_maximization failed with status 2: The problem is infeasible. (HiGHS Status 8: model_status is Infeasible; primal_status is None)",
+          "phase": "e-beta_controller_compute",
+          "solver_stages": [
+            {
+              "elapsed_ns": 32927875,
+              "highs_version": "1.12.0",
+              "message": "The problem is infeasible. (HiGHS Status 8: model_status is Infeasible; primal_status is None)",
+              "mip_gap": null,
+              "mip_node_count": null,
+              "objective_value": null,
+              "scipy_version": "1.18.1",
+              "solution_sha256": null,
+              "solver": "scipy.optimize.milp",
+              "stage": "service_maximization",
+              "status": 2,
+              "success": false
+            }
+          ]
+        },
+        "hard_safety_metrics": {
+          "battery_reserve_respected": true,
+          "declared_dac_outage_steps": 0,
+          "electrolyser_forced_stops": 0,
+          "minimum_allowed_battery_soc": 0.05,
+          "minimum_battery_soc": 0.626703562268808,
+          "observed_critical_or_offline_steps": 0,
+          "out_of_range_decisions": 0,
+          "unexpected_critical_or_offline_steps": 0
+        },
+        "hard_safety_passed": true,
+        "physical_steps": 0,
+        "status": "execution_failed",
+        "value_comparison_candidate": false
+      },
+      "failure_codes": [],
+      "process": {
+        "child_system_cpu_ns": 495641000,
+        "child_user_cpu_ns": 3470466000,
+        "command": [
+          "/Users/filippogombac/Developer/GitHub/PlantAnAgent/.venv/bin/python",
+          "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/tools/beta_uncertainty_fixture.py",
+          "child",
+          "/private/tmp/plantanagent-beta-uncertainty-a82f11c44e36",
+          "--seed",
+          "9100001"
+        ],
+        "exit_code": 0,
+        "started": true,
+        "termination_signal": null,
+        "timeout_seconds": 600,
+        "wall_elapsed_ns": 4904167167
+      },
+      "public_energy_bound": {
+        "allowed_battery_endowment_use_kwh": 9.600003249943257e-07,
+        "cycle_return": {
+          "constraint_semantics": "four separate hard lower bounds at the exact next cycle boundary",
+          "cycle_decisions": 96,
+          "cycle_index": 1,
+          "decision_in_cycle": 0,
+          "issued_at_decision": 0,
+          "next_boundary_decision": 96,
+          "remaining_intervals": 96,
+          "resources": {
+            "battery": {
+              "current": 5013.628498150464,
+              "required_minimum": 5013.628497150464,
+              "signed_margin": 0.0,
+              "target": 5013.628498150464,
+              "tolerance": 1e-06,
+              "unit": "kWh"
+            },
+            "ch4": {
+              "current": 196.170961521788,
+              "required_minimum": 196.170960521788,
+              "signed_margin": 0.0,
+              "target": 196.170961521788,
+              "tolerance": 1e-06,
+              "unit": "kg"
+            },
+            "co2": {
+              "current": 809.2702376831669,
+              "required_minimum": 809.2702366831669,
+              "signed_margin": 0.0,
+              "target": 809.2702376831669,
+              "tolerance": 1e-06,
+              "unit": "kg"
+            },
+            "h2": {
+              "current": 581.6099881137204,
+              "required_minimum": 581.6099871137204,
+              "signed_margin": 0.0,
+              "target": 581.6099881137204,
+              "tolerance": 1e-06,
+              "unit": "kg"
+            }
+          },
+          "sha256": "65da4889c2200e1e038a5446251a10048010125837e8044ee76221e0aeb131fd"
+        },
+        "issued_mean_energy_kwh": 28403.418357542538,
+        "issued_p10_energy_kwh": 23769.195091842266,
+        "maximum_post_18h_methane_kg": 225.0,
+        "mean_energy_deficit_lower_bound_kwh": 4413.825387147921,
+        "minimum_ch4_production_kg": 916.170960521788,
+        "minimum_co2_production_kg": 2519.470140434917,
+        "minimum_delivery_kg": 916.1709615217881,
+        "minimum_h2_production_kg": 458.0854792608941,
+        "minimum_process_energy_kwh": 32817.243745650456,
+        "model_h2_specific_energy_kwh_per_kg": 58.24000000000001,
+        "p10_energy_deficit_lower_bound_kwh": 9048.048652848192,
+        "required_for_night_shipments_and_return_kg": 676.170960521788,
+        "scope": "Necessary bound for issued scenarios; not future-weather truth or a physical-task infeasibility proof. Ignores added buffers, constant-power constraints, startup costs and losses.",
+        "typed_observation": {
+          "beta_task_sha256": "fa1a2b327920e11bb5db7f7b8515a3cf014481adfc9a2223c8443c697b9cc17f",
+          "cycle": {
+            "battery_margin_kwh": 0.0,
+            "ch4_margin_kg": 0.0,
+            "co2_margin_kg": 0.0,
+            "cycle_decisions": 96,
+            "cycle_index": 1,
+            "decision_in_cycle": 0,
+            "h2_margin_kg": 0.0,
+            "progress": 0.0,
+            "schema": "cyclic-return-observation-v1"
+          },
+          "economic_assumptions_sha256": "dce6ba3082e0e2a16c1e341589afb25d8f1d0b2da9124522499dafd705fe6ee2",
+          "market": {
+            "bins": [
+              {
+                "end_offset_s_from_issue": 3600.0,
+                "hour_index": 0,
+                "mean_eur_per_mwh": 107.19903743416734,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 97.7533694441568,
+                "p90_eur_per_mwh": 113.59572074962315,
+                "start_offset_s_from_issue": 0.0
+              },
+              {
+                "end_offset_s_from_issue": 7200.0,
+                "hour_index": 1,
+                "mean_eur_per_mwh": 132.9438778042697,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 115.36373405865169,
+                "p90_eur_per_mwh": 156.0539567557147,
+                "start_offset_s_from_issue": 3600.0
+              },
+              {
+                "end_offset_s_from_issue": 10800.0,
+                "hour_index": 2,
+                "mean_eur_per_mwh": 121.16223582166222,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 103.46815602465912,
+                "p90_eur_per_mwh": 158.07743330698557,
+                "start_offset_s_from_issue": 7200.0
+              },
+              {
+                "end_offset_s_from_issue": 14400.0,
+                "hour_index": 3,
+                "mean_eur_per_mwh": 97.33467107413279,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 68.49893671219438,
+                "p90_eur_per_mwh": 133.5019884775802,
+                "start_offset_s_from_issue": 10800.0
+              },
+              {
+                "end_offset_s_from_issue": 18000.0,
+                "hour_index": 4,
+                "mean_eur_per_mwh": 74.17732977953679,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 42.52478718486474,
+                "p90_eur_per_mwh": 113.34178305827851,
+                "start_offset_s_from_issue": 14400.0
+              },
+              {
+                "end_offset_s_from_issue": 21600.0,
+                "hour_index": 5,
+                "mean_eur_per_mwh": 52.7540554829186,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 10.15175982754146,
+                "p90_eur_per_mwh": 98.5784849830379,
+                "start_offset_s_from_issue": 18000.0
+              },
+              {
+                "end_offset_s_from_issue": 25200.0,
+                "hour_index": 6,
+                "mean_eur_per_mwh": 29.83044840315131,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": -6.286607650254972,
+                "p90_eur_per_mwh": 106.55753061465366,
+                "start_offset_s_from_issue": 21600.0
+              },
+              {
+                "end_offset_s_from_issue": 28800.0,
+                "hour_index": 7,
+                "mean_eur_per_mwh": 38.038234575709645,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": -8.741692605742447,
+                "p90_eur_per_mwh": 104.0298733439235,
+                "start_offset_s_from_issue": 25200.0
+              },
+              {
+                "end_offset_s_from_issue": 32400.0,
+                "hour_index": 8,
+                "mean_eur_per_mwh": 66.52251434356442,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 12.78933915371527,
+                "p90_eur_per_mwh": 117.82572356680049,
+                "start_offset_s_from_issue": 28800.0
+              },
+              {
+                "end_offset_s_from_issue": 36000.0,
+                "hour_index": 9,
+                "mean_eur_per_mwh": 95.9852221193431,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 39.50511677293014,
+                "p90_eur_per_mwh": 148.40033029677537,
+                "start_offset_s_from_issue": 32400.0
+              },
+              {
+                "end_offset_s_from_issue": 39600.0,
+                "hour_index": 10,
+                "mean_eur_per_mwh": 129.40126390081875,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 78.77423136754095,
+                "p90_eur_per_mwh": 176.3187877702009,
+                "start_offset_s_from_issue": 36000.0
+              },
+              {
+                "end_offset_s_from_issue": 43200.0,
+                "hour_index": 11,
+                "mean_eur_per_mwh": 174.5455755758099,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 129.46430680668448,
+                "p90_eur_per_mwh": 239.45750291394484,
+                "start_offset_s_from_issue": 39600.0
+              },
+              {
+                "end_offset_s_from_issue": 46800.0,
+                "hour_index": 12,
+                "mean_eur_per_mwh": 202.51148163360804,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 160.51041557809907,
+                "p90_eur_per_mwh": 273.1474527734125,
+                "start_offset_s_from_issue": 43200.0
+              },
+              {
+                "end_offset_s_from_issue": 50400.0,
+                "hour_index": 13,
+                "mean_eur_per_mwh": 171.82615717170643,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 129.2197003235945,
+                "p90_eur_per_mwh": 222.375786043721,
+                "start_offset_s_from_issue": 46800.0
+              },
+              {
+                "end_offset_s_from_issue": 54000.0,
+                "hour_index": 14,
+                "mean_eur_per_mwh": 153.21250911574492,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 109.8686313212436,
+                "p90_eur_per_mwh": 219.50940617248517,
+                "start_offset_s_from_issue": 50400.0
+              },
+              {
+                "end_offset_s_from_issue": 57600.0,
+                "hour_index": 15,
+                "mean_eur_per_mwh": 139.8554565925108,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 102.06505277432213,
+                "p90_eur_per_mwh": 197.99591512220047,
+                "start_offset_s_from_issue": 54000.0
+              },
+              {
+                "end_offset_s_from_issue": 61200.0,
+                "hour_index": 16,
+                "mean_eur_per_mwh": 129.10331767643402,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 93.65505305527134,
+                "p90_eur_per_mwh": 183.3945914820893,
+                "start_offset_s_from_issue": 57600.0
+              },
+              {
+                "end_offset_s_from_issue": 64800.0,
+                "hour_index": 17,
+                "mean_eur_per_mwh": 124.72488246035743,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 92.16405032942019,
+                "p90_eur_per_mwh": 187.40438327379312,
+                "start_offset_s_from_issue": 61200.0
+              },
+              {
+                "end_offset_s_from_issue": 68400.0,
+                "hour_index": 18,
+                "mean_eur_per_mwh": 124.92179869171956,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 93.34739163111607,
+                "p90_eur_per_mwh": 170.6251728085903,
+                "start_offset_s_from_issue": 64800.0
+              },
+              {
+                "end_offset_s_from_issue": 72000.0,
+                "hour_index": 19,
+                "mean_eur_per_mwh": 118.75360850918571,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 84.12131161900695,
+                "p90_eur_per_mwh": 150.7624158448569,
+                "start_offset_s_from_issue": 68400.0
+              },
+              {
+                "end_offset_s_from_issue": 75600.0,
+                "hour_index": 20,
+                "mean_eur_per_mwh": 108.0694099292263,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 72.43545465122325,
+                "p90_eur_per_mwh": 142.1087207953047,
+                "start_offset_s_from_issue": 72000.0
+              },
+              {
+                "end_offset_s_from_issue": 79200.0,
+                "hour_index": 21,
+                "mean_eur_per_mwh": 99.31349916688283,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 63.47329152006149,
+                "p90_eur_per_mwh": 145.95940491949025,
+                "start_offset_s_from_issue": 75600.0
+              },
+              {
+                "end_offset_s_from_issue": 82800.0,
+                "hour_index": 22,
+                "mean_eur_per_mwh": 98.88357718625167,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 63.02557835369002,
+                "p90_eur_per_mwh": 142.88828282404674,
+                "start_offset_s_from_issue": 79200.0
+              },
+              {
+                "end_offset_s_from_issue": 86400.0,
+                "hour_index": 23,
+                "mean_eur_per_mwh": 112.26226617891204,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 76.86051093138504,
+                "p90_eur_per_mwh": 156.93180624457443,
+                "start_offset_s_from_issue": 82800.0
+              }
+            ],
+            "current_eur_per_mwh": 105.62499076784493,
+            "issue_time_basis": "seconds since episode start",
+            "issued_at_decision": 0,
+            "issued_at_offset_s": 0.0,
+            "market_id": "ce5836bf229e8a8b527f3f2e4d64468c2acccaf042a0edfac14e1e5a175d0766",
+            "schema": "public-price-forecast-issue-v1"
+          },
+          "plant": {
+            "decision_interval_s": 900.0,
+            "delivery": {
+              "cumulative_delivered_kg": 0.0,
+              "cumulative_requested_kg": 0.0,
+              "delivery_period_steps": 360,
+              "next_requested_kg": 240.0,
+              "steps_to_next": 360
+            },
+            "forecast": {
+              "issue_time_basis": "seconds since episode start",
+              "issued_at_offset_s": 0.0,
+              "issued_at_physics_boundary_step": 0,
+              "windows": [
+                {
+                  "end_offset_s_from_issue": 3600.0,
+                  "mean_peak_power_fraction": 0.08435876402808057,
+                  "name": "0-1h",
+                  "offset_interval": "half-open [start, end)",
+                  "p10_peak_power_fraction": 0.07301518304524635,
+                  "start_offset_s_from_issue": 0.0
+                },
+                {
+                  "end_offset_s_from_issue": 21600.0,
+                  "mean_peak_power_fraction": 0.4628319654456557,
+                  "name": "1-6h",
+                  "offset_interval": "half-open [start, end)",
+                  "p10_peak_power_fraction": 0.38980053219150773,
+                  "start_offset_s_from_issue": 3600.0
+                },
+                {
+                  "end_offset_s_from_issue": 43200.0,
+                  "mean_peak_power_fraction": 0.5185210510669584,
+                  "name": "6-12h",
+                  "offset_interval": "half-open [start, end)",
+                  "p10_peak_power_fraction": 0.43533419597926554,
+                  "start_offset_s_from_issue": 21600.0
+                },
+                {
+                  "end_offset_s_from_issue": 86400.0,
+                  "mean_peak_power_fraction": 0.014253231154199778,
+                  "name": "12-24h",
+                  "offset_interval": "half-open [start, end)",
+                  "p10_peak_power_fraction": 0.00998466654083954,
+                  "start_offset_s_from_issue": 43200.0
+                }
+              ]
+            },
+            "progress": 0.0,
+            "state": {
+              "boundary": {
+                "action": {
+                  "battery_share": 0.0,
+                  "battery_support_kw": 0.0,
+                  "dac_share": 0.0,
+                  "electrolyser_share": 0.0,
+                  "methanator_share": 0.0
+                },
+                "battery_capacity_kwh": 8000.0,
+                "battery_energy_kwh": 5013.628498150464,
+                "battery_power_kw": 0.0,
+                "battery_soc": 0.626703562268808,
+                "battery_to_electrolyser_kw": 0.0,
+                "ch4_capacity_kg": 3000.0,
+                "ch4_fill": 0.06539032050726266,
+                "ch4_level_kg": 196.170961521788,
+                "ch4_produced_total_kg": 0.0,
+                "ch4_production_kg_h": 0.0,
+                "clock": "D1 06:00",
+                "co2_capacity_kg": 6000.0,
+                "co2_capture_kg_h": 0.0,
+                "co2_captured_total_kg": 0.0,
+                "co2_fill": 0.13487837294719449,
+                "co2_level_kg": 809.2702376831669,
+                "dac_load_frac": 0.0,
+                "dac_online": false,
+                "dac_power_kw": 0.0,
+                "day": 0,
+                "electrolyser_efficiency": 0.0,
+                "electrolyser_load_frac": 0.0,
+                "electrolyser_online": false,
+                "electrolyser_power_kw": 0.0,
+                "electrolyser_temperature_c": 22.0,
+                "energy_curtailed_kwh": 0.0,
+                "energy_produced_kwh": 0.0,
+                "h2_capacity_kg": 2000.0,
+                "h2_fill": 0.2908049940568602,
+                "h2_level_kg": 581.6099881137204,
+                "h2_produced_total_kg": 0.0,
+                "h2_production_kg_h": 0.0,
+                "health": {
+                  "battery": {
+                    "degradation": 0.0,
+                    "offline": false,
+                    "status": "nominal"
+                  },
+                  "ch4_tank": {
+                    "degradation": 0.0,
+                    "offline": false,
+                    "status": "nominal"
+                  },
+                  "co2_tank": {
+                    "degradation": 0.0,
+                    "offline": false,
+                    "status": "nominal"
+                  },
+                  "dac": {
+                    "degradation": 0.0,
+                    "offline": false,
+                    "status": "nominal"
+                  },
+                  "electrolyser": {
+                    "degradation": 0.0,
+                    "offline": false,
+                    "status": "nominal"
+                  },
+                  "h2_tank": {
+                    "degradation": 0.0,
+                    "offline": false,
+                    "status": "nominal"
+                  },
+                  "methanator": {
+                    "degradation": 0.0,
+                    "offline": false,
+                    "status": "nominal"
+                  },
+                  "solar": {
+                    "degradation": 0.0,
+                    "offline": false,
+                    "status": "nominal"
+                  }
+                },
+                "methanator_load_frac": 0.0,
+                "methanator_online": false,
+                "methanator_power_kw": 0.0,
+                "plant_status": "normal",
+                "solar_available_kw": 0.0,
+                "solar_curtailed_kw": 0.0,
+                "solar_output_factor": 0.0,
+                "solar_potential_kw": 0.0,
+                "solar_to_battery_kw": 0.0,
+                "solar_to_dac_kw": 0.0,
+                "solar_to_electrolyser_kw": 0.0,
+                "solar_to_methanator_kw": 0.0,
+                "step": 0,
+                "time_h": 6.0,
+                "time_of_day_h": 6.0,
+                "time_s": 21600.0
+              },
+              "electrolyser_commitment": {
+                "aborted_starts": 0,
+                "absolute_load_movement_kw": 0.0,
+                "calibration_basis": "literature-bounded/synthetic; not vendor-calibrated",
+                "cold_starts": 0,
+                "committed": false,
+                "controlled_stops": 0,
+                "cooldown_remaining_s": 0.0,
+                "dynamics_version": "electrolyser-commitment-alpha-v3",
+                "forced_stops": 0,
+                "hot_starts": 0,
+                "low_load_time_s": 0.0,
+                "min_down_remaining_s": 0.0,
+                "min_up_remaining_s": 0.0,
+                "mode": "off",
+                "mode_elapsed_s": 0.0,
+                "mode_time_s": {
+                  "cold_starting": 0.0,
+                  "cooldown": 0.0,
+                  "hot_standby": 0.0,
+                  "hot_starting": 0.0,
+                  "off": 0.0,
+                  "running": 0.0
+                },
+                "operating_time_s": 0.0,
+                "previous_power_kw": 0.0,
+                "profile_id": "ael_pressurised_fixed_bop_alpha_v1",
+                "profile_sha256": "c6123ad4c30ef29445fa68e37d7f3d55bdeec05129d8535ab9dca2bc4715c4f9",
+                "ramp_down_headroom_kw": 0.0,
+                "ramp_limited_intervals": 0,
+                "ramp_up_headroom_kw": 0.0,
+                "shortfall_elapsed_s": 0.0,
+                "standby_energy_kwh": 0.0,
+                "startup_energy_kwh": 0.0,
+                "startup_remaining_s": 0.0,
+                "technology": "pressurised alkaline"
+              },
+              "previous_interval": {
+                "battery_net_kwh": 0.0,
+                "battery_power_mean_kw": 0.0,
+                "ch4_produced_kg": 0.0,
+                "ch4_production_mean_kg_h": 0.0,
+                "co2_capture_mean_kg_h": 0.0,
+                "co2_captured_kg": 0.0,
+                "dac_kwh": 0.0,
+                "dac_load_fraction_h": 0.0,
+                "dac_load_mean": 0.0,
+                "dac_online_fraction": 0.0,
+                "dac_online_h": 0.0,
+                "dac_power_mean_kw": 0.0,
+                "electrolyser_kwh": 0.0,
+                "electrolyser_load_fraction_h": 0.0,
+                "electrolyser_load_mean": 0.0,
+                "electrolyser_online_fraction": 0.0,
+                "electrolyser_online_h": 0.0,
+                "electrolyser_power_mean_kw": 0.0,
+                "h2_produced_kg": 0.0,
+                "h2_production_mean_kg_h": 0.0,
+                "hours": 0.0,
+                "methanator_kwh": 0.0,
+                "methanator_load_fraction_h": 0.0,
+                "methanator_load_mean": 0.0,
+                "methanator_online_fraction": 0.0,
+                "methanator_online_h": 0.0,
+                "methanator_power_mean_kw": 0.0,
+                "physical_steps": 0,
+                "solar_available_mean_kw": 0.0,
+                "solar_curtailed_kwh": 0.0,
+                "solar_curtailed_mean_kw": 0.0,
+                "solar_kwh": 0.0,
+                "solar_output_factor": 0.0,
+                "solar_potential_kwh": 0.0,
+                "solar_potential_mean_kw": 0.0
+              }
+            }
+          },
+          "schema": "cyclic-market-controller-observation-v1"
+        }
+      },
+      "seed": 9100001,
+      "timing_archive": {
+        "file": {
+          "allocated_bytes": 4096,
+          "logical_bytes": 1906,
+          "path": "/private/tmp/plantanagent-beta-uncertainty-a82f11c44e36/9100001/evidence/synthetic-latency.json.gz",
+          "sha256": "0ea912be1c11cbb650bf74bc8b187949c3f6842223099714642519b7c8e5b7f8"
+        },
+        "schema": "plant-beta-constrained-rl-study-canonical-json-gzip-v1",
+        "uncompressed_bytes": 6389,
+        "uncompressed_sha256": "4ba486c6eeb75f19906794f242b21ef200d15d660a44ad9d166e42819e0635d4"
+      },
+      "verification_error": null
+    },
+    {
+      "arm_archive": {
+        "file": {
+          "allocated_bytes": 98304,
+          "logical_bytes": 94439,
+          "path": "/private/tmp/plantanagent-beta-uncertainty-a82f11c44e36/9100002/evidence/synthetic-arm.json.gz",
+          "sha256": "9cda521c8b60138ee8670f6a3e78f5f7e782bdf52d3a458e45db58be3a30f6dc"
+        },
+        "schema": "plant-beta-constrained-rl-study-canonical-json-gzip-v1",
+        "uncompressed_bytes": 322645,
+        "uncompressed_sha256": "cc019514bbe3c5ede529a46ce0dfd805b18c9cb114968ff62606f0578f25bc55"
+      },
+      "classification": {
+        "completed_decisions": 0,
+        "cumulative_cycle_constraint_cost": 0.0,
+        "cycle_feasible": false,
+        "cycle_settlements": [],
+        "exclusion_reasons": [
+          "execution_incomplete",
+          "cycle_infeasible_or_unsettled"
+        ],
+        "execution_complete": false,
+        "expected_cycle_count": 7,
+        "expected_decisions": 672,
+        "failure": {
+          "exception_type": "BetaMPCSolveError",
+          "message": "economic-MPC service_maximization failed with status 2: The problem is infeasible. (HiGHS Status 8: model_status is Infeasible; primal_status is None)",
+          "phase": "e-beta_controller_compute",
+          "solver_stages": [
+            {
+              "elapsed_ns": 27879500,
+              "highs_version": "1.12.0",
+              "message": "The problem is infeasible. (HiGHS Status 8: model_status is Infeasible; primal_status is None)",
+              "mip_gap": null,
+              "mip_node_count": null,
+              "objective_value": null,
+              "scipy_version": "1.18.1",
+              "solution_sha256": null,
+              "solver": "scipy.optimize.milp",
+              "stage": "service_maximization",
+              "status": 2,
+              "success": false
+            }
+          ]
+        },
+        "hard_safety_metrics": {
+          "battery_reserve_respected": true,
+          "declared_dac_outage_steps": 0,
+          "electrolyser_forced_stops": 0,
+          "minimum_allowed_battery_soc": 0.05,
+          "minimum_battery_soc": 0.4033833710225286,
+          "observed_critical_or_offline_steps": 0,
+          "out_of_range_decisions": 0,
+          "unexpected_critical_or_offline_steps": 0
+        },
+        "hard_safety_passed": true,
+        "physical_steps": 0,
+        "status": "execution_failed",
+        "value_comparison_candidate": false
+      },
+      "failure_codes": [],
+      "process": {
+        "child_system_cpu_ns": 372268000,
+        "child_user_cpu_ns": 3398872000,
+        "command": [
+          "/Users/filippogombac/Developer/GitHub/PlantAnAgent/.venv/bin/python",
+          "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/tools/beta_uncertainty_fixture.py",
+          "child",
+          "/private/tmp/plantanagent-beta-uncertainty-a82f11c44e36",
+          "--seed",
+          "9100002"
+        ],
+        "exit_code": 0,
+        "started": true,
+        "termination_signal": null,
+        "timeout_seconds": 600,
+        "wall_elapsed_ns": 4026978208
+      },
+      "public_energy_bound": {
+        "allowed_battery_endowment_use_kwh": 9.599998884368688e-07,
+        "cycle_return": {
+          "constraint_semantics": "four separate hard lower bounds at the exact next cycle boundary",
+          "cycle_decisions": 96,
+          "cycle_index": 1,
+          "decision_in_cycle": 0,
+          "issued_at_decision": 0,
+          "next_boundary_decision": 96,
+          "remaining_intervals": 96,
+          "resources": {
+            "battery": {
+              "current": 3227.0669681802287,
+              "required_minimum": 3227.066967180229,
+              "signed_margin": 0.0,
+              "target": 3227.0669681802287,
+              "tolerance": 1e-06,
+              "unit": "kWh"
+            },
+            "ch4": {
+              "current": 338.1588095716092,
+              "required_minimum": 338.1588085716092,
+              "signed_margin": 0.0,
+              "target": 338.1588095716092,
+              "tolerance": 1e-06,
+              "unit": "kg"
+            },
+            "co2": {
+              "current": 1527.3218904864088,
+              "required_minimum": 1527.3218894864087,
+              "signed_margin": 0.0,
+              "target": 1527.3218904864088,
+              "tolerance": 1e-06,
+              "unit": "kg"
+            },
+            "h2": {
+              "current": 193.98933450379798,
+              "required_minimum": 193.98933350379798,
+              "signed_margin": 0.0,
+              "target": 193.98933450379798,
+              "tolerance": 1e-06,
+              "unit": "kg"
+            }
+          },
+          "sha256": "e6cc6ec170c129f3f3f40c9ecf4c2c7524d43d9a1b28d2bd78705ada340a8525"
+        },
+        "issued_mean_energy_kwh": 27825.012703988457,
+        "issued_p10_energy_kwh": 20508.70535537345,
+        "maximum_post_18h_methane_kg": 225.0,
+        "mean_energy_deficit_lower_bound_kwh": 6562.187198991542,
+        "minimum_ch4_production_kg": 959.9999989999999,
+        "minimum_co2_production_kg": 2639.9999962499996,
+        "minimum_delivery_kg": 960.0,
+        "minimum_h2_production_kg": 479.99999849999995,
+        "minimum_process_energy_kwh": 34387.199903939996,
+        "model_h2_specific_energy_kwh_per_kg": 58.24000000000001,
+        "p10_energy_deficit_lower_bound_kwh": 13878.494547606548,
+        "required_for_night_shipments_and_return_kg": 818.1588085716091,
+        "scope": "Necessary bound for issued scenarios; not future-weather truth or a physical-task infeasibility proof. Ignores added buffers, constant-power constraints, startup costs and losses.",
+        "typed_observation": {
+          "beta_task_sha256": "fa1a2b327920e11bb5db7f7b8515a3cf014481adfc9a2223c8443c697b9cc17f",
+          "cycle": {
+            "battery_margin_kwh": 0.0,
+            "ch4_margin_kg": 0.0,
+            "co2_margin_kg": 0.0,
+            "cycle_decisions": 96,
+            "cycle_index": 1,
+            "decision_in_cycle": 0,
+            "h2_margin_kg": 0.0,
+            "progress": 0.0,
+            "schema": "cyclic-return-observation-v1"
+          },
+          "economic_assumptions_sha256": "dce6ba3082e0e2a16c1e341589afb25d8f1d0b2da9124522499dafd705fe6ee2",
+          "market": {
+            "bins": [
+              {
+                "end_offset_s_from_issue": 3600.0,
+                "hour_index": 0,
+                "mean_eur_per_mwh": 103.03285247951979,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 90.57317386207939,
+                "p90_eur_per_mwh": 114.14888555120939,
+                "start_offset_s_from_issue": 0.0
+              },
+              {
+                "end_offset_s_from_issue": 7200.0,
+                "hour_index": 1,
+                "mean_eur_per_mwh": 122.8116440477727,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 100.02113502761843,
+                "p90_eur_per_mwh": 149.1826343678594,
+                "start_offset_s_from_issue": 3600.0
+              },
+              {
+                "end_offset_s_from_issue": 10800.0,
+                "hour_index": 2,
+                "mean_eur_per_mwh": 110.39371497192211,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 79.57587914658326,
+                "p90_eur_per_mwh": 146.7005867538947,
+                "start_offset_s_from_issue": 7200.0
+              },
+              {
+                "end_offset_s_from_issue": 14400.0,
+                "hour_index": 3,
+                "mean_eur_per_mwh": 75.74048142578536,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 47.045302346460666,
+                "p90_eur_per_mwh": 108.65989944125293,
+                "start_offset_s_from_issue": 10800.0
+              },
+              {
+                "end_offset_s_from_issue": 18000.0,
+                "hour_index": 4,
+                "mean_eur_per_mwh": 46.32053764321491,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 11.925692806404191,
+                "p90_eur_per_mwh": 79.2488202157998,
+                "start_offset_s_from_issue": 14400.0
+              },
+              {
+                "end_offset_s_from_issue": 21600.0,
+                "hour_index": 5,
+                "mean_eur_per_mwh": 11.011630325333922,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": -25.791898246738267,
+                "p90_eur_per_mwh": 51.38734558746518,
+                "start_offset_s_from_issue": 18000.0
+              },
+              {
+                "end_offset_s_from_issue": 25200.0,
+                "hour_index": 6,
+                "mean_eur_per_mwh": -16.859383435943748,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": -50.81971199944711,
+                "p90_eur_per_mwh": 18.93264278270518,
+                "start_offset_s_from_issue": 21600.0
+              },
+              {
+                "end_offset_s_from_issue": 28800.0,
+                "hour_index": 7,
+                "mean_eur_per_mwh": -12.259176574344718,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": -45.969490630888124,
+                "p90_eur_per_mwh": 27.083513346203947,
+                "start_offset_s_from_issue": 25200.0
+              },
+              {
+                "end_offset_s_from_issue": 32400.0,
+                "hour_index": 8,
+                "mean_eur_per_mwh": 11.441901736962802,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": -32.974553803549156,
+                "p90_eur_per_mwh": 51.024648332810564,
+                "start_offset_s_from_issue": 28800.0
+              },
+              {
+                "end_offset_s_from_issue": 36000.0,
+                "hour_index": 9,
+                "mean_eur_per_mwh": 33.54929913953542,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": -11.209575467603912,
+                "p90_eur_per_mwh": 67.50392779977349,
+                "start_offset_s_from_issue": 32400.0
+              },
+              {
+                "end_offset_s_from_issue": 39600.0,
+                "hour_index": 10,
+                "mean_eur_per_mwh": 70.07715311497233,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 28.07870778315527,
+                "p90_eur_per_mwh": 109.39018770548967,
+                "start_offset_s_from_issue": 36000.0
+              },
+              {
+                "end_offset_s_from_issue": 43200.0,
+                "hour_index": 11,
+                "mean_eur_per_mwh": 123.25373121079205,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 77.908274826618,
+                "p90_eur_per_mwh": 160.79798682979464,
+                "start_offset_s_from_issue": 39600.0
+              },
+              {
+                "end_offset_s_from_issue": 46800.0,
+                "hour_index": 12,
+                "mean_eur_per_mwh": 146.99252033561527,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 109.70092117050434,
+                "p90_eur_per_mwh": 187.13348178697245,
+                "start_offset_s_from_issue": 43200.0
+              },
+              {
+                "end_offset_s_from_issue": 50400.0,
+                "hour_index": 13,
+                "mean_eur_per_mwh": 113.73421528377085,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 76.5272582622385,
+                "p90_eur_per_mwh": 148.46296695330102,
+                "start_offset_s_from_issue": 46800.0
+              },
+              {
+                "end_offset_s_from_issue": 54000.0,
+                "hour_index": 14,
+                "mean_eur_per_mwh": 100.37776156303227,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 69.67534497498684,
+                "p90_eur_per_mwh": 143.3753575577349,
+                "start_offset_s_from_issue": 50400.0
+              },
+              {
+                "end_offset_s_from_issue": 57600.0,
+                "hour_index": 15,
+                "mean_eur_per_mwh": 93.0989353065814,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 57.85614721378615,
+                "p90_eur_per_mwh": 134.89579613682176,
+                "start_offset_s_from_issue": 54000.0
+              },
+              {
+                "end_offset_s_from_issue": 61200.0,
+                "hour_index": 16,
+                "mean_eur_per_mwh": 79.03437674956056,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 32.145083866857085,
+                "p90_eur_per_mwh": 128.8806727129214,
+                "start_offset_s_from_issue": 57600.0
+              },
+              {
+                "end_offset_s_from_issue": 64800.0,
+                "hour_index": 17,
+                "mean_eur_per_mwh": 74.05138311303106,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 27.295851205701513,
+                "p90_eur_per_mwh": 100.31587039245565,
+                "start_offset_s_from_issue": 61200.0
+              },
+              {
+                "end_offset_s_from_issue": 68400.0,
+                "hour_index": 18,
+                "mean_eur_per_mwh": 66.49811725240755,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 33.53688331888117,
+                "p90_eur_per_mwh": 103.59456556897246,
+                "start_offset_s_from_issue": 64800.0
+              },
+              {
+                "end_offset_s_from_issue": 72000.0,
+                "hour_index": 19,
+                "mean_eur_per_mwh": 66.7519648096199,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 24.248401502669097,
+                "p90_eur_per_mwh": 101.96075197098384,
+                "start_offset_s_from_issue": 68400.0
+              },
+              {
+                "end_offset_s_from_issue": 75600.0,
+                "hour_index": 20,
+                "mean_eur_per_mwh": 64.60031086863356,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 15.31610838423849,
+                "p90_eur_per_mwh": 104.64625730320508,
+                "start_offset_s_from_issue": 72000.0
+              },
+              {
+                "end_offset_s_from_issue": 79200.0,
+                "hour_index": 21,
+                "mean_eur_per_mwh": 62.88648079009776,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 20.348071987184433,
+                "p90_eur_per_mwh": 95.35568257262773,
+                "start_offset_s_from_issue": 75600.0
+              },
+              {
+                "end_offset_s_from_issue": 82800.0,
+                "hour_index": 22,
+                "mean_eur_per_mwh": 62.85360486289919,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 32.90823774259015,
+                "p90_eur_per_mwh": 98.01497138642036,
+                "start_offset_s_from_issue": 79200.0
+              },
+              {
+                "end_offset_s_from_issue": 86400.0,
+                "hour_index": 23,
+                "mean_eur_per_mwh": 70.70819351706655,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 28.733838977240865,
+                "p90_eur_per_mwh": 108.27694200588967,
+                "start_offset_s_from_issue": 82800.0
+              }
+            ],
+            "current_eur_per_mwh": 104.91203814199181,
+            "issue_time_basis": "seconds since episode start",
+            "issued_at_decision": 0,
+            "issued_at_offset_s": 0.0,
+            "market_id": "ce5836bf229e8a8b527f3f2e4d64468c2acccaf042a0edfac14e1e5a175d0766",
+            "schema": "public-price-forecast-issue-v1"
+          },
+          "plant": {
+            "decision_interval_s": 900.0,
+            "delivery": {
+              "cumulative_delivered_kg": 0.0,
+              "cumulative_requested_kg": 0.0,
+              "delivery_period_steps": 360,
+              "next_requested_kg": 240.0,
+              "steps_to_next": 360
+            },
+            "forecast": {
+              "issue_time_basis": "seconds since episode start",
+              "issued_at_offset_s": 0.0,
+              "issued_at_physics_boundary_step": 0,
+              "windows": [
+                {
+                  "end_offset_s_from_issue": 3600.0,
+                  "mean_peak_power_fraction": 0.07134417867190176,
+                  "name": "0-1h",
+                  "offset_interval": "half-open [start, end)",
+                  "p10_peak_power_fraction": 0.05489935974475821,
+                  "start_offset_s_from_issue": 0.0
+                },
+                {
+                  "end_offset_s_from_issue": 21600.0,
+                  "mean_peak_power_fraction": 0.4493402463046061,
+                  "name": "1-6h",
+                  "offset_interval": "half-open [start, end)",
+                  "p10_peak_power_fraction": 0.3569433077265495,
+                  "start_offset_s_from_issue": 3600.0
+                },
+                {
+                  "end_offset_s_from_issue": 43200.0,
+                  "mean_peak_power_fraction": 0.5121467070451918,
+                  "name": "6-12h",
+                  "offset_interval": "half-open [start, end)",
+                  "p10_peak_power_fraction": 0.35732479995019395,
+                  "start_offset_s_from_issue": 21600.0
+                },
+                {
+                  "end_offset_s_from_issue": 86400.0,
+                  "mean_peak_power_fraction": 0.014506407360967331,
+                  "name": "12-24h",
+                  "offset_interval": "half-open [start, end)",
+                  "p10_peak_power_fraction": 0.009848031083001718,
+                  "start_offset_s_from_issue": 43200.0
+                }
+              ]
+            },
+            "progress": 0.0,
+            "state": {
+              "boundary": {
+                "action": {
+                  "battery_share": 0.0,
+                  "battery_support_kw": 0.0,
+                  "dac_share": 0.0,
+                  "electrolyser_share": 0.0,
+                  "methanator_share": 0.0
+                },
+                "battery_capacity_kwh": 8000.0,
+                "battery_energy_kwh": 3227.0669681802287,
+                "battery_power_kw": 0.0,
+                "battery_soc": 0.4033833710225286,
+                "battery_to_electrolyser_kw": 0.0,
+                "ch4_capacity_kg": 3000.0,
+                "ch4_fill": 0.1127196031905364,
+                "ch4_level_kg": 338.1588095716092,
+                "ch4_produced_total_kg": 0.0,
+                "ch4_production_kg_h": 0.0,
+                "clock": "D1 06:00",
+                "co2_capacity_kg": 6000.0,
+                "co2_capture_kg_h": 0.0,
+                "co2_captured_total_kg": 0.0,
+                "co2_fill": 0.2545536484144015,
+                "co2_level_kg": 1527.3218904864088,
+                "dac_load_frac": 0.0,
+                "dac_online": false,
+                "dac_power_kw": 0.0,
+                "day": 0,
+                "electrolyser_efficiency": 0.0,
+                "electrolyser_load_frac": 0.0,
+                "electrolyser_online": false,
+                "electrolyser_power_kw": 0.0,
+                "electrolyser_temperature_c": 22.0,
+                "energy_curtailed_kwh": 0.0,
+                "energy_produced_kwh": 0.0,
+                "h2_capacity_kg": 2000.0,
+                "h2_fill": 0.096994667251899,
+                "h2_level_kg": 193.98933450379798,
+                "h2_produced_total_kg": 0.0,
+                "h2_production_kg_h": 0.0,
+                "health": {
+                  "battery": {
+                    "degradation": 0.0,
+                    "offline": false,
+                    "status": "nominal"
+                  },
+                  "ch4_tank": {
+                    "degradation": 0.0,
+                    "offline": false,
+                    "status": "nominal"
+                  },
+                  "co2_tank": {
+                    "degradation": 0.0,
+                    "offline": false,
+                    "status": "nominal"
+                  },
+                  "dac": {
+                    "degradation": 0.0,
+                    "offline": false,
+                    "status": "nominal"
+                  },
+                  "electrolyser": {
+                    "degradation": 0.0,
+                    "offline": false,
+                    "status": "nominal"
+                  },
+                  "h2_tank": {
+                    "degradation": 0.0,
+                    "offline": false,
+                    "status": "nominal"
+                  },
+                  "methanator": {
+                    "degradation": 0.0,
+                    "offline": false,
+                    "status": "nominal"
+                  },
+                  "solar": {
+                    "degradation": 0.0,
+                    "offline": false,
+                    "status": "nominal"
+                  }
+                },
+                "methanator_load_frac": 0.0,
+                "methanator_online": false,
+                "methanator_power_kw": 0.0,
+                "plant_status": "normal",
+                "solar_available_kw": 0.0,
+                "solar_curtailed_kw": 0.0,
+                "solar_output_factor": 0.0,
+                "solar_potential_kw": 0.0,
+                "solar_to_battery_kw": 0.0,
+                "solar_to_dac_kw": 0.0,
+                "solar_to_electrolyser_kw": 0.0,
+                "solar_to_methanator_kw": 0.0,
+                "step": 0,
+                "time_h": 6.0,
+                "time_of_day_h": 6.0,
+                "time_s": 21600.0
+              },
+              "electrolyser_commitment": {
+                "aborted_starts": 0,
+                "absolute_load_movement_kw": 0.0,
+                "calibration_basis": "literature-bounded/synthetic; not vendor-calibrated",
+                "cold_starts": 0,
+                "committed": false,
+                "controlled_stops": 0,
+                "cooldown_remaining_s": 0.0,
+                "dynamics_version": "electrolyser-commitment-alpha-v3",
+                "forced_stops": 0,
+                "hot_starts": 0,
+                "low_load_time_s": 0.0,
+                "min_down_remaining_s": 0.0,
+                "min_up_remaining_s": 0.0,
+                "mode": "off",
+                "mode_elapsed_s": 0.0,
+                "mode_time_s": {
+                  "cold_starting": 0.0,
+                  "cooldown": 0.0,
+                  "hot_standby": 0.0,
+                  "hot_starting": 0.0,
+                  "off": 0.0,
+                  "running": 0.0
+                },
+                "operating_time_s": 0.0,
+                "previous_power_kw": 0.0,
+                "profile_id": "ael_pressurised_fixed_bop_alpha_v1",
+                "profile_sha256": "c6123ad4c30ef29445fa68e37d7f3d55bdeec05129d8535ab9dca2bc4715c4f9",
+                "ramp_down_headroom_kw": 0.0,
+                "ramp_limited_intervals": 0,
+                "ramp_up_headroom_kw": 0.0,
+                "shortfall_elapsed_s": 0.0,
+                "standby_energy_kwh": 0.0,
+                "startup_energy_kwh": 0.0,
+                "startup_remaining_s": 0.0,
+                "technology": "pressurised alkaline"
+              },
+              "previous_interval": {
+                "battery_net_kwh": 0.0,
+                "battery_power_mean_kw": 0.0,
+                "ch4_produced_kg": 0.0,
+                "ch4_production_mean_kg_h": 0.0,
+                "co2_capture_mean_kg_h": 0.0,
+                "co2_captured_kg": 0.0,
+                "dac_kwh": 0.0,
+                "dac_load_fraction_h": 0.0,
+                "dac_load_mean": 0.0,
+                "dac_online_fraction": 0.0,
+                "dac_online_h": 0.0,
+                "dac_power_mean_kw": 0.0,
+                "electrolyser_kwh": 0.0,
+                "electrolyser_load_fraction_h": 0.0,
+                "electrolyser_load_mean": 0.0,
+                "electrolyser_online_fraction": 0.0,
+                "electrolyser_online_h": 0.0,
+                "electrolyser_power_mean_kw": 0.0,
+                "h2_produced_kg": 0.0,
+                "h2_production_mean_kg_h": 0.0,
+                "hours": 0.0,
+                "methanator_kwh": 0.0,
+                "methanator_load_fraction_h": 0.0,
+                "methanator_load_mean": 0.0,
+                "methanator_online_fraction": 0.0,
+                "methanator_online_h": 0.0,
+                "methanator_power_mean_kw": 0.0,
+                "physical_steps": 0,
+                "solar_available_mean_kw": 0.0,
+                "solar_curtailed_kwh": 0.0,
+                "solar_curtailed_mean_kw": 0.0,
+                "solar_kwh": 0.0,
+                "solar_output_factor": 0.0,
+                "solar_potential_kwh": 0.0,
+                "solar_potential_mean_kw": 0.0
+              }
+            }
+          },
+          "schema": "cyclic-market-controller-observation-v1"
+        }
+      },
+      "seed": 9100002,
+      "timing_archive": {
+        "file": {
+          "allocated_bytes": 4096,
+          "logical_bytes": 1910,
+          "path": "/private/tmp/plantanagent-beta-uncertainty-a82f11c44e36/9100002/evidence/synthetic-latency.json.gz",
+          "sha256": "f6e039c4fe5b6190dd7d4c8110f03af30ea972b8e0b346e7e43c17c3f491f673"
+        },
+        "schema": "plant-beta-constrained-rl-study-canonical-json-gzip-v1",
+        "uncompressed_bytes": 6389,
+        "uncompressed_sha256": "9ae70492d7d8f3ed3d9863616149a02e0ad986e71075f08a1b9c4a74186dca10"
+      },
+      "verification_error": null
+    },
+    {
+      "arm_archive": {
+        "file": {
+          "allocated_bytes": 98304,
+          "logical_bytes": 94492,
+          "path": "/private/tmp/plantanagent-beta-uncertainty-a82f11c44e36/9100003/evidence/synthetic-arm.json.gz",
+          "sha256": "b0cec9afe48b371240d17d8b3d90184aaf8534f7b411c03d1be3899a2fb73881"
+        },
+        "schema": "plant-beta-constrained-rl-study-canonical-json-gzip-v1",
+        "uncompressed_bytes": 322611,
+        "uncompressed_sha256": "7767770ba9c05dfa30fb5ff1bd7367d1a5c67a0dee696bcfc6e4ed6e9139079c"
+      },
+      "classification": {
+        "completed_decisions": 0,
+        "cumulative_cycle_constraint_cost": 0.0,
+        "cycle_feasible": false,
+        "cycle_settlements": [],
+        "exclusion_reasons": [
+          "execution_incomplete",
+          "cycle_infeasible_or_unsettled"
+        ],
+        "execution_complete": false,
+        "expected_cycle_count": 7,
+        "expected_decisions": 672,
+        "failure": {
+          "exception_type": "BetaMPCSolveError",
+          "message": "economic-MPC service_maximization failed with status 2: The problem is infeasible. (HiGHS Status 8: model_status is Infeasible; primal_status is None)",
+          "phase": "e-beta_controller_compute",
+          "solver_stages": [
+            {
+              "elapsed_ns": 29212750,
+              "highs_version": "1.12.0",
+              "message": "The problem is infeasible. (HiGHS Status 8: model_status is Infeasible; primal_status is None)",
+              "mip_gap": null,
+              "mip_node_count": null,
+              "objective_value": null,
+              "scipy_version": "1.18.1",
+              "solution_sha256": null,
+              "solver": "scipy.optimize.milp",
+              "stage": "service_maximization",
+              "status": 2,
+              "success": false
+            }
+          ]
+        },
+        "hard_safety_metrics": {
+          "battery_reserve_respected": true,
+          "declared_dac_outage_steps": 0,
+          "electrolyser_forced_stops": 0,
+          "minimum_allowed_battery_soc": 0.05,
+          "minimum_battery_soc": 0.5223016985300328,
+          "observed_critical_or_offline_steps": 0,
+          "out_of_range_decisions": 0,
+          "unexpected_critical_or_offline_steps": 0
+        },
+        "hard_safety_passed": true,
+        "physical_steps": 0,
+        "status": "execution_failed",
+        "value_comparison_candidate": false
+      },
+      "failure_codes": [],
+      "process": {
+        "child_system_cpu_ns": 371524000,
+        "child_user_cpu_ns": 3421941000,
+        "command": [
+          "/Users/filippogombac/Developer/GitHub/PlantAnAgent/.venv/bin/python",
+          "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/tools/beta_uncertainty_fixture.py",
+          "child",
+          "/private/tmp/plantanagent-beta-uncertainty-a82f11c44e36",
+          "--seed",
+          "9100003"
+        ],
+        "exit_code": 0,
+        "started": true,
+        "termination_signal": null,
+        "timeout_seconds": 600,
+        "wall_elapsed_ns": 4029214834
+      },
+      "public_energy_bound": {
+        "allowed_battery_endowment_use_kwh": 9.600003249943257e-07,
+        "cycle_return": {
+          "constraint_semantics": "four separate hard lower bounds at the exact next cycle boundary",
+          "cycle_decisions": 96,
+          "cycle_index": 1,
+          "decision_in_cycle": 0,
+          "issued_at_decision": 0,
+          "next_boundary_decision": 96,
+          "remaining_intervals": 96,
+          "resources": {
+            "battery": {
+              "current": 4178.4135882402625,
+              "required_minimum": 4178.413587240262,
+              "signed_margin": 0.0,
+              "target": 4178.4135882402625,
+              "tolerance": 1e-06,
+              "unit": "kWh"
+            },
+            "ch4": {
+              "current": 259.5714914889287,
+              "required_minimum": 259.5714904889287,
+              "signed_margin": 0.0,
+              "target": 259.5714914889287,
+              "tolerance": 1e-06,
+              "unit": "kg"
+            },
+            "co2": {
+              "current": 1038.5004559218178,
+              "required_minimum": 1038.5004549218177,
+              "signed_margin": 0.0,
+              "target": 1038.5004559218178,
+              "tolerance": 1e-06,
+              "unit": "kg"
+            },
+            "h2": {
+              "current": 134.0718376147425,
+              "required_minimum": 134.0718366147425,
+              "signed_margin": 0.0,
+              "target": 134.0718376147425,
+              "tolerance": 1e-06,
+              "unit": "kg"
+            }
+          },
+          "sha256": "351da45b983f3d7352d49b28e5f5eab6a499dd3943f45a825cd749564f3fa1f4"
+        },
+        "issued_mean_energy_kwh": 29428.1609450651,
+        "issued_p10_energy_kwh": 25286.829629043343,
+        "maximum_post_18h_methane_kg": 225.0,
+        "mean_energy_deficit_lower_bound_kwh": 4959.038957914905,
+        "minimum_ch4_production_kg": 959.999999,
+        "minimum_co2_production_kg": 2639.9999962499996,
+        "minimum_delivery_kg": 960.0,
+        "minimum_h2_production_kg": 479.9999985,
+        "minimum_process_energy_kwh": 34387.19990394,
+        "model_h2_specific_energy_kwh_per_kg": 58.24000000000001,
+        "p10_energy_deficit_lower_bound_kwh": 9100.370273936664,
+        "required_for_night_shipments_and_return_kg": 739.5714904889287,
+        "scope": "Necessary bound for issued scenarios; not future-weather truth or a physical-task infeasibility proof. Ignores added buffers, constant-power constraints, startup costs and losses.",
+        "typed_observation": {
+          "beta_task_sha256": "fa1a2b327920e11bb5db7f7b8515a3cf014481adfc9a2223c8443c697b9cc17f",
+          "cycle": {
+            "battery_margin_kwh": 0.0,
+            "ch4_margin_kg": 0.0,
+            "co2_margin_kg": 0.0,
+            "cycle_decisions": 96,
+            "cycle_index": 1,
+            "decision_in_cycle": 0,
+            "h2_margin_kg": 0.0,
+            "progress": 0.0,
+            "schema": "cyclic-return-observation-v1"
+          },
+          "economic_assumptions_sha256": "dce6ba3082e0e2a16c1e341589afb25d8f1d0b2da9124522499dafd705fe6ee2",
+          "market": {
+            "bins": [
+              {
+                "end_offset_s_from_issue": 3600.0,
+                "hour_index": 0,
+                "mean_eur_per_mwh": 81.98978202014888,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 70.5000067571646,
+                "p90_eur_per_mwh": 95.89828419562133,
+                "start_offset_s_from_issue": 0.0
+              },
+              {
+                "end_offset_s_from_issue": 7200.0,
+                "hour_index": 1,
+                "mean_eur_per_mwh": 110.0435398830189,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 84.83263084743398,
+                "p90_eur_per_mwh": 137.30235647521232,
+                "start_offset_s_from_issue": 3600.0
+              },
+              {
+                "end_offset_s_from_issue": 10800.0,
+                "hour_index": 2,
+                "mean_eur_per_mwh": 100.7701354540985,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 65.85180716680368,
+                "p90_eur_per_mwh": 135.33043314906007,
+                "start_offset_s_from_issue": 7200.0
+              },
+              {
+                "end_offset_s_from_issue": 14400.0,
+                "hour_index": 3,
+                "mean_eur_per_mwh": 70.90842194319626,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 31.00729648085498,
+                "p90_eur_per_mwh": 117.95731545811623,
+                "start_offset_s_from_issue": 10800.0
+              },
+              {
+                "end_offset_s_from_issue": 18000.0,
+                "hour_index": 4,
+                "mean_eur_per_mwh": 45.04999800935375,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": -13.00821272577615,
+                "p90_eur_per_mwh": 78.34716601370562,
+                "start_offset_s_from_issue": 14400.0
+              },
+              {
+                "end_offset_s_from_issue": 21600.0,
+                "hour_index": 5,
+                "mean_eur_per_mwh": 14.215413848809558,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": -20.126395082222686,
+                "p90_eur_per_mwh": 58.84734556879984,
+                "start_offset_s_from_issue": 18000.0
+              },
+              {
+                "end_offset_s_from_issue": 25200.0,
+                "hour_index": 6,
+                "mean_eur_per_mwh": -8.477595169490206,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": -43.939416881375465,
+                "p90_eur_per_mwh": 29.472546514444243,
+                "start_offset_s_from_issue": 21600.0
+              },
+              {
+                "end_offset_s_from_issue": 28800.0,
+                "hour_index": 7,
+                "mean_eur_per_mwh": 0.458646180862302,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": -35.07886463396398,
+                "p90_eur_per_mwh": 32.93071965764671,
+                "start_offset_s_from_issue": 25200.0
+              },
+              {
+                "end_offset_s_from_issue": 32400.0,
+                "hour_index": 8,
+                "mean_eur_per_mwh": 22.73091308736724,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": -20.497541025526846,
+                "p90_eur_per_mwh": 58.972955467699244,
+                "start_offset_s_from_issue": 28800.0
+              },
+              {
+                "end_offset_s_from_issue": 36000.0,
+                "hour_index": 9,
+                "mean_eur_per_mwh": 44.08387403945306,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 4.927117969477381,
+                "p90_eur_per_mwh": 87.8983571801354,
+                "start_offset_s_from_issue": 32400.0
+              },
+              {
+                "end_offset_s_from_issue": 39600.0,
+                "hour_index": 10,
+                "mean_eur_per_mwh": 80.305602889652,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 39.40153898168437,
+                "p90_eur_per_mwh": 121.7867689840894,
+                "start_offset_s_from_issue": 36000.0
+              },
+              {
+                "end_offset_s_from_issue": 43200.0,
+                "hour_index": 11,
+                "mean_eur_per_mwh": 126.46652431600947,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 90.09864537405579,
+                "p90_eur_per_mwh": 163.84107562533225,
+                "start_offset_s_from_issue": 39600.0
+              },
+              {
+                "end_offset_s_from_issue": 46800.0,
+                "hour_index": 12,
+                "mean_eur_per_mwh": 151.70074558899108,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 114.70302225965268,
+                "p90_eur_per_mwh": 188.0565017442098,
+                "start_offset_s_from_issue": 43200.0
+              },
+              {
+                "end_offset_s_from_issue": 50400.0,
+                "hour_index": 13,
+                "mean_eur_per_mwh": 120.05033227931276,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 80.90833489837554,
+                "p90_eur_per_mwh": 151.47975670068152,
+                "start_offset_s_from_issue": 46800.0
+              },
+              {
+                "end_offset_s_from_issue": 54000.0,
+                "hour_index": 14,
+                "mean_eur_per_mwh": 100.17207695102454,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 62.236260970932456,
+                "p90_eur_per_mwh": 132.66177679278604,
+                "start_offset_s_from_issue": 50400.0
+              },
+              {
+                "end_offset_s_from_issue": 57600.0,
+                "hour_index": 15,
+                "mean_eur_per_mwh": 85.65688563093487,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 50.66848157357825,
+                "p90_eur_per_mwh": 120.11062748517847,
+                "start_offset_s_from_issue": 54000.0
+              },
+              {
+                "end_offset_s_from_issue": 61200.0,
+                "hour_index": 16,
+                "mean_eur_per_mwh": 75.90520914459438,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 38.88527523406637,
+                "p90_eur_per_mwh": 115.82189262696164,
+                "start_offset_s_from_issue": 57600.0
+              },
+              {
+                "end_offset_s_from_issue": 64800.0,
+                "hour_index": 17,
+                "mean_eur_per_mwh": 73.65093163891154,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 41.36950157426985,
+                "p90_eur_per_mwh": 108.92386954250148,
+                "start_offset_s_from_issue": 61200.0
+              },
+              {
+                "end_offset_s_from_issue": 68400.0,
+                "hour_index": 18,
+                "mean_eur_per_mwh": 69.05335104168063,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 34.584768549944556,
+                "p90_eur_per_mwh": 102.00898769647964,
+                "start_offset_s_from_issue": 64800.0
+              },
+              {
+                "end_offset_s_from_issue": 72000.0,
+                "hour_index": 19,
+                "mean_eur_per_mwh": 59.23830456635636,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 31.48051332495921,
+                "p90_eur_per_mwh": 92.24210192289732,
+                "start_offset_s_from_issue": 68400.0
+              },
+              {
+                "end_offset_s_from_issue": 75600.0,
+                "hour_index": 20,
+                "mean_eur_per_mwh": 58.34352973071984,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 25.43840637745867,
+                "p90_eur_per_mwh": 87.72685528210553,
+                "start_offset_s_from_issue": 72000.0
+              },
+              {
+                "end_offset_s_from_issue": 79200.0,
+                "hour_index": 21,
+                "mean_eur_per_mwh": 57.977526903254514,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 26.979022502955726,
+                "p90_eur_per_mwh": 93.28416152083204,
+                "start_offset_s_from_issue": 75600.0
+              },
+              {
+                "end_offset_s_from_issue": 82800.0,
+                "hour_index": 22,
+                "mean_eur_per_mwh": 61.810764794080846,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 16.325133623708695,
+                "p90_eur_per_mwh": 97.8946617877278,
+                "start_offset_s_from_issue": 79200.0
+              },
+              {
+                "end_offset_s_from_issue": 86400.0,
+                "hour_index": 23,
+                "mean_eur_per_mwh": 70.86306548446038,
+                "offset_interval": "half-open [start, end)",
+                "p10_eur_per_mwh": 35.494105688030686,
+                "p90_eur_per_mwh": 109.19537526045724,
+                "start_offset_s_from_issue": 82800.0
+              }
+            ],
+            "current_eur_per_mwh": 79.58829306408336,
+            "issue_time_basis": "seconds since episode start",
+            "issued_at_decision": 0,
+            "issued_at_offset_s": 0.0,
+            "market_id": "ce5836bf229e8a8b527f3f2e4d64468c2acccaf042a0edfac14e1e5a175d0766",
+            "schema": "public-price-forecast-issue-v1"
+          },
+          "plant": {
+            "decision_interval_s": 900.0,
+            "delivery": {
+              "cumulative_delivered_kg": 0.0,
+              "cumulative_requested_kg": 0.0,
+              "delivery_period_steps": 360,
+              "next_requested_kg": 240.0,
+              "steps_to_next": 360
+            },
+            "forecast": {
+              "issue_time_basis": "seconds since episode start",
+              "issued_at_offset_s": 0.0,
+              "issued_at_physics_boundary_step": 0,
+              "windows": [
+                {
+                  "end_offset_s_from_issue": 3600.0,
+                  "mean_peak_power_fraction": 0.09008710009422585,
+                  "name": "0-1h",
+                  "offset_interval": "half-open [start, end)",
+                  "p10_peak_power_fraction": 0.08124951046318804,
+                  "start_offset_s_from_issue": 0.0
+                },
+                {
+                  "end_offset_s_from_issue": 21600.0,
+                  "mean_peak_power_fraction": 0.4718791481503829,
+                  "name": "1-6h",
+                  "offset_interval": "half-open [start, end)",
+                  "p10_peak_power_fraction": 0.4175225263225166,
+                  "start_offset_s_from_issue": 3600.0
+                },
+                {
+                  "end_offset_s_from_issue": 43200.0,
+                  "mean_peak_power_fraction": 0.5437599374184018,
+                  "name": "6-12h",
+                  "offset_interval": "half-open [start, end)",
+                  "p10_peak_power_fraction": 0.4610477004877798,
+                  "start_offset_s_from_issue": 21600.0
+                },
+                {
+                  "end_offset_s_from_issue": 86400.0,
+                  "mean_peak_power_fraction": 0.014465810304705768,
+                  "name": "12-24h",
+                  "offset_interval": "half-open [start, end)",
+                  "p10_peak_power_fraction": 0.010184798400518226,
+                  "start_offset_s_from_issue": 43200.0
+                }
+              ]
+            },
+            "progress": 0.0,
+            "state": {
+              "boundary": {
+                "action": {
+                  "battery_share": 0.0,
+                  "battery_support_kw": 0.0,
+                  "dac_share": 0.0,
+                  "electrolyser_share": 0.0,
+                  "methanator_share": 0.0
+                },
+                "battery_capacity_kwh": 8000.0,
+                "battery_energy_kwh": 4178.4135882402625,
+                "battery_power_kw": 0.0,
+                "battery_soc": 0.5223016985300328,
+                "battery_to_electrolyser_kw": 0.0,
+                "ch4_capacity_kg": 3000.0,
+                "ch4_fill": 0.08652383049630957,
+                "ch4_level_kg": 259.5714914889287,
+                "ch4_produced_total_kg": 0.0,
+                "ch4_production_kg_h": 0.0,
+                "clock": "D1 06:00",
+                "co2_capacity_kg": 6000.0,
+                "co2_capture_kg_h": 0.0,
+                "co2_captured_total_kg": 0.0,
+                "co2_fill": 0.17308340932030297,
+                "co2_level_kg": 1038.5004559218178,
+                "dac_load_frac": 0.0,
+                "dac_online": false,
+                "dac_power_kw": 0.0,
+                "day": 0,
+                "electrolyser_efficiency": 0.0,
+                "electrolyser_load_frac": 0.0,
+                "electrolyser_online": false,
+                "electrolyser_power_kw": 0.0,
+                "electrolyser_temperature_c": 22.0,
+                "energy_curtailed_kwh": 0.0,
+                "energy_produced_kwh": 0.0,
+                "h2_capacity_kg": 2000.0,
+                "h2_fill": 0.06703591880737124,
+                "h2_level_kg": 134.0718376147425,
+                "h2_produced_total_kg": 0.0,
+                "h2_production_kg_h": 0.0,
+                "health": {
+                  "battery": {
+                    "degradation": 0.0,
+                    "offline": false,
+                    "status": "nominal"
+                  },
+                  "ch4_tank": {
+                    "degradation": 0.0,
+                    "offline": false,
+                    "status": "nominal"
+                  },
+                  "co2_tank": {
+                    "degradation": 0.0,
+                    "offline": false,
+                    "status": "nominal"
+                  },
+                  "dac": {
+                    "degradation": 0.0,
+                    "offline": false,
+                    "status": "nominal"
+                  },
+                  "electrolyser": {
+                    "degradation": 0.0,
+                    "offline": false,
+                    "status": "nominal"
+                  },
+                  "h2_tank": {
+                    "degradation": 0.0,
+                    "offline": false,
+                    "status": "nominal"
+                  },
+                  "methanator": {
+                    "degradation": 0.0,
+                    "offline": false,
+                    "status": "nominal"
+                  },
+                  "solar": {
+                    "degradation": 0.0,
+                    "offline": false,
+                    "status": "nominal"
+                  }
+                },
+                "methanator_load_frac": 0.0,
+                "methanator_online": false,
+                "methanator_power_kw": 0.0,
+                "plant_status": "normal",
+                "solar_available_kw": 0.0,
+                "solar_curtailed_kw": 0.0,
+                "solar_output_factor": 0.0,
+                "solar_potential_kw": 0.0,
+                "solar_to_battery_kw": 0.0,
+                "solar_to_dac_kw": 0.0,
+                "solar_to_electrolyser_kw": 0.0,
+                "solar_to_methanator_kw": 0.0,
+                "step": 0,
+                "time_h": 6.0,
+                "time_of_day_h": 6.0,
+                "time_s": 21600.0
+              },
+              "electrolyser_commitment": {
+                "aborted_starts": 0,
+                "absolute_load_movement_kw": 0.0,
+                "calibration_basis": "literature-bounded/synthetic; not vendor-calibrated",
+                "cold_starts": 0,
+                "committed": false,
+                "controlled_stops": 0,
+                "cooldown_remaining_s": 0.0,
+                "dynamics_version": "electrolyser-commitment-alpha-v3",
+                "forced_stops": 0,
+                "hot_starts": 0,
+                "low_load_time_s": 0.0,
+                "min_down_remaining_s": 0.0,
+                "min_up_remaining_s": 0.0,
+                "mode": "off",
+                "mode_elapsed_s": 0.0,
+                "mode_time_s": {
+                  "cold_starting": 0.0,
+                  "cooldown": 0.0,
+                  "hot_standby": 0.0,
+                  "hot_starting": 0.0,
+                  "off": 0.0,
+                  "running": 0.0
+                },
+                "operating_time_s": 0.0,
+                "previous_power_kw": 0.0,
+                "profile_id": "ael_pressurised_fixed_bop_alpha_v1",
+                "profile_sha256": "c6123ad4c30ef29445fa68e37d7f3d55bdeec05129d8535ab9dca2bc4715c4f9",
+                "ramp_down_headroom_kw": 0.0,
+                "ramp_limited_intervals": 0,
+                "ramp_up_headroom_kw": 0.0,
+                "shortfall_elapsed_s": 0.0,
+                "standby_energy_kwh": 0.0,
+                "startup_energy_kwh": 0.0,
+                "startup_remaining_s": 0.0,
+                "technology": "pressurised alkaline"
+              },
+              "previous_interval": {
+                "battery_net_kwh": 0.0,
+                "battery_power_mean_kw": 0.0,
+                "ch4_produced_kg": 0.0,
+                "ch4_production_mean_kg_h": 0.0,
+                "co2_capture_mean_kg_h": 0.0,
+                "co2_captured_kg": 0.0,
+                "dac_kwh": 0.0,
+                "dac_load_fraction_h": 0.0,
+                "dac_load_mean": 0.0,
+                "dac_online_fraction": 0.0,
+                "dac_online_h": 0.0,
+                "dac_power_mean_kw": 0.0,
+                "electrolyser_kwh": 0.0,
+                "electrolyser_load_fraction_h": 0.0,
+                "electrolyser_load_mean": 0.0,
+                "electrolyser_online_fraction": 0.0,
+                "electrolyser_online_h": 0.0,
+                "electrolyser_power_mean_kw": 0.0,
+                "h2_produced_kg": 0.0,
+                "h2_production_mean_kg_h": 0.0,
+                "hours": 0.0,
+                "methanator_kwh": 0.0,
+                "methanator_load_fraction_h": 0.0,
+                "methanator_load_mean": 0.0,
+                "methanator_online_fraction": 0.0,
+                "methanator_online_h": 0.0,
+                "methanator_power_mean_kw": 0.0,
+                "physical_steps": 0,
+                "solar_available_mean_kw": 0.0,
+                "solar_curtailed_kwh": 0.0,
+                "solar_curtailed_mean_kw": 0.0,
+                "solar_kwh": 0.0,
+                "solar_output_factor": 0.0,
+                "solar_potential_kwh": 0.0,
+                "solar_potential_mean_kw": 0.0
+              }
+            }
+          },
+          "schema": "cyclic-market-controller-observation-v1"
+        }
+      },
+      "seed": 9100003,
+      "timing_archive": {
+        "file": {
+          "allocated_bytes": 4096,
+          "logical_bytes": 1912,
+          "path": "/private/tmp/plantanagent-beta-uncertainty-a82f11c44e36/9100003/evidence/synthetic-latency.json.gz",
+          "sha256": "60320035f28565ae8a274344d2bacddb2adbcadf130a21e232c296ba21370550"
+        },
+        "schema": "plant-beta-constrained-rl-study-canonical-json-gzip-v1",
+        "uncompressed_bytes": 6389,
+        "uncompressed_sha256": "c032803e824de26396b9e01780fa45aa710e9ab1851622716477a139d385b2f6"
+      },
+      "verification_error": null
+    }
+  ],
+  "schema": "plant-beta-mpc-delivery-repair-result-v1",
+  "source": {
+    "dependency_lock_sha256": "080d96275581ebbec1b2c27b354ea54e3e66419bfaadb034896da1fd22b228dd",
+    "git_revision": "a82f11c44e36daf9f19299e0b8f54cd76632e32c",
+    "runtime": {
+      "gymnasium": "1.3.0",
+      "numpy": "2.5.2",
+      "plant_sim": {
+        "module_sha256": "5a5e58526aef0787065afeaeda52d7c00430240a1902ba6da3b808c6592f6b16",
+        "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/simulator/src/plant_sim/__init__.py",
+        "version": "0.5.2"
+      },
+      "python": "3.12.7",
+      "scipy": "1.18.1",
+      "stable_baselines3": "2.9.0"
+    },
+    "worktree_clean": true,
+    "worktree_status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "summary_resets": 0,
+  "summary_solver_calls": 0
+}

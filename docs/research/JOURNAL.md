@@ -7957,3 +7957,45 @@ with 21 passes and one existing deprecation warning in 36.55 seconds; its exact
 terminal result was recovered from this task's command record after compaction,
 without duplicating the process. This commit precedes the second, distinct
 three-seed fixture; no complete-week success or training readiness is claimed.
+
+The second fixed fixture ran once at clean `a82f11c44e36`. All three seeds
+stopped on the opening controller call with primary-stage infeasibility; each
+child exited zero and its retained zero-step failure passed detached physical
+and timing reconstruction. Child wall times were 4.90/4.03/4.03 seconds, with no
+cap or fallback. Report-domain SHA is
+`ae2c31f2044f41bfcfb7d0aeb54594cbc385dd9865c9bdc50a35178827748814`.
+These are successfully retained failures, not successful controller executions,
+safety-operation evidence or full-week capacity observations.
+
+A saved-public-record necessary energy bound explains this result without any
+new reset, solver call or future-weather inspection. Positive final CH4 forces
+both nighttime shipments to be full. A partial 18:00 shipment would empty the
+tank; at most 225 kg can be produced before sunset, insufficient for the 480 kg
+night deliveries plus final stock. Hence 18:00 must also ship fully; noon must
+ship at least min(initial CH4, 240). Original resource returns imply at least
+916.17/960/960 kg production and 32.82/34.39/34.39 MWh process electricity under
+the model. Issued mean PV is only 28.40/27.83/29.43 MWh, before buffers, firm-power
+restrictions, startup energy or losses. Battery-return tolerance contributes
+less than one micro-kWh. Thus solver infeasibility is consistent with a simple
+public energy certificate; the former shipment-withholding relaxation hid it.
+This is not proof that the actual weather/physical task or unopened seeds are
+infeasible. `tools/beta_uncertainty_result.py` reproduces the compact artifact
+from saved records, checking compressed and decoded archive digests; it invokes
+no environment or optimizer. Its initial interactive inspection used an incorrect
+list index on the boundary-ledger dictionary, raising KeyError without mutation;
+the corrected decoder reads its explicit decision-boundaries field.
+
+The compact result raw SHA is
+`d7710664d243d49c3dd356584148c954a8981d00495de6184af2ec0a3bd8258a`.
+The report and readiness/roadmap now state the negative result, including the
+opening product E-beta failure. No fallback, task relaxation or reserve parameter
+search is added. The repair implementation is distinct from readiness: future
+work must define explicit supervisory behavior for an infeasible issued scenario
+and investigate task/model feasibility before comparator freeze. Registered
+training, development and held-out evaluation remain closed.
+
+The compact report reconstructs byte-for-byte, and frozen custody/lock, unchanged
+frontend/simulator and absent training-root/authorization checks pass. Strict
+mypy initially found an unguarded optional forecast in the new result-only
+summarizer; it now explicitly rejects a missing public forecast. This changes
+neither the already recorded controller executions nor the compact artifact.
