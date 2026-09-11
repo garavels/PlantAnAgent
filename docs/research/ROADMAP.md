@@ -214,8 +214,12 @@ equipment consequences.
   representations are implemented; their arithmetic/physical/legacy arm-pair regression passes
   158 tests. The exact stage registry and full aggregate calculation now compose selection,
   matched secondary pairs, sensitivity, pooled latency and all ten held-out clauses; their
-  combined campaign/arm/timing regression passes 210 tests. Registered evaluation/hardware
-  authority, checkpoint binding, stage execution and detached custody remain build gates before
+  combined campaign/arm/timing regression passes 210 tests. The production training-input bridge
+  now reopens the complete training verifier and admitted endpoint ledgers while preserving
+  failed slots and original source/host/file identity. Lossless gzip evidence storage has
+  exclusive publication and strict stored/decoded limits. Their combined custody/analysis
+  regression passes 291 tests. Registered evaluation/hardware authority, stage capacity,
+  per-arm checkpoint binding, stage execution and detached custody remain build gates before
   requesting the study.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.

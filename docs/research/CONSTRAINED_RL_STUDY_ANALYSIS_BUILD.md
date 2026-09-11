@@ -310,3 +310,48 @@ Stage authority and evidence must remain outside Git so the admitted training
 source/runtime identity stays unchanged through both evaluation stages. A final
 clean repository gate and concrete execution/storage budget precede explicit
 authorization; no registered training or stage authorization currently exists.
+
+## Evidence storage and training admission bridge
+
+Large physical and timing documents use lossless canonical JSON in a single
+gzip member. The raw canonical bytes and compressed file each retain their own
+SHA-256 and byte count. Publication is exclusive, mode 0600 and fsynced; failures
+retain the consumed filename and partial bytes. Both stored and decoded byte
+limits are mandatory. Readers reject duplicate/non-finite/noncanonical JSON,
+corruption, extra members, trailing data, indirect paths and file replacement.
+Compression has no scientific or authorization semantics. The remaining stage
+capacity measurement must establish suitable limits and sufficient storage;
+compression alone does not establish that the study fits this machine.
+The fixed registry now names `arm.json.gz` and `latency.json.gz` and binds the
+archive schema before any stage opening. Historical synthetic JSON filenames
+remain unchanged.
+
+The training-input bridge calls the same complete production reconstruction as
+the detached training verifier, with no cached-verdict or dependency argument.
+It then reopens the admitted metadata and reconstructs all 128 rollout records
+for every admitted policy. Failed and unstarted slots remain in the fixed 15-slot
+scorecard. Training completion means a closed successful child process (admitted
+or checkpoint-rejected); it is separate from final checkpoint admission. Failed
+slots do not acquire diagnostics from partial or unadmitted artifacts.
+
+The bridge binds the source/runtime/training host, complete report, all checkpoint
+descriptors and a stable metadata snapshot of the closed evidence tree. Parent
+recapture rejects source/host changes and identical-byte file replacement. It
+runs under the original training thread contract and grants no evaluation
+authority. Its in-memory output is not a persisted admission token: detached
+study verification must call the production bridge again.
+
+The combined archive/bridge/training-custody/operational/campaign regression
+passed **291 tests in 120.40 seconds**, including the corrected cross-family
+ledger substitution. Provenance and model/parser substitutes are explicit in
+the reset-free bridge fixtures; their passing status is not registered training
+or production checkpoint evidence. Strict typing passes the three implementation
+modules. The aligned registry passes **16 focused cases in 0.76 seconds**, with
+two additional rehashed archive/path substitutions rejected. Final review made
+the tree snapshot retain forbidden artifact nodes without following them, so a
+properly recorded failed artifact does not hide other admitted policies. The
+expanded bridge passes **33 tests in 33.32 seconds**. Strict typing passes all
+four changed source modules; Black checks all seven Python files. Compilation,
+whitespace, unchanged-lock and both frozen protocol digest checks pass. These
+remain intermediate implementation gates; full stage closure and the final clean
+repository release are still pending.

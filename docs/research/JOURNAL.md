@@ -7445,3 +7445,74 @@ passes all five changed source modules. Production stage execution, external aut
 registered checkpoint binding and full detached stage reconstruction remain the
 next build work. The overall readiness goal remains active; no study result or
 training authorization is claimed by this milestone.
+
+### Lossless study storage and production training-input binding
+
+The previous registry/analysis milestone is committed at `b7476c7`. Hypothesis:
+the existing complete training verifier can supply all-15 study inputs without
+trusting a cached verdict or weakening its training host contract. This requires
+reopening admitted checkpoint metadata for the full rollout scorecard and
+retaining process failures, checkpoint rejections and unstarted slots explicitly.
+No stage permission is conferred by that projection.
+
+A read-only filesystem check found approximately 28 GiB available on this host.
+The training-only 5 GiB floor is not an evaluation-evidence capacity estimate.
+Added a bounded, exclusive, lossless canonical-JSON gzip writer/reader as stage
+storage infrastructure. Its **42 byte-level tests passed in 0.35 seconds**,
+including independently encoded members, exact inclusive limits, multi-megabyte
+expansion, invalid JSON, corruption, extra members, retained failed publications,
+indirect paths, concurrent growth and identical-byte replacement. No protected
+episode or checkpoint was opened, and no study-capacity claim follows from this
+storage implementation.
+
+The training verifier now exposes its complete reconstructed report while the
+existing compact CLI verdict delegates to the same fixed production path.
+The new study bridge reopens admitted metadata, retains all 15 slots and checks
+the whole evidence tree and original source/runtime/host after projection.
+Strict typing passes all three changed source modules. Reset-free integration
+and adversarial bridge fixtures are the next gate; no authorization or sealed
+registered evidence is available or used.
+
+The first bridge run found an implementation error: a byte equality check used
+the JSON-value comparison helper, which cannot serialize bytes. Three cases
+failed at that boundary; it now compares the raw canonical bytes directly.
+The resulting **32 bridge tests passed in 30.26 seconds**. They exercise complete
+receipt/report reconstruction with explicit synthetic provenance/model/parser
+dependencies, all-15 admission ordering, full 128-row hash chains, process and
+checkpoint failures, storage-aborted missing slots, wrong entry-point rejection,
+graph substitution and original training-thread identity. These are not real
+registered checkpoint admissions. Review corrected a negative test to use the
+actual scalar family identifier, ensuring it tests a valid cross-family ledger
+substitution rather than an unknown identifier. Archive descriptor rereads now
+enforce the same stored-byte cap as initial reads, including concurrent growth.
+The combined regression follows these corrections.
+
+The combined archive/bridge/training-custody/operational/campaign regression
+passed **291 tests in 120.40 seconds**, with successful process exit. Strict
+typing passes the three implementation modules. The fixed stage registry is now
+aligned with the selected lossless storage format: its physical and timing
+destinations end in `.json.gz`, and it binds the archive schema. This changes no
+historical synthetic evidence path and opens no stage. Registry-specific checks
+and the final static/whitespace/lock gate follow. The training and beta protocols,
+V1 and product interface are unchanged; stage authority/capacity/execution and
+full detached stage closure remain required for the active overall goal.
+
+The aligned registry passed **16 focused cases in 0.76 seconds**, including two
+new rehashed archive/schema-path substitutions. Final review found that the
+metadata-only tree snapshot was too restrictive for failed checkpoint artifacts:
+a retained forbidden node would reject the entire bridge even when the complete
+training verifier correctly recorded that arm as failed. The snapshot now records
+such nodes without following or opening them, leaving location/status admission
+to the complete verifier. An added dangling-artifact fixture preserves the three
+failed optimizer slots and the other twelve admitted policies. The final bridge
+suite passed **33 tests in 33.32 seconds**; original host and identical-replacement
+checks remain intact.
+
+Strict typing passes all four changed source modules (with the final bridge
+checked again), Black checks seven Python files, and compilation/whitespace/lock
+checks pass. Both frozen protocol SHA-256 values are unchanged, and the tracked
+training authorization remains absent. No real policy was loaded, protected seed
+reset, sealed registered log inspected or experiment started. The latest complete
+clean repository gate remains `ad6ad1e`; this milestone is an intermediate
+implementation gate. Production stage authorization, storage capacity, single-arm
+execution and detached development/held-out reconstruction remain next.

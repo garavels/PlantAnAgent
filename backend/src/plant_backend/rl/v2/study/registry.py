@@ -9,6 +9,7 @@ from ..training.custody_authorization import repository_root
 from ..training.custody_json import authenticate, canonical_bytes
 from ..training.episode_allocator import DEVELOPMENT_SEED_MIN, HELDOUT_SEED_MIN
 from ..training.registered_contract import FAMILY_SLUGS
+from .archive import SCHEMA as ARCHIVE_SCHEMA
 from .contract import (
     BETA_CORE_ALGORITHM_IDS,
     BETA_OPTIMIZER_SEEDS,
@@ -103,8 +104,8 @@ def stage_registry(training_root: Path | str, stage: str) -> dict[str, Any]:
                 "directory": str(directory),
                 "claim_path": str(directory / "claimed.json"),
                 "terminal_path": str(directory / "terminal.json"),
-                "arm_path": str(directory / "arm.json"),
-                "latency_path": str(directory / "latency.json"),
+                "arm_path": str(directory / "arm.json.gz"),
+                "latency_path": str(directory / "latency.json.gz"),
                 "stdout_path": str(directory / "stdout.log"),
                 "stderr_path": str(directory / "stderr.log"),
             }
@@ -116,6 +117,7 @@ def stage_registry(training_root: Path | str, stage: str) -> dict[str, Any]:
             "analysis_contract_sha256": analysis_contract()["sha256"],
             "operational_contract_sha256": operational_contract()["sha256"],
             "latency_contract_sha256": latency_contract()["sha256"],
+            "archive_schema": ARCHIVE_SCHEMA,
             "training_root": str(root),
             "stage_root": str(stage_root),
             "episode_seeds": seeds,

@@ -323,7 +323,11 @@ fallback behavior.
   including independently gated scalar comparisons, frozen choices, all sensitivity settings,
   pooled call latency and the ten held-out clauses. The combined campaign/arm/timing regression
   passes 210 tests, with 52 final campaign arithmetic cases after identity tightening.
-  Registered checkpoint/stage binding, execution and detached campaign custody remain required.
+  The production training-input bridge now reopens full training custody and admitted endpoint
+  ledgers, with all-slot failure accounting and stable source/host/file checks. Bounded lossless
+  gzip storage preserves exact canonical evidence bytes and consumes each destination once.
+  Their combined custody/analysis regression passes 291 tests. Stage authority and capacity,
+  per-arm checkpoint binding, execution and detached campaign custody remain required.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

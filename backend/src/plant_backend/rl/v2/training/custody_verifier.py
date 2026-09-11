@@ -491,8 +491,13 @@ def _recheck_evidence(
     _verify_layout(context, records, target.name)
 
 
-def verify_report(path: Path | str) -> dict[str, Any]:
-    """Production verifier: no injectable runtime, host, process, or policy hooks."""
+def read_verified_report(path: Path | str) -> dict[str, Any]:
+    """Reconstruct and return the complete production report, never a cached verdict.
+
+    Study admission needs the admitted records, not just their status counts.
+    This is the same fixed production verifier used by the detached CLI; there
+    are no injectable runtime, host, process or policy dependencies.
+    """
     target = Path(path)
     report = _read_report(target, synthetic=False)
     host = capacity._verify_host(capacity._host_identity())
@@ -514,6 +519,12 @@ def verify_report(path: Path | str) -> dict[str, Any]:
     _recheck_evidence(
         target, context, report, records, admissions, root_stamp, synthetic=False
     )
+    return report
+
+
+def verify_report(path: Path | str) -> dict[str, Any]:
+    """Compact CLI verdict from complete fresh production reconstruction."""
+    report = read_verified_report(path)
     return {
         "verified": True,
         "schema": documents.REPORT_SCHEMA,

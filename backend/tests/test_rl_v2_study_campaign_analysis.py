@@ -170,13 +170,35 @@ def test_registry_exact_order_and_destinations_without_side_effects(
         assert record["cells"][-1]["actor"]["optimizer_seed"] == 503
         assert Path(record["stage_root"]).name == f"training.{stage}-v1"
         assert len({row["arm_path"] for row in record["cells"]}) == 576
+        assert (
+            record["archive_schema"]
+            == "plant-beta-constrained-rl-study-canonical-json-gzip-v1"
+        )
+        assert all(
+            Path(row["arm_path"]).name == "arm.json.gz" for row in record["cells"]
+        )
+        assert all(
+            Path(row["latency_path"]).name == "latency.json.gz"
+            for row in record["cells"]
+        )
         assert registry.verify_registry(record) == record
     assert not root.exists()
     assert list(tmp_path.iterdir()) == []
 
 
 @pytest.mark.parametrize(
-    "mutation", ["stage", "seed", "order", "missing", "actor", "path", "contract"]
+    "mutation",
+    [
+        "stage",
+        "seed",
+        "order",
+        "missing",
+        "actor",
+        "path",
+        "contract",
+        "archive",
+        "uncompressed_path",
+    ],
 )
 def test_rehashed_registry_substitution_rejected(tmp_path: Path, mutation: str) -> None:
     raw = registry.stage_registry(tmp_path.resolve() / "training", "development")
@@ -192,6 +214,10 @@ def test_rehashed_registry_substitution_rejected(tmp_path: Path, mutation: str) 
         raw["cells"][3]["actor"]["optimizer_seed"] = 211
     elif mutation == "path":
         raw["cells"][0]["arm_path"] = str(tmp_path / "replacement.json")
+    elif mutation == "archive":
+        raw["archive_schema"] = "unregistered archive"
+    elif mutation == "uncompressed_path":
+        raw["cells"][0]["latency_path"] = raw["cells"][0]["latency_path"][:-3]
     else:
         raw["latency_contract_sha256"] = "0" * 64
     with pytest.raises(ValueError):
