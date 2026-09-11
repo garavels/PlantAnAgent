@@ -7274,3 +7274,53 @@ policy-integration and CLI regression passed **119 tests in 7.74 seconds**, with
 successful exit and existing native HiGHS cleanup diagnostics. Strict mypy passed
 all three changed source modules. The registered training loader remains separate
 and unchanged. No registered run or protected evaluation was executed.
+
+## 2026-09-11 — Complete study latency evidence build
+
+The previous goal turn made progress through commits `dd6f18b` and `0e3a27d`:
+standalone/pair evidence and historical evaluation route closure, with 204 and
+119 passing targeted regression cases. Current HEAD is clean. The next hypothesis
+is that explicit inference/warm-up/failure and end-to-end timing can be added to
+the fixed private arm runners without changing their deterministic scientific
+outcomes. The study build document now freezes timing boundaries, all-call
+nearest-rank statistics, warm-up input/count, host requirements and source/authority
+separation. Existing timing excludes failed generic controller calls and has no
+separate inference or complete warm-up record, so it cannot support the registered
+p99 gate alone. No protected environment or trained policy is opened for this build.
+
+The first numerical/call-custody pass reached 45 successful cases, then the
+fresh-child host check rejected missing CPU identity. The instrumented four-arm
+fixture likewise rejected at host admission after confirming identical timed/
+untimed PPO deterministic evidence. A read-only probe established the cause:
+sandboxed `sysctl` omitted the CPU brand/core count, while a permitted hardware
+read reported Apple M4 Pro and 12 cores. The hardware requirement is retained;
+fixtures will rerun with access to that metadata. No registered arm, stage or
+study seed was involved. Initial strict typing found one redundant cast, which
+was removed; complete typing will be rerun with the fixture gate.
+
+With permitted hardware reads, the timing arithmetic, host and four-arm physical
+integration suites passed **71 tests in 103.12 seconds**. The fixture performs
+1,000 warm-ups, then actual timed policy calls; its original untimed policy has
+exactly the same deterministic physical/economic digest. Detached checks bind
+every attempted decision, inference input, physical minute and retained solver
+stage, and reject rehashed timing/host/reference substitutions and identical-file
+replacement. A separate **4-test** extension passed in 58.10 seconds: real H/PPO
+pre-movement failures retain attempted-call durations (and the failed policy
+inference), and synthetic-clock arithmetic accepts exactly 100,000,000 ns while
+rejecting 100,000,001 ns. Fresh-child configuration verifies Torch 1/1 without a
+plant reset or policy training. Failed solver-stage inclusion cases are added to
+the upcoming regression. Strict typing passed all three changed source modules.
+
+The complete latency/evaluation/legacy-verifier regression passed **239 tests in
+239.80 seconds**, with successful exit and existing native HiGHS cleanup text.
+It comprises 77 new timing/host/instrumented cases, 119 route/evaluation/CLI cases
+and 43 historical verifier cases. Failed solver stages are retained for both M24
+and E-beta. The source contract digest is
+`71678ee3f3578c6fc2a8fef115790498bbba64584029a5acfc6c8c3d3753d558`.
+Black, compilation, strict mypy for all three changed source modules, Git
+whitespace and dependency-lock checks passed. No registered checkpoint, training
+campaign, protected reset or production authorization was opened. The optional
+private-runner instrumentation preserves legacy serialized arm fields and leaves
+V1 and the product interface unchanged. Production stage authority, full
+operational scorecards, final clean release and explicit later authorization
+remain required; the unchanged overall goal is not complete.

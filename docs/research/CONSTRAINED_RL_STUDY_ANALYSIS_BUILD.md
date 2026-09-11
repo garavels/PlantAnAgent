@@ -133,3 +133,53 @@ authorization file is absent. Later training/development/held-out permissions re
 The final workflow must execute against the admitted training source identity while retaining
 stage evidence outside Git; it cannot edit the loader or report semantics after study outcomes.
 No registered checkpoint, protected episode manifest/trace or sealed training log is opened.
+
+## Latency measurement representation
+
+The separate study latency contract is fixed before protected execution. Every
+fresh PPO arm process performs exactly 1,000 deterministic policy calls on an
+all-zero float32 vector of the admitted 135-field interface. Warm-up calls never
+reset a plant, enter inference samples, change controller state, or retry after a
+failure. Their output digests and any failure are retained. Policy inference is
+measured around the actual `policy.act` call, including unsuccessful calls, with
+its decision index and exact normalized-input digest. Controller time spans the
+whole command-producing call. End-to-end time starts immediately before that call
+and ends when the simulated interval returns (after M24 transition reconciliation).
+It includes command preparation, dispatch, guard and simulated physics, but excludes
+report publication and detached verification. It is simulation pipeline latency,
+not a measured field-network or physical-plant response time.
+
+All clocks use `time.perf_counter_ns`. Raw integer timestamps retain nesting,
+order, completion/failure and one sample per attempted call. Existing per-minute
+dispatch and solver-stage measurements remain the source for those channels;
+failed attempts remain visible rather than entering only successful-call timing.
+Every p50/p95/p99 uses nearest rank `ceil(p*n)`, on all samples in its stated unit,
+with null percentiles for empty channels. The inference gate is inclusive at
+100,000,000 ns and may use no subset of a policy's admitted timed calls. Host
+identity, CPU, OS, dependencies, clock properties and Torch 1/1 settings are bound
+before and after measurement; the external stage authority must also bind the
+operator's absence-of-concurrent-benchmark-jobs assertion. Measurement evidence
+alone cannot supply that authority or satisfy the complete held-out success rule.
+
+This measurement layer is implemented in `study/latency.py` and
+`study/latency_evidence.py`, with optional instrumentation in the fixed private
+generic and M24 arm runners. The legacy arm format remains unchanged; a separate
+synthetic latency file references the independently verified complete arm. Its
+verifier checks every attempted decision, normalized inference input, completed
+minute, solver stage, timing interval and host/runtime identity, then reconstructs
+all-channel summaries. Unknown CPU identity is rejected. The record retains actual
+warm-up attempts/returns/output digests, failures and one-use semantics. No host or
+concurrency registration is inferred by this synthetic path.
+
+The latency contract digest is
+`71678ee3f3578c6fc2a8fef115790498bbba64584029a5acfc6c8c3d3753d558`.
+The 77 new numerical, host and instrumented integration cases include an identical
+timed/untimed PPO physical/economic digest, actual failed H/PPO calls, failed solver
+stages, rehashed substitutions, identical file replacement and the inclusive
+100 ms boundary. Together with existing evaluation/CLI/legacy-verifier checks,
+**239 tests passed in 239.80 seconds**. Strict typing, formatting, compilation and
+whitespace checks passed; the dependency lock is unchanged. The host fixture needed
+permitted CPU metadata reads because sandboxed sysctl returned no CPU identity;
+the admission requirement was not relaxed. These remain fixture and intermediate
+release results. Production stage authority and full operational scorecards remain
+required, followed by the complete clean release gate and explicit authorization.

@@ -56,6 +56,7 @@ from .policy_setpoint_controller import (
 from .setpoint_command import process_setpoint_boundary_sha256
 from .setpoint_controllers import LegacyHeuristicSetpointControllerV1
 from .study.legacy_admission import require_legacy_evaluation_scope
+from .study.latency import LatencyRecorder
 from .setpoint_execution import ProcessSetpointIntervalExecutionV1
 from .training.config import (
     BETA_REGISTERED_RUN_KIND,
@@ -1075,7 +1076,10 @@ def _generic_arm_result(
     controller: _CommandController,
     manifest_identity: Mapping[str, str],
     initial_vector: NDArray[np.generic],
+    study_timing: LatencyRecorder | None = None,
 ) -> dict[str, Any]:
+    if study_timing is not None and study_timing.arm != arm:
+        raise ValueError("study timing arm differs from the execution arm")
     decisions: list[dict[str, Any]] = []
     executions: list[dict[str, Any]] = []
     intervals: list[dict[str, Any]] = []
@@ -1102,6 +1106,8 @@ def _generic_arm_result(
             decision_solar_kw = float(typed.plant.state.boundary.solar_available_kw)
             source: object = typed.plant if arm == HEURISTIC_ARM else typed
             phase = "controller_compute"
+            if study_timing is not None:
+                study_timing.begin(int(boundary["decision_index"]))
             started_ns = time.perf_counter_ns()
             decision = controller.compute_command(
                 source,
@@ -1110,6 +1116,8 @@ def _generic_arm_result(
                 commitment_profile=environment.episode_config.electrolyser_commitment,
             )
             controller_elapsed_ns.append(time.perf_counter_ns() - started_ns)
+            if study_timing is not None:
+                study_timing.controller_finished()
             serializer = getattr(decision, "to_dict", None)
             command = getattr(decision, "command", None)
             if not callable(serializer) or command is None:
@@ -1135,6 +1143,8 @@ def _generic_arm_result(
                     controller_invalid=raw_invalid,
                 )
             )
+            if study_timing is not None:
+                study_timing.finish()
             previous_solar_kw = decision_solar_kw
             execution = environment.last_process_setpoint_execution
             if not isinstance(execution, ProcessSetpointIntervalExecutionV1):
@@ -1183,6 +1193,8 @@ def _generic_arm_result(
             intervals.append(interval)
             phase = "boundary_capture"
     except Exception as reason:
+        if study_timing is not None:
+            study_timing.abort(reason)
         retained_minutes = sum(
             int(execution["application_count"]) for execution in executions
         )
@@ -1262,7 +1274,10 @@ def _service_mpc_result(
     settings: ServiceMPCSetpointSettingsV1,
     manifest_identity: Mapping[str, str],
     initial_vector: NDArray[np.generic],
+    study_timing: LatencyRecorder | None = None,
 ) -> dict[str, Any]:
+    if study_timing is not None and study_timing.arm != SERVICE_MPC_ARM:
+        raise ValueError("study timing arm differs from M24")
     rewards: list[float] = []
     intervals: list[dict[str, Any]] = []
     dispatcher_elapsed: list[tuple[int, ...]] = []
@@ -1286,12 +1301,16 @@ def _service_mpc_result(
                 environment.controller_observation.state.boundary.solar_available_kw
             )
             phase = "controller_compute"
+            if study_timing is not None:
+                study_timing.begin(int(boundary["decision_index"]))
             decision = controller.compute_setpoints(
                 environment.controller_observation,
                 constraints=environment.constraints,
                 config=environment.config,
                 commitment_profile=environment.episode_config.electrolyser_commitment,
             )
+            if study_timing is not None:
+                study_timing.controller_finished()
             phase = "environment_execution"
             observation_vector, reward, terminated, truncated, info = (
                 environment.step_setpoints(decision.setpoints)
@@ -1315,6 +1334,8 @@ def _service_mpc_result(
                 environment.controller_observation,
                 execution=execution,
             )
+            if study_timing is not None:
+                study_timing.finish()
             truth_states = environment.last_minute_truth_states
             if (
                 truth_states is None
@@ -1344,6 +1365,8 @@ def _service_mpc_result(
             intervals.append(interval)
             phase = "boundary_capture"
     except Exception as reason:
+        if study_timing is not None:
+            study_timing.abort(reason)
         retained_minutes = sum(len(group) for group in dispatcher_elapsed)
         if (
             environment.decisions_taken != len(intervals)

@@ -312,10 +312,12 @@ fallback behavior.
   binds numerical representations before study outcomes and tracks the remaining evaluation
   integration. Statistics, family selection and additive sensitivity kernels have 82 reset-free
   tests. Standalone physical evidence and pairwise admission have 79 synthetic integration and
-  adversarial tests; the combined analysis/legacy-verifier regression passes 204 tests. Registered
-  checkpoint/stage binding, scorecards/latency and detached campaign custody remain pending.
+  adversarial tests; the combined analysis/legacy-verifier regression passes 204 tests.
   Historical beta evaluation routes now reject registered tasks/checkpoints and protected study
   seeds before execution; the route-closure and compatibility regression passes 119 tests.
+  Complete warm-up/inference/failure and simulation-pipeline latency evidence is now fixture-tested,
+  with 239 passing latency/evaluation/verifier regression cases. Registered checkpoint/stage
+  binding, full operational scorecards and detached campaign custody remain required.
 - [`tools/`](tools/) retains the exact hash-bound one-shot drivers used to run the
   endowment diagnostic and construct its compact Git report from the protected external
   artifacts.

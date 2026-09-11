@@ -208,8 +208,10 @@ equipment consequences.
   and tampering coverage. Clean revision `ad6ad1e` passed 2,285 Python tests and the complete
   static/frontend gate. Numerical selection, sensitivity and held-out statistics are implemented;
   independently verified standalone arm/pair evidence is fixture-tested. The combined analysis
-  and legacy-verifier regression passes 204 tests. Registered evaluation authority, complete
-  scorecards/latency and detached stage custody remain build gates before requesting the study.
+  and legacy-verifier regression passes 204 tests. Full warm-up/inference/failure and simulation
+  pipeline timing is instrumented and independently cross-checked against physical fixtures;
+  its combined regression passes 239 tests. Registered evaluation/hardware authority, complete
+  operational scorecards and detached stage custody remain build gates before requesting the study.
 - Gates C–E remain pending. No current result establishes RL superiority, HEPA value,
   full-stack value, site generalization, or a commercial return.
 
