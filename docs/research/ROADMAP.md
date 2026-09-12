@@ -2,6 +2,16 @@
 
 ## Product and research thesis
 
+Next prospective screen: [batch 003](ADAPTIVE_RL_BATCH_003_PROTOCOL.md) places one
+scalar PPO policy around the corrected OperatingMPC, with 32,768 transitions and
+eight fresh development scenarios. An exact zero residual preserves MPC; bounded
+adjustments retain its low-power/startup commands. This tests whether a stronger
+prior is trainable without imitation error or state-dependent cached teacher
+actions. All six actors, failures and individual service/resource/safety outcomes
+remain required. Measured local MPC throughput suggests roughly five training
+hours, plus evaluation/replay; a fixed six-hour training cap retains timeout as
+failure. No outcome, convergence or economic benefit is presumed.
+
 Closed batch 002, 2026-09-12: the four-cell direct/residual PI/scalar comparison
 completed at `a442a4a`; all 80 evaluation and detached replay slots passed custody
 audit. The [results](results/ADAPTIVE_RL_BATCH_002_RESULTS.md) establish exact

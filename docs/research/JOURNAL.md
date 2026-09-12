@@ -8669,3 +8669,73 @@ equal-service cost savings are not established. C/D worsened four/three daily
 methane deficits respectively. The diagnosis scripts, full JSON and Markdown
 were archived byte-identically under the external analysis root's `learning/`
 and `operation/` directories, with manifests and references in compact evidence.
+
+## 2026-09-12 — Prospective MPC residual trainability screen
+
+Batch 002's residual-H policies learned modest changes but inherited a weak
+startup prior and remained below OperatingMPC in every paired service/economic
+case. The [batch 003 protocol](ADAPTIVE_RL_BATCH_003_PROTOCOL.md) fixes one fresh
+scalar PPO policy around the corrected MPC for 32,768 transitions, four rollouts,
+optimizer seed 101, reward scale 0.001 and initial standard deviation 0.2. An exact
+zero output head reproduces the incumbent. A new 139-input identity appends cached
+MPC targets to the actual public observation; no extra physical observation or
+private forecast is introduced. Corrections are limited to ±25% of high-load
+electrolysis excess above the stable-running floor and of downstream targets.
+Low-power/startup targets and every zero target remain the incumbent's. This
+restriction is not a safety guarantee and cannot independently initiate charging
+where MPC commands zero; previous saved MPC charging ceilings were positive on
+only 3.68% of decision boundaries. All required service/resource/safety gates stay.
+
+Eight prior complete MPC evaluation receipts measured median 351.50 and maximum
+389.04 seconds per 672-decision week. Full-receipt extrapolation projects roughly
+4.76–5.27 hours for this short training budget; a new fixed six-hour cap leaves
+time for ordinary overhead without promising completion. Direct MPC residual
+avoids a new imitation dataset and its distribution-shift/commitment-boundary
+errors. Existing development trajectories remain diagnostic data. Fresh training
+seeds 9,620,000–9,620,051 and development seeds 9,700,200–9,700,207 are fixed before
+execution. Native H, OperatingMPC, strict M24/E-beta, initial MPC residual and the
+final policy occupy all 48 evaluation slots with detached replay. This is a
+trainability/feasibility screen, not convergence or formal policy selection.
+
+The wrapper retains complete nominal MPC plan/fallback evidence and executes
+the original float64 command at exact zero. Stale cached/public/authority state,
+prior failure and broken physical/reset boundaries have typed fatal errors;
+malformed policy actions retain ordinary rejection. Its complete 55-test suite
+passed in 119.19 seconds, including full 168-hour controlled-solver parity,
+bounded actual-MPC parity, allocator reset waves, raw EUR/constraint equivalence,
+source admission and numeric-layout fixtures. Strict mypy, Black and whitespace
+checks passed. A test-only checkpoint import error was corrected during fixture
+construction. NumPy/SciPy native layouts are hash-bound with explicit unknown
+HiGHS version where necessary; only the installed numerical runtime received
+integration testing, while other supported layouts use fabricated fixtures.
+
+The separate runner passed 42 checks in 19.41 seconds, plus strict mypy, Black,
+compilation and CLI checks. It preserves four diagnostics/optimizer ledgers,
+immutable reset/rollout allocator prefixes and caught-failure records. Initial
+and final policies require a successfully closed training receipt. Callback,
+checkpoint, allocator and MPC integrity failures abort with reserved exit 86;
+ordinary numerical failures remain explicit local failed arms. Early dispatch
+checks failed while the parallel evaluator file was not yet present; the final
+runner suite passed after the interface was available. No production reset or
+training has occurred at this implementation entry. Exact clean-source gate,
+evaluator/replay validation and launch evidence remain required before execution.
+
+Independent admission review found and closed three further evidence gaps before
+source freeze: the evaluator's preliminary mapper could bypass typed cache-loss
+classification; early training evidence/directory publication could escape fatal
+classification; and replay did not bind the inner controller actor to its slot.
+Specific stale-public/envelope/index, consumed-claim/publication and actor-substitution
+regressions now cover those paths. The updated runner passed 47 checks in 20.16
+seconds; strict mypy, Black and compilation passed.
+
+The evaluator's complete 50-test suite passed in 182.36 seconds, with Black and
+strict mypy. Serialized real-MPC prefixes and synthetic whole-day fallback traces
+verify exact saved-command execution, causal prior/mapping comparison and daily
+settlements. Raw MPC and residual hashes are checked before zeroing only declared
+solver `elapsed_ns` fields and recomputing their hash descendants. Semantic plan,
+command, public-boundary, resource and failure changes remain rejected. Tests
+cover changed fallback clocks, self-consistent semantic tampering, fatal prior/
+physical/capture errors, ordinary failed-policy prefixes and no additional reset,
+encoding or MPC computation from prior-integrity checks. A full-week actual-MPC
+replay wall time has not been separately measured; its fixed ten-minute external
+cap remains binding. No production reset or experiment was run by these checks.

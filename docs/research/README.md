@@ -12,6 +12,12 @@ fallback behavior.
 
 ## Files
 
+- [`ADAPTIVE_RL_BATCH_003_PROTOCOL.md`](ADAPTIVE_RL_BATCH_003_PROTOCOL.md)
+  fixes one short scalar PPO screen around the corrected OperatingMPC: 32,768
+  transitions, exact-MPC initialization, bounded operating-effort adjustments,
+  fresh seeds and all six actors on eight development scenarios. It preserves
+  startup commands and the unchanged delivery/resource task. This is a
+  trainability/feasibility screen, not convergence, formal selection or deployment.
 - [`ADAPTIVE_RL_BATCH_002_RESULTS.md`](results/ADAPTIVE_RL_BATCH_002_RESULTS.md)
   closes four fresh policies and all 80 evaluation/replay slots at `a442a4a`.
   Residual scalar PPO improved mean value over its exact-H initialization by
