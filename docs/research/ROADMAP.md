@@ -2,6 +2,19 @@
 
 ## Product and research thesis
 
+Adaptive research update, 2026-09-12: the one-policy pilot completed, but learning
+reduced mean delivery fill to 30.6% from 84.3% at initialization; H delivered 89.5%
+on the same four stochastic weeks. This is a learning failure, not operational
+benefit. The user granted research autonomy to diagnose it and iterate under
+prospective protocols. The [adaptive research protocol](RL_OPERATIONAL_BENEFIT_RESEARCH_PROTOCOL.md)
+fixes five short, equal-budget tests of reward scaling, constraint signals and
+initial exploration. The current task is unchanged. Operating MPC, H, M24 and
+E-beta are retained in paired development evaluation; stopped comparators cannot
+supply artificial wins. Given already high incumbent delivery in existing cells,
+the commercial objective is improved economics at preserved service and resource
+performance. Fresh confirmation and optimizer-seed replication remain required.
+The original registered matrix and its protected seeds remain unopened.
+
 Immediate execution update, 2026-09-11: the user requested one policy/one optimizer
 seed before committing to the full matrix. The separate
 [single-policy pilot](PPO_SINGLE_POLICY_PILOT.md) fixes PI-Lagrangian seed 101,

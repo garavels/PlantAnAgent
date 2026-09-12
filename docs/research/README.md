@@ -12,6 +12,13 @@ fallback behavior.
 
 ## Files
 
+- [`RL_OPERATIONAL_BENEFIT_RESEARCH_PROTOCOL.md`](RL_OPERATIONAL_BENEFIT_RESEARCH_PROTOCOL.md)
+  defines the separately authorized adaptive investigation after the negative
+  single-policy pilot. It fixes the first five-cell conditioning/exploration
+  screen, unchanged task, strong operating MPC comparison and future confirmation
+  requirements. Economic benefit must preserve delivery and resource performance.
+  The [saved-data diagnosis](results/ppo_pilot_912d9e6_diagnosis.json) retains the
+  failed trained-policy outcome and its evidence limits.
 - [`PPO_SINGLE_POLICY_PILOT.md`](PPO_SINGLE_POLICY_PILOT.md) freezes the subsequently
   user-authorized exploratory PI-Lagrangian seed-101 run and fixed descriptive
   checks. It uses a separate identity and nonprotected episode seeds. The original

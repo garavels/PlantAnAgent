@@ -8331,3 +8331,98 @@ A full 168-hour H integration fixture completed and serialized all seven daily
 settlements; its seed is separate from the pilot scenarios and no comparative
 performance result was inspected. Final clean-commit regression evidence follows
 outside tracked source.
+
+## 2026-09-12 — Completed pilot failure and adaptive learning diagnosis
+
+The one-policy pilot at clean source `912d9e6` completed all 1,048,576 transitions,
+128 rollouts and 40,960 minibatch updates. Training took 15,437.93 seconds;
+evaluation took 131.74 seconds. Both children exited zero with empty stderr and
+the supervisor closed with no failure. The external root remains
+`/Volumes/Lexar/PlantAnAgentResearch/pilot-pi-seed101-v1`. Its exact source gate
+passed 263 scoped Python tests plus static/CLI checks; the earlier complete
+3,052-test repository gate is inherited, not a full test count at `912d9e6`.
+
+On all four fixed descriptive stochastic weeks, final PPO is worse than its
+initialization and H. Mean delivery fill is 30.623% for final PPO, 84.307% for
+initial PPO and 89.506% for H; mean operating value is -105,701.56, -24,941.47 and
+-9,846.52 EUR respectively. Final PPO produces 1,835.50 kg of methane per week
+against initial PPO's 5,443.06 kg and H's 5,803.74 kg. Final hydrogen inventory is
+almost full while methane inventory is empty. All three controllers fail at
+least one resource return in every daily cycle across the four episodes. The
+pilot did not perform the strict minute-level safety gate or detached replay;
+guard authority alone is not evidence of those passes. No registered or held-out
+evaluation has been opened, and no RL benefit is established.
+
+Read-only diagnosis inspected saved trajectories, rollout ledgers and tensor
+weights; it performed zero new environment resets and optimizer steps. The
+final reward critic's second tanh layer is fully saturated, with effectively
+constant prediction near -806 EUR despite discounted return means around
+-22,000 to -27,000 EUR. The policy commands nearly maximum electrolysis on most
+decisions and much less methanation: mean targets change from approximately
+1,509/598/90/1,251 kW to 2,984/410/32/1,159 kW in electrolyser/DAC/methanator/
+battery-charge order. Methanator applied energy matches its dispatched energy,
+pointing to the upstream command/allocation behavior rather than downstream
+guard refusal. Electrolyser hot starts rise from 18.5 to 261.25 per week and
+nonproductive energy from 5,248.75 to 18,594.25 kWh. Manual tensor inference
+reproduces recorded actions within 4.2e-7. Source review found no demonstrated
+action-order, sign or pilot-wiring defect. This identifies poor learning and
+critic fit, not a uniquely proven causal mechanism.
+
+The [compact diagnosis](results/ppo_pilot_912d9e6_diagnosis.json) retains all
+controller means, network/dispatch diagnostics and input/output digests. Two
+saved-data reproduction scripts are committed under `tools/`. Original analysis
+scripts and outputs were archived without changing the pilot root under
+`/Volumes/Lexar/PlantAnAgentResearch/pilot-pi-seed101-v1-analysis-20260912`;
+manifest SHA-256 is
+`59338429618b473dbe118a943f60803006b4c43b09b339b412ba5c3e101223b7`.
+
+The user subsequently granted full research autonomy to diagnose and iterate
+toward verified operational benefit. The new
+[adaptive protocol](RL_OPERATIONAL_BENEFIT_RESEARCH_PROTOCOL.md) preserves the
+original registered study and protected seeds. Five fresh, equal-budget
+131,072-transition cells compare PI/scalar learning with raw/scaled optimizer
+reward and one lower-exploration PI cell. Hypotheses are poor reward conditioning,
+competition from independently standardized sparse resource-cost advantages,
+and excessive exploration. The physical task, raw EUR accounting, resource
+signals, dispatcher and guard remain unchanged. No claim is manufactured by
+increasing demand or weakening forecasts/baselines. Following the user's
+service-ceiling clarification, preserved delivery is a requirement and economic
+efficiency is the main opportunity when existing service is already high.
+
+New isolated research modules provide the batch supervisor, read-only rollout
+diagnostics and native PPO/H/OperatingMPC/M24/E-beta evaluation with complete
+minute truth chains. Saved commands are replayed in a separate process, with
+strict safety, individual resource settlements and incomplete/failure records.
+The replay verifies physical consequences; it does not independently establish
+the authenticity of a reported controller exception. Checkpoint identities,
+source/host/gate checks and closed process receipts are separately bound by the
+parent. All eight development seeds and all ten actor identities are fixed
+before any reset. Local failures remain explicit slots; operator interruption
+or source/integrity loss aborts remaining execution. Future practical-effect
+thresholds, new confirmation data and optimizer-seed replication remain required
+before an operational-benefit or algorithm-level claim.
+
+Initial diagnostics and batch integration checks passed 15 tests in 39.14 seconds.
+An independent launch review found three admission gaps: failed training could
+still supply a checkpoint, initial weights lacked digest verification, and an
+operator interruption could be treated as a local failure and launch the next
+child. All three were repaired with regression tests; the expanded batch suite
+passed 11 tests in 39.56 seconds. A real serialized replay regression exposed
+the tuple-to-list JSON mismatch at the evaluator boundary. Comparison now uses
+canonical JSON values, including scalar type distinctions. A combined typing
+check also exposed mypy 1.11.2's inability to resolve the venv NumPy 2.5.2
+`NDArray` alias. Expanding only the annotations repaired the exact-environment
+check; diagnostics still pass all seven state-preservation/gradient tests. The
+complete evaluator suite passed 29 tests in 151.10 seconds, including real
+compressed-file replay and tamper checks. A final cross-module audit found that
+an integrity mismatch could otherwise become an ordinary failed child and let
+the batch continue. A reserved integrity exit now stops the parent after receipt
+publication; expected unavailable policies remain local failed slots.
+The six focused failure/admission/interruption checks passed after that repair,
+and strict typing of all three research modules plus Black for all eight new
+Python files passed. No production task, existing controller, frozen learner,
+registered protocol or frontend file was changed.
+No adaptive production reset or training step has occurred at
+this implementation entry; only disjoint 9,990,000-series fixtures ran. Final
+clean-source gate and launch evidence will be stored outside tracked source so
+the experiment's source identity remains stable while it runs.

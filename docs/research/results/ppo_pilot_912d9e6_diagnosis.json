@@ -1,0 +1,1095 @@
+{
+  "schema": "plant-ppo-pilot-diagnosis-v1",
+  "pilot_source_commit": "912d9e68386f49fba4dfef0eccaf877a17633b1d",
+  "pilot_root": "/Volumes/Lexar/PlantAnAgentResearch/pilot-pi-seed101-v1",
+  "input_report_sha256": "8b6ef6d530d04fe445e4603f59acf35d97218807d185fecaddf62d46e7c7081e",
+  "actor_means": {
+    "initial": {
+      "physical": {
+        "delivery_fill_rate": 0.8430732154169903,
+        "commitments_met": 20.5,
+        "delivered_kg": 5665.4520076021745,
+        "ch4_produced_kg": 5443.058175197862,
+        "terminal_h2_kg": 95.28229993409212,
+        "terminal_co2_kg": 5999.893230041487,
+        "terminal_ch4_kg": 0.0,
+        "h2_inventory_change_kg": -206.0016316229368,
+        "co2_inventory_change_kg": 4245.0317331729275,
+        "ch4_inventory_change_kg": -222.39383240431252,
+        "terminal_battery_soc": 0.1500722536905225,
+        "electrolyser_applied_energy_kwh": 147810.9208461808,
+        "dac_applied_energy_kwh": 38426.88342993406,
+        "methanator_applied_energy_kwh": 6531.669810237434,
+        "electrolyser_nonproductive_energy_kwh": 5248.75,
+        "electrolyser_cold_starts": 13.75,
+        "electrolyser_hot_starts": 18.5,
+        "electrolyser_aborted_starts": 7.5,
+        "electrolyser_forced_stops": 9.0,
+        "guard_interventions": 377.5,
+        "curtailed_kwh": 17009.05282389979,
+        "solar_kwh": 210949.69480696035,
+        "dispatch_gap_kwh": 31065.383998868143,
+        "request_application_gap_kwh": 35396.956109997845
+      },
+      "net_eur": -24941.471069296404,
+      "components_eur": {
+        "battery_endowment_liability_change": -357.5411972653608,
+        "battery_throughput_reserve": -4947.7066582436355,
+        "delivered_service_value": 22661.808030408698,
+        "electrolyser_life_reserve": -4060.9125000000004,
+        "methane_endowment_liability_change": -1968.3889055817313,
+        "solar_opportunity_cost": -15177.769990657871,
+        "unmet_delivery_penalty": -21090.959847956503
+      },
+      "mean_targets_kw": [
+        1508.6368738013464,
+        598.0038031683372,
+        90.23485330595024,
+        1250.680004915902
+      ],
+      "mean_actions": [
+        0.005757915867564276,
+        -0.003326994719437997,
+        0.0026094811772249416,
+        0.0005440039327216557
+      ],
+      "min_actions": [
+        -0.0018479784484952688,
+        -0.007938510738313198,
+        -0.0033187814988195896,
+        -0.005664053373038769
+      ],
+      "max_actions": [
+        0.011860799044370651,
+        0.0020253839902579784,
+        0.009227427653968334,
+        0.006660808809101582
+      ],
+      "fraction_ge_999": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "total_cycle_deficit_count": {
+        "battery": 28,
+        "h2": 28,
+        "co2": 0,
+        "ch4": 28
+      },
+      "mean_reward_diagnostics": {
+        "settlement_sum": -15119.197488281756,
+        "ordinary_sum": -9822.273581014646,
+        "settlement_mean": -539.9713388672055,
+        "ordinary_mean": -15.25197761027119,
+        "step_std": 351.2256461187943
+      }
+    },
+    "final": {
+      "physical": {
+        "delivery_fill_rate": 0.30623451223643483,
+        "commitments_met": 2.0,
+        "delivered_kg": 2057.895922228842,
+        "ch4_produced_kg": 1835.502089824531,
+        "terminal_h2_kg": 1999.815506695242,
+        "terminal_co2_kg": 5975.370894252581,
+        "terminal_ch4_kg": 0.0,
+        "h2_inventory_change_kg": 1698.5315751382132,
+        "co2_inventory_change_kg": 4220.509397384023,
+        "ch4_inventory_change_kg": -222.39383240431252,
+        "terminal_battery_soc": 0.8931762448441344,
+        "electrolyser_applied_energy_kwh": 156705.51663380163,
+        "dac_applied_energy_kwh": 18536.280288802947,
+        "methanator_applied_energy_kwh": 2202.602507789435,
+        "electrolyser_nonproductive_energy_kwh": 18594.25,
+        "electrolyser_cold_starts": 14.0,
+        "electrolyser_hot_starts": 261.25,
+        "electrolyser_aborted_starts": 12.75,
+        "electrolyser_forced_stops": 12.75,
+        "guard_interventions": 348.0,
+        "curtailed_kwh": 28290.231171745905,
+        "solar_kwh": 210949.69480696035,
+        "dispatch_gap_kwh": 206402.8613214,
+        "request_application_gap_kwh": 208206.60417820796
+      },
+      "net_eur": -105701.55642595519,
+      "components_eur": {
+        "battery_endowment_liability_change": 7.671641100159832e-14,
+        "battery_throughput_reserve": -2307.3091060258375,
+        "delivered_service_value": 8231.583688915369,
+        "electrolyser_life_reserve": -4104.375000000002,
+        "methane_endowment_liability_change": 0.0,
+        "solar_opportunity_cost": -14279.374453420942,
+        "unmet_delivery_penalty": -93242.08155542317
+      },
+      "mean_targets_kw": [
+        2984.049198284213,
+        409.62339926710615,
+        31.921278743539006,
+        1158.7792572752387
+      ],
+      "mean_actions": [
+        0.9893661321894753,
+        -0.31729433455482303,
+        -0.6453191250717888,
+        -0.0729765941798091
+      ],
+      "min_actions": [
+        0.8485391139984131,
+        -0.4518525302410126,
+        -0.9556323289871216,
+        -0.3044365346431732
+      ],
+      "max_actions": [
+        1.0,
+        -0.17441993951797485,
+        -0.26815566420555115,
+        0.21687501668930054
+      ],
+      "fraction_ge_999": [
+        0.8616071428571428,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "total_cycle_deficit_count": {
+        "battery": 18,
+        "h2": 0,
+        "co2": 0,
+        "ch4": 28
+      },
+      "mean_reward_diagnostics": {
+        "settlement_sum": -86082.23783332773,
+        "ordinary_sum": -19619.318592626867,
+        "settlement_mean": -3074.365636904562,
+        "ordinary_mean": -30.464780423333643,
+        "step_std": 718.3168926867719
+      }
+    },
+    "H": {
+      "physical": {
+        "delivery_fill_rate": 0.8950583565544357,
+        "commitments_met": 21.75,
+        "delivered_kg": 6014.792156045807,
+        "ch4_produced_kg": 5803.737048835618,
+        "terminal_h2_kg": 0.0,
+        "terminal_co2_kg": 4161.949171767669,
+        "terminal_ch4_kg": 11.338725194107184,
+        "h2_inventory_change_kg": -301.28393155702895,
+        "co2_inventory_change_kg": 2407.08767489911,
+        "ch4_inventory_change_kg": -211.05510721020534,
+        "terminal_battery_soc": 0.9140682895964665,
+        "electrolyser_applied_energy_kwh": 145991.5824326461,
+        "dac_applied_energy_kwh": 36734.729118394054,
+        "methanator_applied_energy_kwh": 6964.484458602721,
+        "electrolyser_nonproductive_energy_kwh": 7836.0,
+        "electrolyser_cold_starts": 1.25,
+        "electrolyser_hot_starts": 18.25,
+        "electrolyser_aborted_starts": 0.25,
+        "electrolyser_forced_stops": 0.25,
+        "guard_interventions": 160.25,
+        "curtailed_kwh": 16607.850321157006,
+        "solar_kwh": 210949.69480696035,
+        "dispatch_gap_kwh": 66208.13197161684,
+        "request_application_gap_kwh": 66400.76208692403
+      },
+      "net_eur": -9846.524857095508,
+      "components_eur": {
+        "battery_endowment_liability_change": 0.0,
+        "battery_throughput_reserve": -1289.2820655063074,
+        "delivered_service_value": 24059.16862418323,
+        "electrolyser_life_reserve": -1292.025,
+        "methane_endowment_liability_change": -2685.2924042780396,
+        "solar_opportunity_cost": -14534.937132410578,
+        "unmet_delivery_penalty": -14104.156879083857
+      },
+      "mean_targets_kw": [
+        1172.3179310754485,
+        221.5807572215467,
+        48.14239593501257,
+        43.468377484045725
+      ],
+      "mean_actions": null,
+      "min_actions": null,
+      "max_actions": null,
+      "fraction_ge_999": null,
+      "total_cycle_deficit_count": {
+        "battery": 0,
+        "h2": 28,
+        "co2": 0,
+        "ch4": 19
+      },
+      "mean_reward_diagnostics": {
+        "settlement_sum": -7023.662089680347,
+        "ordinary_sum": -2822.862767415206,
+        "settlement_mean": -250.84507463144095,
+        "ordinary_mean": -4.383327278595041,
+        "step_std": 268.0210225911201
+      }
+    }
+  },
+  "network_diagnostics": {
+    "initial": {
+      "gaussian_std": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "episodes": [
+        {
+          "seed": 9800000,
+          "action_prediction_max_abs_error": 5.005858838558197e-09,
+          "mu_mean": [
+            0.005931410472840071,
+            -0.003770581679418683,
+            0.0028112302534282207,
+            -2.0178720660624094e-05
+          ],
+          "mu_std": [
+            0.0034186828415840864,
+            0.0015362739795818925,
+            0.0028208454605191946,
+            0.0032241386361420155
+          ],
+          "mu_min": [
+            -0.0018479785649105906,
+            -0.007284779101610184,
+            -0.002349825343117118,
+            -0.005656441207975149
+          ],
+          "mu_max": [
+            0.011860798113048077,
+            0.001102826907299459,
+            0.00922742672264576,
+            0.006536442786455154
+          ],
+          "expected_lower_clipping": [
+            0.15722565352916718,
+            0.15956954658031464,
+            0.1579769402742386,
+            0.158661350607872
+          ],
+          "expected_upper_clipping": [
+            0.16009610891342163,
+            0.1577448695898056,
+            0.15933729708194733,
+            0.15865172445774078
+          ],
+          "value_min_mean_max": [
+            -0.7333146333694458,
+            -0.2037591189146042,
+            0.4674842059612274
+          ],
+          "discounted_return_min_mean_max": [
+            -12696.300006479549,
+            -7423.461078375085,
+            -2552.0783755016296
+          ],
+          "value_mse": 62716765.24582986,
+          "value_explained_variance": -2.50868774602786e-05,
+          "value_hidden_saturation_fraction": 0.0,
+          "reward_gae_std": 1194.1100505047993,
+          "cost_gae_std": [
+            0.034935357699566544,
+            0.044415858821940955,
+            0.0361905548387009,
+            0.04493496047958066
+          ],
+          "cost_gae_mean": [
+            0.022179995340150385,
+            0.011578995354596774,
+            -0.0018484713283974871,
+            0.027552600561234573
+          ],
+          "cost_value_pred_mean": [
+            -0.06028696894645691,
+            0.10013507306575775,
+            0.0669652596116066,
+            -0.004099206533282995
+          ],
+          "undiscounted_remaining_cost_mean": [
+            0.3963386854750906,
+            0.2899560667574721,
+            0.0,
+            0.5587479727019232
+          ]
+        },
+        {
+          "seed": 9800001,
+          "action_prediction_max_abs_error": 5.9371814131736755e-09,
+          "mu_mean": [
+            0.0057893190532922745,
+            -0.002794729545712471,
+            0.0027736637275666,
+            0.0012050679652020335
+          ],
+          "mu_std": [
+            0.002917001722380519,
+            0.0014629806391894817,
+            0.003059387905523181,
+            0.002873575547710061
+          ],
+          "mu_min": [
+            -0.0004570155870169401,
+            -0.007298832293599844,
+            -0.003318780567497015,
+            -0.003540576435625553
+          ],
+          "mu_max": [
+            0.010682442225515842,
+            0.0020019602961838245,
+            0.008466707542538643,
+            0.0066608102060854435
+          ],
+          "expected_lower_clipping": [
+            0.15725955367088318,
+            0.15933272242546082,
+            0.15798623859882355,
+            0.1583649218082428
+          ],
+          "expected_upper_clipping": [
+            0.16006125509738922,
+            0.15798017382621765,
+            0.15932849049568176,
+            0.15894809365272522
+          ],
+          "value_min_mean_max": [
+            -0.5470576286315918,
+            0.009170361794531345,
+            0.756075382232666
+          ],
+          "discounted_return_min_mean_max": [
+            -13167.741627667627,
+            -7837.25249833856,
+            -2910.856975417196
+          ],
+          "value_mse": 67652486.99301958,
+          "value_explained_variance": -2.3240749775998992e-05,
+          "value_hidden_saturation_fraction": 0.0,
+          "reward_gae_std": 965.8468784185919,
+          "cost_gae_std": [
+            0.03563963137315861,
+            0.044005983221690255,
+            0.03689276393315608,
+            0.0477586698325198
+          ],
+          "cost_gae_mean": [
+            0.023477042487320434,
+            0.014839358623125298,
+            -0.0018223216069360177,
+            0.02478326842615948
+          ],
+          "cost_value_pred_mean": [
+            -0.02490122802555561,
+            0.12069094926118851,
+            0.06443466246128082,
+            -0.03647848218679428
+          ],
+          "undiscounted_remaining_cost_mean": [
+            0.4347615798476013,
+            0.4163061992580475,
+            0.0,
+            0.5307038299341725
+          ]
+        },
+        {
+          "seed": 9800002,
+          "action_prediction_max_abs_error": 5.587935447692871e-09,
+          "mu_mean": [
+            0.005408311262726784,
+            -0.0024165711365640163,
+            0.0025852019898593426,
+            0.0010932860895991325
+          ],
+          "mu_std": [
+            0.0029343643691390753,
+            0.0014528179308399558,
+            0.003078893991187215,
+            0.00294487620703876
+          ],
+          "mu_min": [
+            -0.001587108476087451,
+            -0.006386717781424522,
+            -0.0030949742067605257,
+            -0.0037466969806700945
+          ],
+          "mu_max": [
+            0.010464387014508247,
+            0.0020253825932741165,
+            0.008441168814897537,
+            0.006621600594371557
+          ],
+          "expected_lower_clipping": [
+            0.15735113620758057,
+            0.1592409461736679,
+            0.1580316424369812,
+            0.1583918035030365
+          ],
+          "expected_upper_clipping": [
+            0.15996842086315155,
+            0.15807150304317474,
+            0.15928271412849426,
+            0.158921018242836
+          ],
+          "value_min_mean_max": [
+            -0.564808189868927,
+            -0.058881860226392746,
+            0.759212851524353
+          ],
+          "discounted_return_min_mean_max": [
+            -7202.171657349689,
+            -3678.1996364948614,
+            -901.6397951654799
+          ],
+          "value_mse": 15788390.950588351,
+          "value_explained_variance": -0.00011767738696133456,
+          "value_hidden_saturation_fraction": 0.0,
+          "reward_gae_std": 625.9441776723056,
+          "cost_gae_std": [
+            0.030795708201800658,
+            0.036585131517698766,
+            0.03871005887144245,
+            0.04744789960301193
+          ],
+          "cost_gae_mean": [
+            0.016083106701272897,
+            0.007437781141369579,
+            -0.002039535121614445,
+            0.027496860062267984
+          ],
+          "cost_value_pred_mean": [
+            -0.02866302989423275,
+            0.11593450605869293,
+            0.07732339948415756,
+            -0.038616668432950974
+          ],
+          "undiscounted_remaining_cost_mean": [
+            0.2928904394622269,
+            0.2883968709424766,
+            0.0,
+            0.5479534144957723
+          ]
+        },
+        {
+          "seed": 9800003,
+          "action_prediction_max_abs_error": 6.51925802230835e-09,
+          "mu_mean": [
+            0.005902620032429695,
+            -0.00432609673589468,
+            0.002267830539494753,
+            -0.00010215857764706016
+          ],
+          "mu_std": [
+            0.0032803253270685673,
+            0.0015861615538597107,
+            0.0027987363282591105,
+            0.0031768223270773888
+          ],
+          "mu_min": [
+            -0.000554641941562295,
+            -0.007938510738313198,
+            -0.0028993976302444935,
+            -0.005664050113409758
+          ],
+          "mu_max": [
+            0.010853600688278675,
+            0.0008620853768661618,
+            0.008133212104439735,
+            0.006357582751661539
+          ],
+          "expected_lower_clipping": [
+            0.15723249316215515,
+            0.1597045361995697,
+            0.15810802578926086,
+            0.15868113934993744
+          ],
+          "expected_upper_clipping": [
+            0.16008898615837097,
+            0.15761108696460724,
+            0.15920549631118774,
+            0.15863190591335297
+          ],
+          "value_min_mean_max": [
+            -0.7429371476173401,
+            -0.23651772737503052,
+            0.42534270882606506
+          ],
+          "discounted_return_min_mean_max": [
+            -10624.449235774959,
+            -6115.562425408196,
+            -2117.1986749752264
+          ],
+          "value_mse": 41247625.1734205,
+          "value_explained_variance": -2.776929555836638e-05,
+          "value_hidden_saturation_fraction": 0.0,
+          "reward_gae_std": 1109.7291315189705,
+          "cost_gae_std": [
+            0.03365080653863749,
+            0.04346891455146173,
+            0.03775280801848711,
+            0.04492079256199751
+          ],
+          "cost_gae_mean": [
+            0.019363795968666202,
+            0.012520406844424712,
+            -0.0015432033988513967,
+            0.027435752347828784
+          ],
+          "cost_value_pred_mean": [
+            -0.07076075673103333,
+            0.11293796449899673,
+            0.06451290845870972,
+            -0.005519384052604437
+          ],
+          "undiscounted_remaining_cost_mean": [
+            0.3375682515725253,
+            0.28662235429875665,
+            0.0,
+            0.557571151360255
+          ]
+        }
+      ]
+    },
+    "final": {
+      "gaussian_std": [
+        0.7922539114952087,
+        0.9847250580787659,
+        0.9699901342391968,
+        0.9856064915657043
+      ],
+      "episodes": [
+        {
+          "seed": 9800000,
+          "action_prediction_max_abs_error": 4.172325134277344e-07,
+          "mu_mean": [
+            1.2945749759674072,
+            -0.28909698128700256,
+            -0.5870174765586853,
+            -0.06472043693065643
+          ],
+          "mu_std": [
+            0.3299543261528015,
+            0.04768182709813118,
+            0.13184280693531036,
+            0.13186150789260864
+          ],
+          "mu_min": [
+            0.8485389947891235,
+            -0.40012502670288086,
+            -0.8529476523399353,
+            -0.30443650484085083
+          ],
+          "mu_max": [
+            1.8530771732330322,
+            -0.17441989481449127,
+            -0.26815569400787354,
+            0.18652328848838806
+          ],
+          "expected_lower_clipping": [
+            0.0034729589242488146,
+            0.23542726039886475,
+            0.33655238151550293,
+            0.17347143590450287
+          ],
+          "expected_upper_clipping": [
+            0.6330732107162476,
+            0.09551031142473221,
+            0.05248266085982323,
+            0.14214986562728882
+          ],
+          "value_min_mean_max": [
+            -805.7410278320312,
+            -805.7410888671875,
+            -805.740966796875
+          ],
+          "discounted_return_min_mean_max": [
+            -34382.33065287073,
+            -22914.378913097127,
+            -4296.643892091376
+          ],
+          "value_mse": 560151985.0843204,
+          "value_explained_variance": -3.3948399646988037e-11,
+          "value_hidden_saturation_fraction": 1.0,
+          "reward_gae_std": 1402.7383588757361,
+          "cost_gae_std": [
+            0.007586416298132279,
+            0.0023053106604049903,
+            0.0012150854553858628,
+            0.0025227953814780514
+          ],
+          "cost_gae_mean": [
+            -0.004667051539263232,
+            0.0013116459649320903,
+            -0.0007661283070990162,
+            0.00111943344335579
+          ],
+          "cost_value_pred_mean": [
+            0.2947230935096741,
+            -0.007485571317374706,
+            0.008483042009174824,
+            0.5685848593711853
+          ],
+          "undiscounted_remaining_cost_mean": [
+            0.21198402867314475,
+            0.0,
+            0.0,
+            0.5714285684159648
+          ]
+        },
+        {
+          "seed": 9800001,
+          "action_prediction_max_abs_error": 2.980232238769531e-07,
+          "mu_mean": [
+            1.4743484258651733,
+            -0.34949639439582825,
+            -0.7121297121047974,
+            -0.0853809341788292
+          ],
+          "mu_std": [
+            0.2884204387664795,
+            0.04259287193417549,
+            0.12133965641260147,
+            0.12220577150583267
+          ],
+          "mu_min": [
+            1.0078377723693848,
+            -0.4518525302410126,
+            -0.9556321501731873,
+            -0.2970292866230011
+          ],
+          "mu_max": [
+            2.0278759002685547,
+            -0.23013947904109955,
+            -0.3475094139575958,
+            0.1906190663576126
+          ],
+          "expected_lower_clipping": [
+            0.0015407062601298094,
+            0.25463366508483887,
+            0.3842361867427826,
+            0.17855092883110046
+          ],
+          "expected_upper_clipping": [
+            0.7122735977172852,
+            0.08547601848840714,
+            0.03995518013834953,
+            0.13723213970661163
+          ],
+          "value_min_mean_max": [
+            -805.7410278320312,
+            -805.7410888671875,
+            -805.7410278320312
+          ],
+          "discounted_return_min_mean_max": [
+            -42546.32101428763,
+            -26637.681091497016,
+            -4296.643892091376
+          ],
+          "value_mse": 775882757.6093388,
+          "value_explained_variance": 0.0,
+          "value_hidden_saturation_fraction": 1.0,
+          "reward_gae_std": 1502.9743452327555,
+          "cost_gae_std": [
+            0.012963233126376712,
+            0.0022419532888455778,
+            0.0013207448748085943,
+            0.0026977888390889914
+          ],
+          "cost_gae_mean": [
+            -0.008626904169111452,
+            0.00111550829085287,
+            -0.0006941586013518748,
+            0.0015195548743371261
+          ],
+          "cost_value_pred_mean": [
+            0.31513920426368713,
+            -0.007127152290195227,
+            0.006766028236597776,
+            0.5595986843109131
+          ],
+          "undiscounted_remaining_cost_mean": [
+            0.1550742593019424,
+            0.0,
+            0.0,
+            0.5714285687453685
+          ]
+        },
+        {
+          "seed": 9800002,
+          "action_prediction_max_abs_error": 3.5762786865234375e-07,
+          "mu_mean": [
+            1.4814586639404297,
+            -0.33715900778770447,
+            -0.6912473440170288,
+            -0.07560929656028748
+          ],
+          "mu_std": [
+            0.2916436195373535,
+            0.04681165888905525,
+            0.1341322958469391,
+            0.12726715207099915
+          ],
+          "mu_min": [
+            1.0710440874099731,
+            -0.4439198076725006,
+            -0.9371507167816162,
+            -0.2846890985965729
+          ],
+          "mu_max": [
+            2.0083136558532715,
+            -0.20225189626216888,
+            -0.27960872650146484,
+            0.21687504649162292
+          ],
+          "expected_lower_clipping": [
+            0.0015125125646591187,
+            0.2506759762763977,
+            0.37634262442588806,
+            0.1761491745710373
+          ],
+          "expected_upper_clipping": [
+            0.7148498892784119,
+            0.08749085664749146,
+            0.04211189225316048,
+            0.13955900073051453
+          ],
+          "value_min_mean_max": [
+            -805.7410278320312,
+            -805.7410888671875,
+            -805.7410278320312
+          ],
+          "discounted_return_min_mean_max": [
+            -35928.99797352835,
+            -24101.248803291553,
+            -4296.643892091376
+          ],
+          "value_mse": 612301876.1750906,
+          "value_explained_variance": 0.0,
+          "value_hidden_saturation_fraction": 1.0,
+          "reward_gae_std": 1459.340024347581,
+          "cost_gae_std": [
+            0.008121544344965415,
+            0.0021720454986165856,
+            0.0012729632718359862,
+            0.0028041677348005704
+          ],
+          "cost_gae_mean": [
+            -0.003986224205980267,
+            0.0012659217425347938,
+            -0.0007137701674755197,
+            0.001416952011865196
+          ],
+          "cost_value_pred_mean": [
+            0.1424194574356079,
+            -0.009660009294748306,
+            0.009187708608806133,
+            0.563149094581604
+          ],
+          "undiscounted_remaining_cost_mean": [
+            0.10436856230308991,
+            0.0,
+            0.0,
+            0.5714285698068782
+          ]
+        },
+        {
+          "seed": 9800003,
+          "action_prediction_max_abs_error": 4.172325134277344e-07,
+          "mu_mean": [
+            1.2984979152679443,
+            -0.2934252917766571,
+            -0.5908815860748291,
+            -0.06619572639465332
+          ],
+          "mu_std": [
+            0.3225841522216797,
+            0.04547581449151039,
+            0.12301547825336456,
+            0.1296548694372177
+          ],
+          "mu_min": [
+            0.8723815083503723,
+            -0.4048742949962616,
+            -0.8507087826728821,
+            -0.2994415760040283
+          ],
+          "mu_max": [
+            1.8441429138183594,
+            -0.20829884707927704,
+            -0.3233882188796997,
+            0.15163137018680573
+          ],
+          "expected_lower_clipping": [
+            0.0033546884078532457,
+            0.23675589263439178,
+            0.33779215812683105,
+            0.1737811118364334
+          ],
+          "expected_upper_clipping": [
+            0.6353391408920288,
+            0.09474366903305054,
+            0.05184457451105118,
+            0.14174561202526093
+          ],
+          "value_min_mean_max": [
+            -805.7410278320312,
+            -805.7410888671875,
+            -805.7410278320312
+          ],
+          "discounted_return_min_mean_max": [
+            -33240.50731708093,
+            -22284.13422995125,
+            -4296.643892091376
+          ],
+          "value_mse": 530526818.3271354,
+          "value_explained_variance": 0.0,
+          "value_hidden_saturation_fraction": 1.0,
+          "reward_gae_std": 1372.208094235149,
+          "cost_gae_std": [
+            0.006611337877750705,
+            0.0023962973051925144,
+            0.0010868664736844015,
+            0.0022964727272904864
+          ],
+          "cost_gae_mean": [
+            -0.003622335251773965,
+            0.0013418597331663691,
+            -0.0007323603032824524,
+            0.0011361611490648903
+          ],
+          "cost_value_pred_mean": [
+            0.22297194600105286,
+            -0.008548654615879059,
+            0.007269310299307108,
+            0.5668616890907288
+          ],
+          "undiscounted_remaining_cost_mean": [
+            0.1801594850401032,
+            0.0,
+            0.0,
+            0.5714285671821135
+          ]
+        }
+      ]
+    }
+  },
+  "dispatch_diagnostics": {
+    "initial": {
+      "minutes": 10080.0,
+      "electrolyser_target_kwh": 253450.99479862623,
+      "electrolyser_dispatch_kwh": 163410.1457835852,
+      "electrolyser_applied_kwh": 147810.9208461808,
+      "dac_target_kwh": 100464.63893228065,
+      "dac_dispatch_kwh": 47315.847875363834,
+      "dac_applied_kwh": 38426.88342993411,
+      "methanator_target_kwh": 15159.455355399641,
+      "methanator_dispatch_kwh": 7160.252914831986,
+      "methanator_applied_kwh": 6531.669810237427,
+      "solar_positive_minutes": 5663.0,
+      "electrolyser_daylight_target_kwh": 142097.0727659027,
+      "electrolyser_daylight_dispatch_kwh": 139051.29335069243,
+      "electrolyser_daylight_applied_kwh": 126673.76546720389,
+      "electrolyser_daylight_fully_dispatched_minutes": 5288.5,
+      "electrolyser_daylight_dispatchzero_minutes": 0.0,
+      "electrolyser_daylight_appliedzero_minutes": 263.0,
+      "dac_daylight_target_kwh": 56412.1238820751,
+      "dac_daylight_dispatch_kwh": 47315.847875363834,
+      "dac_daylight_applied_kwh": 38426.88342993411,
+      "dac_daylight_fully_dispatched_minutes": 4158.25,
+      "dac_daylight_dispatchzero_minutes": 374.5,
+      "dac_daylight_appliedzero_minutes": 771.0,
+      "methanator_daylight_target_kwh": 8532.893311785709,
+      "methanator_daylight_dispatch_kwh": 7160.252914831986,
+      "methanator_daylight_applied_kwh": 6531.669810237427,
+      "methanator_daylight_fully_dispatched_minutes": 4158.25,
+      "methanator_daylight_dispatchzero_minutes": 374.5,
+      "methanator_daylight_appliedzero_minutes": 413.25
+    },
+    "final": {
+      "minutes": 10080.0,
+      "electrolyser_target_kwh": 501320.2653117478,
+      "electrolyser_dispatch_kwh": 340401.83843696304,
+      "electrolyser_applied_kwh": 156705.51663380177,
+      "dac_target_kwh": 68816.73107687384,
+      "dac_dispatch_kwh": 24010.848119089118,
+      "dac_applied_kwh": 18536.28028880294,
+      "methanator_target_kwh": 5362.774828914553,
+      "methanator_dispatch_kwh": 2202.6025077894346,
+      "methanator_applied_kwh": 2202.6025077894346,
+      "solar_positive_minutes": 5663.0,
+      "electrolyser_daylight_target_kwh": 283141.9071495533,
+      "electrolyser_daylight_dispatch_kwh": 255066.08235661706,
+      "electrolyser_daylight_applied_kwh": 154954.51663380174,
+      "electrolyser_daylight_fully_dispatched_minutes": 3773.0,
+      "electrolyser_daylight_dispatchzero_minutes": 0.0,
+      "electrolyser_daylight_appliedzero_minutes": 245.25,
+      "dac_daylight_target_kwh": 39407.856276258826,
+      "dac_daylight_dispatch_kwh": 24010.848119089118,
+      "dac_daylight_applied_kwh": 18536.28028880294,
+      "dac_daylight_fully_dispatched_minutes": 3127.0,
+      "dac_daylight_dispatchzero_minutes": 1890.0,
+      "dac_daylight_appliedzero_minutes": 2205.25,
+      "methanator_daylight_target_kwh": 3597.560325153172,
+      "methanator_daylight_dispatch_kwh": 2202.6025077894346,
+      "methanator_daylight_applied_kwh": 2202.6025077894346,
+      "methanator_daylight_fully_dispatched_minutes": 3127.0,
+      "methanator_daylight_dispatchzero_minutes": 1890.0,
+      "methanator_daylight_appliedzero_minutes": 1890.0
+    },
+    "H": {
+      "minutes": 10080.0,
+      "electrolyser_target_kwh": 196949.41242067498,
+      "electrolyser_dispatch_kwh": 196949.41242067498,
+      "electrolyser_applied_kwh": 145991.58243264616,
+      "dac_target_kwh": 37225.56721321985,
+      "dac_dispatch_kwh": 36880.22911839407,
+      "dac_applied_kwh": 36734.72911839406,
+      "methanator_target_kwh": 8087.922517082112,
+      "methanator_dispatch_kwh": 8086.160212818843,
+      "methanator_applied_kwh": 6964.484458602724,
+      "solar_positive_minutes": 5663.0,
+      "electrolyser_daylight_target_kwh": 163821.9124206754,
+      "electrolyser_daylight_dispatch_kwh": 163821.9124206754,
+      "electrolyser_daylight_applied_kwh": 141575.58243264616,
+      "electrolyser_daylight_fully_dispatched_minutes": 5663.0,
+      "electrolyser_daylight_dispatchzero_minutes": 0.0,
+      "electrolyser_daylight_appliedzero_minutes": 175.75,
+      "dac_daylight_target_kwh": 37202.74915649762,
+      "dac_daylight_dispatch_kwh": 36880.22911839407,
+      "dac_daylight_applied_kwh": 36734.72911839406,
+      "dac_daylight_fully_dispatched_minutes": 5444.75,
+      "dac_daylight_dispatchzero_minutes": 484.25,
+      "dac_daylight_appliedzero_minutes": 503.25,
+      "methanator_daylight_target_kwh": 8087.922517082112,
+      "methanator_daylight_dispatch_kwh": 8086.160212818843,
+      "methanator_daylight_applied_kwh": 6964.484458602724,
+      "methanator_daylight_fully_dispatched_minutes": 5649.0,
+      "methanator_daylight_dispatchzero_minutes": 2966.75,
+      "methanator_daylight_appliedzero_minutes": 3083.25
+    }
+  },
+  "new_environment_resets": 0,
+  "new_optimizer_steps": 0,
+  "analysis_limitations": [
+    "Manual forward passes on archived observations diagnose the saved networks; no unique causal mechanism has been proved.",
+    "Original pilot did not perform independent minute replay or strict hard-safety certification.",
+    "All four pilot scenarios are now development-contaminated; no generalization or RL superiority claim."
+  ],
+  "read_only_analysis_input_output_digests": [
+    {
+      "path": "/private/tmp/plant-pilot-behavior-analysis.py",
+      "bytes": 5499,
+      "sha256": "e6d31298aaaef99abcd1b7dca3c3ab2d7010a78125dd2c91227322cdb1d25728"
+    },
+    {
+      "path": "/private/tmp/plant-pilot-behavior-summary.json",
+      "bytes": 218632,
+      "sha256": "0e2f11606aee1460e8f244c9bd3aa72bb23d47cf6ae86e8e9da875257c58dadc"
+    },
+    {
+      "path": "/private/tmp/plant-pilot-network-analysis.py",
+      "bytes": 3273,
+      "sha256": "870c2e876a687fbe9c0ecfbd06d47be544fd73004840725de0b1be0331b0fdd2"
+    },
+    {
+      "path": "/private/tmp/plant-pilot-network-summary.json",
+      "bytes": 17882,
+      "sha256": "33be9561f6975a30b85991447d6cb07b9b3b660821662a1d52f9ad771b93a9e8"
+    },
+    {
+      "path": "/private/tmp/plant-pilot-training-telemetry.json",
+      "bytes": 148136,
+      "sha256": "e1055a92b128bf5d24bc8734f361c2fcc70f683b1d7f23d5ae42233b04c5bc66"
+    },
+    {
+      "path": "/private/tmp/plant-pilot-dispatch-summary.json",
+      "bytes": 4545,
+      "sha256": "2424a9335160928f438eab304e125ff62305911d8c10ba475389bc3185ea1401"
+    },
+    {
+      "path": "/Volumes/Lexar/PlantAnAgentResearch/pilot-pi-seed101-v1/artifacts/initial-policy.pt",
+      "bytes": 325089,
+      "sha256": "f72523f6a0985ec7fea57b28be3e81b75bdd6ddf251141d5b128868972f6d50a"
+    },
+    {
+      "path": "/Volumes/Lexar/PlantAnAgentResearch/pilot-pi-seed101-v1/artifacts/final-policy.zip",
+      "bytes": 4438025,
+      "sha256": "d0010506f43932cabe32ae54e56a942c4a9fc35478e5ab1cad33a99cbb3c7481"
+    },
+    {
+      "path": "/Volumes/Lexar/PlantAnAgentResearch/pilot-pi-seed101-v1/logs/_train.stdout.log",
+      "bytes": 230036,
+      "sha256": "062e97a0a0b79819a80de92faad8a8fec1d3265eada3108bc45675524a506dc3"
+    },
+    {
+      "path": "/Volumes/Lexar/PlantAnAgentResearch/pilot-pi-seed101-v1/evaluation/9800000-H.json.gz",
+      "bytes": 9631599,
+      "sha256": "22d666f355f8cf15e306afd0af7120f4363a8417b3840013faaff36d41ece0fa"
+    },
+    {
+      "path": "/Volumes/Lexar/PlantAnAgentResearch/pilot-pi-seed101-v1/evaluation/9800000-final.json.gz",
+      "bytes": 9335955,
+      "sha256": "3b785750e185e8dd18200d88ce5ed64fea0f14fb0c27f8d67ee4c7c27bd5b653"
+    },
+    {
+      "path": "/Volumes/Lexar/PlantAnAgentResearch/pilot-pi-seed101-v1/evaluation/9800000-initial.json.gz",
+      "bytes": 9512437,
+      "sha256": "503290f81ffec469fb37361db5dcac561965bd39ba13b1fe65ff46d156f4e74d"
+    },
+    {
+      "path": "/Volumes/Lexar/PlantAnAgentResearch/pilot-pi-seed101-v1/evaluation/9800001-H.json.gz",
+      "bytes": 9590373,
+      "sha256": "98db7c78d6272f087fb2e8974d38b280d882638b7f93637f1ef26e354ddd8b5d"
+    },
+    {
+      "path": "/Volumes/Lexar/PlantAnAgentResearch/pilot-pi-seed101-v1/evaluation/9800001-final.json.gz",
+      "bytes": 9378345,
+      "sha256": "7c54b96ca4f7620099b21fad4933b96d589c9571787c039b4e797f697e35bf88"
+    },
+    {
+      "path": "/Volumes/Lexar/PlantAnAgentResearch/pilot-pi-seed101-v1/evaluation/9800001-initial.json.gz",
+      "bytes": 9465005,
+      "sha256": "1eb0ef72763053a79df33c31c23b392e006b47d467a8cfef4cc5bc87a2f5590d"
+    },
+    {
+      "path": "/Volumes/Lexar/PlantAnAgentResearch/pilot-pi-seed101-v1/evaluation/9800002-H.json.gz",
+      "bytes": 9586306,
+      "sha256": "7d38d011d2811978712154e0eb290f6944165b5dbc03f2c18297e0c27ed6c6a7"
+    },
+    {
+      "path": "/Volumes/Lexar/PlantAnAgentResearch/pilot-pi-seed101-v1/evaluation/9800002-final.json.gz",
+      "bytes": 9445829,
+      "sha256": "067393131cc579e413d7de706fb07bf09f9397a2570371ad53a2cfbd30a38c08"
+    },
+    {
+      "path": "/Volumes/Lexar/PlantAnAgentResearch/pilot-pi-seed101-v1/evaluation/9800002-initial.json.gz",
+      "bytes": 9459385,
+      "sha256": "685032f1e1ce29b04fb7c0245340ce3d387adcf0dc91b04cb78c24cf53009d2f"
+    },
+    {
+      "path": "/Volumes/Lexar/PlantAnAgentResearch/pilot-pi-seed101-v1/evaluation/9800003-H.json.gz",
+      "bytes": 9636290,
+      "sha256": "28410270b1d3ce013fae69faba3330880d0f34ce72fbb9b3473ec85e84c672ed"
+    },
+    {
+      "path": "/Volumes/Lexar/PlantAnAgentResearch/pilot-pi-seed101-v1/evaluation/9800003-final.json.gz",
+      "bytes": 9349257,
+      "sha256": "835dbfefc40cb4859d8512afd1a0637ac6fef851f0478d5be4ee15a75246c71d"
+    },
+    {
+      "path": "/Volumes/Lexar/PlantAnAgentResearch/pilot-pi-seed101-v1/evaluation/9800003-initial.json.gz",
+      "bytes": 9536442,
+      "sha256": "c8fe171fc2e694e1cc449d3376f385c1bb7cbf5b1315d2e7ccf706c3cf23eb42"
+    }
+  ],
+  "reproduction_scripts": [
+    "docs/research/tools/ppo_pilot_behavior_diagnosis.py",
+    "docs/research/tools/ppo_pilot_network_diagnosis.py"
+  ],
+  "reproduction_note": "Committed scripts add docstrings and formatting to the hashed original analysis scripts; no environment reset or optimizer execution is used.",
+  "analysis_archive": {
+    "root": "/Volumes/Lexar/PlantAnAgentResearch/pilot-pi-seed101-v1-analysis-20260912",
+    "manifest_sha256": "59338429618b473dbe118a943f60803006b4c43b09b339b412ba5c3e101223b7"
+  }
+}
