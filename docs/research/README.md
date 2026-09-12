@@ -12,13 +12,23 @@ fallback behavior.
 
 ## Files
 
+- [`ADAPTIVE_RL_BATCH_002_RESULTS.md`](results/ADAPTIVE_RL_BATCH_002_RESULTS.md)
+  closes four fresh policies and all 80 evaluation/replay slots at `a442a4a`.
+  Residual scalar PPO improved mean value over its exact-H initialization by
+  EUR 595.39/week, but remained EUR 7,112.54 behind OperatingMPC, inherited five
+  forced stops, and regressed in individual service and daily methane returns.
+  OperatingMPC fulfilled 93.94% of the unchanged 6,720 kg weekly obligation and
+  passed strict safety in all eight scenarios; no actor passed all daily returns.
+  No policy qualified for confirmation. The [compact index](results/adaptive_rl_batch_002_results.json)
+  retains all actors, failed comparators, resource deficits and evidence digests.
 - [`ADAPTIVE_RL_BATCH_002_PROTOCOL.md`](ADAPTIVE_RL_BATCH_002_PROTOCOL.md)
-  fixes the next four-cell comparison: direct versus bounded heuristic-residual
+  fixes the closed four-cell comparison: direct versus bounded heuristic-residual
   PPO, each with PI/scalar learning, corrected reward scaling and lower initial
   exploration. Delivery obligations stay unchanged; the corrected OperatingMPC
   remains a required comparator. The separate 139-input residual contract,
   exact-H initialization, fresh seeds and closed-custody evaluation are explicit.
-  This is prospective development, not a selected or deployed policy.
+  It remains the unchanged prospective design for that completed development
+  experiment, not a selected or deployed policy.
 - [`ADAPTIVE_RL_BATCH_001_RESULTS.md`](results/ADAPTIVE_RL_BATCH_001_RESULTS.md)
   closes the five-policy, eight-scenario adaptive screen at `238fe7c`.
   Reward scaling improved critic conditioning; operating results remained mixed.

@@ -2,15 +2,23 @@
 
 ## Product and research thesis
 
-Next development design: [batch 002](ADAPTIVE_RL_BATCH_002_PROTOCOL.md) compares
-direct PPO with bounded adjustments to H, under PI and scalar learning. All four
-fresh cells use the unchanged beta plant and delivery requirements. The low-power
-electrolyser prior is preserved, while higher-load effort and downstream targets
-remain learnable from the complete public forecast/market/cycle surface. A
-separate fixture-tested OperatingMPC correction respects unfinished startup;
-that engineering improvement belongs to the incumbent, not to RL. New policies
-still require strict safety, paired service/resource checks and fresh confirmation
-before any operational-benefit claim.
+Closed batch 002, 2026-09-12: the four-cell direct/residual PI/scalar comparison
+completed at `a442a4a`; all 80 evaluation and detached replay slots passed custody
+audit. The [results](results/ADAPTIVE_RL_BATCH_002_RESULTS.md) establish exact
+initial-residual equivalence to H on all eight scenarios. Residual scalar PPO
+improved mean value by EUR 595.39/week over H, but lost EUR 7,112.54 against the
+corrected OperatingMPC. Both residuals inherited H's five forced stops, and
+individual delivery and daily methane-deficit regressions remain. OperatingMPC
+achieved 93.94% mean fulfillment and 8/8 strict safety passes; none of the actors
+passed every daily return. Its startup correction is incumbent engineering,
+not learned benefit. No policy qualified for fresh confirmation.
+
+The task still requires 6,720 kg of methane over 168 hours. Further learning must
+improve economics at preserved service/resource performance, without changing
+demand or weakening the strong comparator. Diagnose the residual prior's action
+restrictions, physical failure intervals and operating-value gap before freezing
+the next experiment. Strict safety, paired checks, sealed confirmation and
+optimizer-seed replication remain required for an operational-benefit claim.
 
 Closed adaptive screen, 2026-09-12: all five 131,072-transition policies and all
 80 fixed evaluation/replay slots closed at clean source `238fe7c`. The

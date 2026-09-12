@@ -8599,3 +8599,73 @@ the final suite uses stable source and excludes only wall-clock timing from
 physical equality. The original batch runner, registered learner/protocol and
 production physical task were not changed. Final source freeze and exact-revision
 readiness evidence are stored externally to avoid changing the running checkout.
+
+## 2026-09-12 — Batch 002 closed; residual learning remains behind OperatingMPC
+
+The exact clean `a442a4a9f5b028568d36bbbddf21a34c3609a7cc` readiness gate passed
+511 scoped Python tests in 656.33 seconds, Black, strict mypy, compilation, CLI
+and whitespace checks. The inherited full repository/frontend gate was not
+repeated. Gate SHA-256 is
+`60c35ffd2b81dac615aec2d3c77f06c08c1cc14ce50bf84a92f1925c6dc40bcd`.
+The supervisor launched at `2026-09-12T15:27:54.454314Z` and closed normally at
+`2026-09-12T19:34:57.336127Z`. Four training, 80 evaluation and 80 replay receipts
+closed with empty failure codes; all processes were subsequently verified gone.
+No outcomes were opened or source changed while experiments ran. Quiet waits
+and process-only checks preserved the outcome-blind execution boundary.
+
+The auditor/reporter and their fabricated tests were frozen externally during
+execution. After closure, the audit verified 632 hashed artifacts, complete
+training/checkpoint/allocator bindings, 64 full episodes and 16 stopped comparator
+prefixes against completed detached physical replays. The initial residual and
+native H had identical physical/economic projections in all eight scenarios.
+The audit's raw SHA-256 is
+`a65ba53de363032caced6435a91543b782fcf993dbb93e242a6992f3d40406ea`;
+the descriptive reporter's canonical audit digest is separately
+`182d49901c00386aa3adbfb562b67b6d199c7705d88a010cf3efddc6938af426`.
+Both tools completed successfully. Their byte-identical Git archives under
+`tools/adaptive_batch_002/` passed all 88 fabricated checks in 31.07 seconds.
+
+The [closed results](results/ADAPTIVE_RL_BATCH_002_RESULTS.md) and
+[compact evidence](results/adaptive_rl_batch_002_results.json) retain every actor,
+all 80 slots, daily deficit vectors, failure text and digests. Residual scalar D
+improved mean value by EUR 595.39/week over its exact-H initialization; residual
+PI C improved by EUR 442.40. Both remained behind OperatingMPC (EUR 7,112.54 and
+EUR 7,265.53 respectively), inherited H's five forced stops, lost delivery in
+individual scenarios and worsened individual daily CH4 deficits (maximum increases
+23.65 kg and 16.84 kg). B improved over A in all eight service/economic comparisons,
+but both absolute policies failed strict safety throughout. No policy qualified
+for confirmation. M24/E-beta stopped in all eight scenarios and provide no full
+weekly means. No actor satisfied every daily resource return.
+
+The task still requires 6,720 kg methane across 28 deliveries over 168 hours.
+OperatingMPC achieved 93.94% mean fulfillment with 8/8 strict safety passes; H
+achieved 90.20%, D 90.65%. High commitments and high fulfillment remain distinct.
+Demand is not increased to create an RL opportunity. OperatingMPC's corrected
+startup behavior belongs to the incumbent, and differences between old/new
+scenario panels cannot establish its correction's causal effect. Further work
+must improve economics at preserved service/resource performance and pass hard
+safety. This is adaptive development, not held-out evidence, commercial savings,
+formal policy selection, live deployment or an operational-benefit claim.
+Original registered families, budgets and protected seeds remain untouched.
+
+Independent saved-data diagnosis bound 194 learning inputs and all 40 operating
+archives before deriving mechanisms; no new reset or policy inference occurred.
+All sixteen training curves and 21,504 trained-policy action rows remain available.
+Critics fit the sampled returns (final pre-update EV approximately 0.973/0.975/
+0.949/0.948), exploration remained active, and policy updates continued. Marginal
+action correlations do not prove use of forecast quantiles or faults. D had no
+direct electrolysis adjustment authority in 3,472/5,376 decisions and reproduced
+all four current-H targets in 2,395 decisions. Nonzero standardized PI gradients
+on some zero-observed-cost rollouts motivate a normalization hypothesis, not a
+causal explanation or permission to remove resource costs.
+
+The physical diagnosis identified all five inherited stops: H lowered its command
+below 600 kW during unfinished cold startup with 2,500 kW battery support available;
+C/D issued the same E commands at those boundaries. MPC was already running at
+four corresponding boundaries and maintained 600 kW in the remaining startup.
+C/D's small mean EUR gain over H came from additional delivery and reduced
+shortfall penalties, with higher battery throughput, wear and opportunity cost;
+equal-service cost savings are not established. C/D worsened four/three daily
+methane deficits respectively. The diagnosis scripts, full JSON and Markdown
+were archived byte-identically under the external analysis root's `learning/`
+and `operation/` directories, with manifests and references in compact evidence.

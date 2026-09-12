@@ -699,10 +699,13 @@ done this repository claims nothing about forecast quality.
 ## Current research path: controller-neutral Environment V2 RL
 
 The beta now has executed exploratory PPO evidence: the
-[closed adaptive screen](docs/research/results/ADAPTIVE_RL_BATCH_001_RESULTS.md)
-trained five policies and retained eight scenarios for every controller.
-Conditioning improved, but no PPO demonstrated operational benefit against the
-strong operating baselines while satisfying safety and daily resource returns.
+[first adaptive screen](docs/research/results/ADAPTIVE_RL_BATCH_001_RESULTS.md)
+trained five policies, and the
+[second screen](docs/research/results/ADAPTIVE_RL_BATCH_002_RESULTS.md) trained
+four direct/residual policies, retaining eight scenarios for every controller
+in each batch. Residual PPO modestly improved over H, but remained behind
+OperatingMPC and failed safety and paired service/resource acceptance conditions.
+No PPO has demonstrated operational benefit against the strong operating baseline.
 Checkpoints and full evidence remain outside Git. The original registered
 15-policy study and protected evaluation seeds remain unopened.
 
