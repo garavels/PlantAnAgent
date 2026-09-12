@@ -8535,3 +8535,67 @@ forecast fixture failures and one mistaken expected operator-cap behavior were
 resolved by correcting the fixtures/expectation; no plant or forecast code was
 changed. No development/protected seed or production training reset was run.
 V1, the registered M24/E-beta implementations and the frontend remain unchanged.
+
+## 2026-09-12 — Prospective bounded operating-effort PPO screen
+
+Batch 001 recovered average delivery under lower exploration, but persistent
+approximately 1.5 MW commands caused repeated starts and expensive battery/
+electrolyser use. The new [batch 002 protocol](ADAPTIVE_RL_BATCH_002_PROTOCOL.md)
+tests a restricted operating prior: PPO adjusts H's higher-load electrolysis
+and downstream effort instead of choosing all absolute targets from scratch.
+Four fresh 131,072-transition cells compare direct/residual representations
+under PI/scalar learning, all with optimizer reward scale 0.001, initial std
+0.2 and exactly zero actor output heads. This includes the previously missing
+scalar comparison under lower exploration. It is a comparison of complete
+method packages, not an isolated causal estimate of the added four features.
+Production obligations, public information, simulator, dispatcher, guard and
+resource settlements remain unchanged. The repaired OperatingMPC is the required
+current-source incumbent. Fresh training seeds start at 9,610,000 and all ten
+actor identities use the eight fixed development seeds 9,700,100–9,700,107.
+
+The separate residual wrapper returns the actual 135 base features plus four
+cached H target fractions. It computes H once per boundary without another
+observation-encoder call and sits inside allocator custody. Electrolyser targets
+at/below the 1,200 kW stable-running floor remain H's; adjustments above the
+floor and proportional downstream corrections are bounded. In particular,
+H's 450 kW night target is not multiplied above the 600 kW startup threshold.
+An exactly zero residual executes the original float64 H command and invalid
+flag. This is an action parameterization, not a feasibility or safety certificate.
+Its separately hashed 139-feature checkpoint/interface includes the mapping and
+H implementation sources; existing production beta loaders cannot accept it.
+
+The residual evaluator stores both physical/public observations and actual
+policy inputs. Detached replay executes saved absolute commands, separately
+recomputing H to verify input features and residual mapping; it never runs the
+learned policy. Review exposed four evidence gaps before admission: unchecked
+controller headers, inconsistent failed-decision fields, an unenforced fixture
+stopping budget, and a possible mixed archive after physical/evidence failure.
+The corrected evaluator binds those fields/budgets and raises an integrity
+error for physical/evidence exceptions instead of publishing a replayable-prefix
+claim. Nineteen serialized replay, tamper, prefix and admission checks passed
+in 73.42 seconds; strict mypy and Black passed for the source.
+
+The wrapper's 37-test suite passed in 91.40 seconds, including complete 168-hour
+zero-residual equivalence for commands, all minute states, raw EUR, returned
+observations, seven settlements and constraint transitions. Mapping, clipping,
+malformed actions, float32/float64 publication and four-stream allocator custody
+also passed. Strict mypy and Black passed. A fixture initially used six-hour
+decisions against the inherited hourly tariff cadence; correcting that test to
+one hour resolved its rejection. No production/protected seeds were consumed.
+Batch 002 remains unopened at this implementation entry; final runner checks,
+clean-source gate and launch evidence follow before any production reset.
+
+The batch runner's 32 checks passed in 56.37 seconds, including actual tiny
+PI/scalar learning and checkpoint reopen for both 135/139 interfaces. Read-only
+admission review prompted explicit command-bound training receipts, cross-slot
+episode/replay bindings, and fatal integrity classification for post-learning
+attestation failures and allocator seed/manifest/cursor custody loss during
+learning. Ordinary numerical training failures remain retained failed arms.
+Constructor-only checks patch the base reset to fail, establishing that plan and
+learner construction do not consume unwrapped episodes. Black, strict mypy,
+compilation, CLI and whitespace checks passed. Earlier fixtures correctly caught
+a concurrently changed wrapper source and nondeterministic dispatcher timing;
+the final suite uses stable source and excludes only wall-clock timing from
+physical equality. The original batch runner, registered learner/protocol and
+production physical task were not changed. Final source freeze and exact-revision
+readiness evidence are stored externally to avoid changing the running checkout.

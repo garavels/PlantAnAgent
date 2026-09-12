@@ -12,6 +12,13 @@ fallback behavior.
 
 ## Files
 
+- [`ADAPTIVE_RL_BATCH_002_PROTOCOL.md`](ADAPTIVE_RL_BATCH_002_PROTOCOL.md)
+  fixes the next four-cell comparison: direct versus bounded heuristic-residual
+  PPO, each with PI/scalar learning, corrected reward scaling and lower initial
+  exploration. Delivery obligations stay unchanged; the corrected OperatingMPC
+  remains a required comparator. The separate 139-input residual contract,
+  exact-H initialization, fresh seeds and closed-custody evaluation are explicit.
+  This is prospective development, not a selected or deployed policy.
 - [`ADAPTIVE_RL_BATCH_001_RESULTS.md`](results/ADAPTIVE_RL_BATCH_001_RESULTS.md)
   closes the five-policy, eight-scenario adaptive screen at `238fe7c`.
   Reward scaling improved critic conditioning; operating results remained mixed.

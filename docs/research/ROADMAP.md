@@ -2,6 +2,16 @@
 
 ## Product and research thesis
 
+Next development design: [batch 002](ADAPTIVE_RL_BATCH_002_PROTOCOL.md) compares
+direct PPO with bounded adjustments to H, under PI and scalar learning. All four
+fresh cells use the unchanged beta plant and delivery requirements. The low-power
+electrolyser prior is preserved, while higher-load effort and downstream targets
+remain learnable from the complete public forecast/market/cycle surface. A
+separate fixture-tested OperatingMPC correction respects unfinished startup;
+that engineering improvement belongs to the incumbent, not to RL. New policies
+still require strict safety, paired service/resource checks and fresh confirmation
+before any operational-benefit claim.
+
 Closed adaptive screen, 2026-09-12: all five 131,072-transition policies and all
 80 fixed evaluation/replay slots closed at clean source `238fe7c`. The
 [results](results/ADAPTIVE_RL_BATCH_001_RESULTS.md) support a reward-conditioning
