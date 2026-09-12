@@ -10,9 +10,10 @@ from dataclasses import dataclass, replace
 import math
 from typing import Any
 
-from plant_sim import ElectrolyserCommitmentProfile, PlantConfig
+from plant_sim import ElectrolyserCommitmentProfile, ElectrolyserMode, PlantConfig
 
 from .controllers.base import Constraints
+from .safety.validation import battery_support_availability
 from .rl.v2.beta_config import CyclicMarketTaskConfigV1
 from .rl.v2.beta_control import CyclicMarketControllerObservationV1
 from .rl.v2.beta_mpc_schema import project_beta_mpc_prices
@@ -124,6 +125,7 @@ class OperationalMPCController:
                 "economic cost including inventory recovery",
             ],
             "fallback": "reactive heuristic after a typed solver or plan rejection; retry planning at next boundary",
+            "startup_continuation": "preserve active startup power when currently feasible within the operator envelope; minute guard remains authoritative",
             "numerical_settings": self.settings.to_dict(),
             "research_comparator": False,
         }
@@ -234,6 +236,62 @@ class OperationalMPCController:
             model, physical_model=physical, metadata_json=canonical_json(metadata)
         )
 
+    @staticmethod
+    def _continue_active_startup(
+        targets: ProcessSetpointTargetsV1,
+        observation: CyclicMarketControllerObservationV1,
+        *,
+        constraints: Constraints,
+        config: PlantConfig,
+        commitment_profile: ElectrolyserCommitmentProfile | None,
+    ) -> tuple[ProcessSetpointTargetsV1, dict[str, Any] | None]:
+        snapshot = observation.plant.state.electrolyser_commitment
+        if (
+            snapshot is None
+            or commitment_profile is None
+            or snapshot.mode
+            not in {ElectrolyserMode.COLD_STARTING, ElectrolyserMode.HOT_STARTING}
+        ):
+            return targets, None
+        required_kw = commitment_profile.start_load_frac * config.electrolyser.rated_kw
+        boundary = observation.plant.state.boundary
+        limit_kw = constraints.electrolyser_limit_kw(config)
+        support = battery_support_availability(
+            boundary,
+            constraints=constraints,
+            config=config,
+            electrolyser_headroom_kw=limit_kw,
+        )
+        available_kw = (
+            min(limit_kw, max(0.0, boundary.solar_available_kw) + support.available_kw)
+            if support.electrolyser_available
+            else 0.0
+        )
+        requested_kw = targets.electrolyser_target_kw
+        if not support.electrolyser_available:
+            status = "equipment_offline"
+        elif limit_kw < required_kw:
+            status = "operator_limit"
+        elif available_kw + 1e-9 < required_kw:
+            status = "current_power_shortage"
+        elif requested_kw < required_kw:
+            # A legacy fallback uses the V1 productive floor, which can be below
+            # the active startup draw. Retain the held target through startup;
+            # the common minute dispatcher still adapts to subsequent weather.
+            targets = replace(targets, electrolyser_target_kw=required_kw)
+            status = "adjusted"
+        else:
+            status = "already_sufficient"
+        return targets, {
+            "status": status,
+            "mode": snapshot.mode.value,
+            "startup_remaining_s": snapshot.startup_remaining_s,
+            "required_kw": required_kw,
+            "currently_available_kw": available_kw,
+            "requested_kw": requested_kw,
+            "issued_kw": targets.electrolyser_target_kw,
+        }
+
     def compute_command(
         self,
         observation: CyclicMarketControllerObservationV1,
@@ -294,6 +352,18 @@ class OperationalMPCController:
             )
             notes = (
                 "Issued mean forecasts; rolling 24-hour plan; inventory depletion remains priced.",
+            )
+        targets, startup_continuation = self._continue_active_startup(
+            targets,
+            observation,
+            constraints=constraints,
+            config=config,
+            commitment_profile=commitment_profile,
+        )
+        if startup_continuation is not None:
+            notes = (
+                *notes,
+                "Active startup continuation: " + startup_continuation["status"] + ".",
             )
         resources: list[dict[str, Any]] = []
         for (name, label, unit, state, end, _), target in zip(
@@ -357,6 +427,7 @@ class OperationalMPCController:
                 LegacyHeuristicSetpointControllerV1.id if plan is None else None
             ),
             "solver_failure": failure,
+            "startup_continuation": startup_continuation,
         }
         evidence = OperatingEvidence(
             plan,

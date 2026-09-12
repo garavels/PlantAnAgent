@@ -8507,3 +8507,31 @@ resetting a production environment. The auditor intentionally requires the
 original exact clean source and gate; a later checkout cannot silently reissue
 its audit. The operational diagnosis and its two reproduction scripts were
 archived unchanged under the external analysis root's `operation/` directory.
+
+## 2026-09-12 — Operating MPC respects unfinished startup
+
+The closed batch exposed two OperatingMPC forced stops after its fallback
+reduced an unfinished startup's target to the legacy 450 kW floor. The active
+beta startup requires 600 kW. OperatingMPC now preserves that startup draw when
+current public solar and reserve-, health- and operator-aware battery support
+can supply it. Decision evidence records the original/issued targets, available
+power, startup state and adjustment status. The fallback identity and original
+typed solver failure stay visible. This is an incumbent controller correction,
+not learned-policy benefit; the next experiment must compare against it.
+
+Synthetic cold/hot startup fixtures reproduce the old forced abort and show
+completion after the correction at 650 kW solar, or 550 kW with authorized
+battery support, through the unchanged minute dispatcher, guard and simulator.
+Current shortage and later weather loss still expose forced stops. A direct
+operator equipment cap below startup draw preserves the existing fail-closed
+model-input rejection. Off/running modes and sufficient existing commands retain
+their behavior. These tests establish the local correction, not an eight-seed
+operating result or safety guarantee under future weather uncertainty.
+
+All 20 focused test cases were covered: 19 passed in 51.62 seconds and the added
+future-weather-shortage case passed in 3.25 seconds. Strict mypy, Black and
+whitespace checks passed. During test construction, eight synthetic-clock versus
+forecast fixture failures and one mistaken expected operator-cap behavior were
+resolved by correcting the fixtures/expectation; no plant or forecast code was
+changed. No development/protected seed or production training reset was run.
+V1, the registered M24/E-beta implementations and the frontend remain unchanged.

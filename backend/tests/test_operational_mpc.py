@@ -4,6 +4,7 @@ from dataclasses import replace
 import json
 
 import pytest
+from plant_sim import ElectrolyserMode, PlantSimulator
 
 from plant_backend import demo_recordings, operational_mpc
 from plant_backend.operational_mpc import POLICY_ID
@@ -13,7 +14,10 @@ from plant_backend.rl.v2.economic_mpc_schema import (
     EconomicMPCStageSolveV1,
 )
 from plant_backend.rl.v2.mpc_forecast import project_issued_mean_solar
+from plant_backend.rl.v2.mpc_schema import ServiceMPCInputError
 from plant_backend.rl.v2.setpoint_controllers import LegacyHeuristicSetpointControllerV1
+from plant_backend.rl.v2.setpoint_command import dispatch_process_setpoint_command
+from plant_backend.safety import validate
 from plant_backend.v2_demo import StepRequest, V2DemoSession
 
 
@@ -233,3 +237,210 @@ def test_operation_crosses_daily_deficit_with_fixed_endowment_and_full_horizon(
     cycle = env.cyclic_market_controller_observation.cycle
     assert min(cycle.h2_margin_kg, cycle.co2_margin_kg, cycle.ch4_margin_kg) < 0
     assert len(controller.decision_events) == 97
+
+
+def startup_fixture(operating, monkeypatch, mode, *, solar_kw=650.0, **limits):
+    """Assemble a synthetic boundary from component advances, without seed tapes."""
+    _, env, controller = operating
+    config = replace(env.config, battery=replace(env.config.battery, initial_soc=0.16))
+    profile = env.episode_config.electrolyser_commitment
+    sim = PlantSimulator(config, electrolyser_commitment=profile)
+    monkeypatch.setattr(sim.solar, "clear_sky_kw", lambda _: solar_kw)
+    boundary = sim.reset()
+    observation = env.cyclic_market_controller_observation
+    sim.time_s = observation.plant.state.boundary.time_s
+    boundary = replace(boundary, time_s=sim.time_s)
+    sim.state = sim.telemetry = boundary
+    stack = sim.electrolyser
+
+    def advance(power_kw, count):
+        for _ in range(count):
+            stack.advance_commitment(
+                power_kw,
+                config.dt_h,
+                h2_headroom_kg=1000.0,
+                commitment_intent=True,
+            )
+
+    if mode is ElectrolyserMode.COLD_STARTING:
+        advance(600.0, round((profile.cold_start_s - 900.0) / config.dt_s))
+        assert sim.electrolyser_commitment.startup_remaining_s == 900.0
+    elif mode in {ElectrolyserMode.HOT_STARTING, ElectrolyserMode.RUNNING}:
+        advance(600.0, round(profile.cold_start_s / config.dt_s))
+        if mode is ElectrolyserMode.HOT_STARTING:
+            advance(60.0, 1)
+            advance(3000.0, round(profile.hot_start_s / config.dt_s) - 1)
+            assert sim.electrolyser_commitment.startup_remaining_s == 60.0
+    assert sim.electrolyser_commitment.mode is mode
+    observation = replace(
+        observation,
+        plant=replace(
+            observation.plant,
+            state=replace(
+                observation.plant.state,
+                boundary=boundary,
+                electrolyser_commitment=sim.electrolyser_commitment,
+            ),
+        ),
+    )
+    return (
+        sim,
+        observation,
+        controller,
+        dict(
+            config=config,
+            constraints=replace(env.constraints, **limits),
+            commitment_profile=profile,
+        ),
+    )
+
+
+def advance_held_command(sim, command, arguments):
+    snapshots = []
+    for _ in range(15):
+        boundary = sim.get_telemetry()
+        solar_kw = sim.solar.clear_sky_kw(sim.time_s + sim.config.dt_s)
+        dispatch = dispatch_process_setpoint_command(
+            command,
+            boundary,
+            solar_available_kw=solar_kw,
+            constraints=arguments["constraints"],
+            config=sim.config,
+        )
+        guarded = validate(
+            dispatch.action,
+            boundary,
+            constraints=arguments["constraints"],
+            config=sim.config,
+            dispatch_solar_available_kw=solar_kw,
+        )
+        sim.step(guarded.action)
+        snapshots.append(sim.electrolyser_commitment)
+    return snapshots
+
+
+@pytest.mark.parametrize(
+    "mode", [ElectrolyserMode.COLD_STARTING, ElectrolyserMode.HOT_STARTING]
+)
+@pytest.mark.parametrize("solar_kw", [550.0, 650.0])
+@pytest.mark.parametrize("use_operating_controller", [False, True])
+def test_fallback_continues_active_startup_through_shared_dispatch_and_physics(
+    operating, monkeypatch, mode, solar_kw, use_operating_controller
+):
+    sim, observation, controller, args = startup_fixture(
+        operating, monkeypatch, mode, solar_kw=solar_kw
+    )
+    legacy = LegacyHeuristicSetpointControllerV1().compute_command(
+        observation.plant, **args
+    )
+    assert legacy.command.targets.electrolyser_target_kw == 450.0
+    monkeypatch.setattr(
+        operational_mpc, "solve_economic_mpc_model", fail_with(solver_failure(2))
+    )
+    decision = controller.compute_command(observation, **args)
+    assert decision.command.targets == replace(
+        legacy.command.targets, electrolyser_target_kw=600.0
+    )
+    operation = decision.evidence.operation()
+    assert operation["mode"] == "fallback"
+    assert operation["solver_failure"]["reason"] == "infeasible"
+    assert operation["startup_continuation"]["status"] == "adjusted"
+    assert operation["startup_continuation"]["requested_kw"] == 450.0
+    assert operation["startup_continuation"]["issued_kw"] == 600.0
+    assert decision.command.source_sha256 == decision.evidence.sha256
+    snapshots = advance_held_command(
+        sim, decision.command if use_operating_controller else legacy.command, args
+    )
+    final = snapshots[-1]
+    if use_operating_controller:
+        assert final.forced_stops == 0
+        assert final.aborted_starts == 0
+        assert final.startup_remaining_s == 0.0
+        assert final.mode in {ElectrolyserMode.RUNNING, ElectrolyserMode.HOT_STANDBY}
+    else:
+        assert final.forced_stops == 1
+        assert final.aborted_starts == 1
+
+
+def test_startup_continuation_does_not_override_power_shortage(operating, monkeypatch):
+    sim, observation, controller, args = startup_fixture(
+        operating,
+        monkeypatch,
+        ElectrolyserMode.COLD_STARTING,
+        solar_kw=500.0,
+        battery_support_max_kw=0.0,
+    )
+    legacy = LegacyHeuristicSetpointControllerV1().compute_command(
+        observation.plant, **args
+    )
+    monkeypatch.setattr(
+        operational_mpc, "solve_economic_mpc_model", fail_with(solver_failure(2))
+    )
+    decision = controller.compute_command(observation, **args)
+    assert decision.command.targets == legacy.command.targets
+    assert decision.command.targets.electrolyser_target_kw <= args[
+        "constraints"
+    ].electrolyser_limit_kw(sim.config)
+    assert (
+        decision.evidence.operation()["startup_continuation"]["status"]
+        == "current_power_shortage"
+    )
+    assert advance_held_command(sim, decision.command, args)[-1].forced_stops == 1
+
+
+def test_operator_cap_below_startup_requirement_still_rejects_before_solver(
+    operating, monkeypatch
+):
+    _, observation, controller, args = startup_fixture(
+        operating,
+        monkeypatch,
+        ElectrolyserMode.COLD_STARTING,
+        solar_kw=800.0,
+        electrolyser_max_kw=450.0,
+    )
+    monkeypatch.setattr(
+        operational_mpc,
+        "solve_economic_mpc_model",
+        fail_with(AssertionError("must not solve")),
+    )
+    with pytest.raises(ServiceMPCInputError, match="cap cannot sustain startup power"):
+        controller.compute_command(observation, **args)
+    assert controller.decision_events == ()
+
+
+def test_current_startup_feasibility_does_not_guarantee_future_weather(
+    operating, monkeypatch
+):
+    sim, observation, controller, args = startup_fixture(
+        operating,
+        monkeypatch,
+        ElectrolyserMode.COLD_STARTING,
+        battery_support_max_kw=0.0,
+    )
+    monkeypatch.setattr(
+        operational_mpc, "solve_economic_mpc_model", fail_with(solver_failure(2))
+    )
+    decision = controller.compute_command(observation, **args)
+    assert decision.evidence.operation()["startup_continuation"]["status"] == "adjusted"
+    monkeypatch.setattr(sim.solar, "clear_sky_kw", lambda _: 300.0)
+    assert advance_held_command(sim, decision.command, args)[-1].forced_stops == 1
+    assert sim.get_telemetry().battery_soc >= args["constraints"].reserve_soc(
+        sim.config
+    )
+
+
+@pytest.mark.parametrize("mode", [ElectrolyserMode.OFF, ElectrolyserMode.RUNNING])
+def test_low_power_without_active_startup_preserves_existing_fallback(
+    operating, monkeypatch, mode
+):
+    sim, observation, controller, args = startup_fixture(operating, monkeypatch, mode)
+    legacy = LegacyHeuristicSetpointControllerV1().compute_command(
+        observation.plant, **args
+    )
+    monkeypatch.setattr(
+        operational_mpc, "solve_economic_mpc_model", fail_with(solver_failure(2))
+    )
+    decision = controller.compute_command(observation, **args)
+    assert decision.command.targets == legacy.command.targets
+    assert decision.evidence.operation()["startup_continuation"] is None
+    assert advance_held_command(sim, decision.command, args)[-1].forced_stops == 0
