@@ -1,0 +1,5013 @@
+{
+  "actors": [
+    {
+      "actor": "initial",
+      "aggregate": {
+        "battery_throughput_kwh": {
+          "count": 8,
+          "maximum": 90168.31275244353,
+          "mean": 82526.1796609993,
+          "minimum": 71050.03167370745
+        },
+        "commitments_met": {
+          "count": 8,
+          "maximum": 23.0,
+          "mean": 20.5,
+          "minimum": 17.0
+        },
+        "commitments_settled": {
+          "count": 8,
+          "maximum": 28.0,
+          "mean": 28.0,
+          "minimum": 28.0
+        },
+        "delivered_kg": {
+          "count": 8,
+          "maximum": 6172.808189827305,
+          "mean": 5736.8540668255355,
+          "minimum": 5251.543362105098
+        },
+        "delivery_fill_rate": {
+          "count": 8,
+          "maximum": 0.9185726472957298,
+          "mean": 0.8536985218490379,
+          "minimum": 0.7814796669799253
+        },
+        "electrolyser_forced_stops": {
+          "count": 8,
+          "maximum": 13.0,
+          "mean": 10.25,
+          "minimum": 7.0
+        },
+        "net_operating_value_eur": {
+          "count": 8,
+          "maximum": -9727.700157602485,
+          "mean": -20475.350945501297,
+          "minimum": -28326.522571780697
+        },
+        "terminal_h2_kg": {
+          "count": 8,
+          "maximum": 78.35780062320727,
+          "mean": 58.23400580025305,
+          "minimum": 2.298417692654369
+        }
+      },
+      "aggregate_available": true,
+      "all_daily_returns_pass_count": 0,
+      "execution_eligible_count": 8,
+      "fixed_scenario_count": 8,
+      "hard_safety_pass_count": 0,
+      "slots": [
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700000-initial",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19765454,
+              "sha256": "d5f47a029808fe4c08c60c832bb11357f3b56777523ab1f4de7525d5b7af31b6"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "41c02bb049b024fae80312431b10f797f072dca78067b5eabdd9f535924eb5f0"
+            },
+            "summary.json": {
+              "bytes": 12793,
+              "sha256": "bef3b32cfbbd03799bea124dba6acaff1f328d3bb393c8cbc2317bdc97647ad0"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 11,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700000,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700001-initial",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19839925,
+              "sha256": "f6a36efef5991b299a8dd17bd1e0871361f885f13dd28d8cc0a75cfe958d0e1d"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "9d11942e888bf1072f8b5f2197b89a85b0358e593ffdb848784d7964da2763eb"
+            },
+            "summary.json": {
+              "bytes": 12858,
+              "sha256": "497fb0cbad8ae544a623e0270106c326e28f7f458664ba967e60ac18612ac54f"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 9,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700001,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700002-initial",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19722545,
+              "sha256": "3880fc0b5aa7fa69bba2f95820d6632ab12c10388a7a3d780c70d60df1f60f90"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "a6c41efbd4ea2b217f075744c05ca383935607a76522fd02469a0754fb3e905c"
+            },
+            "summary.json": {
+              "bytes": 12891,
+              "sha256": "e0d68ef434f8499e0e29a955ee590fd328c597b16801b048b18861a4b5552b93"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 7,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700002,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700003-initial",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19785503,
+              "sha256": "a3c8719b4d5cba2e31a3947ca87d4bc0dd5e0eb928fcbd16dd60a011b4d20e49"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "0596aacf89882e0dc2ad9c4f311f512b48f08ef4d2d6933133a8e3084b1d1f38"
+            },
+            "summary.json": {
+              "bytes": 12896,
+              "sha256": "88ca44b3c3c458dc888fb24dd9d00979af954b3f98454bbc0e631c68e08ecf07"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 10,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700003,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700004-initial",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19770647,
+              "sha256": "91e75c230a4a6c9a50fcd33310dcf53fc52f1e5c92c54a13a5b4fdbde04745df"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "144ac65f634139fc4a194b15c8d3b28ec4a1992a8bba0f1c7ec9d7ad6e359e10"
+            },
+            "summary.json": {
+              "bytes": 12819,
+              "sha256": "3f115f1cb7662fa1a2a576d67d2803ddb8813ebe8126bd54d77b220e8e4ac0d0"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 10,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700004,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700005-initial",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19796060,
+              "sha256": "4a0892d8de58d90d40f34da7d587513023e7b67363aed0f4a6b5c87c7714ba43"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "7d1f46fa835f312813a4eb72052d9e12908e56b23aa4e3c0834968dd33d730b7"
+            },
+            "summary.json": {
+              "bytes": 12851,
+              "sha256": "d1d30fcf05ebaefdf204b88c6e6369ae2320ef390ab155413dc9cd519e865973"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 11,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700005,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700006-initial",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19767494,
+              "sha256": "98e9d0f24a89b407b0cbd01ae598edb2aa9a738a399d187a4ffc7c7d2294306d"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "00095af3cd2a1b2941fa5079373ded76cf62b919eab55ea7493f7ce8d5362902"
+            },
+            "summary.json": {
+              "bytes": 12764,
+              "sha256": "e14038e5ef5949cf711264c802671c4648e7cd0548c524f5dbc09eb6691e5ace"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 13,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700006,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700007-initial",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19741618,
+              "sha256": "ac2702bfbda79a04202d6fe8779b9236c940ec1aa79dbca88ed8c6deb5ad0285"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "cfd5024bf0752c5134a297fb960ddbac180744c4a9c618092d1ec05ef745b5c9"
+            },
+            "summary.json": {
+              "bytes": 12929,
+              "sha256": "6a85e5fca057894365605953a937771d864251de96716d34ed406f3575763794"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 11,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700007,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        }
+      ]
+    },
+    {
+      "actor": "H",
+      "aggregate": {
+        "battery_throughput_kwh": {
+          "count": 8,
+          "maximum": 26443.397673358042,
+          "mean": 24036.268317459653,
+          "minimum": 21055.73994718694
+        },
+        "commitments_met": {
+          "count": 8,
+          "maximum": 24.0,
+          "mean": 21.375,
+          "minimum": 17.0
+        },
+        "commitments_settled": {
+          "count": 8,
+          "maximum": 28.0,
+          "mean": 28.0,
+          "minimum": 28.0
+        },
+        "delivered_kg": {
+          "count": 8,
+          "maximum": 6338.575955217968,
+          "mean": 5912.037482037795,
+          "minimum": 5459.0980729267485
+        },
+        "delivery_fill_rate": {
+          "count": 8,
+          "maximum": 0.9432404695264833,
+          "mean": 0.8797674824461005,
+          "minimum": 0.8123657846617185
+        },
+        "electrolyser_forced_stops": {
+          "count": 8,
+          "maximum": 0.0,
+          "mean": 0.0,
+          "minimum": 0.0
+        },
+        "net_operating_value_eur": {
+          "count": 8,
+          "maximum": -1234.1654251929572,
+          "mean": -9713.0199578083,
+          "minimum": -19383.46084119558
+        },
+        "terminal_h2_kg": {
+          "count": 8,
+          "maximum": 0.0,
+          "mean": 0.0,
+          "minimum": 0.0
+        }
+      },
+      "aggregate_available": true,
+      "all_daily_returns_pass_count": 0,
+      "execution_eligible_count": 8,
+      "fixed_scenario_count": 8,
+      "hard_safety_pass_count": 8,
+      "slots": [
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700000-H",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19428719,
+              "sha256": "2e777515f30c4cb539525493d4c912e9ea16eb7faee6bd13fd43769fddadc556"
+            },
+            "replay.json": {
+              "bytes": 434,
+              "sha256": "dfd2eb8d2bc8237d7f178a59d3eb69bd8f3227dea31fcbc4ede5b43cdfadaaa1"
+            },
+            "summary.json": {
+              "bytes": 12365,
+              "sha256": "9997ff934d617c69d8d722abef58bbba82a11a092b43e5e9a96bc612c320fb65"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 0,
+          "hard_safety_passed": true,
+          "minimum_battery_soc": 0.5122267591474141,
+          "physical_steps": 10080,
+          "seed": 9700000,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700001-H",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19421982,
+              "sha256": "0c7e819722bf493d729bb4ed5086d79798735da64438923fcb19db0432804985"
+            },
+            "replay.json": {
+              "bytes": 434,
+              "sha256": "6d8a7c36ea7968c60a07a26b1e384274729cc7859192c6f95366fe479aca0b59"
+            },
+            "summary.json": {
+              "bytes": 12356,
+              "sha256": "ef82422cd86ce63f5d1d364b5a2f6c35edfca55449407ed1340f45883455cd41"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 0,
+          "hard_safety_passed": true,
+          "minimum_battery_soc": 0.6066095877649212,
+          "physical_steps": 10080,
+          "seed": 9700001,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700002-H",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19326318,
+              "sha256": "1979137372908026eb3c41e1f3cbcbc0def6f1796c61d7f9350c80733425c050"
+            },
+            "replay.json": {
+              "bytes": 434,
+              "sha256": "e08b7e26f2c8d9a55d86bb1d9370531fa13e65909168da61efc3d61b2282813b"
+            },
+            "summary.json": {
+              "bytes": 12340,
+              "sha256": "4ba8edbcb17e1f859c79e77f68437673915a3f663ba20d36bbc406932bda53b2"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 0,
+          "hard_safety_passed": true,
+          "minimum_battery_soc": 0.6449927991691383,
+          "physical_steps": 10080,
+          "seed": 9700002,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700003-H",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19436738,
+              "sha256": "9124100d463b71fb986b5078656a3b491fa9d397a9fa1f0bd215b549f667ae8a"
+            },
+            "replay.json": {
+              "bytes": 434,
+              "sha256": "4f3c6fadca8d4f5b4795759865b1e9705260aa26eb27f7ea0e290196b8875cc5"
+            },
+            "summary.json": {
+              "bytes": 12397,
+              "sha256": "a85f5546aabd26e9333be65e2cc9c9e0bba9f9d7d6947db037890e0c69425dc2"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 0,
+          "hard_safety_passed": true,
+          "minimum_battery_soc": 0.32262978352045246,
+          "physical_steps": 10080,
+          "seed": 9700003,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700004-H",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19396959,
+              "sha256": "4f58720eb620e9af2c6902be3669bec6ddbc3ce75ba16e0ab9f0867aead62e11"
+            },
+            "replay.json": {
+              "bytes": 434,
+              "sha256": "7133a9576e80aa3e804484d10f70545e311905f9aa9ab13a6fe3565ca8680c67"
+            },
+            "summary.json": {
+              "bytes": 12472,
+              "sha256": "f4cd9c82741d7bf2431a8d60d5796ec3754b9f4ec020e553b577c9e09aac8d61"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 0,
+          "hard_safety_passed": true,
+          "minimum_battery_soc": 0.5329610009291167,
+          "physical_steps": 10080,
+          "seed": 9700004,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700005-H",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19557943,
+              "sha256": "596a73519527d360543c6c34aba086a8f11e1d29d94bd50039dbae209533a5b0"
+            },
+            "replay.json": {
+              "bytes": 434,
+              "sha256": "74625d40c85ea08478bc070f18ff91c8d654662a9d631db8e0203afd093b4d68"
+            },
+            "summary.json": {
+              "bytes": 12441,
+              "sha256": "298967daf85373e8580abed08f7b501dddc9f9fd296ee61e147aa1ecf1885fbb"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 0,
+          "hard_safety_passed": true,
+          "minimum_battery_soc": 0.33766045625745605,
+          "physical_steps": 10080,
+          "seed": 9700005,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700006-H",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19451502,
+              "sha256": "43b4d66295f8c9890810f00ea1939a4d29bfa49fc592f002976f7bf29412f2be"
+            },
+            "replay.json": {
+              "bytes": 434,
+              "sha256": "70aad25b756122c82021682948bbba64ec1acddb9f6bba29bb4635dd5dd7fb8e"
+            },
+            "summary.json": {
+              "bytes": 12420,
+              "sha256": "b406957e68cb384f7b3ec26388c272ad28b21b689dc481956f6564fa74d7cbc0"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 0,
+          "hard_safety_passed": true,
+          "minimum_battery_soc": 0.31127572228818157,
+          "physical_steps": 10080,
+          "seed": 9700006,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700007-H",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19451983,
+              "sha256": "f32b68c32bc210f472583037f33bff8687812f5e44c4d6a1fdd22843488570c0"
+            },
+            "replay.json": {
+              "bytes": 434,
+              "sha256": "3cde0f4ae0a516d5bf5eb9d936f90b74117d026ea1c595f409de7aedcac08087"
+            },
+            "summary.json": {
+              "bytes": 12408,
+              "sha256": "f3389b44de353e99a5be7424e4190ef87a49bc43887faa983612b630ac7d2c11"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 0,
+          "hard_safety_passed": true,
+          "minimum_battery_soc": 0.3533027945293596,
+          "physical_steps": 10080,
+          "seed": 9700007,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        }
+      ]
+    },
+    {
+      "actor": "OperatingMPC",
+      "aggregate": {
+        "battery_throughput_kwh": {
+          "count": 8,
+          "maximum": 15248.955837225152,
+          "mean": 11558.43917694688,
+          "minimum": 7308.644250874511
+        },
+        "commitments_met": {
+          "count": 8,
+          "maximum": 24.0,
+          "mean": 20.75,
+          "minimum": 18.0
+        },
+        "commitments_settled": {
+          "count": 8,
+          "maximum": 28.0,
+          "mean": 28.0,
+          "minimum": 28.0
+        },
+        "delivered_kg": {
+          "count": 8,
+          "maximum": 6314.522968127732,
+          "mean": 6061.574571570687,
+          "minimum": 5607.336071442465
+        },
+        "delivery_fill_rate": {
+          "count": 8,
+          "maximum": 0.9396611559713888,
+          "mean": 0.9020200255313523,
+          "minimum": 0.8344250106313192
+        },
+        "electrolyser_forced_stops": {
+          "count": 8,
+          "maximum": 1.0,
+          "mean": 0.25,
+          "minimum": 0.0
+        },
+        "net_operating_value_eur": {
+          "count": 8,
+          "maximum": 4830.030748765502,
+          "mean": -4012.2323595681073,
+          "minimum": -15235.649740386696
+        },
+        "terminal_h2_kg": {
+          "count": 8,
+          "maximum": 47.64854128421233,
+          "mean": 8.33853253641068,
+          "minimum": 0.009800208619608203
+        }
+      },
+      "aggregate_available": true,
+      "all_daily_returns_pass_count": 0,
+      "execution_eligible_count": 8,
+      "fixed_scenario_count": 8,
+      "hard_safety_pass_count": 6,
+      "slots": [
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700000-OperatingMPC",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19626701,
+              "sha256": "ecbd784b4141b8ad9ba5084f77449718dd550c025b0345ecc09b80b978b86410"
+            },
+            "replay.json": {
+              "bytes": 445,
+              "sha256": "fb55d6e338c14778574009def94e9fd3b8e98e0b7549ba639c566205418d0a7a"
+            },
+            "summary.json": {
+              "bytes": 13090,
+              "sha256": "36f2be8b7a060cf5343b86eac173a735dde39bc452bfcffff8d30911be4cc7f4"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 1,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700000,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700001-OperatingMPC",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19698675,
+              "sha256": "559444bb083fce59a8e0db55904e6e6703f39f00a3cefdafd948a6d7d5249007"
+            },
+            "replay.json": {
+              "bytes": 445,
+              "sha256": "14c352d5118fe134fa717635a11e13244a1b759ea35127ff7fee7cb3e73a1a7c"
+            },
+            "summary.json": {
+              "bytes": 13067,
+              "sha256": "03782a7e7c841e7eb4accde31e9423aa30a0f81063078cf7c54a7a2b7383a2d2"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 0,
+          "hard_safety_passed": true,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700001,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700002-OperatingMPC",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19480381,
+              "sha256": "b26e5124664589183e39a7ecc50bb6b42326222f0e8ef4ae58729c50d0c180e0"
+            },
+            "replay.json": {
+              "bytes": 445,
+              "sha256": "d38d932ab7402c590c0c285019c4f17f9c5f474e30fb55557eb51264e2ea65b5"
+            },
+            "summary.json": {
+              "bytes": 13007,
+              "sha256": "4e06baa259f8dd5d2e32ed912f3a79118cb476b6d2f9c87f8fe041f9917cb219"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 0,
+          "hard_safety_passed": true,
+          "minimum_battery_soc": 0.15,
+          "physical_steps": 10080,
+          "seed": 9700002,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700003-OperatingMPC",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19769287,
+              "sha256": "0cc9edcaa266cb77d9b14f35ccc3175cc8b8271a1f9c7fc4516683b6ceb78f12"
+            },
+            "replay.json": {
+              "bytes": 445,
+              "sha256": "cd70fdc4267d1d00205a755d6897be70ee3416b33dac911e1a113d754d905f5d"
+            },
+            "summary.json": {
+              "bytes": 13042,
+              "sha256": "dc896a5f913d8aa845ab8863cca9fe7934a6b443ba6d6debdeef3e3a98a648ce"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 0,
+          "hard_safety_passed": true,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700003,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700004-OperatingMPC",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19729496,
+              "sha256": "05ecd1d1c6a20aad7aa6263bd9325a6ec36cc62c9bb8c87ceadb26eb0c0e2cec"
+            },
+            "replay.json": {
+              "bytes": 445,
+              "sha256": "0bdaaf0df1f8a6e7d65a884120bf7278f1139961ee112e9da9b4c185cec590b4"
+            },
+            "summary.json": {
+              "bytes": 13060,
+              "sha256": "a676e3964587144f8d01c995e17892900f542a5a11b0258078bb45a7a87522cc"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 0,
+          "hard_safety_passed": true,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700004,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700005-OperatingMPC",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19916322,
+              "sha256": "477722a3aaef7400e535f6722467e7b12b62b9e34365577968d0da1fab7d17fd"
+            },
+            "replay.json": {
+              "bytes": 445,
+              "sha256": "5f9cfcfddc30b100e78a09414493218ff2f3087c28c8565cdd4e95548a46454a"
+            },
+            "summary.json": {
+              "bytes": 13050,
+              "sha256": "091fa3c1ea4e6c979c5749d27435b81af2028d0468d9dd8a9c303844705ab2a6"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 0,
+          "hard_safety_passed": true,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700005,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700006-OperatingMPC",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19810713,
+              "sha256": "36012bc37dd1828c80d785afcf128008750d6830a1a55c7e85c4380372fcd185"
+            },
+            "replay.json": {
+              "bytes": 445,
+              "sha256": "7e123129c4d9edf6f6883cde1a88d060f093dca870401e9447ef5c454321976e"
+            },
+            "summary.json": {
+              "bytes": 13067,
+              "sha256": "ee9df4ebb1c4ff70b5528c4b7a307bda0adf0b019e74e85f5dee9684f4660300"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 1,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700006,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700007-OperatingMPC",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19704084,
+              "sha256": "8b51e6f7295d6def4d4c826a337284d9caf776e1e2102cb05868fbdebdbb8647"
+            },
+            "replay.json": {
+              "bytes": 445,
+              "sha256": "c6cb766fc6be75d3d97dcf6cc981ff0183386eae2ebf28377c1273d1bb0465b0"
+            },
+            "summary.json": {
+              "bytes": 13135,
+              "sha256": "8294730147eadffafd20f96ddcdfe9842b0199b7e91b959b70d8af44d3cc789f"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 0,
+          "hard_safety_passed": true,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700007,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        }
+      ]
+    },
+    {
+      "actor": "M24",
+      "aggregate": null,
+      "aggregate_available": false,
+      "all_daily_returns_pass_count": 0,
+      "execution_eligible_count": 0,
+      "fixed_scenario_count": 8,
+      "hard_safety_pass_count": 0,
+      "slots": [
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700000-M24",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 14046179,
+              "sha256": "59880b062dba6b0b824020afd6c9a0225a27794ce4b8d59f14f6a43b5fa76553"
+            },
+            "replay.json": {
+              "bytes": 444,
+              "sha256": "ca3da9dca3ebc4473202398c676096289d03b3443149564334a316b481cf99e6"
+            },
+            "summary.json": {
+              "bytes": 8850,
+              "sha256": "cf8294696f55d7baca48f23c7442e078fc16285ba73f6aa944b7dbf91516da15"
+            }
+          },
+          "decisions": 329,
+          "descriptive_ineligibility_reasons": [
+            {
+              "detail": {
+                "message": "service MPC V1 does not model degraded/offline dac",
+                "phase": "controller_compute",
+                "type": "ServiceMPCInputError"
+              },
+              "kind": "controller_or_execution"
+            }
+          ],
+          "execution_complete": false,
+          "failure": {
+            "message": "service MPC V1 does not model degraded/offline dac",
+            "phase": "controller_compute",
+            "type": "ServiceMPCInputError"
+          },
+          "forced_electrolyser_stops": 0,
+          "hard_safety_passed": true,
+          "minimum_battery_soc": 0.5122267591474141,
+          "physical_steps": 4935,
+          "seed": 9700000,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700001-M24",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 6511410,
+              "sha256": "5c84c2b6291f77b1c945e92674c03f6b62a88769b4e15b08982d2ccd8985afcb"
+            },
+            "replay.json": {
+              "bytes": 444,
+              "sha256": "3101e5e56e8fe67699d3c1e01825f00b36403281720312f3ffcb84325f7ca591"
+            },
+            "summary.json": {
+              "bytes": 6928,
+              "sha256": "851a1d2ef3abaf51b8fee8f421436d0fa4824d666692529a655c9cfb1846d31e"
+            }
+          },
+          "decisions": 147,
+          "descriptive_ineligibility_reasons": [
+            {
+              "detail": {
+                "message": "service MPC V1 does not model degraded/offline dac",
+                "phase": "controller_compute",
+                "type": "ServiceMPCInputError"
+              },
+              "kind": "controller_or_execution"
+            }
+          ],
+          "execution_complete": false,
+          "failure": {
+            "message": "service MPC V1 does not model degraded/offline dac",
+            "phase": "controller_compute",
+            "type": "ServiceMPCInputError"
+          },
+          "forced_electrolyser_stops": 0,
+          "hard_safety_passed": true,
+          "minimum_battery_soc": 0.5843147027925002,
+          "physical_steps": 2205,
+          "seed": 9700001,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700002-M24",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 601023,
+              "sha256": "41c7f3a42c9a634b2b90a53bb1133b1007acc9316a56644218edab663b68f0dd"
+            },
+            "replay.json": {
+              "bytes": 442,
+              "sha256": "86f048103cda1d68ee0c1fec1630a9b1c1447e22eafccefa39773008ca91c25f"
+            },
+            "summary.json": {
+              "bytes": 5921,
+              "sha256": "43b9c75581e9548eb09228157bc4d0dd2bd4e9adef6425e63ae53e0c1f949561"
+            }
+          },
+          "decisions": 11,
+          "descriptive_ineligibility_reasons": [
+            {
+              "detail": {
+                "message": "service MPC V1 does not model degraded/offline dac",
+                "phase": "controller_compute",
+                "type": "ServiceMPCInputError"
+              },
+              "kind": "controller_or_execution"
+            }
+          ],
+          "execution_complete": false,
+          "failure": {
+            "message": "service MPC V1 does not model degraded/offline dac",
+            "phase": "controller_compute",
+            "type": "ServiceMPCInputError"
+          },
+          "forced_electrolyser_stops": 0,
+          "hard_safety_passed": true,
+          "minimum_battery_soc": 0.6449927991691383,
+          "physical_steps": 165,
+          "seed": 9700002,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700003-M24",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19132826,
+              "sha256": "bd60a82b906ff1b53cb479e1b386b4534b765ec56293311fde9913866e60d786"
+            },
+            "replay.json": {
+              "bytes": 444,
+              "sha256": "8de82b14ef084dd4cc53fe08caf2ed9ad1eb8e48251f0c3a9de46b25431bcf8a"
+            },
+            "summary.json": {
+              "bytes": 9894,
+              "sha256": "c41d22f761f141f3fcf3319749c9b4aa73fd02f72b4b1f462e579ad4cce576f4"
+            }
+          },
+          "decisions": 454,
+          "descriptive_ineligibility_reasons": [
+            {
+              "detail": {
+                "message": "service MPC V1 does not model degraded/offline dac",
+                "phase": "controller_compute",
+                "type": "ServiceMPCInputError"
+              },
+              "kind": "controller_or_execution"
+            }
+          ],
+          "execution_complete": false,
+          "failure": {
+            "message": "service MPC V1 does not model degraded/offline dac",
+            "phase": "controller_compute",
+            "type": "ServiceMPCInputError"
+          },
+          "forced_electrolyser_stops": 0,
+          "hard_safety_passed": true,
+          "minimum_battery_soc": 0.32262978352045246,
+          "physical_steps": 6810,
+          "seed": 9700003,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700004-M24",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 6465351,
+              "sha256": "0cf5b98fce0d250062caf7caa15b5d77c05dfbfe8479d4cfc09f156cdae8b882"
+            },
+            "replay.json": {
+              "bytes": 444,
+              "sha256": "c33e1d21f0330980e7be7314341760584106e76ad4efa7e2362638f60531bd64"
+            },
+            "summary.json": {
+              "bytes": 6972,
+              "sha256": "3d689862a4c007ac149d8093d86400683e408b8115ed2ce4eb6060f7c422dbd4"
+            }
+          },
+          "decisions": 146,
+          "descriptive_ineligibility_reasons": [
+            {
+              "detail": {
+                "message": "service MPC V1 does not model degraded/offline dac",
+                "phase": "controller_compute",
+                "type": "ServiceMPCInputError"
+              },
+              "kind": "controller_or_execution"
+            }
+          ],
+          "execution_complete": false,
+          "failure": {
+            "message": "service MPC V1 does not model degraded/offline dac",
+            "phase": "controller_compute",
+            "type": "ServiceMPCInputError"
+          },
+          "forced_electrolyser_stops": 0,
+          "hard_safety_passed": true,
+          "minimum_battery_soc": 0.2658412380382255,
+          "physical_steps": 2190,
+          "seed": 9700004,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700005-M24",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 10852234,
+              "sha256": "9ff740d101f7a8c11a45666f8b52761a44a0706f5c6b59aa83cb0ad1a26bf361"
+            },
+            "replay.json": {
+              "bytes": 444,
+              "sha256": "9182c8a9d5dba6052f4b7a7a830a536ee354b0ccee1adf5b0fa0b754664090e0"
+            },
+            "summary.json": {
+              "bytes": 8014,
+              "sha256": "a32f98f31df5c81875e89c076b0adfa1514ade0bfbb5d56d133c6ff57f5c01dc"
+            }
+          },
+          "decisions": 252,
+          "descriptive_ineligibility_reasons": [
+            {
+              "detail": {
+                "message": "service MPC V1 does not model degraded/offline dac",
+                "phase": "controller_compute",
+                "type": "ServiceMPCInputError"
+              },
+              "kind": "controller_or_execution"
+            }
+          ],
+          "execution_complete": false,
+          "failure": {
+            "message": "service MPC V1 does not model degraded/offline dac",
+            "phase": "controller_compute",
+            "type": "ServiceMPCInputError"
+          },
+          "forced_electrolyser_stops": 0,
+          "hard_safety_passed": true,
+          "minimum_battery_soc": 0.15,
+          "physical_steps": 3780,
+          "seed": 9700005,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700006-M24",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 6000515,
+              "sha256": "f629cfd99c37fcdeb69063c02b089e860b50686dccf5bd4db50642c11501326f"
+            },
+            "replay.json": {
+              "bytes": 444,
+              "sha256": "78e27f5995e3db2affe4bb93a38af33617ea7968a589001f0eb5857ada657fa8"
+            },
+            "summary.json": {
+              "bytes": 6962,
+              "sha256": "cb4abc21018e3352d3a3c68db134e491dcfef56f47136a6f2af6e9485f9c8142"
+            }
+          },
+          "decisions": 135,
+          "descriptive_ineligibility_reasons": [
+            {
+              "detail": {
+                "message": "service MPC V1 does not model degraded/offline dac",
+                "phase": "controller_compute",
+                "type": "ServiceMPCInputError"
+              },
+              "kind": "controller_or_execution"
+            }
+          ],
+          "execution_complete": false,
+          "failure": {
+            "message": "service MPC V1 does not model degraded/offline dac",
+            "phase": "controller_compute",
+            "type": "ServiceMPCInputError"
+          },
+          "forced_electrolyser_stops": 0,
+          "hard_safety_passed": true,
+          "minimum_battery_soc": 0.27817472747388516,
+          "physical_steps": 2025,
+          "seed": 9700006,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700007-M24",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 4108410,
+              "sha256": "0452e9e0c3412a31a072588f69ede033fa1dba95102d5f0af16a462295c951bf"
+            },
+            "replay.json": {
+              "bytes": 443,
+              "sha256": "ccb0756303827e8433b53367ed9086276fcc65d790f933b53a9607e1d4b1f7a9"
+            },
+            "summary.json": {
+              "bytes": 6982,
+              "sha256": "88ed085c0f2d801d581cf614cdb833034878755a697c3c14b3eeba1b2a7cee55"
+            }
+          },
+          "decisions": 99,
+          "descriptive_ineligibility_reasons": [
+            {
+              "detail": {
+                "message": "service MPC V1 does not model degraded/offline dac",
+                "phase": "controller_compute",
+                "type": "ServiceMPCInputError"
+              },
+              "kind": "controller_or_execution"
+            }
+          ],
+          "execution_complete": false,
+          "failure": {
+            "message": "service MPC V1 does not model degraded/offline dac",
+            "phase": "controller_compute",
+            "type": "ServiceMPCInputError"
+          },
+          "forced_electrolyser_stops": 0,
+          "hard_safety_passed": true,
+          "minimum_battery_soc": 0.3512248395215281,
+          "physical_steps": 1485,
+          "seed": 9700007,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        }
+      ]
+    },
+    {
+      "actor": "E-beta",
+      "aggregate": null,
+      "aggregate_available": false,
+      "all_daily_returns_pass_count": 0,
+      "execution_eligible_count": 0,
+      "fixed_scenario_count": 8,
+      "hard_safety_pass_count": 0,
+      "slots": [
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700000-E-beta",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 82908,
+              "sha256": "f61ef551e0089f153e8cd4bac814e7ac0dc00430e471d48e1bbee76f883a7839"
+            },
+            "replay.json": {
+              "bytes": 442,
+              "sha256": "a6ab58c54bedda0204f8a6d568667915e0bf998148a612b922f5f8e4e928dbaf"
+            },
+            "summary.json": {
+              "bytes": 4949,
+              "sha256": "724c7608104a69c1a50c242232ba91f38d7ea7d34703cf1434563d25616c0fde"
+            }
+          },
+          "decisions": 0,
+          "descriptive_ineligibility_reasons": [
+            {
+              "detail": {
+                "message": "economic-MPC service_maximization failed with status 2: The problem is infeasible. (HiGHS Status 8: model_status is Infeasible; primal_status is None)",
+                "phase": "controller_compute",
+                "type": "BetaMPCSolveError"
+              },
+              "kind": "controller_or_execution"
+            }
+          ],
+          "execution_complete": false,
+          "failure": {
+            "message": "economic-MPC service_maximization failed with status 2: The problem is infeasible. (HiGHS Status 8: model_status is Infeasible; primal_status is None)",
+            "phase": "controller_compute",
+            "type": "BetaMPCSolveError"
+          },
+          "forced_electrolyser_stops": 0,
+          "hard_safety_passed": true,
+          "minimum_battery_soc": 0.5122267591474141,
+          "physical_steps": 0,
+          "seed": 9700000,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700001-E-beta",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 83063,
+              "sha256": "9b23cd5300229fb131ba3a7651a4679e44c97e7f787fc3896cf07cacfe583aac"
+            },
+            "replay.json": {
+              "bytes": 442,
+              "sha256": "e993cdf9d210a60a3bdbc3c7925325a6b7fea35e8d95e73f9060cd1bd41ba644"
+            },
+            "summary.json": {
+              "bytes": 4945,
+              "sha256": "74eec6daed4a63c351e04e5648524b7f409f2d5d5ef85a77311fb3983754b5ef"
+            }
+          },
+          "decisions": 0,
+          "descriptive_ineligibility_reasons": [
+            {
+              "detail": {
+                "message": "economic-MPC service_maximization failed with status 2: The problem is infeasible. (HiGHS Status 8: model_status is Infeasible; primal_status is None)",
+                "phase": "controller_compute",
+                "type": "BetaMPCSolveError"
+              },
+              "kind": "controller_or_execution"
+            }
+          ],
+          "execution_complete": false,
+          "failure": {
+            "message": "economic-MPC service_maximization failed with status 2: The problem is infeasible. (HiGHS Status 8: model_status is Infeasible; primal_status is None)",
+            "phase": "controller_compute",
+            "type": "BetaMPCSolveError"
+          },
+          "forced_electrolyser_stops": 0,
+          "hard_safety_passed": true,
+          "minimum_battery_soc": 0.6066095877649212,
+          "physical_steps": 0,
+          "seed": 9700001,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700002-E-beta",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 82999,
+              "sha256": "774669ef4e2a366ad4ed1bcd02334786c158ffcc77e4e7cde36aedbaa697cf84"
+            },
+            "replay.json": {
+              "bytes": 442,
+              "sha256": "52f6b45e17298240f2c0473d2c6e1317267fcf33aa0f50a7e39fe247285f928e"
+            },
+            "summary.json": {
+              "bytes": 4949,
+              "sha256": "3cb35e04589747f732331a9df1ee1f3298c3723af2b971eb1a8204528824a0e4"
+            }
+          },
+          "decisions": 0,
+          "descriptive_ineligibility_reasons": [
+            {
+              "detail": {
+                "message": "economic-MPC service_maximization failed with status 2: The problem is infeasible. (HiGHS Status 8: model_status is Infeasible; primal_status is None)",
+                "phase": "controller_compute",
+                "type": "BetaMPCSolveError"
+              },
+              "kind": "controller_or_execution"
+            }
+          ],
+          "execution_complete": false,
+          "failure": {
+            "message": "economic-MPC service_maximization failed with status 2: The problem is infeasible. (HiGHS Status 8: model_status is Infeasible; primal_status is None)",
+            "phase": "controller_compute",
+            "type": "BetaMPCSolveError"
+          },
+          "forced_electrolyser_stops": 0,
+          "hard_safety_passed": true,
+          "minimum_battery_soc": 0.6449927991691383,
+          "physical_steps": 0,
+          "seed": 9700002,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700003-E-beta",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 83075,
+              "sha256": "45975e737858acdb85a2dc173796ee83558a9628ad9e0bc055cbdb33e8ccd857"
+            },
+            "replay.json": {
+              "bytes": 442,
+              "sha256": "edb8b654821c41b3e69d8c0015f5d91244e42886b6581f37e40950d5be63b45f"
+            },
+            "summary.json": {
+              "bytes": 4956,
+              "sha256": "c38ef9dba8e3b246ab5eded51170c7a89398d0945017747935182d9cb4b31b06"
+            }
+          },
+          "decisions": 0,
+          "descriptive_ineligibility_reasons": [
+            {
+              "detail": {
+                "message": "economic-MPC service_maximization failed with status 2: The problem is infeasible. (HiGHS Status 8: model_status is Infeasible; primal_status is None)",
+                "phase": "controller_compute",
+                "type": "BetaMPCSolveError"
+              },
+              "kind": "controller_or_execution"
+            }
+          ],
+          "execution_complete": false,
+          "failure": {
+            "message": "economic-MPC service_maximization failed with status 2: The problem is infeasible. (HiGHS Status 8: model_status is Infeasible; primal_status is None)",
+            "phase": "controller_compute",
+            "type": "BetaMPCSolveError"
+          },
+          "forced_electrolyser_stops": 0,
+          "hard_safety_passed": true,
+          "minimum_battery_soc": 0.32262978352045246,
+          "physical_steps": 0,
+          "seed": 9700003,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700004-E-beta",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 83047,
+              "sha256": "01d13f6bf92ff67097008468638045c4e69938885d1a89fe910f90f2ecd2f09e"
+            },
+            "replay.json": {
+              "bytes": 442,
+              "sha256": "303c398313b9b83bcf802fafaea3e415c5aa328576f256f8ce1fc45bbbf1c6bc"
+            },
+            "summary.json": {
+              "bytes": 4951,
+              "sha256": "efa558f93977dec7410e357b319d2057b54d7db1bc17225b7ccf3a653423b03b"
+            }
+          },
+          "decisions": 0,
+          "descriptive_ineligibility_reasons": [
+            {
+              "detail": {
+                "message": "economic-MPC service_maximization failed with status 2: The problem is infeasible. (HiGHS Status 8: model_status is Infeasible; primal_status is None)",
+                "phase": "controller_compute",
+                "type": "BetaMPCSolveError"
+              },
+              "kind": "controller_or_execution"
+            }
+          ],
+          "execution_complete": false,
+          "failure": {
+            "message": "economic-MPC service_maximization failed with status 2: The problem is infeasible. (HiGHS Status 8: model_status is Infeasible; primal_status is None)",
+            "phase": "controller_compute",
+            "type": "BetaMPCSolveError"
+          },
+          "forced_electrolyser_stops": 0,
+          "hard_safety_passed": true,
+          "minimum_battery_soc": 0.5329610009291167,
+          "physical_steps": 0,
+          "seed": 9700004,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700005-E-beta",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 83085,
+              "sha256": "983c40527a754a9037e37e456661ed1adf746523afcd3f18eb1e817a58eab867"
+            },
+            "replay.json": {
+              "bytes": 442,
+              "sha256": "878f325f498102cb6954717e0b38d399c5525a888d22f39a8943e9b9e22b4b84"
+            },
+            "summary.json": {
+              "bytes": 4960,
+              "sha256": "f13510e053e450b9778ecb8dba5613a6cfd61c275a46797628de9a0aef0d15c7"
+            }
+          },
+          "decisions": 0,
+          "descriptive_ineligibility_reasons": [
+            {
+              "detail": {
+                "message": "economic-MPC service_maximization failed with status 2: The problem is infeasible. (HiGHS Status 8: model_status is Infeasible; primal_status is None)",
+                "phase": "controller_compute",
+                "type": "BetaMPCSolveError"
+              },
+              "kind": "controller_or_execution"
+            }
+          ],
+          "execution_complete": false,
+          "failure": {
+            "message": "economic-MPC service_maximization failed with status 2: The problem is infeasible. (HiGHS Status 8: model_status is Infeasible; primal_status is None)",
+            "phase": "controller_compute",
+            "type": "BetaMPCSolveError"
+          },
+          "forced_electrolyser_stops": 0,
+          "hard_safety_passed": true,
+          "minimum_battery_soc": 0.33766045625745605,
+          "physical_steps": 0,
+          "seed": 9700005,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700006-E-beta",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 82991,
+              "sha256": "790670dfc3ea8638451525a529b35460c431853c21507c45d072817f159925d5"
+            },
+            "replay.json": {
+              "bytes": 442,
+              "sha256": "5cf037dba6be246444719ba022108fc6818c88dde7310d98f775e70c27ca1a4a"
+            },
+            "summary.json": {
+              "bytes": 4956,
+              "sha256": "8335590a0f4261760b7da92d338ee57d18c437776beb598198bc758842fcd389"
+            }
+          },
+          "decisions": 0,
+          "descriptive_ineligibility_reasons": [
+            {
+              "detail": {
+                "message": "economic-MPC service_maximization failed with status 2: The problem is infeasible. (HiGHS Status 8: model_status is Infeasible; primal_status is None)",
+                "phase": "controller_compute",
+                "type": "BetaMPCSolveError"
+              },
+              "kind": "controller_or_execution"
+            }
+          ],
+          "execution_complete": false,
+          "failure": {
+            "message": "economic-MPC service_maximization failed with status 2: The problem is infeasible. (HiGHS Status 8: model_status is Infeasible; primal_status is None)",
+            "phase": "controller_compute",
+            "type": "BetaMPCSolveError"
+          },
+          "forced_electrolyser_stops": 0,
+          "hard_safety_passed": true,
+          "minimum_battery_soc": 0.31127572228818157,
+          "physical_steps": 0,
+          "seed": 9700006,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700007-E-beta",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 82977,
+              "sha256": "3d70a42056b97a054a1f0272225b1f86d82e12f07bb16b0075e55e8ff794d8be"
+            },
+            "replay.json": {
+              "bytes": 442,
+              "sha256": "e200e406f5f00e2d370f0484b6b0fcab78d55e176f721feec5306835e398e39c"
+            },
+            "summary.json": {
+              "bytes": 4955,
+              "sha256": "3b20624de06bf8bcbc46e0380a8e8acaed0866acfee24156df87fdcf5f51abc3"
+            }
+          },
+          "decisions": 0,
+          "descriptive_ineligibility_reasons": [
+            {
+              "detail": {
+                "message": "economic-MPC service_maximization failed with status 2: The problem is infeasible. (HiGHS Status 8: model_status is Infeasible; primal_status is None)",
+                "phase": "controller_compute",
+                "type": "BetaMPCSolveError"
+              },
+              "kind": "controller_or_execution"
+            }
+          ],
+          "execution_complete": false,
+          "failure": {
+            "message": "economic-MPC service_maximization failed with status 2: The problem is infeasible. (HiGHS Status 8: model_status is Infeasible; primal_status is None)",
+            "phase": "controller_compute",
+            "type": "BetaMPCSolveError"
+          },
+          "forced_electrolyser_stops": 0,
+          "hard_safety_passed": true,
+          "minimum_battery_soc": 0.3533027945293596,
+          "physical_steps": 0,
+          "seed": 9700007,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        }
+      ]
+    },
+    {
+      "actor": "A-pi-raw",
+      "aggregate": {
+        "battery_throughput_kwh": {
+          "count": 8,
+          "maximum": 51584.9498804146,
+          "mean": 43459.45065586254,
+          "minimum": 34870.649068747596
+        },
+        "commitments_met": {
+          "count": 8,
+          "maximum": 20.0,
+          "mean": 17.25,
+          "minimum": 14.0
+        },
+        "commitments_settled": {
+          "count": 8,
+          "maximum": 28.0,
+          "mean": 28.0,
+          "minimum": 28.0
+        },
+        "delivered_kg": {
+          "count": 8,
+          "maximum": 5692.659113704773,
+          "mean": 5137.175282128488,
+          "minimum": 4643.739450321429
+        },
+        "delivery_fill_rate": {
+          "count": 8,
+          "maximum": 0.847121891920353,
+          "mean": 0.7644606074595964,
+          "minimum": 0.6910326562978317
+        },
+        "electrolyser_forced_stops": {
+          "count": 8,
+          "maximum": 19.0,
+          "mean": 18.125,
+          "minimum": 17.0
+        },
+        "net_operating_value_eur": {
+          "count": 8,
+          "maximum": -21566.299025806766,
+          "mean": -32070.272176136008,
+          "minimum": -47521.90395549535
+        },
+        "terminal_h2_kg": {
+          "count": 8,
+          "maximum": 1146.5148006358015,
+          "mean": 928.4274422753963,
+          "minimum": 774.2780258154032
+        }
+      },
+      "aggregate_available": true,
+      "all_daily_returns_pass_count": 0,
+      "execution_eligible_count": 8,
+      "fixed_scenario_count": 8,
+      "hard_safety_pass_count": 0,
+      "slots": [
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700000-A-pi-raw",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19180590,
+              "sha256": "827941a89b47dfb8f07881060b7400a412df0afcf1f48c48430766421251f1ea"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "26066d6dd865159c38c456ce0fda17ff54e636d79537a3103b84e33db5615df0"
+            },
+            "summary.json": {
+              "bytes": 12619,
+              "sha256": "cda1bcd7f6d44a218c1a89030b4ffc90961df0089dd28282553b001e44dc469e"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 18,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700000,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700001-A-pi-raw",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19470207,
+              "sha256": "5389580a388a9bfae95feaef43bb35b3d7efbd9afaa3f55f337acfa033704346"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "bfadee66298a63257189536195bb90230d017ada209f916628acdb64009e54e9"
+            },
+            "summary.json": {
+              "bytes": 12693,
+              "sha256": "ad02a8a8b63edfde56c075af7a9a2fc98e160fd61b5f78e4654bda781b6259c2"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 19,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700001,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700002-A-pi-raw",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19410836,
+              "sha256": "7d271263086f07b24860cd2d51fe52269d9cbd1362a324dced806fbbdf269e6b"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "429f33fccfef89752eb76bc4129d03652a03081f0739eae49ff5820d9741c476"
+            },
+            "summary.json": {
+              "bytes": 12859,
+              "sha256": "10aba39a544db683bd44392bc4d6ae18bb9dda8287339be78735ccbba29f1743"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 19,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700002,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700003-A-pi-raw",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19461542,
+              "sha256": "c7f586c53563d80021d8b625af91749359302cd712000b3cbc6fe4c5f7088630"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "03626f4ecf62faf5791370a2e94f19b1fd95c7c5ac69b6aa1a73d2c3c39047db"
+            },
+            "summary.json": {
+              "bytes": 12651,
+              "sha256": "37c9fee719453233d7eb2ff194285eef9c2d5a6c5b8a79ac99f192d5723dc8eb"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 17,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700003,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700004-A-pi-raw",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19472587,
+              "sha256": "3728173d44bf7321d92f4c0c6adcb01b20fc3c15cccf30a8cb8edde447e207a4"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "ecae9490b14706677de885c53e4e3ba66e8b93bf57d97d6cbd0d8dce0bbf84de"
+            },
+            "summary.json": {
+              "bytes": 12830,
+              "sha256": "67734ea6dbc4f6ae786c990d6f842d10b27655b119a8b5b3dfc538c6f4a23265"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 18,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700004,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700005-A-pi-raw",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19363063,
+              "sha256": "7668f9c079b7f981a0d47c778d41ca556071276289c64c325df55ce6f428904a"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "03c1633d9bb49f10b6ee98c8a810fba00cfcbebf6a0ab3178522b48a350f6e84"
+            },
+            "summary.json": {
+              "bytes": 12622,
+              "sha256": "5229d0d77aafc43024e01b5e296aa6ad310d9f2c31c03a549f4c39d086b74d80"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 17,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700005,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700006-A-pi-raw",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19308304,
+              "sha256": "483faf33eb085a1623d250f507d2b9259cc7f6a6f75c14f02017d8b71ab385d6"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "b7ab0795109e5754b38616934f75eb7b23e85525e8bc099915568f735e73e9d3"
+            },
+            "summary.json": {
+              "bytes": 12651,
+              "sha256": "78dba800b17ff45774cf0e52fead37c03820c9130c897243688e8aac4a00b4c9"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 18,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700006,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700007-A-pi-raw",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19317072,
+              "sha256": "8904bf052e9e590e57c7b8633177093cb5ddf170fc6d06860ed3e3a4fa02c222"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "bb28f81406e27c28a75fc6a9987e0d1f57671b007c4f4a09286368ad776234bd"
+            },
+            "summary.json": {
+              "bytes": 12703,
+              "sha256": "e1a644a203b3366b3051dddb1a02bc8fc31b8e4ea0fd56011549813af2af1ba2"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 19,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700007,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        }
+      ]
+    },
+    {
+      "actor": "B-pi-scaled",
+      "aggregate": {
+        "battery_throughput_kwh": {
+          "count": 8,
+          "maximum": 36352.988208444775,
+          "mean": 26539.95452954823,
+          "minimum": 17721.092329367097
+        },
+        "commitments_met": {
+          "count": 8,
+          "maximum": 11.0,
+          "mean": 8.125,
+          "minimum": 6.0
+        },
+        "commitments_settled": {
+          "count": 8,
+          "maximum": 28.0,
+          "mean": 28.0,
+          "minimum": 28.0
+        },
+        "delivered_kg": {
+          "count": 8,
+          "maximum": 4055.8454607811987,
+          "mean": 3571.7741376073377,
+          "minimum": 3163.484909195724
+        },
+        "delivery_fill_rate": {
+          "count": 8,
+          "maximum": 0.6035484316638688,
+          "mean": 0.5315140085725205,
+          "minimum": 0.47075668291603034
+        },
+        "electrolyser_forced_stops": {
+          "count": 8,
+          "maximum": 20.0,
+          "mean": 18.125,
+          "minimum": 15.0
+        },
+        "net_operating_value_eur": {
+          "count": 8,
+          "maximum": -63556.72166595349,
+          "mean": -70549.00575687036,
+          "minimum": -77509.55739697792
+        },
+        "terminal_h2_kg": {
+          "count": 8,
+          "maximum": 1999.9279061218317,
+          "mean": 1987.5552482378455,
+          "minimum": 1953.0562615881438
+        }
+      },
+      "aggregate_available": true,
+      "all_daily_returns_pass_count": 0,
+      "execution_eligible_count": 8,
+      "fixed_scenario_count": 8,
+      "hard_safety_pass_count": 0,
+      "slots": [
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700000-B-pi-scaled",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 18770041,
+              "sha256": "279de5cb12418b2d54cd6b50d258dcc9410d568f7be7a1ddd8bc7e0c83453583"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "bba159ad780df280ae5d52084ae1e1d24fd4b0bb4a2ceb8d2a0035cce41848cc"
+            },
+            "summary.json": {
+              "bytes": 12863,
+              "sha256": "2827cfa5ab051f3c242a0afeb1855f12b80c5914a93151639636141c70c46edf"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 19,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700000,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700001-B-pi-scaled",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19067822,
+              "sha256": "b06754a57f455b55792c7d6826cd40c1a213122afb35f61cb4e62367b850ddde"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "39da53911974a4f39fffe846eff7ecec9386313cbb430248a7a8615d18a5b5b8"
+            },
+            "summary.json": {
+              "bytes": 12821,
+              "sha256": "7281830f9ba76d8475ccf27a8d6f17220c5e4f54ceb96ffbf6f03c845ebed921"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 18,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700001,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700002-B-pi-scaled",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19222553,
+              "sha256": "445c728bafc5606c36fe919a07f61341e1d64ec5c2e8e8a502a2a4ff45b6c147"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "8c743d1cabfec7f32a558946358a16b155656c018a69ada5918d44a101124695"
+            },
+            "summary.json": {
+              "bytes": 12833,
+              "sha256": "730aaf799dac47007860bb95b67337d52495b7dc9347b00fd9a68dcd46f97ba0"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 20,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700002,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700003-B-pi-scaled",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19040102,
+              "sha256": "5154e1b4000572bf79ee1e3b1060ea78b0ea11f721dd1d23beeaaecad89aeeed"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "d186f2d1bd38844ac33a6d90d0c7f031b3d0ba7d665c29ae043f629e2a9bee33"
+            },
+            "summary.json": {
+              "bytes": 12815,
+              "sha256": "ad5c0a58ce6fc23e98585a52079eefdd67ca213fc640e41f01e8214f731273aa"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 15,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700003,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700004-B-pi-scaled",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19095349,
+              "sha256": "f9f5fd08e72255b3e808379adc168aaf7e3ab61eaca589bab6ce80504e9121e4"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "bb7d74d9ba8db8ba0b4db64253181f64487bee06ee55d16be9af9e101f79f9f4"
+            },
+            "summary.json": {
+              "bytes": 12838,
+              "sha256": "8566df69f93c2dd453a296a1362302c76e9d9816b514889b8dea83d4a2899c40"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 16,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700004,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700005-B-pi-scaled",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 18757342,
+              "sha256": "9c5679ea69068b1232cda38f25ef1abb5a000b6b95d541676777655babe3ad79"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "2a60078ee89a347119778258a14756d088e8a44677810f8c9c1948d9c2824d13"
+            },
+            "summary.json": {
+              "bytes": 12878,
+              "sha256": "039a3396baa70ce5b4c4ba661ecd69819f5af50bc66b46bfacf7aea2642b19ae"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 18,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700005,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700006-B-pi-scaled",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 18712056,
+              "sha256": "bbb28a5fa83db336dd0949b2e9f3005e42267461659f79d68f4299c49bbfde6e"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "037a9d14f4b940b54c9ea221cc741b7201f89ae13588997c71738919ce817dc3"
+            },
+            "summary.json": {
+              "bytes": 12858,
+              "sha256": "04090245f3f0c08f571c1c1b4cdce9bdf821d8da4ca986d3f50b01213c55a9c3"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 19,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700006,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700007-B-pi-scaled",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 18941435,
+              "sha256": "3206bdbde10aff0c1a3841c83cd07e5f069a3230d77934f8e771ea74307def50"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "471f75b67d1b2f24bfd5823657b5b02e4bf8ee30fd3653dfabca0c829a8a30a1"
+            },
+            "summary.json": {
+              "bytes": 12901,
+              "sha256": "4a2feb265612409db11c9ffbafb408fc12648a58ea5c5b2afcee91a677fa0e4a"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 20,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700007,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        }
+      ]
+    },
+    {
+      "actor": "C-scalar-raw",
+      "aggregate": {
+        "battery_throughput_kwh": {
+          "count": 8,
+          "maximum": 27165.294193580423,
+          "mean": 21531.618305493423,
+          "minimum": 18391.6116702097
+        },
+        "commitments_met": {
+          "count": 8,
+          "maximum": 13.0,
+          "mean": 10.125,
+          "minimum": 7.0
+        },
+        "commitments_settled": {
+          "count": 8,
+          "maximum": 28.0,
+          "mean": 28.0,
+          "minimum": 28.0
+        },
+        "delivered_kg": {
+          "count": 8,
+          "maximum": 4384.904726372759,
+          "mean": 3867.2009537395434,
+          "minimum": 3368.1851495689843
+        },
+        "delivery_fill_rate": {
+          "count": 8,
+          "maximum": 0.6525155842816606,
+          "mean": 0.5754763324017178,
+          "minimum": 0.5012180282096703
+        },
+        "electrolyser_forced_stops": {
+          "count": 8,
+          "maximum": 20.0,
+          "mean": 18.0,
+          "minimum": 17.0
+        },
+        "net_operating_value_eur": {
+          "count": 8,
+          "maximum": -46716.09982256492,
+          "mean": -62371.540041228254,
+          "minimum": -78139.5720925175
+        },
+        "terminal_h2_kg": {
+          "count": 8,
+          "maximum": 1999.3166752551795,
+          "mean": 1799.7816968793418,
+          "minimum": 1557.8889887367743
+        }
+      },
+      "aggregate_available": true,
+      "all_daily_returns_pass_count": 0,
+      "execution_eligible_count": 8,
+      "fixed_scenario_count": 8,
+      "hard_safety_pass_count": 0,
+      "slots": [
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700000-C-scalar-raw",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 18777753,
+              "sha256": "337909d62cc0c952e31e8d6f7006acc9c7b31aba211e9ec3a4c65bec33dc11cc"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "dd7edafa3a473a69acd7539766aee07821ba5e4cf3f4879d238bf27b65556bf5"
+            },
+            "summary.json": {
+              "bytes": 12825,
+              "sha256": "475eec2a5a5813e0db761da39c97bd24f392859722e79845c23cc88de948b612"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 18,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700000,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700001-C-scalar-raw",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 18997313,
+              "sha256": "642cb77a443deb441cc851efd1502132c9280eeab62b511eef754573d260bf73"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "5714c842bc907d6e0bd5ea8eb4899a979303636c5333265996d61c6c185956f5"
+            },
+            "summary.json": {
+              "bytes": 12843,
+              "sha256": "96585b0ceb12f21f09840587adf7e14bf512a5e8c5c8f00ed3f131110bc90215"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 17,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700001,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700002-C-scalar-raw",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 18995785,
+              "sha256": "c827e6e1ff2011912e4829d9e821915df92b87726ce8cf9e2fac0581e6c7967e"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "a67a844067215c141c5e17ef409fe346cebcc5bfeadea6381a08082722bc84cb"
+            },
+            "summary.json": {
+              "bytes": 12880,
+              "sha256": "7cf815c98d5afb303b14f2184f328ecf0ca5072911386b15732da072ead4dce3"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 19,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700002,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700003-C-scalar-raw",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19038678,
+              "sha256": "608dbf718eb0200906299f668957005e4ca87056e088a5ba953dc13cc47db035"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "86164707f036f8f5a4dbd528fe8828a1a893548ea5dc3c6b81210ee710ca48dc"
+            },
+            "summary.json": {
+              "bytes": 12849,
+              "sha256": "057d3fdb5b2c8d8037f6cf110c70f0e58015c006591a9a902025538ef37aa8ef"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 17,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700003,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700004-C-scalar-raw",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19042525,
+              "sha256": "e2c365f16fe380503d196b59175fb8499e5d2febec66e282666a7afa955dca2a"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "73f818a4d8ce53369c8c8c73e13d3958c07185fe0557d1dd95eeee2dc760c90d"
+            },
+            "summary.json": {
+              "bytes": 12855,
+              "sha256": "c5a8627dc2b189a4f89fa66aa8e54f12bc8ebadd0f938f82ab52846520abd2f8"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 17,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700004,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700005-C-scalar-raw",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 18920458,
+              "sha256": "1639729daad5ecc68b7d0dabbf24e78b33c0f46a05257b16c716eab7813f8d93"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "a38944a3d04be50fe4f191dc2a67ca8735b77473ff9da6b69f615d2dfbef6c0b"
+            },
+            "summary.json": {
+              "bytes": 12787,
+              "sha256": "2e1c6064d79408cdbd42a34af7b2c59ae79ed9a1581798c8f8648eb206858bb2"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 17,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700005,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700006-C-scalar-raw",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 18868325,
+              "sha256": "fb05bb87fc7cd76700a3c3006c171b922a48e50b32dc7bfbff70a18c66211c89"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "6d8ab061af169d3d1efea7a612697a648699c7273555d93d86d74eb3c9713085"
+            },
+            "summary.json": {
+              "bytes": 12836,
+              "sha256": "a08b13df83553ed21fa3a5312444d1de4e39925ea42ed4387628a44fdda39fc0"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 19,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700006,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700007-C-scalar-raw",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 18838479,
+              "sha256": "d7a857fa8cd5b9112a32e935c36823697460602b9f5f2f4ce04371744d641d5d"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "002dfb084aaf03a27f56876fc21aeec5e0bd67c0f38fe0ee435f6e69a309d3d5"
+            },
+            "summary.json": {
+              "bytes": 12883,
+              "sha256": "a0ff201c3edd2153dd0cd1062bc87f8ef7c37b0a5d2c14279ceeecbd855b61f4"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 20,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700007,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        }
+      ]
+    },
+    {
+      "actor": "D-scalar-scaled",
+      "aggregate": {
+        "battery_throughput_kwh": {
+          "count": 8,
+          "maximum": 31770.983484379096,
+          "mean": 21533.257581489983,
+          "minimum": 16858.48265398966
+        },
+        "commitments_met": {
+          "count": 8,
+          "maximum": 24.0,
+          "mean": 15.5,
+          "minimum": 10.0
+        },
+        "commitments_settled": {
+          "count": 8,
+          "maximum": 28.0,
+          "mean": 28.0,
+          "minimum": 28.0
+        },
+        "delivered_kg": {
+          "count": 8,
+          "maximum": 6151.498956440174,
+          "mean": 4942.280126242006,
+          "minimum": 4166.267804975894
+        },
+        "delivery_fill_rate": {
+          "count": 8,
+          "maximum": 0.9154016304226449,
+          "mean": 0.7354583521193462,
+          "minimum": 0.6199803281214128
+        },
+        "electrolyser_forced_stops": {
+          "count": 8,
+          "maximum": 20.0,
+          "mean": 19.5,
+          "minimum": 19.0
+        },
+        "net_operating_value_eur": {
+          "count": 8,
+          "maximum": -23779.68438065927,
+          "mean": -37592.42005652902,
+          "minimum": -54168.299897407414
+        },
+        "terminal_h2_kg": {
+          "count": 8,
+          "maximum": 1498.8562758930193,
+          "mean": 1138.2335898202234,
+          "minimum": 645.7454124876444
+        }
+      },
+      "aggregate_available": true,
+      "all_daily_returns_pass_count": 0,
+      "execution_eligible_count": 8,
+      "fixed_scenario_count": 8,
+      "hard_safety_pass_count": 0,
+      "slots": [
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700000-D-scalar-scaled",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19149977,
+              "sha256": "c9a58dc5b6bce8e78881c1a5554dbbc455894e60d238b770b89e0ea34d23211b"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "3f2770615a26f242cd1bab4c6b0357fcdd1d88e766e2fc1218f27f58f84c6d0e"
+            },
+            "summary.json": {
+              "bytes": 12897,
+              "sha256": "4cccdcf20e696a8c4d869dbac939bb11d7a49bf294ce34b7f7b7eca57d00fbb4"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 20,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700000,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700001-D-scalar-scaled",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19292052,
+              "sha256": "64fc64b0dc09df24d275b0b5b5230a7c42ad4d3cbfdd1e4cce5c226f7f5772b4"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "37821b70b43c196c568ec41d0844b9a3a0d504af7a32f65ef38687ce0e38edcf"
+            },
+            "summary.json": {
+              "bytes": 12849,
+              "sha256": "8c7777a28e676aefe087e4e43d0f8155432a76ce57acd104ba8e43bfee0cdb45"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 19,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700001,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700002-D-scalar-scaled",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19464060,
+              "sha256": "70860fd4c4da0c8747a5d5f6a094c4801a3b0e6cd2e625fbb447b9ad8e09ca61"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "12bcb4d8e0d3a356ad4fb6c2cf4bef893ef6a1628e600b36dfa07babe36fdf83"
+            },
+            "summary.json": {
+              "bytes": 12904,
+              "sha256": "e2590346870ccda564c8854026ed5695737a726408ccde4831a23b09a6439436"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 20,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700002,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700003-D-scalar-scaled",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19195557,
+              "sha256": "044832f0af4a763302da7ec574974b96c063c2e047dca22f9b3ddbe5fcc9337f"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "e2e459a9b04fd386636a18b5ad4e7e32de40e4bfd5ddc081fe29ceeb00ba77e2"
+            },
+            "summary.json": {
+              "bytes": 12867,
+              "sha256": "19805993870b1691f03147690f909f418fc0268d8d8006b966bc6aa8900da231"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 20,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700003,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700004-D-scalar-scaled",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19277260,
+              "sha256": "f16375b9b25009cf73de24e45875ccea71d9761c81b752d335008cd20aae387c"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "db0f483c3975e271e830e4a5db0400a877407d6de599f60d5458891c847dbf98"
+            },
+            "summary.json": {
+              "bytes": 12811,
+              "sha256": "4c2e7bdc06759b352fc3fc24aeb73d4362bc927e7a12a6d57a8e5e5a3621bc39"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 19,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700004,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700005-D-scalar-scaled",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19181278,
+              "sha256": "319fe35fe67e84a96cf1b1c9ae0becc36d5539d3c7bc37b49db49a2941f30cd4"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "9daf6b5c6c9410b045dbfe7ececac4b872b69c4dd26282863c71fb04b0742dfe"
+            },
+            "summary.json": {
+              "bytes": 12799,
+              "sha256": "556eafea0e177c15e1ebffc72ac8c4e022886ec5bb622af89126551b13c16f38"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 19,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700005,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700006-D-scalar-scaled",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19077583,
+              "sha256": "768f8f12b3d13cd42f92d2a79e67cd363612b38b7e9b7bdca75a264b3b8df190"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "2ef12bd063435c2f5df9e7bbe701445c2b3e2ae49a8890311585a35f29905b63"
+            },
+            "summary.json": {
+              "bytes": 12851,
+              "sha256": "cbcc7c2a8b522c37e4715c7b2b96d8a38fd724716632b13f4953451aecad7a52"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 19,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700006,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700007-D-scalar-scaled",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19183836,
+              "sha256": "279e531c2b4ca0f643fca3fc93937f5fdf458cb081bdffec584cf12e02bdae1f"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "029bbea91bcf03d2aa380f5a750313fa5aef808a63c08cdebb0bc3ff51f7aa1c"
+            },
+            "summary.json": {
+              "bytes": 12871,
+              "sha256": "04ae9ecc7c3a5afa7ae8d15c1821bd5bc74ea876a76c4da1a6ccea7e275334ca"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 20,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700007,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        }
+      ]
+    },
+    {
+      "actor": "E-pi-scaled-lowstd",
+      "aggregate": {
+        "battery_throughput_kwh": {
+          "count": 8,
+          "maximum": 79155.55819026522,
+          "mean": 68391.66860072268,
+          "minimum": 55629.02896102057
+        },
+        "commitments_met": {
+          "count": 8,
+          "maximum": 27.0,
+          "mean": 23.125,
+          "minimum": 21.0
+        },
+        "commitments_settled": {
+          "count": 8,
+          "maximum": 28.0,
+          "mean": 28.0,
+          "minimum": 28.0
+        },
+        "delivered_kg": {
+          "count": 8,
+          "maximum": 6543.466884280915,
+          "mean": 6083.5345934160005,
+          "minimum": 5606.424208015245
+        },
+        "delivery_fill_rate": {
+          "count": 8,
+          "maximum": 0.9737301911132314,
+          "mean": 0.9052878859250001,
+          "minimum": 0.8342893166689354
+        },
+        "electrolyser_forced_stops": {
+          "count": 8,
+          "maximum": 14.0,
+          "mean": 11.0,
+          "minimum": 7.0
+        },
+        "net_operating_value_eur": {
+          "count": 8,
+          "maximum": -2277.0675891765695,
+          "mean": -11637.026802291246,
+          "minimum": -20141.498637590663
+        },
+        "terminal_h2_kg": {
+          "count": 8,
+          "maximum": 153.76989944793905,
+          "mean": 62.19245117416584,
+          "minimum": 0.6584931687276004
+        }
+      },
+      "aggregate_available": true,
+      "all_daily_returns_pass_count": 0,
+      "execution_eligible_count": 8,
+      "fixed_scenario_count": 8,
+      "hard_safety_pass_count": 0,
+      "slots": [
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700000-E-pi-scaled-lowstd",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19670524,
+              "sha256": "8687e90eb421eef96b2410880aad5fc58679f2dbf0f77afc0478b8427d63d58a"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "84e6044fb88ea07f891a82922b59555dc28c0be956b13bbcda89d20e746af824"
+            },
+            "summary.json": {
+              "bytes": 12881,
+              "sha256": "cfd14e8959a9c6194222a8a5b321a468bb8d92c6937693654f45eb390e221719"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 14,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700000,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700001-E-pi-scaled-lowstd",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19699592,
+              "sha256": "280b868df66a88e77ffa25f48f455e423e34bc7a4d96cb0def46cfb97a92bfba"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "66bd13a9be1077d45ae8e0a2c7de3ce1f75587296d5776b081a22c5bf2390fee"
+            },
+            "summary.json": {
+              "bytes": 12894,
+              "sha256": "4f660a19ea8c99ea0582b263348bb7eff93311d236aab96183beed74b7a403ca"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 7,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700001,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700002-E-pi-scaled-lowstd",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19680713,
+              "sha256": "3d2d47061ba526986821a6d1ead8319b5023c553fd2a804ceeb10db5891b91ae"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "63907ed8f577c93d759e6600e40194dae48de98062406da921d290ce1214f728"
+            },
+            "summary.json": {
+              "bytes": 12938,
+              "sha256": "d2d19883e38730cdba9ee5c6e6bb63c4be50742257bd20e573df6e76f3cd355b"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 12,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700002,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700003-E-pi-scaled-lowstd",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19728781,
+              "sha256": "5f2d49b5cd2b38327c36161085cefb318241e1249ec9f489f84c213ca1b7a192"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "507a93a849daf940a9e94a7a8d6866939f26ba5f5159733c59c66bb4ae3ed325"
+            },
+            "summary.json": {
+              "bytes": 12921,
+              "sha256": "df9ad7e6d65475f792a50038abe73a79a594a1ce34738851db5901c8341c9c03"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 11,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700003,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700004-E-pi-scaled-lowstd",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19725874,
+              "sha256": "0328c41dff76eb25aee07e4748aea9cc4a2a0402b677a135e5777e4a128774c6"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "c2c83b8a266093acd743aa2e8a68226ab43240ceb494c4fd621ca00ea60b5b2a"
+            },
+            "summary.json": {
+              "bytes": 12922,
+              "sha256": "c51f334cd36c49c65531cd543c9a6127cddeeff28c19fa88869f52c861f27302"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 11,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700004,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700005-E-pi-scaled-lowstd",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19762113,
+              "sha256": "44c216f1f26dcfbfde563fa25080573d3b849303a2d906c449eff295646abbea"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "51987350d10e8a736c9690c743d3decdaef155ed025e36937caa51aac9dfdddb"
+            },
+            "summary.json": {
+              "bytes": 12889,
+              "sha256": "20e944e3c0f9f2391bf3cf7416c9d7c2d0dd1a081c1b441523f38e0fd7986519"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 11,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700005,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700006-E-pi-scaled-lowstd",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19665730,
+              "sha256": "009e3e5e39ae8bcf43278b4117c15e675261fc714daaf971bcf49b1df01d1221"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "4aa2d1e70796680bd3efede4dc1bfc515f596b1ff98d9c22577ef5faf2d90f0b"
+            },
+            "summary.json": {
+              "bytes": 12826,
+              "sha256": "041d901ccc62cec16c0ade4f131e366cd477e7359019f39d609bd31517d7a9ab"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 12,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700006,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        },
+        {
+          "all_daily_returns_passed": false,
+          "artifact_directory": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/evaluations/9700007-E-pi-scaled-lowstd",
+          "artifacts": {
+            "episode.json.gz": {
+              "bytes": 19654091,
+              "sha256": "a73592b509243483ae333ed78ae32d35d3b49476fdf9056bd8d4cbead0cf616a"
+            },
+            "replay.json": {
+              "bytes": 436,
+              "sha256": "1f55cd2464df0009430a832ebcdbea5804d50730ec47a9606d29b192dc413214"
+            },
+            "summary.json": {
+              "bytes": 12942,
+              "sha256": "dde25240664277cf324f63b612ab0f9f45f25994cb8e376502e6eace10e1a18c"
+            }
+          },
+          "decisions": 672,
+          "descriptive_ineligibility_reasons": [],
+          "execution_complete": true,
+          "failure": null,
+          "forced_electrolyser_stops": 10,
+          "hard_safety_passed": false,
+          "minimum_battery_soc": 0.14999999999999997,
+          "physical_steps": 10080,
+          "seed": 9700007,
+          "soc_safety_passed": true,
+          "soc_safety_threshold": 0.05
+        }
+      ]
+    }
+  ],
+  "analysis_root": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001-analysis",
+  "audit_semantic_sha256_used_by_descriptive_report": "fccabb49ec22ff6e7dacbd32302c682034fd3f05cd18aefb25ddf93bea2d8e86",
+  "batch_root": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001",
+  "claim_status": {
+    "commercial_savings_demonstrated": false,
+    "commission_or_deployment_readiness_demonstrated": false,
+    "formal_development_selection": false,
+    "formal_registered_training": false,
+    "heldout_or_confirmation_evaluation": false,
+    "operational_benefit_demonstrated": false,
+    "protected_seed_consumption": false,
+    "rl_superiority_demonstrated": false
+  },
+  "closed_at": "2026-09-12T14:23:56.520417+00:00",
+  "closure": {
+    "closed_receipts": 165,
+    "complete_physical_episodes": 64,
+    "controller_exception_authenticity_independently_replayed": false,
+    "evaluation_receipts": 80,
+    "integrity_verified": true,
+    "physically_replayed_slots": 80,
+    "receipt_codes_all_empty": true,
+    "replay_receipts": 80,
+    "retained_controller_failure_prefixes": 16,
+    "training_receipts": 5
+  },
+  "design": {
+    "actions": 4,
+    "arm_count": 5,
+    "decision_interval_min": 15,
+    "development_seeds": [
+      9700000,
+      9700001,
+      9700002,
+      9700003,
+      9700004,
+      9700005,
+      9700006,
+      9700007
+    ],
+    "epochs_per_rollout": 10,
+    "evaluation_actor_count": 10,
+    "horizon_h": 168,
+    "minibatch_size": 256,
+    "observations": 135,
+    "optimizer_seed": 101,
+    "optimizer_steps_per_arm": 5120,
+    "physics_interval_min": 1,
+    "rollouts_per_arm": 16,
+    "training_seed_base": 9600000,
+    "transitions_per_arm": 131072,
+    "transitions_per_environment_per_rollout": 2048,
+    "vector_environments": 4
+  },
+  "evidence": [
+    {
+      "bytes": 118552,
+      "path": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/report.json",
+      "sha256": "6514e7a1400409df7f69104caa3ec266508952cc008e9a861c75c8b7a9a78b4f"
+    },
+    {
+      "bytes": 10657,
+      "path": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/plan.json",
+      "sha256": "75683811f9f2dbf4bd911dac775d1574a7062ed243c7ce610d546cdbfdb5b8f2"
+    },
+    {
+      "bytes": 5388,
+      "path": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-readiness-238fe7c/gate.json",
+      "sha256": "88b4fd2d8fa6c8f38c8ecb7f30b8d09bca89539e9f751de75bd6163e59c1cf98"
+    },
+    {
+      "bytes": 5771102,
+      "path": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001-analysis/audit.json",
+      "sha256": "88048a9e5e5d1bb8bfd3d823824691daf82746fd488bbab5a1856ff57ab739a9"
+    },
+    {
+      "bytes": 2826186,
+      "path": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001-analysis/descriptive/analysis.json",
+      "sha256": "9ac18492778cd4a0f625c3b8f9d53fba013001012e6c600895dc4de42b0d2cda"
+    },
+    {
+      "bytes": 5848,
+      "path": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001-analysis/descriptive/analysis.md",
+      "sha256": "c51c3863e7b13132a05946cbf8a74798d4722b9379e6a59f18a01800f55734e0"
+    },
+    {
+      "bytes": 1827832,
+      "path": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001-analysis/mechanism/plant-batch001-mechanism-results.json",
+      "sha256": "94b75c19b01f58521266b476f2f0d582f0681403acdb459e90a61897abcefc7b"
+    },
+    {
+      "bytes": 8511,
+      "path": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001-analysis/mechanism/plant-batch001-mechanism-results.md",
+      "sha256": "807006dc3fb5ee9fb52dad8a9d98559197a6f121b7c5bd4a6ebe380a94249361"
+    },
+    {
+      "bytes": 570,
+      "path": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001-analysis/mechanism/manifest.json",
+      "sha256": "caee409dbc3d56d3a76d9cad65e64783b91030d05f86bf0016a52b82e1e6d61a"
+    },
+    {
+      "bytes": 825078,
+      "path": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001-analysis/operation/plant-batch001-operational-diagnosis.json",
+      "sha256": "bdd5e613387db226bcdfe8a40609f614b502f9ec4a77d3337662d8959fb8585c"
+    },
+    {
+      "bytes": 10203,
+      "path": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001-analysis/operation/plant-batch001-operational-diagnosis.md",
+      "sha256": "e87359f5e447f0451f70dade6ba42fe03a0665b651557ee8d5d78105c85d7f7e"
+    },
+    {
+      "bytes": 715,
+      "path": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001-analysis/operation/plant-batch001-operational-digests.json",
+      "sha256": "9c68d816f7f5b86b66950bd344e4c78699f2a1a29522c0efb1fdf6c37a54c7db"
+    },
+    {
+      "bytes": 1331,
+      "path": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001-analysis/operation/manifest.json",
+      "sha256": "ef8ae1f832b7754042e19bb3d06bb14088b614990ca6973d3b19708d2ed5d6e8"
+    }
+  ],
+  "fixed_mechanism_comparisons": [
+    {
+      "all_eight_pairs_available": true,
+      "candidate": "B-pi-scaled",
+      "candidate_all_cases_daily_returns_passed": false,
+      "candidate_all_cases_hard_safety_passed": false,
+      "comparator": "A-pi-raw",
+      "confirmation_or_material_benefit_claim": false,
+      "direction": "candidate minus comparator; higher EUR/service is better; lower wear/deficit is better",
+      "paired_differences": {
+        "delivered_kg": {
+          "count": 8,
+          "empirical_p10": -1786.916493420795,
+          "maximum": -1113.108670070313,
+          "mean": -1565.4011445211504,
+          "median": -1621.8929866247815,
+          "minimum": -1810.6818186776768,
+          "negative_count": 8,
+          "positive_count": 0,
+          "values": [
+            -1113.108670070313,
+            -1810.6818186776768,
+            -1636.813652923574,
+            -1709.4201973317986,
+            -1776.7313540249884,
+            -1568.7968513502979,
+            -1606.9723203259891,
+            -1300.6842914645645
+          ]
+        },
+        "delivery_fill_rate": {
+          "count": 8,
+          "empirical_p10": -0.26591019247333264,
+          "maximum": -0.16564117114141563,
+          "mean": -0.23294659888707597,
+          "median": -0.24135312300964012,
+          "minimum": -0.2694466992079877,
+          "negative_count": 8,
+          "positive_count": 0,
+          "values": [
+            -0.16564117114141563,
+            -0.2694466992079877,
+            -0.2435734602564842,
+            -0.2543780055553272,
+            -0.26439454672990903,
+            -0.2334519124033182,
+            -0.23913278576279606,
+            -0.19355421003936968
+          ]
+        },
+        "net_operating_value_eur": {
+          "count": 8,
+          "empirical_p10": -42508.09517080057,
+          "maximum": -29987.653441482573,
+          "mean": -38478.733580734355,
+          "median": -39572.208903499646,
+          "minimum": -43715.99774232621,
+          "negative_count": 8,
+          "positive_count": 0,
+          "values": [
+            -29987.653441482573,
+            -43715.99774232621,
+            -39159.65841404911,
+            -41937.41566298766,
+            -41990.422640146724,
+            -38328.24642653478,
+            -39984.759392950175,
+            -32725.714925397588
+          ]
+        }
+      }
+    },
+    {
+      "all_eight_pairs_available": true,
+      "candidate": "D-scalar-scaled",
+      "candidate_all_cases_daily_returns_passed": false,
+      "candidate_all_cases_hard_safety_passed": false,
+      "comparator": "C-scalar-raw",
+      "confirmation_or_material_benefit_claim": false,
+      "direction": "candidate minus comparator; higher EUR/service is better; lower wear/deficit is better",
+      "paired_differences": {
+        "delivered_kg": {
+          "count": 8,
+          "empirical_p10": 570.036888390399,
+          "maximum": 1923.4785250196296,
+          "mean": 1075.079172502463,
+          "median": 845.3612820616647,
+          "minimum": 334.47472045934046,
+          "negative_count": 0,
+          "positive_count": 8,
+          "values": [
+            1923.4785250196296,
+            892.6399087164195,
+            1915.3352358684442,
+            334.47472045934046,
+            670.9921032179955,
+            1354.220570907993,
+            711.4096604229717,
+            798.0826554069099
+          ]
+        },
+        "delivery_fill_rate": {
+          "count": 8,
+          "empirical_p10": 0.08482691791523794,
+          "maximum": 0.2862319233660162,
+          "mean": 0.1599820197176284,
+          "median": 0.12579780983060485,
+          "minimum": 0.049773023877878075,
+          "negative_count": 0,
+          "positive_count": 8,
+          "values": [
+            0.2862319233660162,
+            0.13283331974946722,
+            0.2850201243851851,
+            0.049773023877878075,
+            0.09985001535982074,
+            0.20152091828987995,
+            0.10586453280103747,
+            0.11876229991174247
+          ]
+        },
+        "net_operating_value_eur": {
+          "count": 8,
+          "empirical_p10": 13350.836265284626,
+          "maximum": 45144.32506329159,
+          "mean": 24779.119984699228,
+          "median": 19919.368104127934,
+          "minimum": 7661.408733734301,
+          "negative_count": 0,
+          "positive_count": 8,
+          "values": [
+            43290.67622011114,
+            21088.846762756497,
+            45144.32506329159,
+            7661.408733734301,
+            15941.763222209498,
+            30566.88807975667,
+            15789.162350234765,
+            18749.88944549937
+          ]
+        }
+      }
+    },
+    {
+      "all_eight_pairs_available": true,
+      "candidate": "A-pi-raw",
+      "candidate_all_cases_daily_returns_passed": false,
+      "candidate_all_cases_hard_safety_passed": false,
+      "comparator": "C-scalar-raw",
+      "confirmation_or_material_benefit_claim": false,
+      "direction": "candidate minus comparator; higher EUR/service is better; lower wear/deficit is better",
+      "paired_differences": {
+        "delivered_kg": {
+          "count": 8,
+          "empirical_p10": 1162.5191504408124,
+          "maximum": 1456.4953931330429,
+          "mean": 1269.9743283889447,
+          "median": 1285.4229101334536,
+          "minimum": 947.7740071074486,
+          "negative_count": 0,
+          "positive_count": 8,
+          "values": [
+            1254.5527832979683,
+            1355.8366239898637,
+            1456.4953931330429,
+            947.7740071074486,
+            1260.4364209037494,
+            1313.8535784125775,
+            1274.781399239585,
+            1296.0644210273222
+          ]
+        },
+        "delivery_fill_rate": {
+          "count": 8,
+          "empirical_p10": 0.17299392119654944,
+          "maximum": 0.21674038588289324,
+          "mean": 0.18898427505787868,
+          "median": 0.19128317115081156,
+          "minimum": 0.14103779867670363,
+          "negative_count": 0,
+          "positive_count": 8,
+          "values": [
+            0.18668940227648334,
+            0.20176140237944407,
+            0.21674038588289324,
+            0.14103779867670363,
+            0.18756494358686748,
+            0.19551392535901457,
+            0.18969961298208116,
+            0.19286672931954196
+          ]
+        },
+        "net_operating_value_eur": {
+          "count": 8,
+          "empirical_p10": 27601.251791145296,
+          "maximum": 34099.73506066076,
+          "mean": 30301.267865092246,
+          "median": 30587.47064485817,
+          "minimum": 23337.335923305764,
+          "negative_count": 0,
+          "positive_count": 8,
+          "values": [
+            30617.66813702215,
+            32421.35584726798,
+            34099.73506066076,
+            23337.335923305764,
+            29428.644305933667,
+            30340.60305638877,
+            30557.273152694193,
+            31607.52743746469
+          ]
+        }
+      }
+    },
+    {
+      "all_eight_pairs_available": true,
+      "candidate": "B-pi-scaled",
+      "candidate_all_cases_daily_returns_passed": false,
+      "candidate_all_cases_hard_safety_passed": false,
+      "comparator": "D-scalar-scaled",
+      "confirmation_or_material_benefit_claim": false,
+      "direction": "candidate minus comparator; higher EUR/service is better; lower wear/deficit is better",
+      "paired_differences": {
+        "delivered_kg": {
+          "count": 8,
+          "empirical_p10": -1876.1201369520747,
+          "maximum": -802.7025258441522,
+          "mean": -1370.5059886346685,
+          "median": -1267.3860698717335,
+          "minimum": -2095.6534956589753,
+          "negative_count": 8,
+          "positive_count": 0,
+          "values": [
+            -1782.0344117919744,
+            -1347.4851034042326,
+            -2095.6534956589753,
+            -1096.1209106836905,
+            -1187.2870363392344,
+            -1609.1638438457135,
+            -1043.6005815093758,
+            -802.7025258441522
+          ]
+        },
+        "delivery_fill_rate": {
+          "count": 8,
+          "empirical_p10": -0.2791845441892968,
+          "maximum": -0.11944978063157019,
+          "mean": -0.20394434354682567,
+          "median": -0.18859911754043657,
+          "minimum": -0.31185319875877604,
+          "negative_count": 8,
+          "positive_count": 0,
+          "values": [
+            -0.2651836922309485,
+            -0.20051861657801084,
+            -0.31185319875877604,
+            -0.16311323075650164,
+            -0.1766796185028623,
+            -0.23945890533418357,
+            -0.15529770558175238,
+            -0.11944978063157019
+          ]
+        },
+        "net_operating_value_eur": {
+          "count": 8,
+          "empirical_p10": -44923.73759220408,
+          "maximum": -19868.07693343227,
+          "mean": -32956.58570034133,
+          "median": -30443.51510711864,
+          "minimum": -50204.24841667994,
+          "negative_count": 8,
+          "positive_count": 0,
+          "values": [
+            -42660.661524571566,
+            -32383.488657814727,
+            -50204.24841667994,
+            -26261.488473416197,
+            -28503.541556422555,
+            -38554.531449902686,
+            -25216.648590490746,
+            -19868.07693343227
+          ]
+        }
+      }
+    },
+    {
+      "all_eight_pairs_available": true,
+      "candidate": "E-pi-scaled-lowstd",
+      "candidate_all_cases_daily_returns_passed": false,
+      "candidate_all_cases_hard_safety_passed": false,
+      "comparator": "B-pi-scaled",
+      "confirmation_or_material_benefit_claim": false,
+      "direction": "candidate minus comparator; higher EUR/service is better; lower wear/deficit is better",
+      "paired_differences": {
+        "delivered_kg": {
+          "count": 8,
+          "empirical_p10": 2381.9140138977264,
+          "maximum": 2758.126367609399,
+          "mean": 2511.7604558086628,
+          "median": 2473.702080487365,
+          "minimum": 2239.521682413538,
+          "negative_count": 0,
+          "positive_count": 8,
+          "values": [
+            2459.7827374750136,
+            2683.0407137965553,
+            2487.6214234997165,
+            2448.707551651196,
+            2574.343871204362,
+            2239.521682413538,
+            2442.9392988195214,
+            2758.126367609399
+          ]
+        },
+        "delivery_fill_rate": {
+          "count": 8,
+          "empirical_p10": 0.3544514901633522,
+          "maximum": 0.4104354713704462,
+          "mean": 0.3737738773524796,
+          "median": 0.36811042864395316,
+          "minimum": 0.3332621551210623,
+          "negative_count": 0,
+          "positive_count": 8,
+          "values": [
+            0.3660390978385437,
+            0.3992620109816303,
+            0.3701817594493626,
+            0.3643910047099994,
+            0.3830868855958872,
+            0.3332621551210623,
+            0.363532633752905,
+            0.4104354713704462
+          ]
+        },
+        "net_operating_value_eur": {
+          "count": 8,
+          "empirical_p10": 55527.116290775506,
+          "maximum": 65339.189359246506,
+          "mean": 58911.97895457911,
+          "median": 57491.597473274815,
+          "minimum": 51919.006316977204,
+          "negative_count": 0,
+          "positive_count": 8,
+          "values": [
+            57368.05875938726,
+            63631.15851101701,
+            57615.136187162374,
+            57073.449136689065,
+            60990.74839748251,
+            51919.006316977204,
+            57359.084968670984,
+            65339.189359246506
+          ]
+        }
+      }
+    }
+  ],
+  "limits": [
+    "One optimizer seed and eight adaptive development scenarios; no algorithm-level inference, formal selection or held-out confirmation.",
+    "All sixteen rollout curves and null explained-variance values are retained in external mechanism evidence; this compact record contains full-curve summaries, not selected-time substitutes.",
+    "The deterministic first 256 env-major buffer samples are pre-update diagnostics, not shuffled SGD minibatches or Adam parameter updates. The final diagnostic precedes the final optimization.",
+    "Common actor-plus-reward-critic clipping factors are implied by the diagnostic minibatch. They do not prove the actual cumulative actor update.",
+    "Training reward MSE uses scaled units; dividing by reward_scale squared restores units but does not make different states or bootstrap targets comparable. Explained variance is undefined when target variance is zero.",
+    "Reward-return diagnostics are bootstrapped lambda returns; ledger reward_return is a sum of immediate scaled training rewards, not weekly evaluation value.",
+    "PI and scalar ledger approximate KL differ in aggregation; cross-family KL is not a matched optimizer statistic.",
+    "Checkpoint, ledger and source custody verified. Diagnostic file hashes and step/multiplier joins are recorded; diagnostic files are not embedded cryptographic commitments in the final checkpoint payload.",
+    "All controller failures remain explicit incomplete slots with null weekly aggregates. Physical prefix replay cannot independently authenticate the controller exception.",
+    "Observed startup-energy and fault-response associations identify engineering hypotheses; no counterfactual repair was run in batch 001."
+  ],
+  "lowstd_operating_comparisons": [
+    {
+      "all_eight_pairs_available": true,
+      "candidate": "E-pi-scaled-lowstd",
+      "candidate_all_cases_daily_returns_passed": false,
+      "candidate_all_cases_hard_safety_passed": false,
+      "comparator": "initial",
+      "confirmation_or_material_benefit_claim": false,
+      "direction": "candidate minus comparator; higher EUR/service is better; lower wear/deficit is better",
+      "paired_differences": {
+        "delivered_kg": {
+          "count": 8,
+          "empirical_p10": 256.48287811914895,
+          "maximum": 508.71912963528575,
+          "mean": 346.68052659046543,
+          "median": 341.4820348795147,
+          "minimum": 237.16440626782514,
+          "negative_count": 0,
+          "positive_count": 8,
+          "values": [
+            264.76222319828776,
+            237.16440626782514,
+            370.6586944536102,
+            508.71912963528575,
+            274.6273751659728,
+            434.5483142437124,
+            354.8808459101474,
+            328.08322384888197
+          ]
+        },
+        "delivery_fill_rate": {
+          "count": 8,
+          "empirical_p10": 0.03816709495820668,
+          "maximum": 0.07570225143382225,
+          "mean": 0.051589364075962124,
+          "median": 0.050815778999927785,
+          "minimum": 0.035292322361283435,
+          "negative_count": 0,
+          "positive_count": 8,
+          "values": [
+            0.039399140356888074,
+            0.035292322361283435,
+            0.0551575438175016,
+            0.07570225143382225,
+            0.040867168923507835,
+            0.06466492771483823,
+            0.05280964968901003,
+            0.04882190831084554
+          ]
+        },
+        "net_operating_value_eur": {
+          "count": 8,
+          "empirical_p10": 7068.822643808568,
+          "maximum": 12095.8168127476,
+          "mean": 8838.32414321005,
+          "median": 8539.406935166884,
+          "minimum": 6177.932819701422,
+          "negative_count": 0,
+          "positive_count": 8,
+          "values": [
+            6177.932819701422,
+            7450.632568425915,
+            8279.467418841437,
+            12095.8168127476,
+            7876.180584919889,
+            10692.37622258261,
+            9334.840266969193,
+            8799.346451492329
+          ]
+        }
+      }
+    },
+    {
+      "all_eight_pairs_available": true,
+      "candidate": "E-pi-scaled-lowstd",
+      "candidate_all_cases_daily_returns_passed": false,
+      "candidate_all_cases_hard_safety_passed": false,
+      "comparator": "H",
+      "confirmation_or_material_benefit_claim": false,
+      "direction": "candidate minus comparator; higher EUR/service is better; lower wear/deficit is better",
+      "paired_differences": {
+        "delivered_kg": {
+          "count": 8,
+          "empirical_p10": 17.82625650308229,
+          "maximum": 386.7338034976974,
+          "mean": 171.49711137820555,
+          "median": 192.36189257732076,
+          "minimum": -103.22349785443203,
+          "negative_count": 1,
+          "positive_count": 7,
+          "values": [
+            238.73526729669993,
+            247.97667518623803,
+            204.89092906294718,
+            69.70472265630269,
+            179.83285609169434,
+            -103.22349785443203,
+            147.3261350884968,
+            386.7338034976974
+          ]
+        },
+        "delivery_fill_rate": {
+          "count": 8,
+          "empirical_p10": 0.002652716741530059,
+          "maximum": 0.05754967313953829,
+          "mean": 0.025520403478899625,
+          "median": 0.028625281633529842,
+          "minimum": -0.01536063956167144,
+          "negative_count": 1,
+          "positive_count": 7,
+          "values": [
+            0.03552608144296132,
+            0.03690129095033301,
+            0.03048972158674812,
+            0.010372726585759273,
+            0.026760841680311565,
+            -0.01536063956167144,
+            0.02192353200721686,
+            0.05754967313953829
+          ]
+        },
+        "net_operating_value_eur": {
+          "count": 8,
+          "empirical_p10": -5443.468550210593,
+          "maximum": 3996.580894245919,
+          "mean": -1924.0068444829474,
+          "median": -1504.3900910553682,
+          "minimum": -7809.09661007867,
+          "negative_count": 6,
+          "positive_count": 2,
+          "values": [
+            -758.0377963950814,
+            284.65663566064404,
+            -3667.749744061379,
+            -4429.627953124275,
+            -1331.8078432780217,
+            -7809.09661007867,
+            -1676.9723388327147,
+            3996.580894245919
+          ]
+        }
+      }
+    },
+    {
+      "all_eight_pairs_available": true,
+      "candidate": "E-pi-scaled-lowstd",
+      "candidate_all_cases_daily_returns_passed": false,
+      "candidate_all_cases_hard_safety_passed": false,
+      "comparator": "OperatingMPC",
+      "confirmation_or_material_benefit_claim": false,
+      "direction": "candidate minus comparator; higher EUR/service is better; lower wear/deficit is better",
+      "paired_differences": {
+        "delivered_kg": {
+          "count": 8,
+          "empirical_p10": -319.61758890801,
+          "maximum": 524.1481169590406,
+          "mean": 21.96002184531335,
+          "median": -15.436249768961261,
+          "minimum": -499.4259089277357,
+          "negative_count": 4,
+          "positive_count": 4,
+          "values": [
+            -62.570841388389454,
+            61.42605005013229,
+            524.1481169590406,
+            -242.5568803281276,
+            31.69834185046693,
+            -499.4259089277357,
+            -151.39427875155616,
+            514.3555752986758
+          ]
+        },
+        "delivery_fill_rate": {
+          "count": 8,
+          "empirical_p10": -0.047562141206549134,
+          "maximum": 0.07799823169033349,
+          "mean": 0.0032678603936478062,
+          "median": -0.0022970609775240236,
+          "minimum": -0.07431933168567495,
+          "negative_count": 4,
+          "positive_count": 4,
+          "values": [
+            -0.00931113711136744,
+            0.009140781257460096,
+            0.07799823169033349,
+            -0.03609477385835236,
+            0.004717015156319393,
+            -0.07431933168567495,
+            -0.022528910528505364,
+            0.07654100822896959
+          ]
+        },
+        "net_operating_value_eur": {
+          "count": 8,
+          "empirical_p10": -14562.306992300106,
+          "maximum": 2947.9710469435813,
+          "mean": -7624.79444272314,
+          "median": -7966.630428900398,
+          "minimum": -18037.913900912765,
+          "negative_count": 7,
+          "positive_count": 1,
+          "values": [
+            -10142.338315171093,
+            -5596.246015204063,
+            -1133.1468697901382,
+            -13072.761174323252,
+            -5790.9225426297035,
+            -18037.913900912765,
+            -10172.997770697686,
+            2947.9710469435813
+          ]
+        }
+      }
+    },
+    {
+      "all_eight_pairs_available": false,
+      "candidate": "E-pi-scaled-lowstd",
+      "candidate_all_cases_daily_returns_passed": false,
+      "candidate_all_cases_hard_safety_passed": false,
+      "comparator": "M24",
+      "confirmation_or_material_benefit_claim": false,
+      "direction": "candidate minus comparator; higher EUR/service is better; lower wear/deficit is better",
+      "paired_differences": null
+    },
+    {
+      "all_eight_pairs_available": false,
+      "candidate": "E-pi-scaled-lowstd",
+      "candidate_all_cases_daily_returns_passed": false,
+      "candidate_all_cases_hard_safety_passed": false,
+      "comparator": "E-beta",
+      "confirmation_or_material_benefit_claim": false,
+      "direction": "candidate minus comparator; higher EUR/service is better; lower wear/deficit is better",
+      "paired_differences": null
+    }
+  ],
+  "mechanism_findings": {
+    "low_initial_std": {
+      "evidence": [
+        "E expected clipped-coordinate fraction is about 2.63e-7 to 5.75e-7 over all sixteen snapshots; sampled observed fraction is zero throughout.",
+        "B expected clipped-coordinate fraction remains about .306-.321.",
+        "E exceeds B in service and EUR on all eight development scenarios; its average service is 90.53%.",
+        "E is still economically worse on average than H and OperatingMPC, passes strict safety on 0/8 and all daily returns on 0/8."
+      ],
+      "finding": "Lower initial standard deviation nearly removes sampled action-space clipping and markedly improves final control versus broad-std PI; feasibility and economic competitiveness remain unproven.",
+      "interpretation": "Supports initial exploration/clipping as relevant to the failure; it changes visited states, entropy and gradients together, so clipping alone is not isolated."
+    },
+    "operational_benefit": {
+      "established": false,
+      "reason": "No PPO arm passes strict safety or all daily resource returns in any of the eight development cases; the strongest service arm E has worse mean EUR than the strong H and OperatingMPC baselines."
+    },
+    "pi_signal_balance": {
+      "evidence": [
+        "PI is operationally better than scalar with raw reward, but worse with scaled reward, in all eight matched cases for each contrast.",
+        "Weighted cost actor norm is larger than reward actor norm on average, but aggregate gradient cosines are negative in only 7/16 A, 5/16 B and 1/16 E diagnostics.",
+        "PI multipliers end near 1.0-1.28 without upper/lower saturation; cost EV at final diagnostic spans roughly .89-.99.",
+        "Scalar C also accumulates a mean 1799.8 kg H2, so accumulation is not exclusive to PI."
+      ],
+      "finding": "An interaction with reward conditioning, not evidence that PI alone causes accumulation or that multiplier growth exploded.",
+      "interpretation": "Constraint gradient tradeoffs and policy-dependent states remain relevant; no causal claim from gradient correlation alone."
+    },
+    "reward_conditioning": {
+      "evidence": [
+        "Both raw reward arms finish with effectively zero reward EV and 100% second-layer tanh saturation in the diagnostic sample.",
+        "B and D improve reward EV over raw comparators in rollouts 2-16, but have worse initial EV.",
+        "Every paired scaled diagnostic increases clipped actor gradient norm; all 80 diagnostics still apply common clipping.",
+        "B is worse than A in service and EUR on all eight development scenarios; D is better than C on all eight."
+      ],
+      "finding": "Strong support for the reward-critic conditioning diagnosis, with contradictory operational response across PI and scalar.",
+      "interpretation": "Conditioning improvement is measured; a universal scaling-only operational remedy is rejected by B versus A."
+    }
+  },
+  "operational_diagnosis": {
+    "confounders": [
+      "Comparison uses one optimizer seed and adaptive development scenarios. E was identified after viewing the five arms.",
+      "Neither H nor OperatingMPC meets all strict daily returns. OperatingMPC consumes nearly all initial CO2 and may trade resource restoration for service value.",
+      "Greater mean delivered methane is not dominance: E has one delivery loss versus H and four versus OperatingMPC across the eight scenarios."
+    ],
+    "daily_boundaries_per_actor": 56,
+    "heuristic_forced_stop_total": 0,
+    "hypotheses": [
+      "A feasibility-aware start/stop/standby prior may address persistent positive electrolysis commands during insufficient startup energy. This is a prospective experiment, not a proved counterfactual.",
+      "A structured or residual controller with an inventory-aware DAC prior may reduce unnecessary carbon capture and reliance on guard outage correction.",
+      "A separate action mapping for startup, standby and running regimes may be easier to learn than crossing their discontinuities with continuous Gaussian absolute commands."
+    ],
+    "lowstd_daily_return_failure_counts": {
+      "battery": 56,
+      "ch4": 52,
+      "co2": 1,
+      "h2": 56
+    },
+    "lowstd_forced_stop_total": 88,
+    "lowstd_forced_stops_by_seed": [
+      14,
+      7,
+      12,
+      11,
+      11,
+      11,
+      12,
+      10
+    ],
+    "lowstd_nonzero_dac_request_in_declared_outage_minutes": 4503,
+    "lowstd_soc_safety_failures": 0,
+    "lowstd_stop_intervals_aborting_start": 69,
+    "lowstd_stop_intervals_reaching_soc_at_most_0_151": 86,
+    "observations": [
+      "E increases mean delivered methane versus H by 171.497 kg and versus OperatingMPC by 21.960 kg, but decreases net value by EUR 1,924.01 and EUR 7,624.79 respectively.",
+      "All eight E scenarios have forced stops. All 56 daily battery and H2 returns fail, 52 daily CH4 returns fail, and one CO2 return fails.",
+      "All 88 E forced stops occur at dawn or evening; 69 also abort startup, and 86 reach SOC <= 0.151 within the interval.",
+      "E holds a nonzero DAC target throughout all 4,503 declared outage minutes; the guard drops allocations for 334.625 minutes per week.",
+      "E runs near half load almost constantly: 82.63125 low-load hours of 86.06875 operating hours weekly; this incurs more wear and battery cycling than the baselines."
+    ],
+    "operating_mpc_forced_stop_seeds": [
+      9700000,
+      9700006
+    ],
+    "operating_mpc_forced_stop_total": 2,
+    "soc_0_151_is_descriptive_not_safety_threshold": true,
+    "soc_safety_threshold": 0.05,
+    "verified_archives": 24
+  },
+  "schema": "plant-adaptive-rl-batch-001-compact-results-v1",
+  "source_commit": "238fe7ca763254b70af63a4ef0690a9d4523aa60",
+  "source_tree": "becdfaa68e7924a7af75ca2794b32f09dbf8d4e2",
+  "status": "closed_negative_for_operational_benefit",
+  "training_conditioning": {
+    "A-pi-raw": {
+      "all16_scalar_summaries": {
+        "actor_gradient_norm": {
+          "first": 0.17844035758496707,
+          "last": 0.2839055789666199,
+          "maximum": 0.4932681198574567,
+          "mean_all": 0.26716247441249746,
+          "minimum": 0.17844035758496707,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "common_clip_factor": {
+          "first": 5.6698787199178054e-05,
+          "last": 3.982862462226385e-05,
+          "maximum": 5.6698787199178054e-05,
+          "mean_all": 2.540708193909297e-05,
+          "minimum": 1.7990959550799006e-05,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "critic_gradient_norm": {
+          "first": 8818.530775349438,
+          "last": 12553.78523798722,
+          "maximum": 27791.73609699365,
+          "mean_all": 21477.453319701784,
+          "minimum": 8818.530775349438,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "critic_tanh_mean_derivative_layer2": {
+          "first": 0.7669076919555664,
+          "last": 1.1870783055201173e-05,
+          "maximum": 0.7669076919555664,
+          "mean_all": 0.04876200037006129,
+          "minimum": 1.1870783055201173e-05,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "critic_tanh_saturated_fraction_layer1": {
+          "first": 0.00341796875,
+          "last": 0.45892333984375,
+          "maximum": 0.5855712890625,
+          "mean_all": 0.3048439025878906,
+          "minimum": 0.00341796875,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "critic_tanh_saturated_fraction_layer2": {
+          "first": 0.00152587890625,
+          "last": 1.0,
+          "maximum": 1.0,
+          "mean_all": 0.9375953674316406,
+          "minimum": 0.00152587890625,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "diagnostic_actor_norm_after_common_clipping": {
+          "first": 1.0117351862455286e-05,
+          "last": 1.130756873282799e-05,
+          "maximum": 1.130756873282799e-05,
+          "mean_all": 6.64343601900989e-06,
+          "minimum": 3.750853906679977e-06,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "gaussian_expected_any_action_clipped_fraction": {
+          "first": 0.7827900052070618,
+          "last": 0.7913180589675903,
+          "maximum": 0.7913180589675903,
+          "mean_all": 0.7831622995436192,
+          "minimum": 0.7809053063392639,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "gaussian_expected_clipped_coordinate_fraction": {
+          "first": 0.31731560826301575,
+          "last": 0.3240121603012085,
+          "maximum": 0.3240121603012085,
+          "mean_all": 0.3176034316420555,
+          "minimum": 0.3158373534679413,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "gaussian_observed_clipped_coordinate_fraction": {
+          "first": 0.31640625,
+          "last": 0.3251953125,
+          "maximum": 0.3486328125,
+          "mean_all": 0.32342529296875,
+          "minimum": 0.30078125,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "ledger_approximate_kl": {
+          "first": 0.0002400449084234424,
+          "last": 0.0014569609513273463,
+          "maximum": 0.0014666161841887515,
+          "mean_all": 0.0005327102399405703,
+          "minimum": 0.00013807266441290267,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "ledger_entropy_loss": {
+          "first": -5.67373593300581,
+          "last": -5.632940523326397,
+          "maximum": -5.632940523326397,
+          "mean_all": -5.662326572742313,
+          "minimum": -5.67373593300581,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "ledger_immediate_reward_sum_eur": {
+          "first": -1189426.569256797,
+          "last": -651452.2585387416,
+          "maximum": -651452.2585387416,
+          "mean_all": -1057693.9748020093,
+          "minimum": -1214781.6217038818,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "ledger_ppo_likelihood_clip_fraction": {
+          "first": 0.0,
+          "last": 0.00469970703125,
+          "maximum": 0.00469970703125,
+          "mean_all": 0.000848388671875,
+          "minimum": 0.0,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "reward_cost_gradient_cosine": {
+          "first": 0.047010855856444995,
+          "last": 0.03993895401173905,
+          "maximum": 0.7863242576812585,
+          "mean_all": 0.1502677700725504,
+          "minimum": -0.3446770877928639,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "reward_explained_variance": {
+          "first": -0.00018872917071499629,
+          "last": -5.884597875649433e-08,
+          "maximum": 2.9128984757598175e-07,
+          "mean_all": -1.2135003198243677e-05,
+          "minimum": -0.00018872917071499629,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "reward_value_mse_divided_by_scale_squared": {
+          "first": 4436289.0,
+          "last": 4709159.0,
+          "maximum": 13493705.0,
+          "mean_all": 9646205.09375,
+          "minimum": 4436289.0,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "reward_value_mse_training_units": {
+          "first": 4436289.0,
+          "last": 4709159.0,
+          "maximum": 13493705.0,
+          "mean_all": 9646205.09375,
+          "minimum": 4436289.0,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "rollout": {
+          "first": 1,
+          "last": 16,
+          "maximum": 16,
+          "mean_all": 8.5,
+          "minimum": 1,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "timesteps_before_optimization": {
+          "first": 8192,
+          "last": 131072,
+          "maximum": 131072,
+          "mean_all": 69632.0,
+          "minimum": 8192,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "weighted_cost_to_reward_actor_norm_ratio": {
+          "first": 2.042544334070982,
+          "last": 3.8071992323760675,
+          "maximum": 4.624916218302846,
+          "mean_all": 2.605975963165458,
+          "minimum": 0.7835407114868195,
+          "null_count": 0,
+          "valid_count": 16
+        }
+      },
+      "common_clipped_diagnostic_count": 16,
+      "completed_training_episodes": 192,
+      "constraint_state_sha256": "50d502661629dfa572a76cc9ff25d25bd2dcb17a35eda29c7e313fd40b4b92d5",
+      "episode_count_weighted_mean_training_cost_by_resource": {
+        "battery": 0.5203740906848074,
+        "ch4": 0.9282490946124357,
+        "co2": 0.0054010903891802105,
+        "h2": 0.7571245691522847
+      },
+      "files": {
+        "final-policy.zip": {
+          "bytes": 1482580,
+          "path": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/training/A-pi-raw/final-policy.zip",
+          "sha256": "8daf5d38b48ae32baf2ce12ff37f10d7db7b782cba0f7ccfea8437f63ecc0cb6"
+        },
+        "initial-policy.pt": {
+          "bytes": 324276,
+          "path": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/training/A-pi-raw/initial-policy.pt",
+          "sha256": "a49f0e9dcc7dca45c61adcba5d69ab6b3e30c952b9357076f36c13058f9331d0"
+        },
+        "result.json": {
+          "bytes": 548161,
+          "path": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/training/A-pi-raw/result.json",
+          "sha256": "f348e2785eddc06f13c7ca0236e5cdfc5d14c16a42a35ba6b583d89e8b45553c"
+        }
+      },
+      "negative_reward_cost_cosine_count": 7,
+      "optimizer_steps": 5120,
+      "rollouts": 16,
+      "settled_training_cycles": 1364,
+      "specification": {
+        "algorithm": "plant-beta-ppo-pi-lagrangian-v1",
+        "initial_std": 1.0,
+        "name": "A-pi-raw",
+        "reward_scale": 1.0
+      },
+      "timesteps": 131072
+    },
+    "B-pi-scaled": {
+      "all16_scalar_summaries": {
+        "actor_gradient_norm": {
+          "first": 0.1775799129286235,
+          "last": 0.1939160787592705,
+          "maximum": 0.5055180453442287,
+          "mean_all": 0.2751762621192786,
+          "minimum": 0.14269543848004773,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "common_clip_factor": {
+          "first": 0.058426556019648274,
+          "last": 0.05615608513591576,
+          "maximum": 0.17645300699068517,
+          "mean_all": 0.06684575356606652,
+          "minimum": 0.014066095667882701,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "critic_gradient_norm": {
+          "first": 8.555908741826821,
+          "last": 8.9016416630192,
+          "maximum": 35.546179195771835,
+          "mean_all": 13.824906235071165,
+          "minimum": 2.8153812727924934,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "critic_tanh_mean_derivative_layer2": {
+          "first": 0.7669076919555664,
+          "last": 0.4397742748260498,
+          "maximum": 0.7669076919555664,
+          "mean_all": 0.5179033763706684,
+          "minimum": 0.3956804573535919,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "critic_tanh_saturated_fraction_layer1": {
+          "first": 0.00341796875,
+          "last": 0.024658203125,
+          "maximum": 0.07293701171875,
+          "mean_all": 0.021942138671875,
+          "minimum": 0.00341796875,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "critic_tanh_saturated_fraction_layer2": {
+          "first": 0.00152587890625,
+          "last": 0.2047119140625,
+          "maximum": 0.2320556640625,
+          "mean_all": 0.11806488037109375,
+          "minimum": 0.00152587890625,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "diagnostic_actor_norm_after_common_clipping": {
+          "first": 0.010375382730688483,
+          "last": 0.01088956782802854,
+          "maximum": 0.08027318199695928,
+          "mean_all": 0.021133713697696465,
+          "minimum": 0.002007167689030822,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "gaussian_expected_any_action_clipped_fraction": {
+          "first": 0.7827900052070618,
+          "last": 0.7832978963851929,
+          "maximum": 0.7869687080383301,
+          "mean_all": 0.7790685258805752,
+          "minimum": 0.7677733898162842,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "gaussian_expected_clipped_coordinate_fraction": {
+          "first": 0.31731560826301575,
+          "last": 0.3173173666000366,
+          "maximum": 0.3208566904067993,
+          "mean_all": 0.3144343141466379,
+          "minimum": 0.3057880103588104,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "gaussian_observed_clipped_coordinate_fraction": {
+          "first": 0.31640625,
+          "last": 0.3251953125,
+          "maximum": 0.3388671875,
+          "mean_all": 0.31640625,
+          "minimum": 0.30078125,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "ledger_approximate_kl": {
+          "first": 0.0045371994005108714,
+          "last": 0.008300468642119085,
+          "maximum": 0.008300468642119085,
+          "mean_all": 0.005898823325742342,
+          "minimum": 0.004179244174156338,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "ledger_entropy_loss": {
+          "first": -5.658544182777405,
+          "last": -5.193390986323356,
+          "maximum": -5.193390986323356,
+          "mean_all": -5.446146674547345,
+          "minimum": -5.658544182777405,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "ledger_immediate_reward_sum_eur": {
+          "first": -1189426.57799876,
+          "last": -282738.0201215892,
+          "maximum": -268206.93162397767,
+          "mean_all": -611764.2444131746,
+          "minimum": -1189426.57799876,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "ledger_ppo_likelihood_clip_fraction": {
+          "first": 0.04354248046875,
+          "last": 0.11351318359375,
+          "maximum": 0.11351318359375,
+          "mean_all": 0.07063217163085937,
+          "minimum": 0.03896484375,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "reward_cost_gradient_cosine": {
+          "first": 0.02175571580649318,
+          "last": -0.49421861847440457,
+          "maximum": 0.6487646085829964,
+          "mean_all": 0.08677010491918458,
+          "minimum": -0.6236768060502014,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "reward_explained_variance": {
+          "first": -0.21411786203323735,
+          "last": 0.928562133870356,
+          "maximum": 0.94136484674915,
+          "mean_all": 0.8221677459450338,
+          "minimum": -0.21411786203323735,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "reward_value_mse_divided_by_scale_squared": {
+          "first": 4342227.458953857,
+          "last": 833733.5586547852,
+          "maximum": 7860657.215118408,
+          "mean_all": 2043387.7650648355,
+          "minimum": 316148.5195159912,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "reward_value_mse_training_units": {
+          "first": 4.342227458953857,
+          "last": 0.8337335586547852,
+          "maximum": 7.860657215118408,
+          "mean_all": 2.0433877650648355,
+          "minimum": 0.3161485195159912,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "rollout": {
+          "first": 1,
+          "last": 16,
+          "maximum": 16,
+          "mean_all": 8.5,
+          "minimum": 1,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "timesteps_before_optimization": {
+          "first": 8192,
+          "last": 131072,
+          "maximum": 131072,
+          "mean_all": 69632.0,
+          "minimum": 8192,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "weighted_cost_to_reward_actor_norm_ratio": {
+          "first": 1.99389462424246,
+          "last": 1.839401157413932,
+          "maximum": 3.3934321994383287,
+          "mean_all": 1.9060918472778516,
+          "minimum": 1.0727079321411679,
+          "null_count": 0,
+          "valid_count": 16
+        }
+      },
+      "common_clipped_diagnostic_count": 16,
+      "completed_training_episodes": 192,
+      "constraint_state_sha256": "667572b214f96716d071caba8fb9abac944e0cb6daa062fb22d46815624885d2",
+      "episode_count_weighted_mean_training_cost_by_resource": {
+        "battery": 0.5566331529260974,
+        "ch4": 0.8337384661889041,
+        "co2": 0.28362877857070873,
+        "h2": 0.6255977299873436
+      },
+      "files": {
+        "final-policy.zip": {
+          "bytes": 1482867,
+          "path": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/training/B-pi-scaled/final-policy.zip",
+          "sha256": "34b226fd5ebc2f41bc4b7497caaa5cc1f7d7b46ec12c8880c96d0481b049e51d"
+        },
+        "initial-policy.pt": {
+          "bytes": 324276,
+          "path": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/training/B-pi-scaled/initial-policy.pt",
+          "sha256": "a49f0e9dcc7dca45c61adcba5d69ab6b3e30c952b9357076f36c13058f9331d0"
+        },
+        "result.json": {
+          "bytes": 548465,
+          "path": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/training/B-pi-scaled/result.json",
+          "sha256": "1351a97e58bf241da895ef25895e4bf33fb8b25321b57c53882f43cff12aaee2"
+        }
+      },
+      "negative_reward_cost_cosine_count": 5,
+      "optimizer_steps": 5120,
+      "rollouts": 16,
+      "settled_training_cycles": 1364,
+      "specification": {
+        "algorithm": "plant-beta-ppo-pi-lagrangian-v1",
+        "initial_std": 1.0,
+        "name": "B-pi-scaled",
+        "reward_scale": 0.001
+      },
+      "timesteps": 131072
+    },
+    "C-scalar-raw": {
+      "all16_scalar_summaries": {
+        "actor_gradient_norm": {
+          "first": 0.3889766424756017,
+          "last": 0.4964437610549446,
+          "maximum": 0.818326092986067,
+          "mean_all": 0.5749903467628193,
+          "minimum": 0.3837739225283924,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "common_clip_factor": {
+          "first": 5.6698787155628803e-05,
+          "last": 6.6457224000819e-05,
+          "maximum": 8.757361936173307e-05,
+          "mean_all": 5.2221313396908414e-05,
+          "minimum": 2.381566587449343e-05,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "critic_gradient_norm": {
+          "first": 8818.530775349438,
+          "last": 7523.636540083148,
+          "maximum": 20994.58408007802,
+          "mean_all": 11060.082417451345,
+          "minimum": 5709.48194503341,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "critic_tanh_mean_derivative_layer2": {
+          "first": 0.7669076919555664,
+          "last": 1.2795779184671119e-05,
+          "maximum": 0.7669076919555664,
+          "mean_all": 0.04874938595776257,
+          "minimum": 1.2795779184671119e-05,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "critic_tanh_saturated_fraction_layer1": {
+          "first": 0.00341796875,
+          "last": 0.44464111328125,
+          "maximum": 0.5904541015625,
+          "mean_all": 0.3331336975097656,
+          "minimum": 0.00341796875,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "critic_tanh_saturated_fraction_layer2": {
+          "first": 0.00152587890625,
+          "last": 1.0,
+          "maximum": 1.0,
+          "mean_all": 0.9375953674316406,
+          "minimum": 0.00152587890625,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "diagnostic_actor_norm_after_common_clipping": {
+          "first": 2.2054503860235262e-05,
+          "last": 3.2992274232237516e-05,
+          "maximum": 5.1799885042895555e-05,
+          "mean_all": 2.889932808067966e-05,
+          "minimum": 1.5150634533292553e-05,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "gaussian_expected_any_action_clipped_fraction": {
+          "first": 0.7827900052070618,
+          "last": 0.8084659576416016,
+          "maximum": 0.8084659576416016,
+          "mean_all": 0.7905298359692097,
+          "minimum": 0.7798465490341187,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "gaussian_expected_clipped_coordinate_fraction": {
+          "first": 0.31731560826301575,
+          "last": 0.3374801576137543,
+          "maximum": 0.3374801576137543,
+          "mean_all": 0.32336394488811493,
+          "minimum": 0.31500136852264404,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "gaussian_observed_clipped_coordinate_fraction": {
+          "first": 0.31640625,
+          "last": 0.341796875,
+          "maximum": 0.341796875,
+          "mean_all": 0.32720947265625,
+          "minimum": 0.302734375,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "ledger_approximate_kl": {
+          "first": 0.0029883533716201782,
+          "last": 0.003814621828496456,
+          "maximum": 0.004783853888511658,
+          "mean_all": 0.0038550485915038735,
+          "minimum": 0.00254903850145638,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "ledger_entropy_loss": {
+          "first": -5.666518080234527,
+          "last": -5.529362320899963,
+          "maximum": -5.529362320899963,
+          "mean_all": -5.590130766108632,
+          "minimum": -5.666518080234527,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "ledger_immediate_reward_sum_eur": {
+          "first": -1189426.569256797,
+          "last": -251711.92375331884,
+          "maximum": -237155.28149235062,
+          "mean_all": -563074.6733656904,
+          "minimum": -1189426.569256797,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "ledger_ppo_likelihood_clip_fraction": {
+          "first": 0.00330810546875,
+          "last": 0.01846923828125,
+          "maximum": 0.02508544921875,
+          "mean_all": 0.013991546630859376,
+          "minimum": 0.00142822265625,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "reward_cost_gradient_cosine": {
+          "first": null,
+          "last": null,
+          "maximum": null,
+          "mean_all": null,
+          "minimum": null,
+          "null_count": 16,
+          "valid_count": 0
+        },
+        "reward_explained_variance": {
+          "first": -0.00018872917071499629,
+          "last": -1.7184016876115038e-08,
+          "maximum": 9.265745060105246e-09,
+          "mean_all": -1.2260170749317512e-05,
+          "minimum": -0.00018872917071499629,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "reward_value_mse_divided_by_scale_squared": {
+          "first": 4436289.0,
+          "last": 2539846.5,
+          "maximum": 9022559.0,
+          "mean_all": 4066664.3046875,
+          "minimum": 1742019.375,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "reward_value_mse_training_units": {
+          "first": 4436289.0,
+          "last": 2539846.5,
+          "maximum": 9022559.0,
+          "mean_all": 4066664.3046875,
+          "minimum": 1742019.375,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "rollout": {
+          "first": 1,
+          "last": 16,
+          "maximum": 16,
+          "mean_all": 8.5,
+          "minimum": 1,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "timesteps_before_optimization": {
+          "first": 8192,
+          "last": 131072,
+          "maximum": 131072,
+          "mean_all": 69632.0,
+          "minimum": 8192,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "weighted_cost_to_reward_actor_norm_ratio": {
+          "first": null,
+          "last": null,
+          "maximum": null,
+          "mean_all": null,
+          "minimum": null,
+          "null_count": 16,
+          "valid_count": 0
+        }
+      },
+      "common_clipped_diagnostic_count": 16,
+      "completed_training_episodes": 192,
+      "constraint_state_sha256": "8c01ab7b0a68dfd2ba4e30d5bd7640170f151a5f4439110cb7ef6d013460b4f4",
+      "episode_count_weighted_mean_training_cost_by_resource": {
+        "battery": 0.609452056398366,
+        "ch4": 0.8716854270331469,
+        "co2": 0.013202024845842215,
+        "h2": 0.6569332570977516
+      },
+      "files": {
+        "final-policy.zip": {
+          "bytes": 824682,
+          "path": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/training/C-scalar-raw/final-policy.zip",
+          "sha256": "14927212ec17e5c9431730ac61906ced4a812c02ebb57ab88bf2faa8f58f5574"
+        },
+        "initial-policy.pt": {
+          "bytes": 109308,
+          "path": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/training/C-scalar-raw/initial-policy.pt",
+          "sha256": "5488ac12f29658ceee8b13f6b29d0447702837826d0567cfd94cd52ac0e44d02"
+        },
+        "result.json": {
+          "bytes": 530657,
+          "path": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/training/C-scalar-raw/result.json",
+          "sha256": "5c9cdc96d0993d15471a0056ef25aead0c448c1e474b377c8561e00ad56b7391"
+        }
+      },
+      "negative_reward_cost_cosine_count": null,
+      "optimizer_steps": 5120,
+      "rollouts": 16,
+      "settled_training_cycles": 1364,
+      "specification": {
+        "algorithm": "plant-beta-sb3-ppo-scalar-v1",
+        "initial_std": 1.0,
+        "name": "C-scalar-raw",
+        "reward_scale": 1.0
+      },
+      "timesteps": 131072
+    },
+    "D-scalar-scaled": {
+      "all16_scalar_summaries": {
+        "actor_gradient_norm": {
+          "first": 0.39846744001408585,
+          "last": 0.7453535109488817,
+          "maximum": 0.962209493094445,
+          "mean_all": 0.6287057131605118,
+          "minimum": 0.39846744001408585,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "common_clip_factor": {
+          "first": 0.058375865724910846,
+          "last": 0.10918900176775412,
+          "maximum": 0.32014451115036624,
+          "mean_all": 0.09653727239582058,
+          "minimum": 0.015916291471545073,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "critic_gradient_norm": {
+          "first": 8.555908741826821,
+          "last": 4.518147424962668,
+          "maximum": 31.4067586581316,
+          "mean_all": 10.366230899733983,
+          "minimum": 1.4916114592094754,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "critic_tanh_mean_derivative_layer2": {
+          "first": 0.7669076919555664,
+          "last": 0.5064362287521362,
+          "maximum": 0.7669076919555664,
+          "mean_all": 0.5374292805790901,
+          "minimum": 0.43783390522003174,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "critic_tanh_saturated_fraction_layer1": {
+          "first": 0.00341796875,
+          "last": 0.01873779296875,
+          "maximum": 0.069091796875,
+          "mean_all": 0.024036407470703125,
+          "minimum": 0.00341796875,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "critic_tanh_saturated_fraction_layer2": {
+          "first": 0.00152587890625,
+          "last": 0.12579345703125,
+          "maximum": 0.207275390625,
+          "mean_all": 0.10393524169921875,
+          "minimum": 0.00152587890625,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "diagnostic_actor_norm_after_common_clipping": {
+          "first": 0.02326088177401124,
+          "last": 0.08138440582459919,
+          "maximum": 0.21114605617096127,
+          "mean_all": 0.06242925423994033,
+          "minimum": 0.009109297528572072,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "gaussian_expected_any_action_clipped_fraction": {
+          "first": 0.7827900052070618,
+          "last": 0.7650691866874695,
+          "maximum": 0.7827900052070618,
+          "mean_all": 0.7684796527028084,
+          "minimum": 0.7612927556037903,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "gaussian_expected_clipped_coordinate_fraction": {
+          "first": 0.31731560826301575,
+          "last": 0.3051036596298218,
+          "maximum": 0.31731560826301575,
+          "mean_all": 0.3066264782100916,
+          "minimum": 0.30159375071525574,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "gaussian_observed_clipped_coordinate_fraction": {
+          "first": 0.31640625,
+          "last": 0.30859375,
+          "maximum": 0.328125,
+          "mean_all": 0.30682373046875,
+          "minimum": 0.29296875,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "ledger_approximate_kl": {
+          "first": 0.007648209575563669,
+          "last": 0.006936036050319672,
+          "maximum": 0.009759731590747833,
+          "mean_all": 0.008272892504464835,
+          "minimum": 0.006936036050319672,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "ledger_entropy_loss": {
+          "first": -5.62945290505886,
+          "last": -5.071791440248489,
+          "maximum": -5.071791440248489,
+          "mean_all": -5.339348147809505,
+          "minimum": -5.62945290505886,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "ledger_immediate_reward_sum_eur": {
+          "first": -1189426.57799876,
+          "last": -125188.74045831762,
+          "maximum": -125188.74045831762,
+          "mean_all": -454929.64037562895,
+          "minimum": -1189426.57799876,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "ledger_ppo_likelihood_clip_fraction": {
+          "first": 0.062841796875,
+          "last": 0.08067626953125,
+          "maximum": 0.1092529296875,
+          "mean_all": 0.08542861938476562,
+          "minimum": 0.062841796875,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "reward_cost_gradient_cosine": {
+          "first": null,
+          "last": null,
+          "maximum": null,
+          "mean_all": null,
+          "minimum": null,
+          "null_count": 16,
+          "valid_count": 0
+        },
+        "reward_explained_variance": {
+          "first": -0.21411786203323735,
+          "last": 0.9378896065519516,
+          "maximum": 0.9518197301892627,
+          "mean_all": 0.8311120076983959,
+          "minimum": -0.21411786203323735,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "reward_value_mse_divided_by_scale_squared": {
+          "first": 4342227.458953857,
+          "last": 189117.1634197235,
+          "maximum": 6915302.753448486,
+          "mean_all": 1453847.2667336464,
+          "minimum": 189117.1634197235,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "reward_value_mse_training_units": {
+          "first": 4.342227458953857,
+          "last": 0.1891171634197235,
+          "maximum": 6.915302753448486,
+          "mean_all": 1.4538472667336464,
+          "minimum": 0.1891171634197235,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "rollout": {
+          "first": 1,
+          "last": 16,
+          "maximum": 16,
+          "mean_all": 8.5,
+          "minimum": 1,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "timesteps_before_optimization": {
+          "first": 8192,
+          "last": 131072,
+          "maximum": 131072,
+          "mean_all": 69632.0,
+          "minimum": 8192,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "weighted_cost_to_reward_actor_norm_ratio": {
+          "first": null,
+          "last": null,
+          "maximum": null,
+          "mean_all": null,
+          "minimum": null,
+          "null_count": 16,
+          "valid_count": 0
+        }
+      },
+      "common_clipped_diagnostic_count": 16,
+      "completed_training_episodes": 192,
+      "constraint_state_sha256": "a9ece85e2f935a0734312fb806497e39096724fc87353269bc2811cfdde386cd",
+      "episode_count_weighted_mean_training_cost_by_resource": {
+        "battery": 0.6020879327388314,
+        "ch4": 0.7473327422684634,
+        "co2": 0.22790754001003347,
+        "h2": 0.7042672546552771
+      },
+      "files": {
+        "final-policy.zip": {
+          "bytes": 824877,
+          "path": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/training/D-scalar-scaled/final-policy.zip",
+          "sha256": "611a9f9231d3d0533e275fd57f79f8abfe8f3fae394f941a3f558aca6f83d765"
+        },
+        "initial-policy.pt": {
+          "bytes": 109308,
+          "path": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/training/D-scalar-scaled/initial-policy.pt",
+          "sha256": "5488ac12f29658ceee8b13f6b29d0447702837826d0567cfd94cd52ac0e44d02"
+        },
+        "result.json": {
+          "bytes": 530867,
+          "path": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/training/D-scalar-scaled/result.json",
+          "sha256": "fe686649d004886fbf27a9cf933ff4142c3c28b36c6a6cd291638b11d6ab46a2"
+        }
+      },
+      "negative_reward_cost_cosine_count": null,
+      "optimizer_steps": 5120,
+      "rollouts": 16,
+      "settled_training_cycles": 1364,
+      "specification": {
+        "algorithm": "plant-beta-sb3-ppo-scalar-v1",
+        "initial_std": 1.0,
+        "name": "D-scalar-scaled",
+        "reward_scale": 0.001
+      },
+      "timesteps": 131072
+    },
+    "E-pi-scaled-lowstd": {
+      "all16_scalar_summaries": {
+        "actor_gradient_norm": {
+          "first": 1.1426702838827332,
+          "last": 1.0501232961300921,
+          "maximum": 1.5930093427805307,
+          "mean_all": 1.116398959198618,
+          "minimum": 0.6165141029699063,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "common_clip_factor": {
+          "first": 0.417531025790356,
+          "last": 0.22720504380352904,
+          "maximum": 0.417531025790356,
+          "mean_all": 0.1435509258365097,
+          "minimum": 0.03965189987939596,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "critic_gradient_norm": {
+          "first": 0.35825454135873136,
+          "last": 1.9339391728318271,
+          "maximum": 12.564951444470358,
+          "mean_all": 5.050241433119989,
+          "minimum": 0.35825454135873136,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "critic_tanh_mean_derivative_layer2": {
+          "first": 0.7451817393302917,
+          "last": 0.5618221759796143,
+          "maximum": 0.7451817393302917,
+          "mean_all": 0.5671723447740078,
+          "minimum": 0.5254725217819214,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "critic_tanh_saturated_fraction_layer1": {
+          "first": 0.00604248046875,
+          "last": 0.006103515625,
+          "maximum": 0.062255859375,
+          "mean_all": 0.0165863037109375,
+          "minimum": 0.003662109375,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "critic_tanh_saturated_fraction_layer2": {
+          "first": 0.001708984375,
+          "last": 0.0924072265625,
+          "maximum": 0.14599609375,
+          "mean_all": 0.09295272827148438,
+          "minimum": 0.001708984375,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "diagnostic_actor_norm_after_common_clipping": {
+          "first": 0.47710029576971485,
+          "last": 0.23859330949634389,
+          "maximum": 0.47710029576971485,
+          "mean_all": 0.15438965500670782,
+          "minimum": 0.03387730781754968,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "gaussian_expected_any_action_clipped_fraction": {
+          "first": 2.343207597732544e-06,
+          "last": 2.0884908735752106e-06,
+          "maximum": 2.343207597732544e-06,
+          "mean_all": 1.6275153029710054e-06,
+          "minimum": 1.0551884770393372e-06,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "gaussian_expected_clipped_coordinate_fraction": {
+          "first": 5.746842361986637e-07,
+          "last": 5.256151780486107e-07,
+          "maximum": 5.746842361986637e-07,
+          "mean_all": 4.0616760088596493e-07,
+          "minimum": 2.6338966563344e-07,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "gaussian_observed_clipped_coordinate_fraction": {
+          "first": 0.0,
+          "last": 0.0,
+          "maximum": 0.0,
+          "mean_all": 0.0,
+          "minimum": 0.0,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "ledger_approximate_kl": {
+          "first": 0.005766738615056966,
+          "last": 0.00909844239213271,
+          "maximum": 0.00909844239213271,
+          "mean_all": 0.007541089023061431,
+          "minimum": 0.005694362609938252,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "ledger_entropy_loss": {
+          "first": 0.7740068107843399,
+          "last": 1.108378590270877,
+          "maximum": 1.108378590270877,
+          "mean_all": 0.9245959620457143,
+          "minimum": 0.7740068107843399,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "ledger_immediate_reward_sum_eur": {
+          "first": -353174.51750121155,
+          "last": -202451.22881801194,
+          "maximum": -189373.58122528173,
+          "mean_all": -302812.5221120318,
+          "minimum": -398298.5115286201,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "ledger_ppo_likelihood_clip_fraction": {
+          "first": 0.06734619140625,
+          "last": 0.12459716796875,
+          "maximum": 0.12459716796875,
+          "mean_all": 0.099591064453125,
+          "minimum": 0.06702880859375,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "reward_cost_gradient_cosine": {
+          "first": 0.5106362340400378,
+          "last": 0.6576964318205303,
+          "maximum": 0.7984265658516823,
+          "mean_all": 0.4994229003005373,
+          "minimum": -0.3175075260173676,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "reward_explained_variance": {
+          "first": -0.3127895697857226,
+          "last": 0.971449145180676,
+          "maximum": 0.971449145180676,
+          "mean_all": 0.8602980889608932,
+          "minimum": -0.3127895697857226,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "reward_value_mse_divided_by_scale_squared": {
+          "first": 85238.84415626526,
+          "last": 253574.81837272644,
+          "maximum": 1670639.6341323853,
+          "mean_all": 375334.77786928415,
+          "minimum": 85238.84415626526,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "reward_value_mse_training_units": {
+          "first": 0.08523884415626526,
+          "last": 0.25357481837272644,
+          "maximum": 1.6706396341323853,
+          "mean_all": 0.37533477786928415,
+          "minimum": 0.08523884415626526,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "rollout": {
+          "first": 1,
+          "last": 16,
+          "maximum": 16,
+          "mean_all": 8.5,
+          "minimum": 1,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "timesteps_before_optimization": {
+          "first": 8192,
+          "last": 131072,
+          "maximum": 131072,
+          "mean_all": 69632.0,
+          "minimum": 8192,
+          "null_count": 0,
+          "valid_count": 16
+        },
+        "weighted_cost_to_reward_actor_norm_ratio": {
+          "first": 2.635100115465863,
+          "last": 2.062276290064499,
+          "maximum": 4.253379577600523,
+          "mean_all": 2.2578735675709063,
+          "minimum": 1.0626620497799144,
+          "null_count": 0,
+          "valid_count": 16
+        }
+      },
+      "common_clipped_diagnostic_count": 16,
+      "completed_training_episodes": 192,
+      "constraint_state_sha256": "d92aa8be42b9fc20e6e6e46cc77828ba0a688d51583072337ddfd15bace04fbf",
+      "episode_count_weighted_mean_training_cost_by_resource": {
+        "battery": 0.6334744262403409,
+        "ch4": 0.8108731427021301,
+        "co2": 0.0007385935424863199,
+        "h2": 0.6759668805431795
+      },
+      "files": {
+        "final-policy.zip": {
+          "bytes": 1482559,
+          "path": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/training/E-pi-scaled-lowstd/final-policy.zip",
+          "sha256": "660c5b7861d09eb3d3504f27895f9046056e85dd4f3259749fd60bbc7b9cb242"
+        },
+        "initial-policy.pt": {
+          "bytes": 324276,
+          "path": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/training/E-pi-scaled-lowstd/initial-policy.pt",
+          "sha256": "0ff7ad4e2a6ae7e278576fc61c3676585c8c2811b015d92fbc6a2b0458dbdbaa"
+        },
+        "result.json": {
+          "bytes": 548176,
+          "path": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001/training/E-pi-scaled-lowstd/result.json",
+          "sha256": "3468336966976245bcbb6f3e5104700c250c7e0c862c8c2ea01e6b1d736eaa98"
+        }
+      },
+      "negative_reward_cost_cosine_count": 1,
+      "optimizer_steps": 5120,
+      "rollouts": 16,
+      "settled_training_cycles": 1364,
+      "specification": {
+        "algorithm": "plant-beta-ppo-pi-lagrangian-v1",
+        "initial_std": 0.2,
+        "name": "E-pi-scaled-lowstd",
+        "reward_scale": 0.001
+      },
+      "timesteps": 131072
+    }
+  },
+  "validation": {
+    "black_passed": true,
+    "compile_cli_whitespace_passed": true,
+    "frontend_rechecked": false,
+    "full_repository_suite_repeated": false,
+    "inherited_complete_gate_revision": "b5ea55e9c12571574f3452a6d145c6b8d51c2d87",
+    "inherited_complete_python_tests": 3052,
+    "scoped_python_test_runtime_s": 404.67,
+    "scoped_python_tests_passed": 379,
+    "source_clean_and_unchanged": true,
+    "strict_mypy_passed": true
+  }
+}

@@ -698,6 +698,14 @@ done this repository claims nothing about forecast quality.
 
 ## Current research path: controller-neutral Environment V2 RL
 
+The beta now has executed exploratory PPO evidence: the
+[closed adaptive screen](docs/research/results/ADAPTIVE_RL_BATCH_001_RESULTS.md)
+trained five policies and retained eight scenarios for every controller.
+Conditioning improved, but no PPO demonstrated operational benefit against the
+strong operating baselines while satisfying safety and daily resource returns.
+Checkpoints and full evidence remain outside Git. The original registered
+15-policy study and protected evaluation seeds remain unopened.
+
 The maintained V1 stack below remains available for the live control-room demo. The research
 branch now also has a separately identified RL path for the more realistic Environment V2
 tasks. It uses four normalized **absolute process targets**, so a learned policy, the
@@ -752,8 +760,8 @@ make v2-controller-benchmark \
   OUTPUT=/absolute/path/to/new-report.json
 ```
 
-The repository does not contain a research-scale PPO checkpoint, so this is a finished
-evaluation build rather than a controller-performance result. The full boundary, including the
+This earlier economic-alpha comparison remains an evaluation build; the subsequent
+beta pilot and adaptive results are linked above. The full alpha boundary, including the
 economic optimizer's model mismatch and the current unequal tariff representation, is recorded
 in
 [`docs/research/CONTROLLER_NEUTRAL_BENCHMARK_BUILD.md`](docs/research/CONTROLLER_NEUTRAL_BENCHMARK_BUILD.md).

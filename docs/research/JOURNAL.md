@@ -8426,3 +8426,84 @@ No adaptive production reset or training step has occurred at
 this implementation entry; only disjoint 9,990,000-series fixtures ran. Final
 clean-source gate and launch evidence will be stored outside tracked source so
 the experiment's source identity remains stable while it runs.
+
+## 2026-09-12 — Adaptive batch 001 closed: conditioning improved, benefit unproved
+
+Executed the frozen five-arm development screen at clean revision
+`238fe7ca763254b70af63a4ef0690a9d4523aa60` after a 379-test scoped gate passed in
+404.67 seconds, plus Black, strict mypy, compilation, CLI and whitespace checks.
+The full repository and frontend gates were not repeated for this launch; the
+inherited complete gate remains 3,052 Python tests at `b5ea55e`. The source stayed
+clean and unchanged while the experiment ran. The five arms crossed PI/scalar PPO
+with raw/0.001-scaled rewards and added a 0.2-initial-standard-deviation PI arm.
+Each trained 131,072 transitions, sixteen rollouts and 5,120 minibatch optimizer
+steps using optimizer seed 101. The hypotheses concerned reward conditioning,
+resource-cost signal competition and exploration, with production requirements,
+accounting, dispatcher and guard unchanged.
+
+The supervisor closed at `2026-09-12T14:23:56.520417+00:00`. All 165 closed process
+receipts had empty failure codes. Independent full artifact audit passed for
+five trained endpoints, eighty evaluation slots and eighty physical replays:
+64 complete episodes and sixteen retained controller-failure prefixes. M24
+rejected degraded/offline DAC in all eight scenarios; E-beta's service LP was
+infeasible in all eight. Their weekly aggregates remain null. A clean child exit
+or valid physical replay does not imply controller completion or independently
+authenticate the reported controller exception. Full audit and endpoint/ledger
+checks were performed only after authoritative batch closure.
+
+The [closed results](results/ADAPTIVE_RL_BATCH_001_RESULTS.md) and
+[compact digest index](results/adaptive_rl_batch_001_results.json) retain all ten
+actors and all eight seed slots per actor. Mean service / operating EUR were:
+initial 85.37% / −20,475.35; H 87.98% / −9,713.02; OperatingMPC 90.20% / −4,012.23;
+A PI-raw 76.45% / −32,070.27; B PI-scaled 53.15% / −70,549.01; C scalar-raw
+57.55% / −62,371.54; D scalar-scaled 73.55% / −37,592.42; E PI-scaled-lowstd
+90.53% / −11,637.03. H passed strict safety in 8/8 cases and OperatingMPC in 6/8;
+the initial and every trained policy passed in 0/8. No actor satisfied all daily
+resource returns. All forty trained-policy strict failures involved forced
+stops, while the battery safety threshold of 0.05 was respected. The dispatch
+floor near 0.15 must not be mislabeled as a battery safety failure.
+
+All sixteen rollout curves support a conditioning improvement: the scaled
+reward critics avoided full tanh saturation and reached pre-final-update
+explained variance 0.929, 0.938 and 0.971 for B, D and E, while A/C remained near
+zero. Scaled diagnostics implied less common gradient clipping, but all eighty
+diagnostic minibatches still implied clipping. Operating counterevidence is
+retained: scaling PI lost service and EUR in all eight pairs, while scaling
+scalar improved both in all eight. Aggregate reward/cost gradient opposition
+was intermittent and multipliers did not explode; this does not establish PI
+signal conflict as the sole mechanism. MSE retains scaled-unit labels, null
+explained variance is preserved, and deterministic pre-update diagnostic
+minibatches are not presented as actual SGD/Adam updates.
+
+E improved every development case relative to the initial policy and B, but its
+mean value was EUR 1,924.01 below H and EUR 7,624.79 below OperatingMPC. Its worst
+paired scenario, 9,700,005, had both less delivery and worse economics than H and
+OperatingMPC. An independently archive-bound physical diagnosis retained all
+24 E/H/OperatingMPC episodes and all 56 daily boundaries per actor. E had 88
+forced stops, 69 in intervals aborting a startup and 86 in intervals reaching
+SOC ≤ 0.151; persistent positive targets and dawn/evening timing suggest a
+startup-energy planning limitation. H had zero stops; OperatingMPC had two after
+reducing its command during unfinished startup. E requested DAC during every
+one of 4,503 declared outage minutes, with the guard removing allocations;
+learned fault adaptation is not demonstrated. No counterfactual repair was run
+in this batch. These findings motivate prospective engineering tests rather
+than a causal benefit claim.
+
+The external evidence root is
+`/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-001-analysis`. Its raw audit
+SHA-256 is `88048a9e5e5d1bb8bfd3d823824691daf82746fd488bbab5a1856ff57ab739a9`;
+the compact index includes separate canonical audit digest, exact evidence
+file digests and all per-slot summary/archive/replay digests. Full curves,
+minute evidence and checkpoints remain outside Git. No registered training,
+formal selection, held-out or confirmation evaluation, protected-seed access,
+operational benefit, RL superiority or commercial savings is claimed. This
+entry records the closed batch only and does not revise its frozen protocol.
+
+The outcome-blind audit/report tools and three fabricated-artifact test files
+are archived under `tools/adaptive_batch_001/`. Their original external copies
+were frozen while source `238fe7c` was still running. After archival, all 31
+fixture checks passed in 6.64 seconds without reopening production outcomes or
+resetting a production environment. The auditor intentionally requires the
+original exact clean source and gate; a later checkout cannot silently reissue
+its audit. The operational diagnosis and its two reproduction scripts were
+archived unchanged under the external analysis root's `operation/` directory.

@@ -2,6 +2,21 @@
 
 ## Product and research thesis
 
+Closed adaptive screen, 2026-09-12: all five 131,072-transition policies and all
+80 fixed evaluation/replay slots closed at clean source `238fe7c`. The
+[results](results/ADAPTIVE_RL_BATCH_001_RESULTS.md) support a reward-conditioning
+problem, but contradict a scaling-only remedy: scaled PI worsened every paired
+development outcome while scaled scalar PPO improved its raw counterpart.
+Low-exploration PI reached 90.53% mean delivery, yet its -11,637.03 EUR/week mean
+value trailed H (-9,713.02) and OperatingMPC (-4,012.23). Every PPO failed the
+strict safety gate because of forced electrolyser stops; SOC stayed above the
+0.05 safety threshold. No actor satisfied all daily resource returns.
+M24 and E-beta stopped in all eight scenarios, so their prefixes supply no
+weekly comparison means. Next work must address anticipatory startup/standby,
+resource scheduling and the remaining exploration/constraint interaction under
+a new prospective experiment. No policy was formally selected, no protected or
+confirmation seed was opened, and operational benefit remains unproved.
+
 Adaptive research update, 2026-09-12: the one-policy pilot completed, but learning
 reduced mean delivery fill to 30.6% from 84.3% at initialization; H delivered 89.5%
 on the same four stochastic weeks. This is a learning failure, not operational

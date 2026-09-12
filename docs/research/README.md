@@ -12,6 +12,16 @@ fallback behavior.
 
 ## Files
 
+- [`ADAPTIVE_RL_BATCH_001_RESULTS.md`](results/ADAPTIVE_RL_BATCH_001_RESULTS.md)
+  closes the five-policy, eight-scenario adaptive screen at `238fe7c`.
+  Reward scaling improved critic conditioning; operating results remained mixed.
+  Low-exploration PI delivered 90.53% on average but earned less simulated value
+  than H and OperatingMPC, and passed neither strict safety nor all daily returns
+  in any scenario. All ten actors and 80 result slots, including stopped
+  comparators, are retained through the [compact evidence](results/adaptive_rl_batch_001_results.json).
+  Forced electrolyser stops caused the PPO safety failures; the 0.05 SOC safety
+  threshold was respected. No formal selection, held-out evaluation or
+  operational-benefit claim follows.
 - [`RL_OPERATIONAL_BENEFIT_RESEARCH_PROTOCOL.md`](RL_OPERATIONAL_BENEFIT_RESEARCH_PROTOCOL.md)
   defines the separately authorized adaptive investigation after the negative
   single-policy pilot. It fixes the first five-cell conditioning/exploration
@@ -25,7 +35,7 @@ fallback behavior.
   15-policy registered study remains unopened.
 - [`PPO_LAUNCH_PLAN.md`](PPO_LAUNCH_PLAN.md) defines the fixed 15-policy launch,
   Lexar storage proposal, retained comparator risk, source-freeze checks and
-  closed-custody product export/replay workflow. Training remains unopened.
+  closed-custody product export/replay workflow. Registered training remains unopened.
 - [`PPO_READINESS_BUILD.md`](PPO_READINESS_BUILD.md) records the prospective scope
   for the Learning panel, admitted evidence exports and fixed PPO recording adapter.
 
