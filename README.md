@@ -41,8 +41,9 @@ has. It never allocates a kilowatt and never touches the simulator.
 Since V7 the plant is also an **RL environment**. `PlantEnv` wraps the simulator with a
 normalised observation, a five-number action and a reward built from the plant's own
 counters; PPO training, checkpointing and a deterministic heuristic-vs-policy comparison are
-wired up end to end. **No policy has been trained** — V7 is the foundation, and the backend
-keeps the heuristic controller unless a compatible checkpoint is loaded successfully.
+wired up end to end. V7 shipped this foundation without a trained policy; executed V2
+research policies are described below. The V1 backend keeps the heuristic controller
+unless a compatible checkpoint is loaded successfully.
 
 Since V9 the plant can also be *asked about the future*. `backend/src/plant_backend/hepa/`
 implements HEPA — a horizon-conditioned event-predictive architecture — end to end:
@@ -698,20 +699,26 @@ done this repository claims nothing about forecast quality.
 
 ## Current research path: controller-neutral Environment V2 RL
 
-The beta now has executed exploratory PPO evidence: the
+The beta has executed exploratory PPO evidence. The latest
+[MPC-residual screen](docs/research/results/ADAPTIVE_RL_BATCH_003_RESULTS.md)
+trained one policy for 32,768 transitions and retained all eight development scenarios.
+It matched its native-MPC initialization physically before learning and retained 8/8
+strict safety passes afterward. Mean value improved by EUR 104.98/week, but individual
+deliveries and daily resource deficits worsened. It does not qualify for confirmation.
+Earlier, the
 [first adaptive screen](docs/research/results/ADAPTIVE_RL_BATCH_001_RESULTS.md)
 trained five policies, and the
 [second screen](docs/research/results/ADAPTIVE_RL_BATCH_002_RESULTS.md) trained
 four direct/residual policies, retaining eight scenarios for every controller
-in each batch. Residual PPO modestly improved over H, but remained behind
-OperatingMPC and failed safety and paired service/resource acceptance conditions.
+in each batch. Those heuristic-residual policies modestly improved over H, but remained
+behind OperatingMPC and failed safety and paired service/resource acceptance conditions.
 No PPO has demonstrated operational benefit against the strong operating baseline.
 Checkpoints and full evidence remain outside Git. The original registered
 15-policy study and protected evaluation seeds remain unopened.
 
-The maintained V1 stack below remains available for the live control-room demo. The research
-branch now also has a separately identified RL path for the more realistic Environment V2
-tasks. It uses four normalized **absolute process targets**, so a learned policy, the
+The V1 stack below is retained for compatibility. The research branch has a separately
+identified RL path for Environment V2 tasks. The early controller-neutral integration
+below uses four normalized **absolute process targets**, so a learned policy, the
 transparent heuristic adapter, and service MPC no longer receive different physical authority.
 
 ```text
@@ -736,8 +743,9 @@ make v2-train CONFIG=/path/to/training.json OUTPUT=runs/new-v2-run
 make v2-rl-eval CHECKPOINT=runs/new-v2-run/checkpoint SEEDS=3
 ```
 
-No four-target policy has been trained or evaluated as a research contender in this
-repository. Disposable two-transition PPO wiring tests exercise both the 57/4 and 62/4 tasks,
+The current beta research uses 135 inputs for direct policies and 139 for residual policies;
+its trained results are linked above. The earlier disposable two-transition PPO wiring
+tests exercise both the 57/4 and 62/4 tasks,
 save, resume to four transitions, reload, and evaluate each checkpoint when the optional
 training dependency is available; these are not controller results. The integration is
 preparation for a registered experiment, not evidence that RL outperforms the heuristic or
@@ -798,11 +806,11 @@ make v2-beta-controller-benchmark-verify \
   REPORT=/absolute/path/to/new-beta-report.json
 ```
 
-The complete repository gate passes 1,535 Python tests with 4 optional skips, scoped typing and
+The beta-controller build gate recorded 1,535 Python tests with 4 optional skips, scoped typing and
 static checks, and frontend build/lint. A bounded untrained seed-34 smoke completed all four
 1,440-minute arms safely but produced no eligible comparison because cycle returns failed and
-service differed; it is not a performance result. No trained beta checkpoint or controller ranking
-is claimed here. See
+service differed; it is not a performance result. That fixture build did not establish a
+trained controller ranking; later adaptive training evidence is linked above. See
 [`docs/research/CYCLIC_MARKET_BETA_CONTROLLER_BUILD.md`](docs/research/CYCLIC_MARKET_BETA_CONTROLLER_BUILD.md)
 for the complete information policy, eligibility gates, verifier scope, integration-smoke finding,
 and next research steps. The outcome-blind constrained-learning algorithm, episode allocator,
@@ -1090,8 +1098,8 @@ rolled out through `PlantEnv` — the heuristic through `step_action`, the polic
 controller             CH4 kg      solar use  curtailed kWh        min SOC           idle    corrections         cycles         reward
 Heuristic              1768.8          98.1%            833          22.3%          48.8%           52.0          141.0          694.2
 
-No policy has been trained yet: the RL row above is either absent or a
-constant-action mock. Performance numbers follow the first real training run.
+No trained policy is supplied in this V1 example: the RL row is either absent
+or a constant-action mock. It is not an executed V2 research result.
 ```
 
 The JSON carries every run, the per-controller aggregate, the checkpoint metadata and

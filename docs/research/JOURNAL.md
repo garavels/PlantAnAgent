@@ -8739,3 +8739,137 @@ physical/capture errors, ordinary failed-policy prefixes and no additional reset
 encoding or MPC computation from prior-integrity checks. A full-week actual-MPC
 replay wall time has not been separately measured; its fixed ten-minute external
 cap remains binding. No production reset or experiment was run by these checks.
+
+## 2026-09-13 — Closed MPC-residual screen; no confirmation admission
+
+The exact clean `4072959` gate passed 751 Python regressions in 1,033.30 seconds,
+plus Black, strict source mypy, compilation, CLI and whitespace checks. Its SHA-256
+is `df9c898c507932054055710a07725568b302f187bea21645ae95495c0b13bb68`.
+This was a scoped research gate; the complete repository/frontend gate was not
+repeated. The original auditor/reporter passed 64/60 fabricated tests and were
+archived with checked gate/launch helpers before production execution. Their
+manifest SHA-256 is
+`85291086efc1289c340ec9b0005ba0364dfda9d049358529010d18560c030e50`.
+
+Existing research autonomy authorized the single fixed batch 003 policy. The
+exclusive Lexar root was claimed at 2026-09-12T20:50:04Z on AC power with the
+10-GiB floor satisfied. Training used four synchronous environments, one Torch
+intra/inter-op thread, seed 101 and 32,768 transitions. Source remained unchanged;
+only process state and closure existence were checked while the experiment ran.
+No performance, diagnostics or partial checkpoint selection was opened during
+execution. Training closed successfully after 15,617.84 seconds, below the six-hour
+cap. The complete batch closed normally at 2026-09-13T05:32:34Z; all processes were
+gone before audit. All 97 receipts closed without custody codes: one training,
+48 evaluation and 48 replay attempts. No retry, continuation or substitute occurred.
+
+The original frozen auditor failed before performance analysis on its assumption
+that initial ignored framework-reset seeds equal optimizer seed plus environment
+index. Producer review established that `ConstrainedPPO.set_random_seed` intentionally
+seeds optimizer RNG/action space only, never the vector environment. All 52 physical
+reset seeds were exactly 9,620,000–9,620,051, all framework metadata was null, all
+four allocator prefixes matched the reset records, and final cursors were 8,192
+per environment. The original failed attempt is preserved externally; this was
+an auditor-fixture assumption error, not observed training-seed contamination.
+
+A versioned external correction requires null framework metadata for that fixed
+producer while preserving physical seed, order, progress, checkpoint, source,
+replay and outcome checks. The eight new targeted regressions include the actual
+optimizer-seeding method on spies and rejection of numeric framework metadata
+and altered physical mappings. The full corrected 72-test suite passed in 346.72
+seconds; source mypy, Black, compilation and CLI passed. Optional strict mypy on
+the inherited untyped fixture file reported 131 annotation/type errors; it was
+outside the source-only gate, was retained in the correction note, and did not
+trigger an unrelated fixture rewrite. Original experiment/tools remain unchanged.
+The corrected archive manifest SHA-256 is
+`0ce985e1a84c9274a1c76e875f69f4afe2c49bf2365983441ef035655819ea6a`.
+
+The corrected full audit passed 603 artifact bindings, all 48 evaluation/replay
+slots and full initial-residual/native-MPC physical equivalence on all eight
+scenarios. Audit SHA-256:
+`b0f6e996ce750c7cccb8c0a366725db3fc4046156710d93453dc2340e47d3e8b`.
+The unchanged frozen reporter then produced the all-slot descriptive report,
+SHA-256 `13b107a00b7f904f1b1782066c17aadaaf06c68151a1ef6a547ed73e7a3ae998`.
+There are 32 complete weeks and 16 stopped M24/E-beta prefixes. M24 always stopped
+on unsupported public DAC-offline state; E-beta always stopped at opening LP
+infeasibility. No failed comparator supplied a weekly mean or artificial RL win.
+
+The final policy and native MPC both passed strict safety in 8/8 weeks; the
+initial residual already had that exact MPC behavior. Final mean delivery was
+93.36474% versus MPC 93.25959% on the unchanged 6,720 kg/28-delivery task; precise
+values remain in the compact evidence rather than a rounded claim. Mean value
+was EUR 2,065.84 versus EUR 1,960.86, a EUR 104.983 difference with six positive
+and two negative pairs. The worst pair lost EUR 988.522 and 23.622 kg weekly
+delivery. Of 224 individual deliveries, 26 improve, 17 worsen and 181 are equal.
+All 56 daily returns remain infeasible, and every seed has some worsened resource
+boundary. Battery/H2/CO2/CH4 deficits increase in 34/31/17/9 daily comparisons.
+No endpoint qualifies for confirmation and the active operational-benefit goal
+is not complete.
+
+Independent saved-data diagnosis rehashed all 24 final/MPC/H episode archives,
+matched weather/price/outage truth and reconciled daily/weekly EUR components.
+The mean gain is chiefly 7.066 kg extra delivery (EUR 169.593 service value and
+avoided penalties), offset by 1,106.764 kWh extra battery throughput (EUR 62.884
+wear), EUR 9.490 extra solar opportunity cost and small other components. Dawn
+accounts for 32 of the final policy's 38 shortfall events. Initial stock depletion
+coexists with declining late-week deliveries and varying weather/faults; this is
+not an isolated depletion experiment. Energy savings at preserved service remain
+unproved. The operational script, complete JSON and Markdown are archived under
+`adaptive-rl-batch-003-analysis/operation/` with input/output digests.
+
+The independent learning diagnosis rechecked 18 consumed inputs, all four
+pre-update diagnostics, all four optimizer ledgers and all 5,376 final-policy
+decision records. All 1,280 updates completed; pre-update critic EV improved from
+-0.314592 to 0.884058, sampled std remained about 0.20, and whole-critic saturation
+or action-bound clipping was not observed in the measured samples. These snapshots precede their updates
+and do not measure the final updated critic or establish convergence. Small final
+residuals changed an issued target above 1e-9 kW in 2,508 decisions; 2,868 changed
+none. Only 201 charging ceilings had non-dust authority. All 139 input correlation
+tables and all seed/fault strata remain external. Strong mean/p10 collinearity and
+zero DAC targets while offline prevent attributing benefit to quantiles or learned
+fault recovery. No new reset or inference was used for either diagnosis.
+
+A source-only runtime review rejected an apparent solver-futility hypothesis:
+zero scheduled labels do not mean all solves failed. Recovery is an accepted
+optimized plan with current/projected deficits or shortfalls. Final/native MPC
+accepted 5,329/5,344 recovery plans and used 47/32 fallbacks. Operating MPC allows
+delivery shortfalls and soft inventory deficits, so the existing hard-return beta
+energy certificate cannot justify skipping its optimization. No solver stage,
+forecast update, baseline or fallback was weakened. Immutable within-boundary
+matrix reuse is a possible future engineering measurement; no speedup is claimed.
+
+A second source-only review found that existing PI/I learners can use the exact
+139-input wrapper and unchanged four daily cost channels in a new adaptive harness.
+Scalar does not optimize separate daily constraint costs, but its methane-equivalent
+endowment economics does involve H2/CO2; claiming no inventory incentive would be
+incorrect. More training and constrained learning need matched budgets, initialization,
+seeds and fixed endpoints to distinguish their effects. The current process runner
+is serial; thread-pooling its signal handlers and process-wide child accounting is
+not safe. Any concurrent execution needs isolated supervisors and a new frozen
+protocol. No next experiment has been launched at this entry.
+
+The [result report](results/ADAPTIVE_RL_BATCH_003_RESULTS.md), compact all-slot JSON,
+paired figure and original/corrected analysis tools are now archived in Git-facing
+files. Raw checkpoints and large trajectories/diagnoses remain on Lexar. The
+figure uses every paired week, preserves losing cases and was rendered/inspected;
+axis-label overlap was corrected and plotting cache warnings were resolved with
+task-local cache directories. README status statements now distinguish historical
+untrained fixtures from executed V2 research; no frontend or visual identity changed.
+
+Archive verification confirmed byte identity for all six checked Python files,
+successful compilation and Black, and collection of all 196 historical/corrected
+fabricated tests in 1.09 seconds. The suites were not rerun merely after copying.
+New result/tool Markdown links resolve; compact extraction retains all 48 slots,
+all eight per-actor 28-delivery arrays and all 56 daily vectors, verifies delivery
+mass totals, and rechecks every referenced external artifact digest. Whitespace
+checks pass. The compact file is 802,390 bytes, SHA-256
+`0d91e53afd4e704667850b517ce081af32fa9f83448a257e92901636dfca982e`.
+
+The first staged whitespace check exposed Matplotlib's trailing spaces in the
+new SVG, which the earlier unstaged check had not covered. Only line-end ASCII
+whitespace was removed from the Git copy. XML element order, non-path attributes,
+text and every path-data token remain unchanged; the original plotted artifact
+and its digest stay preserved externally. The formatted SVG SHA-256 is
+`3183b7313b908b78804bb0583f08b823a661fa45a8545775f3b60b6cc5b5d5f2`;
+the original-to-publication mapping is under the external analysis directory's
+`publication-formatting/`. This is publication formatting, not an experiment or
+numerical-result change. Full staged whitespace checking is repeated afterward.

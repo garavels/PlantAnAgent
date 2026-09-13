@@ -12,8 +12,16 @@ fallback behavior.
 
 ## Files
 
+- [`ADAPTIVE_RL_BATCH_003_RESULTS.md`](results/ADAPTIVE_RL_BATCH_003_RESULTS.md)
+  closes one MPC-residual policy and all 48 evaluation/replay slots at `4072959`.
+  Initial residual and native MPC match physically in all eight scenarios. The
+  trained policy retained 8/8 strict safety passes and improved mean value by
+  EUR 104.98/week, but 17 individual deliveries and some daily deficits worsened.
+  No endpoint qualified for confirmation. The [compact evidence](results/adaptive_rl_batch_003_results.json)
+  retains every result, the original/corrected audit provenance, diagnostics and
+  [all eight paired outcomes](results/adaptive_rl_batch_003_paired.svg).
 - [`ADAPTIVE_RL_BATCH_003_PROTOCOL.md`](ADAPTIVE_RL_BATCH_003_PROTOCOL.md)
-  fixes one short scalar PPO screen around the corrected OperatingMPC: 32,768
+  fixes the closed short scalar PPO screen around the corrected OperatingMPC: 32,768
   transitions, exact-MPC initialization, bounded operating-effort adjustments,
   fresh seeds and all six actors on eight development scenarios. It preserves
   startup commands and the unchanged delivery/resource task. This is a

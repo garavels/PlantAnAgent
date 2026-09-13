@@ -2,15 +2,24 @@
 
 ## Product and research thesis
 
-Next prospective screen: [batch 003](ADAPTIVE_RL_BATCH_003_PROTOCOL.md) places one
-scalar PPO policy around the corrected OperatingMPC, with 32,768 transitions and
-eight fresh development scenarios. An exact zero residual preserves MPC; bounded
-adjustments retain its low-power/startup commands. This tests whether a stronger
-prior is trainable without imitation error or state-dependent cached teacher
-actions. All six actors, failures and individual service/resource/safety outcomes
-remain required. Measured local MPC throughput suggests roughly five training
-hours, plus evaluation/replay; a fixed six-hour training cap retains timeout as
-failure. No outcome, convergence or economic benefit is presumed.
+Closed [batch 003](results/ADAPTIVE_RL_BATCH_003_RESULTS.md), 2026-09-13: one
+32,768-transition scalar MPC-residual policy completed its eight-scenario screen.
+The exact zero initialization matched native MPC physically in all eight weeks;
+the final policy retained its 8/8 strict safety passes. Mean value improved by
+EUR 104.98/week, but 17/224 individual deliveries and resource deficits in every
+scenario worsened. All 48 evaluation/replay slots, including stopped M24/E-beta
+comparators, passed the corrected custody audit. No policy qualified for confirmation.
+
+The update path is functioning: four optimizer rounds completed, pre-update
+critic fit improved, and sampled exploration did not collapse. Small residuals
+changed targets at 2,508/5,376 decisions. Most additional mean value comes from
+7.066 kg/week more delivered methane, with 1,106.764 kWh/week more battery cycling;
+equal-service cost savings and forecast/fault benefits are unproved. The next
+prospective design must separate additional training budget from explicit daily
+constraint optimization while preserving the exact MPC prior, task and paired
+evidence. Existing PI/I mechanisms fit the wrapper; merely adding updates or
+multipliers is not a demonstrated remedy. No next experiment has started at this
+evidence entry. Original registered families and protected seeds remain untouched.
 
 Closed batch 002, 2026-09-12: the four-cell direct/residual PI/scalar comparison
 completed at `a442a4a`; all 80 evaluation and detached replay slots passed custody
