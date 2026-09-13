@@ -7,7 +7,9 @@ from dataclasses import replace
 import gzip
 import io
 import json
+import os
 from pathlib import Path
+import plistlib
 from types import SimpleNamespace
 
 import numpy as np
@@ -127,16 +129,26 @@ def test_repair_replication_is_new_root_with_explicit_reused_seed_provenance():
     )
 
     spec = batch.specification(batch.ROOT)
-    assert batch.ROOT.name == "adaptive-rl-batch-005"
-    assert batch.SCHEMA == "plant-adaptive-rl-mpc-constraint-batch-005"
+    assert batch.ACTIVE_BASE == Path(
+        "/Users/filippogombac/Developer/PlantAnAgentResearch"
+    )
+    assert batch.ROOT == batch.ACTIVE_BASE / "adaptive-rl-batch-006"
+    assert batch.SCHEMA == "plant-adaptive-rl-mpc-constraint-batch-006"
     repair = spec["repair_replication"]
-    assert repair["previous_batch"] == "adaptive-rl-batch-004"
+    assert repair["previous_batch"] == "adaptive-rl-batch-005"
     assert (
-        repair["previous_source_commit"] == "4f908fcaeaeed417a793204778d87f62c29ec768"
+        repair["previous_source_commit"] == "776a98fa01b0cad5b85f0e532bbc6a3c660dbcd6"
     )
-    assert repair["previous_report_sha256"] == (
-        "f4b7c3a4796f99f45686db1ea6fe9d6250a260c79d4511094a7e88c7072a68f3"
+    assert repair["previous_report_sha256"] is None
+    assert repair["previous_interruption_inventory_sha256"] == (
+        "a768e110eb1b0c7b4e6cf4d8e449adef33bca3b73aa8d314344c47fec1bf434e"
     )
+    assert repair["previous_os_evidence_sha256"] == (
+        "7d4d97084054c116d6a8a88f2baae0a03a71023f61f601246a0cd36000281a5d"
+    )
+    assert "exact final progress and exits unavailable" in repair["previous_status"]
+    assert "first 44 reset records per arm" in repair["training_seed_status"]
+    assert "Lexar archive only after closure" in repair["storage_change"]
     assert "reused development" in repair["training_seed_status"]
     assert "never opened" in repair["development_seed_status"]
     assert "no resume" in repair["initialization"]
@@ -353,16 +365,52 @@ def test_one_hundred_reset_stream_without_physics():
         vector.close()
 
 
-def fake_campaign(tmp_path, monkeypatch):
+def fake_storage(tmp_path, monkeypatch):
     root = tmp_path / "batch"
+    gate = tmp_path / "gate.json"
+    monkeypatch.setattr(batch, "ACTIVE_BASE", tmp_path)
     monkeypatch.setattr(batch, "ROOT", root)
+    monkeypatch.setattr(batch, "_INTERNAL_MOUNT", tmp_path)
+    volume = {
+        "VolumeUUID": "86093AA6-4234-4173-AD1C-F1762C98870E",
+        "MountPoint": str(tmp_path),
+        "FilesystemType": "apfs",
+        "Internal": True,
+        "Removable": False,
+        "Ejectable": False,
+    }
+
+    real_check_output = batch.subprocess.check_output
+
+    def diskutil(command, **kwargs):
+        if command[0] != "/usr/sbin/diskutil":
+            return real_check_output(command, **kwargs)
+        assert command == ["/usr/sbin/diskutil", "info", "-plist", str(tmp_path)]
+        assert kwargs == {"stderr": batch.subprocess.PIPE, "timeout": 10}
+        return plistlib.dumps(volume)
+
+    monkeypatch.setattr(batch.subprocess, "check_output", diskutil)
+    monkeypatch.setattr(
+        batch.shutil, "disk_usage", lambda *a: SimpleNamespace(free=20 * 1024**3)
+    )
+    return root, gate, volume
+
+
+def fake_campaign(tmp_path, monkeypatch):
+    root, gate, _ = fake_storage(tmp_path, monkeypatch)
     monkeypatch.setattr(batch, "DEV_SEEDS", tuple(range(9_992_080, 9_992_088)))
     runtime = SimpleNamespace(git_head="a" * 40, to_dict=lambda: {"fixture": True})
     monkeypatch.setattr(batch, "capture", lambda **kw: runtime)
     monkeypatch.setattr(batch, "require_plan", lambda: {})
     monkeypatch.setattr(batch, "verify_initial_matching", lambda *a: {"fixture": True})
-    gate = tmp_path / "gate.json"
-    publish_json(gate, {"passed": True, "source_commit": runtime.git_head})
+    publish_json(
+        gate,
+        {
+            "passed": True,
+            "source_commit": runtime.git_head,
+            "storage": batch.capture_storage_identity(gate),
+        },
+    )
     return root, gate
 
 
@@ -581,10 +629,15 @@ def test_archive_limit_and_slot_binding(tmp_path, monkeypatch):
 
 
 def test_source_gate_and_resource_admission_precede_root_claim(tmp_path, monkeypatch):
-    root = tmp_path / "absent"
-    monkeypatch.setattr(batch, "ROOT", root)
-    gate = tmp_path / "gate.json"
-    publish_json(gate, {"passed": True, "source_commit": "a" * 40})
+    root, gate, _ = fake_storage(tmp_path, monkeypatch)
+    publish_json(
+        gate,
+        {
+            "passed": True,
+            "source_commit": "a" * 40,
+            "storage": batch.capture_storage_identity(gate),
+        },
+    )
     with pytest.raises(ValueError, match="authorization"):
         batch.run(gate, authorized=False)
     monkeypatch.setattr(
@@ -885,3 +938,288 @@ def test_initial_load_restores_caller_rng_without_reset(tmp_path, monkeypatch):
     batch.load_initial(tmp_path, config, arm)
     assert LearnerRNGStateV1.capture().to_dict() == before
     assert allocator.ledger == ()
+
+
+def test_internal_storage_contract_captures_os_identity_without_free_bytes(
+    tmp_path, monkeypatch
+):
+    root, gate, _ = fake_storage(tmp_path, monkeypatch)
+    identity = batch.capture_storage_identity(gate)
+    assert not root.exists() and not gate.exists()
+    assert identity == {
+        "schema": "plant-adaptive-internal-storage-v1",
+        "active_base": str(tmp_path),
+        "batch_root": str(root),
+        "gate_path": str(gate),
+        "volume": {
+            "uuid": "86093AA6-4234-4173-AD1C-F1762C98870E",
+            "mount_point": str(tmp_path),
+            "filesystem_type": "apfs",
+            "internal": True,
+            "removable": False,
+            "ejectable": False,
+            "st_dev": tmp_path.stat().st_dev,
+        },
+    }
+    publish_json(gate, {"storage": identity})
+    monkeypatch.setattr(
+        batch.subprocess,
+        "check_output",
+        lambda *a, **kw: pytest.fail("periodic OS query"),
+    )
+    assert batch.require_storage(gate, identity) == identity
+    monkeypatch.setattr(
+        batch.shutil, "disk_usage", lambda *a: SimpleNamespace(free=11 * 1024**3)
+    )
+    assert batch.require_storage(gate, identity) == identity
+
+
+@pytest.mark.parametrize(
+    "key,value",
+    [
+        ("VolumeUUID", "other-volume"),
+        ("MountPoint", "/Volumes/fixture"),
+        ("FilesystemType", "exfat"),
+        ("Internal", False),
+        ("Internal", 1),
+        ("Removable", True),
+        ("Ejectable", True),
+    ],
+)
+def test_internal_storage_rejects_wrong_os_volume(tmp_path, monkeypatch, key, value):
+    root, gate, volume = fake_storage(tmp_path, monkeypatch)
+    volume[key] = value
+    with pytest.raises(ValueError, match="nonremovable APFS"):
+        batch.capture_storage_identity(gate)
+    assert not root.exists() and not gate.exists()
+
+
+@pytest.mark.parametrize(
+    "failure",
+    ["external_gate", "symlink_gate", "symlink_base", "existing_root", "space"],
+)
+def test_internal_storage_rejections_precede_root_creation(
+    tmp_path, monkeypatch, failure
+):
+    base = tmp_path / "active"
+    base.mkdir()
+    root, gate, _ = fake_storage(base, monkeypatch)
+    identity = batch.capture_storage_identity(gate)
+    publish_json(gate, {"storage": identity, "passed": True, "source_commit": "a" * 40})
+    if failure == "external_gate":
+        gate = tmp_path / "outside.json"
+        publish_json(gate, {"storage": identity})
+    elif failure == "symlink_gate":
+        original = base / "real-gate.json"
+        gate.rename(original)
+        gate.symlink_to(original)
+    elif failure == "symlink_base":
+        original = tmp_path / "real-active"
+        base.rename(original)
+        base.symlink_to(original, target_is_directory=True)
+    elif failure == "existing_root":
+        root.mkdir()
+        (root / "preserved").write_bytes(b"existing attempt")
+    else:
+        monkeypatch.setattr(
+            batch.shutil, "disk_usage", lambda *a: SimpleNamespace(free=0)
+        )
+    monkeypatch.setattr(
+        batch,
+        "capture",
+        lambda **kw: pytest.fail("source work before storage rejection"),
+    )
+    with pytest.raises(ValueError):
+        batch.run(gate, authorized=True)
+    if failure == "existing_root":
+        assert (root / "preserved").read_bytes() == b"existing attempt"
+        assert list(root.iterdir()) == [root / "preserved"]
+    else:
+        assert not root.exists()
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("uuid", "wrong"),
+        ("mount_point", "/Volumes/fixture"),
+        ("filesystem_type", "exfat"),
+        ("internal", 1),
+        ("removable", True),
+        ("ejectable", True),
+        ("st_dev", -1),
+    ],
+)
+def test_periodic_storage_rejects_arbitrary_expected_identity(
+    tmp_path, monkeypatch, field, value
+):
+    _, gate, _ = fake_storage(tmp_path, monkeypatch)
+    identity = batch.capture_storage_identity(gate)
+    publish_json(gate, {"storage": identity})
+    identity["volume"][field] = value
+    with pytest.raises(ValueError, match="storage identity changed"):
+        batch.require_storage(gate, identity)
+
+
+def fake_stored_plan(tmp_path, monkeypatch):
+    from plant_backend.rl.v2.training import capacity_benchmark
+
+    root, gate, _ = fake_storage(tmp_path, monkeypatch)
+    storage = batch.capture_storage_identity(gate)
+    publish_json(gate, {"passed": True, "storage": storage})
+    root.mkdir()
+    plan = {
+        "specification": {"fixture": "fixed science"},
+        "runtime": {"source": "frozen"},
+        "host": {"fixture": "host"},
+        "gate": batch.file_record(gate),
+        "storage": storage,
+    }
+    publish_json(root / "plan.json", plan)
+    monkeypatch.setattr(batch, "specification", lambda root: plan["specification"])
+    monkeypatch.setattr(batch, "capture", lambda **kw: {"source": "frozen"})
+    monkeypatch.setattr(
+        batch,
+        "BetaTrainingRuntimeProvenanceV1",
+        SimpleNamespace(from_dict=lambda value: value),
+    )
+    monkeypatch.setattr(capacity_benchmark, "_host_identity", lambda: plan["host"])
+
+    def verify(expected, current):
+        if expected != current:
+            raise ValueError("fixture source changed")
+
+    monkeypatch.setattr(batch, "verify_unchanged", verify)
+    return root, gate, plan
+
+
+@pytest.mark.parametrize(
+    "failure",
+    ["gate_bytes", "gate_storage", "plan_storage", "device", "space", "source"],
+)
+def test_periodic_plan_storage_gate_device_space_and_source_fail_closed(
+    tmp_path, monkeypatch, failure
+):
+    root, gate, plan = fake_stored_plan(tmp_path, monkeypatch)
+    assert batch.require_plan() == plan
+    monkeypatch.setattr(
+        batch.subprocess,
+        "check_output",
+        lambda *a, **kw: pytest.fail("periodic diskutil"),
+    )
+    if failure in ("gate_bytes", "gate_storage"):
+        value = json.loads(gate.read_text())
+        if failure == "gate_bytes":
+            value["changed"] = True
+        else:
+            value["storage"]["volume"]["uuid"] = "changed"
+        gate.write_text(json.dumps(value))
+    elif failure == "plan_storage":
+        plan["storage"]["volume"]["uuid"] = "changed"
+        (root / "plan.json").write_text(json.dumps(plan))
+    elif failure == "device":
+        original = Path.stat
+
+        def changed(path, *args, **kwargs):
+            result = original(path, *args, **kwargs)
+            if path == root:
+                fields = list(result)
+                fields[2] += 1
+                return os.stat_result(fields)
+            return result
+
+        monkeypatch.setattr(Path, "stat", changed)
+    elif failure == "space":
+        monkeypatch.setattr(
+            batch.shutil, "disk_usage", lambda *a: SimpleNamespace(free=0)
+        )
+    else:
+        monkeypatch.setattr(batch, "capture", lambda **kw: {"source": "changed"})
+    with pytest.raises(ValueError):
+        batch.require_plan()
+
+
+def test_fabricated_internal_graph_uses_no_volumes_io(tmp_path, monkeypatch):
+    from plant_backend.rl.v2.training import capacity_benchmark
+
+    root, gate = fake_campaign(tmp_path, monkeypatch)
+    monkeypatch.setattr(
+        batch,
+        "specification",
+        lambda path: {"fixture": "fixed science", "root": str(path)},
+    )
+    monkeypatch.setattr(
+        capacity_benchmark, "_host_identity", lambda: {"fixture": "host"}
+    )
+    touched = []
+
+    def guarded(original):
+        def call(path, *args, **kwargs):
+            if not isinstance(path, int):
+                name = os.fsdecode(path)
+                assert not name.startswith("/Volumes/"), name
+                touched.append(name)
+            return original(path, *args, **kwargs)
+
+        return call
+
+    for name in ("open", "stat", "lstat"):
+        monkeypatch.setattr(os, name, guarded(getattr(os, name)))
+    monkeypatch.setattr(io, "open", guarded(io.open))
+    monkeypatch.setattr(
+        batch,
+        "training_wave",
+        lambda: {
+            "receipts": [
+                receipt(root, "_train", f"train-{arm.name}", ["--cell", arm.name])
+                for arm in batch.ARMS
+            ],
+            "fatal": None,
+            "supervisors": [{"fixture": True}, {"fixture": True}],
+        },
+    )
+    monkeypatch.setattr(
+        batch,
+        "closed_child",
+        lambda stage, name, timeout, extra: receipt(root, stage, name, extra),
+    )
+    report = batch.run(gate, authorized=True)
+    assert report["status"] == "closed" and len(report["receipts"]) == 114
+    assert touched
+    plan = json.loads((root / "plan.json").read_text())
+    assert plan["storage"] == json.loads(gate.read_text())["storage"]
+    assert plan["gate"]["path"] == str(gate)
+    assert all(path.is_relative_to(tmp_path) for path in root.rglob("*"))
+
+
+@pytest.mark.parametrize("failure", ["gate", "root", "space"])
+def test_internal_storage_races_during_os_admission_reject_before_claim(
+    tmp_path, monkeypatch, failure
+):
+    root, gate = fake_campaign(tmp_path, monkeypatch)
+    original = batch.subprocess.check_output
+
+    def changed(command, **kwargs):
+        result = original(command, **kwargs)
+        if command[0] == "/usr/sbin/diskutil":
+            if failure == "gate":
+                value = json.loads(gate.read_text())
+                value["passed"] = False
+                gate.write_text(json.dumps(value))
+            elif failure == "root":
+                root.mkdir()
+                (root / "preserved").write_bytes(b"another claim")
+            else:
+                monkeypatch.setattr(
+                    batch.shutil, "disk_usage", lambda *a: SimpleNamespace(free=0)
+                )
+        return result
+
+    monkeypatch.setattr(batch.subprocess, "check_output", changed)
+    with pytest.raises(ValueError):
+        batch.run(gate, authorized=True)
+    if failure == "root":
+        assert (root / "preserved").read_bytes() == b"another claim"
+        assert list(root.iterdir()) == [root / "preserved"]
+    else:
+        assert not root.exists()

@@ -1,4 +1,4 @@
-"""Batch 005 repair replication of matched scalar/PI MPC residual development."""
+"""Batch 006 matched scalar/PI MPC residual development on internal storage."""
 
 from __future__ import annotations
 
@@ -9,8 +9,12 @@ import hashlib
 import io
 import json
 import math
+import os
 from pathlib import Path
+import plistlib
 import shutil
+import stat
+import subprocess
 import sys
 from typing import Any, Callable, cast
 
@@ -31,7 +35,13 @@ from .config import (
     BETA_PI_LAGRANGIAN_ALGORITHM_ID as PI,
     ControllerNeutralTrainingConfigV1,
 )
-from .custody_io import mkdir_exclusive, publish_bytes, publish_json, read_regular
+from .custody_io import (
+    mkdir_exclusive,
+    publish_bytes,
+    publish_json,
+    read_regular,
+    require_directory,
+)
 from .custody_json import canonical_bytes
 from .custody_process import capture_process
 from .episode_allocator import EpisodeSeedAllocatorV1, EpisodeSeedCustodyError
@@ -42,8 +52,12 @@ from .runtime_provenance import (
 )
 
 MODULE = "plant_backend.rl.v2.training.research_mpc_constraint_batch"
-ROOT = Path("/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-005")
-SCHEMA = "plant-adaptive-rl-mpc-constraint-batch-005"
+ACTIVE_BASE = Path("/Users/filippogombac/Developer/PlantAnAgentResearch")
+ROOT = ACTIVE_BASE / "adaptive-rl-batch-006"
+SCHEMA = "plant-adaptive-rl-mpc-constraint-batch-006"
+STORAGE_SCHEMA = "plant-adaptive-internal-storage-v1"
+_INTERNAL_VOLUME_UUID = "86093AA6-4234-4173-AD1C-F1762C98870E"
+_INTERNAL_MOUNT = Path("/System/Volumes/Data")
 TOTAL_STEPS = 65_536
 OPTIMIZER_SEED = 101
 TRAIN_SEED_BASE = 9_630_000
@@ -97,13 +111,16 @@ def specification(root: Path) -> dict[str, Any]:
         "schema": SCHEMA,
         "root": str(root),
         "repair_replication": {
-            "previous_batch": "adaptive-rl-batch-004",
-            "previous_source_commit": "4f908fcaeaeed417a793204778d87f62c29ec768",
-            "previous_report_sha256": "f4b7c3a4796f99f45686db1ea6fe9d6250a260c79d4511094a7e88c7072a68f3",
-            "previous_status": "aborted before the first optimizer update; no evaluation",
-            "training_seed_status": "reused development stream; first eight reset seeds consumed in batch 004",
-            "development_seed_status": "planned for batch 004 but never opened; adaptive development only",
+            "previous_batch": "adaptive-rl-batch-005",
+            "previous_source_commit": "776a98fa01b0cad5b85f0e532bbc6a3c660dbcd6",
+            "previous_report_sha256": None,
+            "previous_interruption_inventory_sha256": "a768e110eb1b0c7b4e6cf4d8e449adef33bca3b73aa8d314344c47fec1bf434e",
+            "previous_os_evidence_sha256": "7d4d97084054c116d6a8a88f2baae0a03a71023f61f601246a0cd36000281a5d",
+            "previous_status": "interrupted after active USB volume loss; no closure report or evaluation; exact final progress and exits unavailable",
+            "training_seed_status": "reused development stream; batch 004 opened eight reset seeds; batch 005 retained the first 44 reset records per arm",
+            "development_seed_status": "planned for batches 004 and 005 but never opened; adaptive development only",
             "initialization": "fresh matched models and optimizer/allocator state; no resume",
+            "storage_change": "persistent internal active artifacts and admission evidence; Lexar archive only after closure; retain internal originals",
             "operating_solar_projection": "issued-mean-physics-left-samples-v1",
             "task_reward_learner_authority_changes": False,
             "registered_projection_changes": False,
@@ -713,20 +730,123 @@ def load_initial(
         caller_rng.restore()
 
 
+def _storage_identity(gate: Path, *, require_gate: bool) -> dict[str, Any]:
+    """Check current paths/device against the fixed internal-storage contract."""
+    if (
+        ACTIVE_BASE != ACTIVE_BASE.resolve()
+        or ROOT.parent != ACTIVE_BASE
+        or ROOT != ROOT.resolve()
+        or not gate.is_absolute()
+        or not gate.is_relative_to(ACTIVE_BASE)
+        or gate.is_relative_to(ROOT)
+        or gate != gate.resolve()
+    ):
+        raise ValueError("adaptive storage paths must remain canonical and internal")
+    require_directory(ACTIVE_BASE)
+    require_directory(_INTERNAL_MOUNT)
+    require_directory(gate.parent)
+    paths = [
+        ACTIVE_BASE,
+        _INTERNAL_MOUNT,
+        Path(__file__).resolve().parents[6],
+        gate.parent,
+    ]
+    if os.path.lexists(ROOT):
+        require_directory(ROOT)
+        paths.append(ROOT)
+    if os.path.lexists(gate):
+        observed = gate.lstat()
+        if not stat.S_ISREG(observed.st_mode) or observed.st_nlink != 1:
+            raise ValueError(
+                "adaptive storage gate must be a singly linked regular file"
+            )
+        paths.append(gate)
+    elif require_gate:
+        raise ValueError("adaptive storage gate is absent")
+    device = ACTIVE_BASE.stat().st_dev
+    if any(path.stat().st_dev != device for path in paths):
+        raise ValueError(
+            "adaptive storage device differs from the internal repository volume"
+        )
+    if shutil.disk_usage(ACTIVE_BASE).free < MINIMUM_FREE:
+        raise ValueError("adaptive batch needs 10 GiB free on internal active storage")
+    return {
+        "schema": STORAGE_SCHEMA,
+        "active_base": str(ACTIVE_BASE),
+        "batch_root": str(ROOT),
+        "gate_path": str(gate),
+        "volume": {
+            "uuid": _INTERNAL_VOLUME_UUID,
+            "mount_point": str(_INTERNAL_MOUNT),
+            "filesystem_type": "apfs",
+            "internal": True,
+            "removable": False,
+            "ejectable": False,
+            "st_dev": device,
+        },
+    }
+
+
+def capture_storage_identity(gate: Path) -> dict[str, Any]:
+    """Verify OS volume metadata before admission; the gate may not yet exist."""
+    if os.path.lexists(ROOT):
+        raise ValueError("adaptive root must be absent; no retry")
+    identity = _storage_identity(gate, require_gate=False)
+    try:
+        raw = subprocess.check_output(
+            ["/usr/sbin/diskutil", "info", "-plist", str(_INTERNAL_MOUNT)],
+            stderr=subprocess.PIPE,
+            timeout=10,
+        )
+        volume = plistlib.loads(raw)
+    except (OSError, subprocess.SubprocessError, ValueError) as exc:
+        raise ValueError("adaptive internal storage OS admission failed") from exc
+    expected = {
+        "VolumeUUID": _INTERNAL_VOLUME_UUID,
+        "MountPoint": str(_INTERNAL_MOUNT),
+        "FilesystemType": "apfs",
+        "Internal": True,
+        "Removable": False,
+        "Ejectable": False,
+    }
+    if not isinstance(volume, dict) or any(
+        type(volume.get(key)) is not type(value) or volume.get(key) != value
+        for key, value in expected.items()
+    ):
+        raise ValueError(
+            "adaptive storage must use the frozen internal nonremovable APFS volume"
+        )
+    if os.path.lexists(ROOT):
+        raise ValueError("adaptive root appeared during OS admission; no retry")
+    if _storage_identity(gate, require_gate=False) != identity:
+        raise ValueError("adaptive storage changed during OS admission")
+    return identity
+
+
+def require_storage(gate: Path, expected: object) -> dict[str, Any]:
+    """Recheck frozen paths/device and free space without recurring OS commands."""
+    identity = _storage_identity(gate, require_gate=True)
+    if canonical_bytes(identity) != canonical_bytes(expected):
+        raise ValueError("adaptive storage identity changed")
+    return identity
+
+
 def require_plan() -> dict[str, Any]:
     from .capacity_benchmark import _host_identity
 
     plan = json.loads(read_regular(ROOT / "plan.json"))
+    gate_path = Path(plan["gate"]["path"])
+    storage = require_storage(gate_path, plan["storage"])
+    gate = json.loads(read_regular(gate_path))
+    if canonical_bytes(gate.get("storage")) != canonical_bytes(storage):
+        raise ValueError("adaptive gate and plan storage identities differ")
     if canonical_bytes(plan["specification"]) != canonical_bytes(specification(ROOT)):
         raise ValueError("adaptive batch specification changed")
     verify_unchanged(
         BetaTrainingRuntimeProvenanceV1.from_dict(plan["runtime"]),
         capture(require_clean=True),
     )
-    if (
-        _host_identity() != plan["host"]
-        or file_record(Path(plan["gate"]["path"])) != plan["gate"]
-    ):
+    if _host_identity() != plan["host"] or file_record(gate_path) != plan["gate"]:
         raise ValueError("adaptive batch host or gate changed")
     return cast(dict[str, Any], plan)
 
@@ -967,20 +1087,26 @@ def run(gate: Path, *, authorized: bool) -> dict[str, Any]:
         raise ValueError("adaptive batch requires research authorization assertion")
     if ROOT.exists() or ROOT != ROOT.resolve():
         raise ValueError("adaptive root must be absent and canonical; no retry")
+    _storage_identity(gate, require_gate=True)
     runtime = capture(require_clean=True)
-    checked = json.loads(read_regular(gate))
+    gate_raw = read_regular(gate)
+    checked = json.loads(gate_raw)
     if (
         checked.get("passed") is not True
         or checked.get("source_commit") != runtime.git_head
     ):
         raise ValueError("adaptive gate must pass at the exact clean source")
-    if shutil.disk_usage(ROOT.parent).free < MINIMUM_FREE:
-        raise ValueError("adaptive batch needs 10 GiB free")
+    storage = capture_storage_identity(gate)
+    require_storage(gate, checked.get("storage"))
+    gate_record = file_record(gate)
+    if gate_record["sha256"] != hashlib.sha256(gate_raw).hexdigest():
+        raise ValueError("adaptive gate changed during storage admission")
     plan = {
         "specification": specification(ROOT),
         "runtime": runtime.to_dict(),
         "host": _host_identity(),
-        "gate": file_record(gate),
+        "gate": gate_record,
+        "storage": storage,
         "started_at": now(),
     }
     mkdir_exclusive(ROOT)

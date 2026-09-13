@@ -9275,3 +9275,30 @@ gate must move too: periodic `require_plan` reads its original absolute path.
 Moving only checkpoints would retain the USB dependency. Closed archives preserve
 original bytes and embedded paths; internal originals remain through audit and
 publication. No production reset or batch-006 launch has occurred at this entry.
+
+The bounded implementation now places the matched runner under the internal base
+and binds the interrupted attempt's forensic/OS evidence digests without reading
+Lexar during execution. Gate and plan share an exact storage record containing
+canonical base/root/gate paths, APFS UUID/mount, internal/nonremovable flags and the
+observed device number. Free-space measurements are enforced but excluded from
+the immutable identity. OS admission runs before claiming the root; lightweight
+device/path/gate/space checks run with the existing periodic integrity checks.
+
+Source review confirmed no learner, forecast, solver, task, helper or frontend
+behavior change. Tests reject wrong volume metadata, symlink/external gates,
+existing roots, low space, changed gate/plan/source/device identities and races
+during OS admission. The fabricated runner still retains its two training and
+112 comparison/replay slots without accessing external active paths. The initial
+focused subset passed 38 tests; the finalized owned module passed all 71 tests
+in 127.90 seconds. Black, strict source MyPy and compilation passed. No production
+policy was trained, resumed or evaluated by these checks.
+
+The root source gate and launch/pin/freeze helpers are prepared but not executed.
+Production execution will use the immutable internal copies of the tools,
+including the launcher itself. The detached auditor independently validates the
+new storage joins; the reporter retains the existing all-pair interpretation.
+A separate archive helper checks normal audited closure and current process
+absence before making an immutable external copy. Its receipt and own logs must
+live outside the copied collections. Full prospective tool checks, a tiny actual
+internal-volume helper fixture, final source admission and archival-tool checks
+remain required before launch.
