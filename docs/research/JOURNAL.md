@@ -8873,3 +8873,103 @@ and its digest stay preserved externally. The formatted SVG SHA-256 is
 the original-to-publication mapping is under the external analysis directory's
 `publication-formatting/`. This is publication formatting, not an experiment or
 numerical-result change. Full staged whitespace checking is repeated afterward.
+
+## 2026-09-13 — Prospective matched scalar/PI MPC-residual screen
+
+The next hypothesis is that explicit existing daily resource-cost optimization
+may improve the tradeoff observed in batch 003. Freeze two fresh MPC-residual
+arms, scalar and PI-Lagrangian, at the same 65,536-transition budget, optimizer
+seed 101, reward scale 0.001, initial std 0.2, zero action head and exact current
+139-input interface. The [batch 004 protocol](ADAPTIVE_RL_BATCH_004_PROTOCOL.md)
+fixes the unchanged 6,720 kg/28-delivery week, matched training seeds
+9,630,000–9,630,099 and eight new development seeds 9,700,300–9,700,307. A source
+search found no earlier use of those seed ranges. No production reset has occurred.
+Both arms have eight rollouts and 2,560 minibatch updates; they use fixed final
+endpoints. Relative to batch 003, different seeds prevent isolating a budget effect.
+
+The old scalar MPC wrapper and its complete simulator/controller/replay contracts
+remain unchanged. New work is confined to a separately named mixed-family runner,
+two-process training supervision, fixture tests and research documentation/tools.
+Native H/MPC/M24/E-beta, successful-A initialization and both final policies occupy
+all 56 evaluation and 56 detached replay slots. Initialization must match exactly
+between arms and against independent fresh construction, without a physical reset.
+Missing initialization from an ordinary failed arm stays unavailable; existing
+inconsistent evidence is fatal. No policy substitution or protected-study reuse.
+
+Concurrent training uses isolated supervisors so existing signal handlers and
+process-wide child CPU accounting remain on each supervisor's main thread.
+An execution barrier registers each trainer's process group before its command
+can run; parent-loss monitoring and global fatal cleanup must prevent orphaned
+training. The existing shared capture implementation is not modified. Its module-
+local subprocess binding is replaced only inside an isolated supervisor to run
+the barrier, with exact-command checks and restoration; the global subprocess
+module and unrelated Git checks retain their normal behavior.
+
+Source review identified two admission issues before launch: imported supervisor
+callbacks bypass the batch CLI's Torch thread setup, and invoking full source/
+host/policy-identity capture at every 0.1-second process poll would add avoidable
+work and could delay the launch acknowledgement. The runner therefore initializes
+the frozen one-thread host settings before supervisor admission, while full
+integrity checks have a prospectively fixed 30-second cadence distinct from
+responsive process/log/storage polling. Tests must cover these joins along with
+ordinary failure, fatal exit 86, interruption, acknowledgement loss and group closure.
+
+The first 26 runner fixtures passed in approximately 126 seconds, including tiny
+controlled-solver scalar/PI endpoints, completed-episode PI multiplier updates,
+the 100-reset null-framework-seed contract and the complete fabricated attempt
+graph. Additional integration/tamper checks and the isolated supervisor tests
+are still in progress. New detached auditor/reporter tools are being prepared
+from fabricated artifacts, including the previously corrected null framework-
+seed rule. These implementation results do not admit training: clean committed
+source, final scoped regression gate and frozen analysis tooling remain required.
+
+The runner now has 40 validated fixture cases. Its first 26 passed in 126.13
+seconds, including both actual 3,072-transition/eight-rollout controlled-physics
+endpoints; the final 38 non-long cases passed in 10.01 seconds, with those two
+already-passed training cases explicitly deselected. Black and strict source
+mypy passed. Additional tests reject hidden integrity receipts before treating
+an arm as unavailable and verify no-reset/caller-RNG restoration for initial
+policy loading. Independent reconstruction of the exact fresh seed-101 tensor
+recipe is assigned to the detached auditor; the producer checks immutable
+initial records and cross-arm equality after training closes.
+
+A read-only timing probe constructed both policy identities, captured the current
+dirty source and queried host identity three times, with physical reset patched
+to raise. It took 0.734, 0.451 and 0.439 seconds, reported both 139-field interfaces
+and Torch 1/1 threads, and performed no inference/reset. This supports separating
+full admission checks from rapid process polling; it is neither a clean-source
+gate nor a training-capacity/speedup measurement. The next exact gate covers the
+new runner/supervisor plus their existing simulator/controller/learner/custody
+dependencies. Historical external auditor suites and frontend checks will not be
+repeated merely because these separate research modules were added.
+
+Independent source review confirmed the two-arm budget/seed interface, A-only
+initial availability, reserved integrity exit and reopened checkpoint/PI-state
+joins. It identified a concrete supervision gap before source freeze: the helper
+could hash files for an inventory after a process group failed bounded cleanup,
+when a writer might still be live. The correction retains only a fatal identity/
+unavailable-path record for unresolved closure, and forbids completion rereads or
+file hashing in that branch. A periodic-check edge could also delay a late launch
+acknowledgement; this is fail-closed availability, not unauthorized execution.
+An explicit 30-second supervisor startup bound now permits deferring heavy checks
+until both trainer identities are known/closed without deferring integrity checks
+indefinitely. Five-second acknowledgement and 30-second normal integrity cadence
+remain fixed. The protocol and detached auditor must bind these new admission
+fields; focused fabricated regressions and review confirmation precede launch.
+
+The final supervisor suite passed all 26 tiny subprocess fixtures in 22.99
+seconds, with Black, strict mypy on both owned files, compilation and whitespace
+checks. It covers ordinary peer-preserving failures, reserved fatal exit,
+interruption, abrupt parent/supervisor loss, acknowledgement timeout, command
+substitution, log/storage/source/evidence loss and unresolved cleanup. The reviewer
+confirmed the timing and inventory fixes and found no remaining launch-blocking
+runner/helper mismatch. Supervisor startup is 30 seconds, acknowledgement five,
+normal full-source cadence 30 and process polling 0.1, with a 15-second supervisor
+closure allowance and the existing bounded group termination machinery.
+
+The runner specification now explicitly records the 30-second supervisor startup
+bound; two focused contract/API fixtures passed in 1.09 seconds after that addition.
+All four new source/test files are stable for commit. The protocol and admission
+record bind the new timings, and the detached tool owner is aligning its fabricated
+fixtures. No production root has been claimed. Source freeze is followed by the
+exact-revision scoped gate and prospective tool archive before any training starts.

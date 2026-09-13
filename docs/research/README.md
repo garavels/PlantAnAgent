@@ -12,6 +12,12 @@ fallback behavior.
 
 ## Files
 
+- [`ADAPTIVE_RL_BATCH_004_PROTOCOL.md`](ADAPTIVE_RL_BATCH_004_PROTOCOL.md)
+  fixes the next matched scalar/PI MPC-residual screen: 65,536 transitions per arm,
+  equal initialization and seed streams, unchanged delivery/resource task and
+  seven actors on eight fresh scenarios. Two isolated training supervisors precede
+  sequential evaluation/replay. Implementation and exact-revision admission must
+  complete before launch; this is not a selected or confirmed policy.
 - [`ADAPTIVE_RL_BATCH_003_RESULTS.md`](results/ADAPTIVE_RL_BATCH_003_RESULTS.md)
   closes one MPC-residual policy and all 48 evaluation/replay slots at `4072959`.
   Initial residual and native MPC match physically in all eight scenarios. The

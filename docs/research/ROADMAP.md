@@ -2,6 +2,15 @@
 
 ## Product and research thesis
 
+Next prospective screen, 2026-09-13: [batch 004](ADAPTIVE_RL_BATCH_004_PROTOCOL.md)
+compares scalar and existing PI-Lagrangian PPO around the exact same MPC prior,
+with 65,536 transitions each, matched initial actor/reward tensors and fresh shared
+training streams. The seven-actor/eight-scenario panel retains every incumbent,
+delivery and daily resource outcome. This isolates method at the matched budget;
+cross-batch comparisons cannot isolate a budget effect. Two isolated training
+supervisors require dedicated custody tests before source freeze and launch.
+The original task, registered study and confirmation requirements remain unchanged.
+
 Closed [batch 003](results/ADAPTIVE_RL_BATCH_003_RESULTS.md), 2026-09-13: one
 32,768-transition scalar MPC-residual policy completed its eight-scenario screen.
 The exact zero initialization matched native MPC physically in all eight weeks;
