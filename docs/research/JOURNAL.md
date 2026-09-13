@@ -9410,3 +9410,26 @@ nine compact evidence-reference hashes and whitespace checks. The index SHA256 i
 Independent final review found no material claim inaccuracies. This publication
 changes six documentation/evidence files only; no runtime test rerun or new
 training admission is claimed.
+
+## 2026-09-14 — Powered batch-007 replication frozen before implementation
+
+The user explicitly requested resumption after restoring power. Read-only macOS
+inspection reports AC and 56% battery, charging; the worktree is clean at
+`97b227a`. The [new protocol](ADAPTIVE_RL_BATCH_007_PROTOCOL.md) preserves every
+scientific setting, seed range, comparator, budget and integrity deadline from
+batch 006. Fresh models and a new exclusive internal root are required.
+
+The implementation scope is a runner-only AC/20% reserve requirement with a
+two-second subprocess timeout, admission sampling, periodic training checks and
+existing stage-boundary checks. Dynamic charge samples do not enter immutable
+identity. Failures retain bounded power evidence and trigger existing cancellation.
+Evaluation/replay retain ten-minute bounds and entry/exit checks; continuous
+30-second sampling inside those children is not claimed. General monitor timing
+instrumentation is deferred because no specific monitor defect was established.
+The generic helper/schema and learner/plant/frontend behavior remain unchanged.
+
+Two agents are reading the owned runner and detached tool joins while this
+protocol is frozen. Additional delegation attempts hit the agent-thread limit;
+the root owns admission/launch/archive work. No implementation, production reset
+or batch-007 execution precedes this protocol commit. Scoped tests, source review,
+clean-revision gate and prospective tool checks remain required before launch.
