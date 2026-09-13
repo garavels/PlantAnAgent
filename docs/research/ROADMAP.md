@@ -2,6 +2,13 @@
 
 ## Product and research thesis
 
+Next prospective attempt: [batch 005](ADAPTIVE_RL_BATCH_005_PROTOCOL.md) replicates
+the aborted matched scalar/PI design with repaired forecast/supervision interfaces,
+fresh models and an exclusive new root. The training streams are explicitly reused
+development material, including the failed dusk issue; the development panel was
+never opened. Learner budget/settings, delivery and resource task remain fixed.
+Implementation review, exact-source gate and prospective tools precede launch.
+
 Aborted [batch 004](results/ADAPTIVE_RL_BATCH_004_RESULTS.md), 2026-09-13: the
 matched scalar/PI screen passed its 698-test scoped source gate, then stopped
 before the first PPO update. Scalar's prior rejected a valid minute-sampled dusk

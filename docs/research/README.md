@@ -12,6 +12,11 @@ fallback behavior.
 
 ## Files
 
+- [`ADAPTIVE_RL_BATCH_005_PROTOCOL.md`](ADAPTIVE_RL_BATCH_005_PROTOCOL.md)
+  freezes a fresh repair replication of batch 004's matched scalar/PI design.
+  It explicitly reuses development training seeds, preserves the unopened panel
+  and all learner/task settings, and requires sampled-forecast and schema-v2
+  supervision gates before a new exclusive root may launch.
 - [`ADAPTIVE_RL_BATCH_004_RESULTS.md`](results/ADAPTIVE_RL_BATCH_004_RESULTS.md)
   records the aborted matched scalar/PI attempt at `4f908fc`: scalar's MPC prior
   rejected a valid dusk forecast before its first optimizer update; PI was cancelled.

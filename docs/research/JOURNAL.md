@@ -9079,3 +9079,32 @@ No tests or experiments were rerun merely for publication. Delivery remains
 6,720 kg/168 hours/28 obligations. High incumbent fulfillment makes preserved-
 service cost, wear and recovery improvement the objective; no policy qualifies
 for confirmation and no operational-benefit claim follows from this abort.
+
+## 2026-09-13 — Batch 005 repair replication frozen
+
+The [new prospective protocol](ADAPTIVE_RL_BATCH_005_PROTOCOL.md) preserves the
+two-arm 65,536-transition/seed-101 comparison, exact learner settings and task.
+Use fresh models and a new exclusively claimed batch-005 root. Reuse the planned
+9,630,000–9,630,099 training streams explicitly as development material, including
+the first eight reset seeds already consumed by batch 004. This includes the
+failed forecast rather than avoiding it through seed replacement. The planned
+9,700,300–9,700,307 development panel was never opened; it remains developmental,
+not confirmation. No old model, optimizer or allocator state is resumed.
+
+The permitted differences are the versioned sampled OperatingMPC projection,
+schema-v2 supervision and their source/analysis joins. Advance the existing
+matched runner's default root/schema with an explicit prior-source/report and
+seed-status record, retaining batch 004's exact implementation in Git at `4f908fc`.
+This avoids duplicating the learner/runner or introducing a generic refactor.
+The launch specification must bind the helper's executable monitoring settings.
+Both priors and the OperatingMPC comparator receive the same repair; initial
+physical parity must be checked again. Registered M24/E-beta remain unchanged,
+and every failed comparator stays visible.
+
+Source-gate and launch helpers were prepared under new batch-005 filenames without
+executing either. The new exact-source gate covers the changed forecast, operating
+controller, residual/checkpoint, supervision and runner contracts, their existing
+model/replay dependencies and demo backend integration. Unrelated learner/front-
+end suites are not repeated merely to inflate the count. Independent review,
+the tiny real-volume fixture, clean-source gate and prospective analysis tools
+remain required before production training. No batch-005 reset has occurred.
