@@ -12,6 +12,10 @@ fallback behavior.
 
 ## Files
 
+- [`ADAPTIVE_RL_BATCH_007_PROTOCOL.md`](ADAPTIVE_RL_BATCH_007_PROTOCOL.md)
+  freezes the user-requested fresh scalar/PI replication after power restoration.
+  It adds runner-only AC/20% reserve checks during training and at stage boundaries,
+  with durable refusal evidence, unchanged scientific settings and no resumed state.
 - [`ADAPTIVE_RL_BATCH_006_RESULTS.md`](results/ADAPTIVE_RL_BATCH_006_RESULTS.md)
   records a closed abort after host low-battery hibernation. Both arms recorded
   three completed rollouts (24,576 transitions, 37.5%); neither saved a final

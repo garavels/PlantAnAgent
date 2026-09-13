@@ -9433,3 +9433,53 @@ protocol is frozen. Additional delegation attempts hit the agent-thread limit;
 the root owns admission/launch/archive work. No implementation, production reset
 or batch-007 execution precedes this protocol commit. Scoped tests, source review,
 clean-revision gate and prospective tool checks remain required before launch.
+
+The bounded implementation is complete in the matched runner and its test module.
+It records immutable power policy separately from accepted admission samples,
+checks AC/20% reserve before root claim and through existing integrity callbacks,
+and permanently refuses further stages after a power-failure directory exists.
+Refusals retain unique bounded evidence; publication failure still aborts. Both
+query streams and UTC/monotonic timing are retained, including successful stderr.
+The query has a two-second subprocess timeout and rejects a late return as well.
+Initial sample validation rejects missing/invalid admission without comparing its
+charge level against later observations. No generic supervision helper changed.
+
+The first formatting invocation used the virtualenv's absent Black module and
+failed with `No module named black`. The installed `/opt/anaconda3/bin/black`
+resolved that environment issue. The first source snapshot passed 106 tests in
+129.04 seconds. Review then requested retaining successful stderr and checking
+the recorded admission sample during execution; a focused 73-case check passed
+in 2.06 seconds. The final owned suite passed **121 tests in 133.95 seconds**,
+with strict source MyPy, Black, compilation, CLI and whitespace checks passing.
+The earlier environment failure and superseded checks remain in the preparation
+receipt; no check is relabelled as a production training result.
+
+Independent final review found no admission/custody blocker in the runner,
+launcher, gate, pinning or freezer. A separate AST/source inventory verified
+31 unchanged inherited function bodies and 16 unchanged scientific/budget
+declarations against `c59ba89`; only specification, require_plan and run changed
+among inherited functions, with four power-specific functions added. The proof
+SHA256 is `ef463cad1ac9351ac9cb5bc84a0ab43f8f596b88c8ae83e3e750fed3e9daa758`.
+This is a bounded source-change check, not a behavior-equivalence theorem.
+
+Detached tools independently check the literal power policy and accepted gate
+start/end and plan admission observations before reading outcomes. Raw pmset
+observations are reparsed; any power-failure artifact excludes normal admission.
+Targeted checks passed 96 tests in 44.10 seconds plus an updated actual-producer
+capture fixture; strict MyPy passed. Their full fixture/static gate is running
+against unchanged final source. No production reset or learner outcome was read.
+
+The archive helper's normal-closure checks now join power provenance across the
+auditor, gate, plan, launch and frozen tool manifest. Its final gate passed 58
+tests in 0.71 seconds plus Black, strict MyPy, compilation and CLI checks; receipt
+SHA256 is `df01c98521f3fa62036b25037a0c749752ef08d759d7eabf9e3140e0e5f23e37`.
+A separate read-only actual-volume probe passed for internal APFS and currently
+attached Lexar, SHA256
+`732f9642dc044d5403d914b9c8a13c8405140c9c6c48e27308933ea80347b0e0`.
+It neither claimed a destination nor copied artifacts. Current destination
+absence would not block internal training; the archive helper always rechecks
+identity before any later copy. Root helper formatting/compilation also passed.
+
+The exact clean-revision source gate, completed prospective tool gate and frozen
+internal archive remain required before launch. No new run is active at this
+entry. Power checks do not resume batch 006 or justify changed learner settings.

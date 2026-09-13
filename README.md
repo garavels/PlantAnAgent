@@ -704,8 +704,9 @@ used internal active storage and recorded 24,576 of 65,536 transitions per arm
 (37.5%) before low-battery hibernation interrupted the host. A verification-age
 failure immediately after wake cancelled both arms; closure records and partial
 evidence survived, but neither a final trained policy nor evaluation exists.
-No new learning result follows. Continuous power and interruption handling need
-to be addressed before a fresh, prospectively admitted attempt. The beta has
+No new learning result follows. The fresh [batch-007 protocol](docs/research/ADAPTIVE_RL_BATCH_007_PROTOCOL.md)
+preserves the scientific design and adds power checks during training, with an
+exact-source gate and prospective tool checks before launch. The beta has
 executed earlier exploratory PPO evidence. The latest completed
 [MPC-residual screen](docs/research/results/ADAPTIVE_RL_BATCH_003_RESULTS.md)
 trained one policy for 32,768 transitions and retained all eight development scenarios.

@@ -1,4 +1,4 @@
-"""Batch004 fixtures only; controlled solves and physical seeds 9_992_000..099."""
+"""Batch007 runner fixtures; controlled solves and physical seeds 9_992_000..099."""
 
 from __future__ import annotations
 
@@ -132,22 +132,28 @@ def test_repair_replication_is_new_root_with_explicit_reused_seed_provenance():
     assert batch.ACTIVE_BASE == Path(
         "/Users/filippogombac/Developer/PlantAnAgentResearch"
     )
-    assert batch.ROOT == batch.ACTIVE_BASE / "adaptive-rl-batch-006"
-    assert batch.SCHEMA == "plant-adaptive-rl-mpc-constraint-batch-006"
+    assert batch.ROOT == batch.ACTIVE_BASE / "adaptive-rl-batch-007"
+    assert batch.SCHEMA == "plant-adaptive-rl-mpc-constraint-batch-007"
     repair = spec["repair_replication"]
-    assert repair["previous_batch"] == "adaptive-rl-batch-005"
+    assert repair["previous_batch"] == "adaptive-rl-batch-006"
     assert (
-        repair["previous_source_commit"] == "776a98fa01b0cad5b85f0e532bbc6a3c660dbcd6"
+        repair["previous_source_commit"] == "c59ba89aa301b863e50be7246fe5003c6fb731dc"
     )
-    assert repair["previous_report_sha256"] is None
+    assert repair["previous_report_sha256"] == (
+        "7ec0ca88e83f5e98743ee396251941e3f61973c8f5610e6f4878bd75c886cbcf"
+    )
     assert repair["previous_interruption_inventory_sha256"] == (
-        "a768e110eb1b0c7b4e6cf4d8e449adef33bca3b73aa8d314344c47fec1bf434e"
+        "e19ff6d6f37c452af00e43125a0ab7be109e5218ad988c2fd1c0a40e1f9e66fe"
     )
     assert repair["previous_os_evidence_sha256"] == (
-        "7d4d97084054c116d6a8a88f2baae0a03a71023f61f601246a0cd36000281a5d"
+        "51b02b6fd7823534cf20053afe717bab1350e6e0733e100d80aac9deeea1365a"
     )
-    assert "exact final progress and exits unavailable" in repair["previous_status"]
+    assert (
+        "low-battery hibernation followed by closed abort" in repair["previous_status"]
+    )
     assert "first 44 reset records per arm" in repair["training_seed_status"]
+    assert "first 40 reset records" in repair["training_seed_status"]
+    assert "24,576 completed-rollout transitions" in repair["training_seed_status"]
     assert "Lexar archive only after closure" in repair["storage_change"]
     assert "reused development" in repair["training_seed_status"]
     assert "never opened" in repair["development_seed_status"]
@@ -365,6 +371,22 @@ def test_one_hundred_reset_stream_without_physics():
         vector.close()
 
 
+def power_output(percent=56, source="AC Power", state="charging", present="true"):
+    return (
+        f"Now drawing from '{source}'\n"
+        f" -InternalBattery-0 (id=35127395)\t{percent}%; {state}; "
+        f"1:11 remaining present: {present}\n"
+    ).encode()
+
+
+def power_result(stdout=None, stderr=b""):
+    return SimpleNamespace(
+        stdout=power_output() if stdout is None else stdout,
+        stderr=stderr,
+        returncode=0,
+    )
+
+
 def fake_storage(tmp_path, monkeypatch):
     root = tmp_path / "batch"
     gate = tmp_path / "gate.json"
@@ -381,6 +403,7 @@ def fake_storage(tmp_path, monkeypatch):
     }
 
     real_check_output = batch.subprocess.check_output
+    real_run = batch.subprocess.run
 
     def diskutil(command, **kwargs):
         if command[0] != "/usr/sbin/diskutil":
@@ -389,7 +412,19 @@ def fake_storage(tmp_path, monkeypatch):
         assert kwargs == {"stderr": batch.subprocess.PIPE, "timeout": 10}
         return plistlib.dumps(volume)
 
+    def pmset(command, **kwargs):
+        if command != ["/usr/bin/pmset", "-g", "batt"]:
+            return real_run(command, **kwargs)
+        assert kwargs == {
+            "stdout": batch.subprocess.PIPE,
+            "stderr": batch.subprocess.PIPE,
+            "timeout": 2.0,
+            "check": True,
+        }
+        return power_result()
+
     monkeypatch.setattr(batch.subprocess, "check_output", diskutil)
+    monkeypatch.setattr(batch.subprocess, "run", pmset)
     monkeypatch.setattr(
         batch.shutil, "disk_usage", lambda *a: SimpleNamespace(free=20 * 1024**3)
     )
@@ -409,6 +444,7 @@ def fake_campaign(tmp_path, monkeypatch):
             "passed": True,
             "source_commit": runtime.git_head,
             "storage": batch.capture_storage_identity(gate),
+            "power_policy": batch.power_policy(),
         },
     )
     return root, gate
@@ -1066,7 +1102,10 @@ def fake_stored_plan(tmp_path, monkeypatch):
 
     root, gate, _ = fake_storage(tmp_path, monkeypatch)
     storage = batch.capture_storage_identity(gate)
-    publish_json(gate, {"passed": True, "storage": storage})
+    publish_json(
+        gate,
+        {"passed": True, "storage": storage, "power_policy": batch.power_policy()},
+    )
     root.mkdir()
     plan = {
         "specification": {"fixture": "fixed science"},
@@ -1074,6 +1113,7 @@ def fake_stored_plan(tmp_path, monkeypatch):
         "host": {"fixture": "host"},
         "gate": batch.file_record(gate),
         "storage": storage,
+        "power_admission": batch.capture_power_sample(),
     }
     publish_json(root / "plan.json", plan)
     monkeypatch.setattr(batch, "specification", lambda root: plan["specification"])
@@ -1223,3 +1263,315 @@ def test_internal_storage_races_during_os_admission_reject_before_claim(
         assert list(root.iterdir()) == [root / "preserved"]
     else:
         assert not root.exists()
+
+
+def test_power_policy_is_literal_and_dynamic_samples_do_not_change_identity(
+    monkeypatch,
+):
+    expected = {
+        "schema": "plant-adaptive-ac-power-policy-v1",
+        "command": ["/usr/bin/pmset", "-g", "batt"],
+        "required_source": "AC Power",
+        "minimum_battery_percent": 20,
+        "accepted_battery_states": ["charging", "charged", "not charging"],
+        "command_timeout_seconds": 2.0,
+        "maximum_observation_bytes": 8192,
+        "training_check_interval_seconds": 30.0,
+        "sampling": [
+            "before_root_claim",
+            "training_integrity_callbacks",
+            "stage_entry_and_exit",
+        ],
+        "failure_action": "abort-no-retry",
+    }
+    assert batch.power_policy() == expected
+    specification = batch.specification(batch.ROOT)
+    assert specification["power_policy"] == expected
+    samples = []
+    for percent in (20, 57, 100):
+        monkeypatch.setattr(
+            batch.subprocess,
+            "run",
+            lambda *a, **kw: power_result(power_output(percent)),
+        )
+        samples.append(batch.capture_power_sample())
+        assert batch.specification(batch.ROOT) == specification
+    assert [sample["battery_percent"] for sample in samples] == [20, 57, 100]
+    assert all(sample["status"] == "accepted" for sample in samples)
+    expected["command"].clear()
+    assert batch.power_policy()["command"] == ["/usr/bin/pmset", "-g", "batt"]
+
+
+@pytest.mark.parametrize("percent", [20, 56, 100])
+@pytest.mark.parametrize("state", ["charging", "charged", "not charging"])
+def test_power_ac_boundary_acceptance_has_bounded_query_timing(
+    tmp_path, monkeypatch, percent, state
+):
+    def query(command, **kwargs):
+        assert command == ["/usr/bin/pmset", "-g", "batt"]
+        assert kwargs == {
+            "stdout": batch.subprocess.PIPE,
+            "stderr": batch.subprocess.PIPE,
+            "timeout": 2.0,
+            "check": True,
+        }
+        return power_result(power_output(percent, state=state), stderr=b"status detail")
+
+    monkeypatch.setattr(batch.subprocess, "run", query)
+    failure_directory = tmp_path / "power-failures"
+    sample = batch.require_power(failure_directory=failure_directory)
+    assert sample["schema"] == "plant-adaptive-power-sample-v1"
+    assert sample["status"] == "accepted"
+    assert sample["code"] is sample["error"] is None
+    assert sample["command_exit_code"] == 0
+    assert sample["source"] == "AC Power"
+    assert sample["battery_present"] is True
+    assert sample["battery_percent"] == percent
+    assert sample["battery_state"] == state
+    assert sample["output_truncated"] is False
+    assert sample["stdout"].encode() == power_output(percent, state=state)
+    assert sample["stderr"] == "status detail"
+    assert sample["pid"] == os.getpid()
+    assert sample["started_at"] and sample["closed_at"]
+    assert (
+        0
+        <= sample["elapsed_ns"]
+        == sample["closed_monotonic_ns"] - sample["started_monotonic_ns"]
+        <= 2_000_000_000
+    )
+    assert not failure_directory.exists()
+
+
+@pytest.mark.parametrize(
+    "raw,code",
+    [
+        (power_output(source="Battery Power"), "power_source_not_ac"),
+        (power_output(source="UPS Power"), "power_source_not_ac"),
+        (power_output(percent=19), "power_reserve_low"),
+        (power_output(percent=0), "power_reserve_low"),
+        (power_output(state="discharging"), "power_battery_state_rejected"),
+        (power_output(state="unknown"), "power_battery_state_rejected"),
+        (power_output(present="false"), "power_battery_absent"),
+        (power_output(percent=101), "power_observation_malformed"),
+        (power_output(percent=-1), "power_observation_malformed"),
+        (power_output(percent="20.0"), "power_observation_malformed"),
+        (power_output(percent="NaN"), "power_observation_malformed"),
+        (b"Now drawing from 'AC Power'\n", "power_observation_malformed"),
+        (power_output() + power_output(), "power_observation_malformed"),
+        (power_output().replace(b"true", b"unknown"), "power_observation_malformed"),
+        (power_output().replace(b"charging", b"\xff"), "power_observation_malformed"),
+        (b"x" * 8193, "power_observation_oversized"),
+    ],
+)
+def test_power_observation_refusals_keep_bounded_immutable_failure(
+    tmp_path, monkeypatch, raw, code
+):
+    monkeypatch.setattr(batch.subprocess, "run", lambda *a, **kw: power_result(raw))
+    directory = tmp_path / "power-failures"
+    with pytest.raises(batch.PowerAdmissionError, match=code) as error:
+        batch.require_power(failure_directory=directory)
+    records = list(directory.iterdir())
+    assert len(records) == 1
+    assert str(records[0]) in str(error.value)
+    sample = json.loads(records[0].read_text())
+    assert sample["status"] == "refused" and sample["code"] == code
+    assert len((sample["stdout"] + sample["stderr"]).encode()) <= 8192
+    before = records[0].read_bytes()
+    monkeypatch.setattr(
+        batch.subprocess,
+        "run",
+        lambda *a, **kw: pytest.fail("resampling after consumed power refusal"),
+    )
+    with pytest.raises(batch.PowerAdmissionError, match="power_previous_refusal"):
+        batch.require_power(failure_directory=directory)
+    assert records[0].read_bytes() == before
+
+
+@pytest.mark.parametrize("kind", ["timeout", "nonzero", "unavailable", "late_success"])
+def test_power_query_failures_are_identifiable_without_retry(
+    tmp_path, monkeypatch, kind
+):
+    calls = []
+
+    def query(command, **kwargs):
+        calls.append(command)
+        if kind == "timeout":
+            raise batch.subprocess.TimeoutExpired(
+                command, 2, output=b"partial\n", stderr=b"bounded failure"
+            )
+        if kind == "nonzero":
+            raise batch.subprocess.CalledProcessError(
+                1, command, output=b"x" * 9000, stderr=b"failure"
+            )
+        if kind == "unavailable":
+            raise FileNotFoundError("injected pmset absence")
+        return power_result(power_output())
+
+    monkeypatch.setattr(batch.subprocess, "run", query)
+    ticks = iter((10, 2_000_000_011 if kind == "late_success" else 25))
+    monkeypatch.setattr(batch.time, "monotonic_ns", lambda: next(ticks))
+    codes = {
+        "timeout": "power_query_timeout",
+        "nonzero": "power_query_failed",
+        "unavailable": "power_query_unavailable",
+        "late_success": "power_query_timeout",
+    }
+    with pytest.raises(batch.PowerAdmissionError, match=codes[kind]):
+        batch.require_power(failure_directory=tmp_path, admission=True)
+    assert calls == [["/usr/bin/pmset", "-g", "batt"]]
+    sample = json.loads(next(tmp_path.iterdir()).read_text())
+    assert sample["code"] == codes[kind]
+    assert sample["elapsed_ns"] == (2_000_000_001 if kind == "late_success" else 15)
+    assert (
+        sample["command_exit_code"]
+        == {
+            "timeout": None,
+            "nonzero": 1,
+            "unavailable": None,
+            "late_success": 0,
+        }[kind]
+    )
+    assert len((sample["stdout"] + sample["stderr"]).encode()) <= 8192
+
+
+def test_preclaim_power_refusal_preserves_evidence_and_never_claims_root(
+    tmp_path, monkeypatch
+):
+    root, gate = fake_campaign(tmp_path, monkeypatch)
+    original = batch.subprocess.run
+
+    def query(command, **kwargs):
+        if command == list(batch.POWER_COMMAND):
+            assert not root.exists()
+            return power_result(
+                power_output(source="Battery Power", state="discharging")
+            )
+        return original(command, **kwargs)
+
+    monkeypatch.setattr(batch.subprocess, "run", query)
+    monkeypatch.setattr(
+        batch, "training_wave", lambda: pytest.fail("training launched")
+    )
+    with pytest.raises(batch.PowerAdmissionError, match="power_source_not_ac"):
+        batch.run(gate, authorized=True)
+    assert not root.exists()
+    evidence = list(tmp_path.glob(f"{root.name}-power-admission-*.json"))
+    assert len(evidence) == 1
+    assert json.loads(evidence[0].read_text())["source"] == "Battery Power"
+
+
+def test_periodic_power_failure_is_durable_and_blocks_recovered_stage(
+    tmp_path, monkeypatch
+):
+    root, _, plan = fake_stored_plan(tmp_path, monkeypatch)
+    assert batch.require_plan() == plan
+    monkeypatch.setattr(
+        batch.subprocess, "run", lambda *a, **kw: power_result(power_output(percent=19))
+    )
+    with pytest.raises(batch.PowerAdmissionError, match="power_reserve_low"):
+        batch.require_plan()
+    records = list((root / "power-failures").iterdir())
+    assert len(records) == 1
+    assert json.loads(records[0].read_text())["battery_percent"] == 19
+    monkeypatch.setattr(
+        batch.subprocess,
+        "run",
+        lambda *a, **kw: power_result(power_output(percent=100)),
+    )
+    assert (
+        batch.execute_child(
+            lambda: pytest.fail("stage ran after power refusal"), artifact_phase=False
+        )
+        == batch.INTEGRITY_EXIT
+    )
+
+
+@pytest.mark.parametrize("join", ["preclaim", "periodic"])
+def test_power_policy_gate_join_rejects_changed_frozen_threshold(
+    tmp_path, monkeypatch, join
+):
+    if join == "preclaim":
+        root, gate = fake_campaign(tmp_path, monkeypatch)
+    else:
+        root, gate, plan = fake_stored_plan(tmp_path, monkeypatch)
+    value = json.loads(gate.read_text())
+    value["power_policy"]["minimum_battery_percent"] = 1
+    gate.write_text(json.dumps(value))
+    if join == "periodic":
+        plan["gate"] = batch.file_record(gate)
+        (root / "plan.json").write_text(json.dumps(plan))
+    with pytest.raises(ValueError, match="power polic"):
+        if join == "preclaim":
+            batch.run(gate, authorized=True)
+        else:
+            batch.require_plan()
+    if join == "preclaim":
+        assert not root.exists()
+
+
+def test_power_evidence_publication_failure_still_aborts(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        batch.subprocess, "run", lambda *a, **kw: power_result(power_output(percent=19))
+    )
+    monkeypatch.setattr(
+        batch,
+        "publish_json",
+        lambda *a: (_ for _ in ()).throw(OSError("injected write refusal")),
+    )
+    with pytest.raises(
+        batch.PowerAdmissionError,
+        match="power_reserve_low; power evidence publication failed: OSError",
+    ):
+        batch.require_power(failure_directory=tmp_path, admission=True)
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        (None, None),
+        ("status", "refused"),
+        ("source", "Battery Power"),
+        ("battery_percent", 19),
+        ("battery_percent", True),
+        ("battery_percent", 101),
+        ("battery_present", False),
+        ("command_exit_code", False),
+        ("elapsed_ns", 2_000_000_001),
+        ("elapsed_ns", -1),
+        ("closed_monotonic_ns", 0),
+        ("output_truncated", True),
+        ("stdout", "x" * 8193),
+        ("started_at", None),
+    ],
+)
+def test_periodic_plan_rejects_missing_or_invalid_initial_power_sample(
+    tmp_path, monkeypatch, field, value
+):
+    root, _, plan = fake_stored_plan(tmp_path, monkeypatch)
+    if field is None:
+        plan.pop("power_admission")
+    else:
+        plan["power_admission"][field] = value
+    (root / "plan.json").write_text(json.dumps(plan))
+    monkeypatch.setattr(
+        batch.subprocess,
+        "run",
+        lambda *a, **kw: pytest.fail("sampled current power before retained admission"),
+    )
+    with pytest.raises(ValueError, match="initial power admission"):
+        batch.require_plan()
+
+
+def test_periodic_plan_allows_accepted_charge_change_without_new_evidence(
+    tmp_path, monkeypatch
+):
+    root, _, plan = fake_stored_plan(tmp_path, monkeypatch)
+    assert plan["power_admission"]["battery_percent"] == 56
+    monkeypatch.setattr(
+        batch.subprocess,
+        "run",
+        lambda *a, **kw: power_result(power_output(percent=20)),
+    )
+    assert batch.require_plan() == plan
+    assert not (root / "power-failures").exists()
+    assert list(root.iterdir()) == [root / "plan.json"]

@@ -1,4 +1,4 @@
-"""Batch 006 matched scalar/PI MPC residual development on internal storage."""
+"""Batch 007 matched scalar/PI MPC residual development with power admission."""
 
 from __future__ import annotations
 
@@ -12,10 +12,12 @@ import math
 import os
 from pathlib import Path
 import plistlib
+import re
 import shutil
 import stat
 import subprocess
 import sys
+import time
 from typing import Any, Callable, cast
 
 from .. import beta_spaces
@@ -53,9 +55,15 @@ from .runtime_provenance import (
 
 MODULE = "plant_backend.rl.v2.training.research_mpc_constraint_batch"
 ACTIVE_BASE = Path("/Users/filippogombac/Developer/PlantAnAgentResearch")
-ROOT = ACTIVE_BASE / "adaptive-rl-batch-006"
-SCHEMA = "plant-adaptive-rl-mpc-constraint-batch-006"
+ROOT = ACTIVE_BASE / "adaptive-rl-batch-007"
+SCHEMA = "plant-adaptive-rl-mpc-constraint-batch-007"
 STORAGE_SCHEMA = "plant-adaptive-internal-storage-v1"
+POWER_SAMPLE_SCHEMA = "plant-adaptive-power-sample-v1"
+POWER_COMMAND = ("/usr/bin/pmset", "-g", "batt")
+POWER_TIMEOUT = 2.0
+POWER_OUTPUT_LIMIT = 8192
+MINIMUM_BATTERY_PERCENT = 20
+AC_BATTERY_STATES = ("charging", "charged", "not charging")
 _INTERNAL_VOLUME_UUID = "86093AA6-4234-4173-AD1C-F1762C98870E"
 _INTERNAL_MOUNT = Path("/System/Volumes/Data")
 TOTAL_STEPS = 65_536
@@ -111,16 +119,17 @@ def specification(root: Path) -> dict[str, Any]:
         "schema": SCHEMA,
         "root": str(root),
         "repair_replication": {
-            "previous_batch": "adaptive-rl-batch-005",
-            "previous_source_commit": "776a98fa01b0cad5b85f0e532bbc6a3c660dbcd6",
-            "previous_report_sha256": None,
-            "previous_interruption_inventory_sha256": "a768e110eb1b0c7b4e6cf4d8e449adef33bca3b73aa8d314344c47fec1bf434e",
-            "previous_os_evidence_sha256": "7d4d97084054c116d6a8a88f2baae0a03a71023f61f601246a0cd36000281a5d",
-            "previous_status": "interrupted after active USB volume loss; no closure report or evaluation; exact final progress and exits unavailable",
-            "training_seed_status": "reused development stream; batch 004 opened eight reset seeds; batch 005 retained the first 44 reset records per arm",
-            "development_seed_status": "planned for batches 004 and 005 but never opened; adaptive development only",
+            "previous_batch": "adaptive-rl-batch-006",
+            "previous_source_commit": "c59ba89aa301b863e50be7246fe5003c6fb731dc",
+            "previous_report_sha256": "7ec0ca88e83f5e98743ee396251941e3f61973c8f5610e6f4878bd75c886cbcf",
+            "previous_interruption_inventory_sha256": "e19ff6d6f37c452af00e43125a0ab7be109e5218ad988c2fd1c0a40e1f9e66fe",
+            "previous_os_evidence_sha256": "51b02b6fd7823534cf20053afe717bab1350e6e0733e100d80aac9deeea1365a",
+            "previous_status": "low-battery hibernation followed by closed abort; no final trained policies or evaluation; exact subsequent partial-rollout progress unavailable",
+            "training_seed_status": "reused development stream; batch 004 opened eight reset seeds; batch 005 retained the first 44 reset records per arm; batch 006 retained the first 40 reset records and 24,576 completed-rollout transitions per arm",
+            "development_seed_status": "planned for batches 004 through 006 but never opened; adaptive development only",
             "initialization": "fresh matched models and optimizer/allocator state; no resume",
-            "storage_change": "persistent internal active artifacts and admission evidence; Lexar archive only after closure; retain internal originals",
+            "storage_change": "unchanged persistent internal active artifacts and admission evidence; Lexar archive only after closure; retain internal originals",
+            "power_change": "AC and at least 20 percent reserve before root claim, at training integrity callbacks and stage entry/exit; no retry or resume",
             "operating_solar_projection": "issued-mean-physics-left-samples-v1",
             "task_reward_learner_authority_changes": False,
             "registered_projection_changes": False,
@@ -160,6 +169,7 @@ def specification(root: Path) -> dict[str, Any]:
         "stream_limit_bytes": LOG_LIMIT,
         "archive_limit_bytes": ARCHIVE_LIMIT,
         "minimum_free_bytes": MINIMUM_FREE,
+        "power_policy": power_policy(),
         "registered_evaluation_eligible": False,
         "authorization": "User granted full research autonomy to diagnose learning failure and iterate experiments toward verified operational benefit.",
     }
@@ -730,6 +740,206 @@ def load_initial(
         caller_rng.restore()
 
 
+def power_policy() -> dict[str, Any]:
+    """Return only the frozen policy; observations never enter its identity."""
+    return {
+        "schema": "plant-adaptive-ac-power-policy-v1",
+        "command": list(POWER_COMMAND),
+        "required_source": "AC Power",
+        "minimum_battery_percent": MINIMUM_BATTERY_PERCENT,
+        "accepted_battery_states": list(AC_BATTERY_STATES),
+        "command_timeout_seconds": POWER_TIMEOUT,
+        "maximum_observation_bytes": POWER_OUTPUT_LIMIT,
+        "training_check_interval_seconds": INTEGRITY_CHECK_INTERVAL,
+        "sampling": [
+            "before_root_claim",
+            "training_integrity_callbacks",
+            "stage_entry_and_exit",
+        ],
+        "failure_action": "abort-no-retry",
+    }
+
+
+class PowerAdmissionError(ValueError):
+    """An identifiable refusal whose bounded observation remains on disk."""
+
+
+def capture_power_sample() -> dict[str, Any]:
+    """Sample macOS power once, retaining bounded query and timing evidence."""
+    sample: dict[str, Any] = {
+        "schema": POWER_SAMPLE_SCHEMA,
+        "command": list(POWER_COMMAND),
+        "pid": os.getpid(),
+        "started_at": now(),
+        "started_monotonic_ns": time.monotonic_ns(),
+        "status": "refused",
+        "code": None,
+        "source": None,
+        "battery_percent": None,
+        "battery_state": None,
+        "battery_present": None,
+        "command_exit_code": None,
+        "stdout": "",
+        "stderr": "",
+        "output_truncated": False,
+        "error": None,
+    }
+    stdout, stderr = b"", b""
+    try:
+        result = subprocess.run(
+            list(POWER_COMMAND),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=POWER_TIMEOUT,
+            check=True,
+        )
+        stdout, stderr = result.stdout, result.stderr
+        sample["command_exit_code"] = result.returncode
+    except subprocess.TimeoutExpired as exc:
+        sample["code"] = "power_query_timeout"
+        stdout, stderr = exc.output or b"", exc.stderr or b""
+        sample["error"] = {"type": type(exc).__name__, "message": str(exc)[:2048]}
+    except subprocess.CalledProcessError as exc:
+        sample["code"] = "power_query_failed"
+        sample["command_exit_code"] = exc.returncode
+        stdout, stderr = exc.output or b"", exc.stderr or b""
+        sample["error"] = {"type": type(exc).__name__, "message": str(exc)[:2048]}
+    except OSError as exc:
+        sample["code"] = "power_query_unavailable"
+        sample["error"] = {"type": type(exc).__name__, "message": str(exc)[:2048]}
+    finally:
+        sample["closed_monotonic_ns"] = time.monotonic_ns()
+        sample["closed_at"] = now()
+        sample["elapsed_ns"] = (
+            sample["closed_monotonic_ns"] - sample["started_monotonic_ns"]
+        )
+    sample["output_truncated"] = len(stdout) + len(stderr) > POWER_OUTPUT_LIMIT
+    bounded_stdout = stdout[:POWER_OUTPUT_LIMIT]
+    bounded_stderr = stderr[: POWER_OUTPUT_LIMIT - len(bounded_stdout)]
+    sample["stdout"] = (
+        bounded_stdout.decode("utf-8", errors="replace")
+        .encode("utf-8")[:POWER_OUTPUT_LIMIT]
+        .decode("utf-8", errors="ignore")
+    )
+    remaining = POWER_OUTPUT_LIMIT - len(sample["stdout"].encode("utf-8"))
+    sample["stderr"] = (
+        bounded_stderr.decode("utf-8", errors="replace")
+        .encode("utf-8")[:remaining]
+        .decode("utf-8", errors="ignore")
+    )
+    if sample["code"] is not None:
+        return sample
+    if sample["elapsed_ns"] > int(POWER_TIMEOUT * 1e9):
+        sample["code"] = "power_query_timeout"
+        return sample
+    if sample["output_truncated"]:
+        sample["code"] = "power_observation_oversized"
+        return sample
+    try:
+        lines = stdout.decode("utf-8").splitlines()
+    except UnicodeDecodeError:
+        sample["code"] = "power_observation_malformed"
+        return sample
+    if len(lines) != 2:
+        sample["code"] = "power_observation_malformed"
+        return sample
+    source = re.fullmatch(r"Now drawing from '([^']+)'", lines[0])
+    battery = re.fullmatch(
+        r"\s*-InternalBattery-\d+ \(id=\d+\)\s+(\d{1,3})%; "
+        r"([a-z ]+); (?:\d+:\d{2} remaining|\(no estimate\)) present: (true|false)",
+        lines[1],
+    )
+    if source is None or battery is None:
+        sample["code"] = "power_observation_malformed"
+        return sample
+    sample.update(
+        source=source.group(1),
+        battery_percent=int(battery.group(1)),
+        battery_state=battery.group(2),
+        battery_present=battery.group(3) == "true",
+    )
+    if not 0 <= sample["battery_percent"] <= 100:
+        sample["code"] = "power_observation_malformed"
+    elif not sample["battery_present"]:
+        sample["code"] = "power_battery_absent"
+    elif sample["source"] != "AC Power":
+        sample["code"] = "power_source_not_ac"
+    elif sample["battery_state"] not in AC_BATTERY_STATES:
+        sample["code"] = "power_battery_state_rejected"
+    elif sample["battery_percent"] < MINIMUM_BATTERY_PERCENT:
+        sample["code"] = "power_reserve_low"
+    else:
+        sample["status"] = "accepted"
+    return sample
+
+
+def validate_power_admission(value: object) -> None:
+    """Reject invalid retained admission without comparing dynamic charge levels."""
+    if not isinstance(value, dict) or (
+        value.get("schema") != POWER_SAMPLE_SCHEMA
+        or value.get("command") != list(POWER_COMMAND)
+        or value.get("status") != "accepted"
+        or value.get("code") is not None
+        or value.get("error") is not None
+        or type(value.get("command_exit_code")) is not int
+        or value.get("command_exit_code") != 0
+        or value.get("output_truncated") is not False
+        or value.get("source") != "AC Power"
+        or value.get("battery_present") is not True
+        or type(value.get("battery_percent")) is not int
+        or not MINIMUM_BATTERY_PERCENT <= value["battery_percent"] <= 100
+        or value.get("battery_state") not in AC_BATTERY_STATES
+        or type(value.get("pid")) is not int
+        or value["pid"] <= 0
+        or any(
+            type(value.get(key)) is not int
+            for key in ("started_monotonic_ns", "closed_monotonic_ns", "elapsed_ns")
+        )
+        or value["started_monotonic_ns"] < 0
+        or not 0 <= value["elapsed_ns"] <= int(POWER_TIMEOUT * 1e9)
+        or value["elapsed_ns"]
+        != value["closed_monotonic_ns"] - value["started_monotonic_ns"]
+        or any(
+            not isinstance(value.get(key), str) or not value[key]
+            for key in ("started_at", "closed_at")
+        )
+        or any(not isinstance(value.get(key), str) for key in ("stdout", "stderr"))
+        or len((value["stdout"] + value["stderr"]).encode("utf-8")) > POWER_OUTPUT_LIMIT
+    ):
+        raise ValueError("adaptive initial power admission differs")
+
+
+def require_power(
+    *, failure_directory: Path, admission: bool = False
+) -> dict[str, Any]:
+    """Preserve refusals exclusively before raising through integrity handling."""
+    if not admission and os.path.lexists(failure_directory):
+        raise PowerAdmissionError(
+            f"power_previous_refusal; evidence={failure_directory}"
+        )
+    sample = capture_power_sample()
+    if sample["status"] == "accepted":
+        validate_power_admission(sample)
+        return sample
+    prefix = f"{ROOT.name}-power-admission" if admission else "power"
+    path = failure_directory / (
+        f"{prefix}-{sample['pid']}-{sample['closed_monotonic_ns']}.json"
+    )
+    try:
+        if not admission and not os.path.lexists(failure_directory):
+            try:
+                mkdir_exclusive(failure_directory)
+            except FileExistsError:
+                # Concurrent root and supervisor refusals share this directory.
+                require_directory(failure_directory)
+        publish_json(path, sample)
+    except Exception as exc:
+        raise PowerAdmissionError(
+            f"{sample['code']}; power evidence publication failed: {type(exc).__name__}"
+        ) from exc
+    raise PowerAdmissionError(f"{sample['code']}; evidence={path}")
+
+
 def _storage_identity(gate: Path, *, require_gate: bool) -> dict[str, Any]:
     """Check current paths/device against the fixed internal-storage contract."""
     if (
@@ -842,12 +1052,16 @@ def require_plan() -> dict[str, Any]:
         raise ValueError("adaptive gate and plan storage identities differ")
     if canonical_bytes(plan["specification"]) != canonical_bytes(specification(ROOT)):
         raise ValueError("adaptive batch specification changed")
+    if canonical_bytes(gate.get("power_policy")) != canonical_bytes(power_policy()):
+        raise ValueError("adaptive gate and plan power policies differ")
+    validate_power_admission(plan.get("power_admission"))
     verify_unchanged(
         BetaTrainingRuntimeProvenanceV1.from_dict(plan["runtime"]),
         capture(require_clean=True),
     )
     if _host_identity() != plan["host"] or file_record(gate_path) != plan["gate"]:
         raise ValueError("adaptive batch host or gate changed")
+    require_power(failure_directory=ROOT / "power-failures")
     return cast(dict[str, Any], plan)
 
 
@@ -1096,6 +1310,8 @@ def run(gate: Path, *, authorized: bool) -> dict[str, Any]:
         or checked.get("source_commit") != runtime.git_head
     ):
         raise ValueError("adaptive gate must pass at the exact clean source")
+    if canonical_bytes(checked.get("power_policy")) != canonical_bytes(power_policy()):
+        raise ValueError("adaptive gate power policy differs")
     storage = capture_storage_identity(gate)
     require_storage(gate, checked.get("storage"))
     gate_record = file_record(gate)
@@ -1109,6 +1325,9 @@ def run(gate: Path, *, authorized: bool) -> dict[str, Any]:
         "storage": storage,
         "started_at": now(),
     }
+    plan["power_admission"] = require_power(
+        failure_directory=gate.parent, admission=True
+    )
     mkdir_exclusive(ROOT)
     publish_json(ROOT / "plan.json", plan)
     for name in ("logs", "receipts", "training", "evaluations", "supervisors"):

@@ -2,6 +2,14 @@
 
 ## Product and research thesis
 
+Prospective [batch 007](ADAPTIVE_RL_BATCH_007_PROTOCOL.md), 2026-09-14: the user
+requested resumption after restoring power. Keep batch 006's matched scientific
+design with fresh state and a new exclusive internal root. Add AC/20% reserve
+checks before admission, at existing training integrity callbacks and at stage
+entry/exit. Retain all monitor deadlines; power failure records permanently
+exclude normal admission. Scoped tests, clean-source gate and prospective tool
+checks must pass before launch. No learning result follows from the power repair.
+
 Aborted [batch 006](results/ADAPTIVE_RL_BATCH_006_RESULTS.md), 2026-09-13: the
 internal-storage scalar/PI replication recorded three completed rollouts per arm
 (24,576/65,536 transitions, 37.5%; 960 minibatch updates). The host entered
@@ -15,8 +23,8 @@ and synchronous integrity-check timings were not persisted. The evidence does
 not show hash corruption or a learning failure. Preserve this attempt and its
 unopened development panel. A fresh attempt needs reliable continuous power,
 prospective power/interruption checks and bounded timing evidence, with the
-existing integrity deadlines and scientific task retained. No next protocol or
-execution has been admitted; do not resume the interrupted state.
+existing integrity deadlines and scientific task retained. Batch 007 is the
+subsequent prospective response; do not resume the interrupted state.
 
 Interrupted [batch 005](results/ADAPTIVE_RL_BATCH_005_RESULTS.md), 2026-09-13:
 both trainers were still active after 3 hours 56 minutes, but no final endpoint,
