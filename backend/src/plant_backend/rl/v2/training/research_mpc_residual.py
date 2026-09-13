@@ -200,6 +200,7 @@ def _mpc_sources() -> dict[str, Any]:
                 "mpc_model",
                 "mpc_schema",
                 "mpc_forecast",
+                "operating_mpc_forecast",
                 "mpc_execution",
                 "mpc_setpoint_execution",
                 "mpc_setpoints",
@@ -212,6 +213,8 @@ def _mpc_sources() -> dict[str, Any]:
         importlib.import_module("plant_backend.safety.validation"),
         importlib.import_module("plant_sim.commitment"),
         importlib.import_module("plant_sim.config"),
+        importlib.import_module("plant_sim.components.solar"),
+        importlib.import_module("plant_sim.state"),
     )
     numerical = _numerical_sources()
     hashes = {

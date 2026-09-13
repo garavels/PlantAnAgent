@@ -120,6 +120,35 @@ def test_prespecified_budget_and_unchanged_task():
     assert old.TOTAL_STEPS == 32768 and len(old.ARMS) == 1
 
 
+def test_repair_replication_is_new_root_with_explicit_reused_seed_provenance():
+    from plant_backend.rl.v2.training import research_parallel_supervision as helper
+    from plant_backend.rl.v2.operating_mpc_forecast import (
+        OPERATING_FORECAST_PROJECTION_VERSION,
+    )
+
+    spec = batch.specification(batch.ROOT)
+    assert batch.ROOT.name == "adaptive-rl-batch-005"
+    assert batch.SCHEMA == "plant-adaptive-rl-mpc-constraint-batch-005"
+    repair = spec["repair_replication"]
+    assert repair["previous_batch"] == "adaptive-rl-batch-004"
+    assert (
+        repair["previous_source_commit"] == "4f908fcaeaeed417a793204778d87f62c29ec768"
+    )
+    assert repair["previous_report_sha256"] == (
+        "f4b7c3a4796f99f45686db1ea6fe9d6250a260c79d4511094a7e88c7072a68f3"
+    )
+    assert "reused development" in repair["training_seed_status"]
+    assert "never opened" in repair["development_seed_status"]
+    assert "no resume" in repair["initialization"]
+    assert repair["task_reward_learner_authority_changes"] is False
+    assert repair["registered_projection_changes"] is False
+    assert repair["operating_solar_projection"] == OPERATING_FORECAST_PROJECTION_VERSION
+    assert spec["training_supervision_schema"] == helper.SCHEMA
+    assert spec["training_log_monitor"] == helper.monitor_settings()
+    spec["training_log_monitor"].clear()
+    assert batch.specification(batch.ROOT)["training_log_monitor"]
+
+
 def test_constructor_matches_exact_actor_reward_tensors_and_cost_independence(
     tmp_path, monkeypatch
 ):

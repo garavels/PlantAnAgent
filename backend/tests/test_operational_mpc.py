@@ -9,11 +9,17 @@ from plant_sim import ElectrolyserMode, PlantSimulator
 from plant_backend import demo_recordings, operational_mpc
 from plant_backend.operational_mpc import POLICY_ID
 from plant_backend.rl.v2.economic_mpc_schema import (
+    EconomicMPCInputError,
     EconomicMPCPlanError,
+    EconomicMPCSettingsV1,
     EconomicMPCSolveError,
     EconomicMPCStageSolveV1,
 )
-from plant_backend.rl.v2.mpc_forecast import project_issued_mean_solar
+from plant_backend.rl.v2 import economic_mpc_solver
+from plant_backend.rl.v2.operating_mpc_forecast import (
+    OPERATING_FORECAST_PROJECTION_VERSION,
+    project_operating_issued_mean_solar,
+)
 from plant_backend.rl.v2.mpc_schema import ServiceMPCInputError
 from plant_backend.rl.v2.setpoint_controllers import LegacyHeuristicSetpointControllerV1
 from plant_backend.rl.v2.setpoint_command import dispatch_process_setpoint_command
@@ -81,7 +87,7 @@ def test_mean_model_keeps_physics_and_exact_shipments_without_daily_returns(oper
         physical.variable_lower[i] == reserve
         for i in physical.group("battery_energy_kwh")[1:]
     )
-    projection = project_issued_mean_solar(
+    projection = project_operating_issued_mean_solar(
         observation.plant.forecast,
         boundary_time_s=observation.plant.state.boundary.time_s,
         config=env.config,
@@ -89,6 +95,20 @@ def test_mean_model_keeps_physics_and_exact_shipments_without_daily_returns(oper
     )
     assert physical.forecast_sha256 == projection.sha256
     assert model.metadata()["operating_policy"]["id"] == POLICY_ID
+    assert (
+        model.metadata()["operating_policy"]["forecast_projection_version"]
+        == OPERATING_FORECAST_PROJECTION_VERSION
+    )
+    assert (
+        controller.settings.to_dict()["forecast_projection_version"]
+        == OPERATING_FORECAST_PROJECTION_VERSION
+    )
+    assert (
+        controller.settings.physical_settings.to_dict()["forecast_projection_version"]
+        == OPERATING_FORECAST_PROJECTION_VERSION
+    )
+    assert physical.settings_sha256 == controller.settings.physical_settings.sha256
+    assert model.settings_sha256 == controller.settings.sha256
     altered = replace(
         model,
         physical_model=replace(physical, rows=physical.rows[:-1]),
@@ -204,6 +224,79 @@ def test_stale_input_and_changed_reference_fail_before_solver_without_fallback(
     with pytest.raises(ValueError, match="reference changed"):
         controller.compute_command(altered, **arguments(env))
     assert len(controller.decision_events) == 1
+
+
+def test_operating_solver_adapter_preserves_identity_and_stage_audits(
+    operating, monkeypatch
+):
+    _, env, controller = operating
+    model = controller.build_model(
+        env.cyclic_market_controller_observation, **arguments(env)
+    )
+    solved = economic_mpc_solver.solve_economic_mpc_stages(
+        model, settings=controller.settings
+    )
+    monkeypatch.setattr(
+        operational_mpc, "solve_economic_mpc_stages", lambda *a, **k: solved
+    )
+    plan = operational_mpc.solve_economic_mpc_model(model, settings=controller.settings)
+    assert plan.settings_sha256 == controller.settings.sha256
+    assert plan.forecast_sha256 == model.forecast_sha256
+    assert plan.model_sha256 == model.sha256
+    assert plan.stages == solved.stages
+    with pytest.raises(TypeError, match="OperatingMPCSettingsV1"):
+        operational_mpc.solve_economic_mpc_model(
+            model, settings=EconomicMPCSettingsV1()
+        )
+    # The frozen alpha adapter keeps its original exact-type admission boundary.
+    with pytest.raises(TypeError, match="EconomicMPCSettingsV1"):
+        economic_mpc_solver.solve_economic_mpc_model(
+            model, settings=controller.settings
+        )
+    with pytest.raises(EconomicMPCInputError, match="identity mismatch"):
+        operational_mpc.solve_economic_mpc_model(
+            model, settings=replace(controller.settings, solver_time_limit_s=3.0)
+        )
+    mutations = (
+        (replace(solved, solution_domain="different-domain"), "domain mismatch"),
+        (replace(solved, model_sha256="0" * 64), "identity mismatch"),
+        (
+            replace(solved, primary_solution=(0.0,) * model.variable_count),
+            "primary solution failed independent",
+        ),
+        (
+            replace(solved, economic_solution=(0.0,) * model.variable_count),
+            "economic solution failed independent",
+        ),
+        (
+            replace(
+                solved,
+                stages=(
+                    replace(solved.stages[0], objective_value=1e9),
+                    solved.stages[1],
+                ),
+            ),
+            "objective evidence",
+        ),
+        (
+            replace(
+                solved,
+                stages=(
+                    solved.stages[0],
+                    replace(solved.stages[1], solution_sha256="0" * 64),
+                ),
+            ),
+            "solution digest",
+        ),
+    )
+    for altered, message in mutations:
+        monkeypatch.setattr(
+            operational_mpc, "solve_economic_mpc_stages", lambda *a, **k: altered
+        )
+        with pytest.raises(EconomicMPCPlanError, match=message):
+            operational_mpc.solve_economic_mpc_model(
+                model, settings=controller.settings
+            )
 
 
 def test_operation_crosses_daily_deficit_with_fixed_endowment_and_full_horizon(

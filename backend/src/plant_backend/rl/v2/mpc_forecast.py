@@ -195,12 +195,16 @@ class MPCForecastTrajectoryV1:
     interval_band_names: tuple[str, ...]
     bands: tuple[MPCForecastBandV1, ...]
 
-    def __post_init__(self) -> None:
+    def _validate_projection_version(self) -> None:
+        """Keep legacy identities closed; a distinct subtype may declare its own."""
         if self.projection_version not in (
             FORECAST_PROJECTION_VERSION,
             P10_FORECAST_PROJECTION_VERSION,
         ):
             raise ValueError("forecast projection version is unsupported")
+
+    def __post_init__(self) -> None:
+        self._validate_projection_version()
         if (
             not isinstance(self.source_issue_sha256, str)
             or len(self.source_issue_sha256) != 64

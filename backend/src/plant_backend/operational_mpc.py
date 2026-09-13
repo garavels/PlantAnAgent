@@ -6,9 +6,9 @@ observations and never changes the simulator, guard or research task contracts.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+from dataclasses import asdict, dataclass, replace
 import math
-from typing import Any
+from typing import Any, ClassVar
 
 from plant_sim import ElectrolyserCommitmentProfile, ElectrolyserMode, PlantConfig
 
@@ -17,22 +17,33 @@ from .safety.validation import battery_support_availability
 from .rl.v2.beta_config import CyclicMarketTaskConfigV1
 from .rl.v2.beta_control import CyclicMarketControllerObservationV1
 from .rl.v2.beta_mpc_schema import project_beta_mpc_prices
-from .rl.v2.beta_mpc_uncertainty import constant_power_rows
 from .rl.v2.economic_mpc_model import (
     EconomicMPCModelV1,
     _build_economic_mpc_model_from_prices,
 )
 from .rl.v2.economic_mpc_schema import (
+    ECONOMIC_MPC_SOLUTION_DOMAIN,
     EconomicMPCPlanError,
     EconomicMPCPlanV1,
     EconomicMPCSettingsV1,
     EconomicMPCSolveError,
 )
-from .rl.v2.economic_mpc_solver import solve_economic_mpc_model
+from .rl.v2.economic_mpc_solver import (
+    _economic_mpc_plan_values_from_solve_result,
+    solve_economic_mpc_stages,
+)
 from .rl.v2.economics import EconomicAssumptionsV1
 from .rl.v2.mpc_execution import public_observation_sha256
-from .rl.v2.mpc_forecast import project_issued_mean_solar
-from .rl.v2.mpc_schema import canonical_json, domain_sha256
+from .rl.v2.mpc_schema import (
+    ServiceMPCSetpointSettingsV1,
+    canonical_json,
+    domain_sha256,
+)
+from .rl.v2.operating_mpc_forecast import (
+    OPERATING_FORECAST_PROJECTION_VERSION,
+    operating_constant_power_rows,
+    project_operating_issued_mean_solar,
+)
 from .rl.v2.setpoint_command import (
     ProcessSetpointCommandV1,
     issue_process_setpoint_command,
@@ -82,6 +93,65 @@ class OperatingDecision:
     invalid: bool = False
 
 
+@dataclass(frozen=True, slots=True)
+class OperatingMPCPhysicalSettingsV1(ServiceMPCSetpointSettingsV1):
+    """Operating-only projection identity; inherited numerical settings unchanged."""
+
+    forecast_projection_version: ClassVar[str] = OPERATING_FORECAST_PROJECTION_VERSION
+
+
+@dataclass(frozen=True, slots=True)
+class OperatingMPCSettingsV1(EconomicMPCSettingsV1):
+    @property
+    def physical_settings(self) -> OperatingMPCPhysicalSettingsV1:
+        return OperatingMPCPhysicalSettingsV1(
+            **asdict(super(OperatingMPCSettingsV1, self).physical_settings)
+        )
+
+    def body(self) -> dict[str, Any]:
+        return {
+            **EconomicMPCSettingsV1.body(self),
+            "forecast_projection_version": OPERATING_FORECAST_PROJECTION_VERSION,
+        }
+
+
+def solve_economic_mpc_model(
+    model: EconomicMPCModelV1, *, settings: OperatingMPCSettingsV1
+) -> EconomicMPCPlanV1:
+    """Operating settings adapter; retain both existing stage and plan audits.
+
+    The alpha entry point deliberately accepts only exact alpha settings. Use
+    its identity-neutral primitives without widening that historical gate.
+    """
+    if type(model) is not EconomicMPCModelV1:
+        raise TypeError("model must be EconomicMPCModelV1")
+    if type(settings) is not OperatingMPCSettingsV1:
+        raise TypeError("settings must be OperatingMPCSettingsV1")
+    solved = solve_economic_mpc_stages(model, settings=settings)
+    values = _economic_mpc_plan_values_from_solve_result(
+        model,
+        settings=settings,
+        solved=solved,
+        expected_solution_domain=ECONOMIC_MPC_SOLUTION_DOMAIN,
+    )
+    return EconomicMPCPlanV1(
+        model_sha256=values.model_sha256,
+        forecast_sha256=values.forecast_sha256,
+        settings_sha256=values.settings_sha256,
+        assumptions_sha256=values.assumptions_sha256,
+        horizon_intervals=values.horizon_intervals,
+        deliveries=values.deliveries,
+        stages=values.stages,
+        steps=values.steps,
+        primary_delivered_optimum_kg=values.primary_delivered_optimum_kg,
+        selected_delivered_kg=values.selected_delivered_kg,
+        delivery_lock_tolerance_kg=values.delivery_lock_tolerance_kg,
+        predicted_cost_components_eur=values.predicted_cost_components_eur,
+        terminal_ch4_equivalent_deficit_kg=values.terminal_ch4_equivalent_deficit_kg,
+        terminal_battery_deficit_kwh=values.terminal_battery_deficit_kwh,
+    )
+
+
 class OperationalMPCController:
     id = POLICY_ID
 
@@ -93,7 +163,7 @@ class OperationalMPCController:
         assumptions: EconomicAssumptionsV1,
         beta_task: CyclicMarketTaskConfigV1,
     ) -> None:
-        self.settings = EconomicMPCSettingsV1(
+        self.settings = OperatingMPCSettingsV1(
             task_horizon_h=horizon_h,
             interval_s=interval_s,
             # The active physical safety reserve remains hard in the base model.
@@ -116,6 +186,7 @@ class OperationalMPCController:
         return {
             "id": self.id,
             "forecast_statistic": "issued_mean",
+            "forecast_projection_version": OPERATING_FORECAST_PROJECTION_VERSION,
             "planning_horizon_h": 24.0,
             "daily_restoration": "measured target; not an optimizer constraint",
             "inventory_accounting": "fixed episode-opening battery and methane-equivalent depletion costs",
@@ -190,7 +261,7 @@ class OperationalMPCController:
             raise ValueError("operating episode is complete")
         forecast = observation.plant.forecast
         assert forecast is not None
-        weather = project_issued_mean_solar(
+        weather = project_operating_issued_mean_solar(
             forecast,
             boundary_time_s=observation.plant.state.boundary.time_s,
             config=config,
@@ -221,7 +292,7 @@ class OperationalMPCController:
             causal_current_dac_health=True,
             mandatory_deliveries=True,
         )
-        power_rows, power = constant_power_rows(model, weather, config)
+        power_rows, power = operating_constant_power_rows(model, weather, config)
         physical = replace(
             model.physical_model, rows=(*model.physical_model.rows, *power_rows)
         )

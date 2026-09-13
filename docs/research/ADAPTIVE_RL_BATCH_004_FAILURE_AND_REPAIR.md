@@ -49,6 +49,14 @@ M24/E-beta mean/p10 projection algorithms, versions and golden digests. Bind the
 new module and solar implementation/constants explicitly into residual checkpoint
 dependencies. Existing checkpoints are not silently reinterpreted.
 
+Fixture integration exposed exact-type alpha solver gates that correctly reject
+the Operating settings subtype. Use an Operating-only adapter to the existing
+structural staged solver and identity-neutral plan extractor, then the existing
+typed plan constructor. Preserve model/settings/domain checks, both independent
+solution audits, delivery lock, stage objective/digest evidence and all solver
+options. Do not broaden the frozen alpha solver entry points. This wiring change
+is validated before any repaired production execution.
+
 Fixtures must cover the exact failed public issue, independently constructed
 sampled dawn/dusk/night issues, supported timing grids, all four bands, darkness,
 capacity rejection, full/short prefix equality, p10-only public digest changes,

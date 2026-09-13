@@ -1,0 +1,257 @@
+{
+  "helper_sha256": "e0cb3d6bd7c82b810fb46e98e732f8d71d7b4734d47442faf92453a613460139",
+  "input_sha256": "46cc65f57f9689399bbefd95598b9ca73e20f3a53290e5ea8dc232e2a374d16f",
+  "results": [
+    {
+      "case": "ordinary-allocation",
+      "elapsed_ns": 10259666,
+      "error": null,
+      "monitoring": {
+        "backlog_bytes": 0,
+        "bytes_read": 224,
+        "configuration": {
+          "final_verification_seconds": 60.0,
+          "hash_block_bytes": 65536,
+          "identity_settle_seconds": 1.0,
+          "prefix_deadline_seconds": 60.0,
+          "prefix_interval_seconds": 30.0,
+          "read_bytes_per_poll": 2097152,
+          "schema": "plant-research-parallel-training-wave-v2",
+          "soft_slice_seconds": 0.01
+        },
+        "final_verified": true,
+        "logs": [
+          {
+            "final_sha256": "f50e1b6582c0383af8ef07965ff77fc519b7c2ecada6490ba8b13203e5a91124",
+            "hashed_bytes": 80,
+            "high_water_bytes": 80,
+            "path": "/Volumes/Lexar/PlantAnAgentResearch/supervision-exfat-repair-fixture-004/ordinary-allocation.log"
+          }
+        ],
+        "max_backlog_bytes": 0,
+        "max_poll_bytes": 80,
+        "max_poll_wall_ns": 34083,
+        "wall_ns": 116083
+      },
+      "passed": true,
+      "states": [
+        {
+          "path_bytes": 0,
+          "path_inode": 18446744073709490124,
+          "reader_bytes": 0,
+          "reader_inode": 18446744073709490124,
+          "stage": "anchored-empty"
+        },
+        {
+          "path_bytes": 64,
+          "path_inode": 18446744073709490124,
+          "reader_bytes": 64,
+          "reader_inode": 18446744073709490124,
+          "stage": "written"
+        },
+        {
+          "path_bytes": 64,
+          "path_inode": 2637017,
+          "reader_bytes": 64,
+          "reader_inode": 2637017,
+          "stage": "fsynced"
+        }
+      ]
+    },
+    {
+      "case": "replacement",
+      "elapsed_ns": 1056815333,
+      "error": {
+        "code": "log_identity_mismatch",
+        "exception_type": "_Failure",
+        "message": "replacement.log: held descriptor and path did not converge",
+        "site": "log.metadata"
+      },
+      "monitoring": {
+        "backlog_bytes": 0,
+        "bytes_read": 64,
+        "configuration": {
+          "final_verification_seconds": 60.0,
+          "hash_block_bytes": 65536,
+          "identity_settle_seconds": 1.0,
+          "prefix_deadline_seconds": 60.0,
+          "prefix_interval_seconds": 30.0,
+          "read_bytes_per_poll": 2097152,
+          "schema": "plant-research-parallel-training-wave-v2",
+          "soft_slice_seconds": 0.01
+        },
+        "final_verified": false,
+        "logs": [
+          {
+            "final_sha256": null,
+            "hashed_bytes": 64,
+            "high_water_bytes": 64,
+            "path": "/Volumes/Lexar/PlantAnAgentResearch/supervision-exfat-repair-fixture-004/replacement.log"
+          }
+        ],
+        "max_backlog_bytes": 0,
+        "max_poll_bytes": 64,
+        "max_poll_wall_ns": 302583,
+        "wall_ns": 1075666
+      },
+      "passed": true,
+      "states": [
+        {
+          "path_bytes": 0,
+          "path_inode": 18446744073709490121,
+          "reader_bytes": 0,
+          "reader_inode": 18446744073709490121,
+          "stage": "anchored-empty"
+        },
+        {
+          "path_bytes": 64,
+          "path_inode": 18446744073709490121,
+          "reader_bytes": 64,
+          "reader_inode": 18446744073709490121,
+          "stage": "written"
+        },
+        {
+          "path_bytes": 64,
+          "path_inode": 2637019,
+          "reader_bytes": 64,
+          "reader_inode": 2637019,
+          "stage": "fsynced"
+        }
+      ]
+    },
+    {
+      "case": "truncate-regrow",
+      "elapsed_ns": 6083292,
+      "error": {
+        "code": "log_prefix_changed",
+        "exception_type": "_Failure",
+        "message": "truncate-regrow.log: retained prefix changed at byte 0",
+        "site": "log.prefix"
+      },
+      "monitoring": {
+        "backlog_bytes": 16,
+        "bytes_read": 144,
+        "configuration": {
+          "final_verification_seconds": 60.0,
+          "hash_block_bytes": 65536,
+          "identity_settle_seconds": 1.0,
+          "prefix_deadline_seconds": 60.0,
+          "prefix_interval_seconds": 30.0,
+          "read_bytes_per_poll": 2097152,
+          "schema": "plant-research-parallel-training-wave-v2",
+          "soft_slice_seconds": 0.01
+        },
+        "final_verified": false,
+        "logs": [
+          {
+            "final_sha256": null,
+            "hashed_bytes": 64,
+            "high_water_bytes": 80,
+            "path": "/Volumes/Lexar/PlantAnAgentResearch/supervision-exfat-repair-fixture-004/truncate-regrow.log"
+          }
+        ],
+        "max_backlog_bytes": 16,
+        "max_poll_bytes": 80,
+        "max_poll_wall_ns": 58333,
+        "wall_ns": 122292
+      },
+      "passed": true,
+      "states": [
+        {
+          "path_bytes": 0,
+          "path_inode": 18446744073709490114,
+          "reader_bytes": 0,
+          "reader_inode": 18446744073709490114,
+          "stage": "anchored-empty"
+        },
+        {
+          "path_bytes": 64,
+          "path_inode": 18446744073709490114,
+          "reader_bytes": 64,
+          "reader_inode": 18446744073709490114,
+          "stage": "written"
+        },
+        {
+          "path_bytes": 64,
+          "path_inode": 2637023,
+          "reader_bytes": 64,
+          "reader_inode": 2637023,
+          "stage": "fsynced"
+        }
+      ]
+    },
+    {
+      "case": "retained-prefix-mutation",
+      "elapsed_ns": 3186542,
+      "error": {
+        "code": "log_prefix_changed",
+        "exception_type": "_Failure",
+        "message": "retained-prefix-mutation.log: retained prefix changed at byte 0",
+        "site": "log.prefix"
+      },
+      "monitoring": {
+        "backlog_bytes": 64,
+        "bytes_read": 128,
+        "configuration": {
+          "final_verification_seconds": 60.0,
+          "hash_block_bytes": 65536,
+          "identity_settle_seconds": 1.0,
+          "prefix_deadline_seconds": 60.0,
+          "prefix_interval_seconds": 30.0,
+          "read_bytes_per_poll": 2097152,
+          "schema": "plant-research-parallel-training-wave-v2",
+          "soft_slice_seconds": 0.01
+        },
+        "final_verified": false,
+        "logs": [
+          {
+            "final_sha256": null,
+            "hashed_bytes": 64,
+            "high_water_bytes": 64,
+            "path": "/Volumes/Lexar/PlantAnAgentResearch/supervision-exfat-repair-fixture-004/retained-prefix-mutation.log"
+          }
+        ],
+        "max_backlog_bytes": 64,
+        "max_poll_bytes": 64,
+        "max_poll_wall_ns": 29792,
+        "wall_ns": 78750
+      },
+      "passed": true,
+      "states": [
+        {
+          "path_bytes": 0,
+          "path_inode": 18446744073709490110,
+          "reader_bytes": 0,
+          "reader_inode": 18446744073709490110,
+          "stage": "anchored-empty"
+        },
+        {
+          "path_bytes": 64,
+          "path_inode": 18446744073709490110,
+          "reader_bytes": 64,
+          "reader_inode": 18446744073709490110,
+          "stage": "written"
+        },
+        {
+          "path_bytes": 64,
+          "path_inode": 2637026,
+          "reader_bytes": 64,
+          "reader_inode": 2637026,
+          "stage": "fsynced"
+        }
+      ]
+    }
+  ],
+  "schema": "plant-supervision-exfat-repair-fixture-004-v1",
+  "script_sha256": "629db5868b801adcd4a621fe577ca6e836ec33c47fb10ea62bf574157df9a466",
+  "settings": {
+    "final_verification_seconds": 60.0,
+    "hash_block_bytes": 65536,
+    "identity_settle_seconds": 1.0,
+    "prefix_deadline_seconds": 60.0,
+    "prefix_interval_seconds": 30.0,
+    "read_bytes_per_poll": 2097152,
+    "schema": "plant-research-parallel-training-wave-v2",
+    "soft_slice_seconds": 0.01
+  }
+}

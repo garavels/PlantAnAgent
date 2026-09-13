@@ -1,4 +1,4 @@
-"""Prespecified scalar/PI MPC residual development with isolated training supervisors."""
+"""Batch 005 repair replication of matched scalar/PI MPC residual development."""
 
 from __future__ import annotations
 
@@ -42,8 +42,8 @@ from .runtime_provenance import (
 )
 
 MODULE = "plant_backend.rl.v2.training.research_mpc_constraint_batch"
-ROOT = Path("/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-004")
-SCHEMA = "plant-adaptive-rl-mpc-constraint-batch-004"
+ROOT = Path("/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-005")
+SCHEMA = "plant-adaptive-rl-mpc-constraint-batch-005"
 TOTAL_STEPS = 65_536
 OPTIMIZER_SEED = 101
 TRAIN_SEED_BASE = 9_630_000
@@ -90,9 +90,24 @@ def template(root: Path) -> ControllerNeutralTrainingConfigV1:
 
 
 def specification(root: Path) -> dict[str, Any]:
+    from .research_parallel_supervision import SCHEMA as supervision_schema
+    from .research_parallel_supervision import monitor_settings
+
     return {
         "schema": SCHEMA,
         "root": str(root),
+        "repair_replication": {
+            "previous_batch": "adaptive-rl-batch-004",
+            "previous_source_commit": "4f908fcaeaeed417a793204778d87f62c29ec768",
+            "previous_report_sha256": "f4b7c3a4796f99f45686db1ea6fe9d6250a260c79d4511094a7e88c7072a68f3",
+            "previous_status": "aborted before the first optimizer update; no evaluation",
+            "training_seed_status": "reused development stream; first eight reset seeds consumed in batch 004",
+            "development_seed_status": "planned for batch 004 but never opened; adaptive development only",
+            "initialization": "fresh matched models and optimizer/allocator state; no resume",
+            "operating_solar_projection": "issued-mean-physics-left-samples-v1",
+            "task_reward_learner_authority_changes": False,
+            "registered_projection_changes": False,
+        },
         "arms": [asdict(a) for a in ARMS],
         "environment_template": template(root).to_dict(),
         "training_seed_base": TRAIN_SEED_BASE,
@@ -121,6 +136,8 @@ def specification(root: Path) -> dict[str, Any]:
         "torch_interop_threads": 1,
         "training_integrity_check_interval_seconds": INTEGRITY_CHECK_INTERVAL,
         "training_supervisor_startup_seconds": 30.0,
+        "training_supervision_schema": supervision_schema,
+        "training_log_monitor": monitor_settings(),
         "train_timeout_seconds": TRAIN_TIMEOUT,
         "evaluation_timeout_seconds": EVAL_TIMEOUT,
         "stream_limit_bytes": LOG_LIMIT,

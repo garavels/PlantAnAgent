@@ -9108,3 +9108,86 @@ model/replay dependencies and demo backend integration. Unrelated learner/front-
 end suites are not repeated merely to inflate the count. Independent review,
 the tiny real-volume fixture, clean-source gate and prospective analysis tools
 remain required before production training. No batch-005 reset has occurred.
+
+The runner's root/schema and explicit repair-provenance/monitor-settings joins
+passed two focused no-reset contract tests in 1.61 seconds (39 deselected). The
+sampled projection's first 45 independent fixtures passed in 0.20 seconds,
+including the archived failing issue and unchanged old mean/p10 golden hashes.
+The combined Operating integration exposed an exact-type alpha solver guard:
+the new settings subtype must not enter that frozen alpha-only constructor.
+The permitted same-file Operating adapter instead reuses the existing structural
+staged solve and fully audited identity-neutral plan extractor, preserving all
+hashes, solver stages/options, delivery locks and acceptance checks. No alpha
+gate is weakened. Additional adapter and actual-solver fixtures precede admission.
+
+Independent prospective-tool adaptation found another old fixture blind spot:
+ordinary audit records use path/bytes/SHA, whereas supervisor custody file records
+use path/logical_bytes/allocated_bytes/SHA. The old fabricated supervision graph
+used the former and therefore did not exercise actual producer records. Batch
+004 never reached normal auditing, so no admitted result relied on that mismatch.
+The batch-005 auditor receives a separate strict custody-record validator and a
+tiny actual-helper-produced wave fixture. Original tools and failed artifacts
+remain unchanged. Supervision review also requires the new cleanup-failure fields
+to be validated before a completion can be accepted; contradictory error evidence
+must not permit the campaign to proceed.
+
+The complete focused projection/OperatingMPC/legacy uncertainty/residual run
+passed 140 tests in 175.18 seconds. It includes the exact sunset issue, unchanged
+legacy golden identities, full-week zero-residual/native parity with a controlled
+solver and a bounded actual-MPC prefix. The adapter reuses one actual fixture solve
+to reject mismatched settings, solution domain/model hashes, infeasible primary
+and economic vectors, objective evidence and solution digests. Its targeted join
+passed in 3.27 seconds; the three earlier failing integration paths passed in
+12.11 seconds after the adapter. Black passed seven owned files and strict source/
+new-test MyPy passed five. No production episode or policy evaluation was run.
+
+Supervision's first full run had 49 passes and one metadata-bracket regression
+whose loaded implementation preceded the correction. The corrected retained-FD
+shrink case then passed alone. Seven added cleanup-schema cases passed, enforcing
+bounded exact error records and rejecting a supposedly successful completion with
+cleanup failures. Cancellation/publication, disconnected shutdown, recovered
+receipts and unknown-group inventory prohibitions all have exercised fixtures.
+The first repaired real-Lexar probe passed all four tiny allocation/replacement/
+truncate-regrow/prefix-mutation cases. Its immutable manifest SHA is
+`4f691eef4a35b86366926f2639487dea64a467ea60997f4abcb97e32e56ec167`;
+the [exact output](results/adaptive_rl_batch_005_monitor_repair_fixture.json)
+retains the intermediate source hash and measurements. This tiny I/O fixture
+does not establish full-stream monitoring throughput or training speed.
+
+Independent final review found one additional admission bug: final verification
+tested completion before its elapsed deadline, allowing the last slow read to
+finish after the limit and still be accepted. A one-byte/20-ms mocked read against
+a 10-ms bound reproduced it without a reset or source edit. The repair checks the
+deadline immediately after each final poll and before success. The new regression
+requires rejection despite zero remaining backlog and denies a final file record.
+Two targeted cases passed in 0.25 seconds (56 deselected), with Black, strict MyPy
+on both owned files, compilation and whitespace checks passing. No other blocker
+was found in the forecast/settings/solver, checkpoint, cancellation or runner joins.
+
+After that source change, a new exclusively claimed actual-Lexar fixture repeated
+the same four cases under `/Volumes/Lexar/PlantAnAgentResearch/supervision-exfat-repair-fixture-005`.
+All four passed and all 14 manifested file hashes were verified. Its manifest SHA
+is `16506f8a7d62b788c9f0a2275cac5cfa79aa1587d0a761e186cb422255217f26`.
+The [final exact output](results/adaptive_rl_batch_005_monitor_repair_final_fixture.json)
+has SHA `ee4d7184eb406c930b9143a08afbecbb4e13ff142abecdff0d16f942437050d6`
+and binds helper source `69a9accb5b40a532a7f1e05d52c9f7e802d8112c7920db913bcbc1e7fa2a2c82`.
+The tiny ordinary case used 224 hashed bytes and approximately 0.104 ms of monitor
+work; replacement rejection included the declared one-second metadata settling
+bound. Neither result is a general performance guarantee. Previous fixture roots
+remain untouched; the exact-source gate will verify this final proof's source
+identity before running the complete scoped regression set.
+
+The prospective batch-005 auditor now distinguishes ordinary and custody file
+schemas, validates final log coverage/digests and fixed monitoring bounds, and
+checks group closure before opening ordinary process receipts/logs. Its first
+focused join run passed 52 cases with one test assertion failure: the expected
+custody-record count omitted two receipts (16 expected versus 18 actual). The
+actual helper-produced wave itself passed the independent audit. That fixture
+assertion was corrected before the full tool gate. Tool sources remain separately
+frozen; a fresh-process helper-join check after the final deadline repair must
+record its exact source rather than relabel any earlier imported implementation.
+
+All repository changes are ready for a coherent repair commit and the exact clean-
+revision gate. Training remains unopened until that gate and the independent
+prospective tool checks/archive are complete. Demand and all learner settings
+remain those frozen by batch 005; no checkpoint or partial batch is resumed.

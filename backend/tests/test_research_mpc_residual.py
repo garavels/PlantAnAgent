@@ -6,6 +6,7 @@ Seeds 9_990_900..9_990_979 are fixtures, never registered or development data.
 from copy import deepcopy
 from dataclasses import replace
 import hashlib
+import importlib
 import json
 from pathlib import Path
 from typing import Any
@@ -474,6 +475,20 @@ def test_contract_binds_135_source_and_ordered_139_mapping_and_copies(wrapper):
         == hashlib.sha256(Path(residual.__file__).read_bytes()).hexdigest()
     )
     assert len(contract["mpc_dependencies"]["source_sha256"]) >= 30
+    for name in (
+        "plant_backend.rl.v2.operating_mpc_forecast",
+        "plant_sim.components.solar",
+        "plant_sim.state",
+    ):
+        module = importlib.import_module(name)
+        assert (
+            contract["mpc_dependencies"]["source_sha256"][name]
+            == hashlib.sha256(Path(module.__file__).read_bytes()).hexdigest()
+        )
+        changed = deepcopy(contract)
+        changed["mpc_dependencies"]["source_sha256"][name] = "0" * 64
+        with pytest.raises(ValueError, match="contract mismatch"):
+            wrapper.require_interface_contract(changed)
     assert wrapper.interface_contract_digest == contract_digest(contract)
     assert wrapper.checkpoint_contract_digest != wrapper.base.checkpoint_contract_digest
     assert (
