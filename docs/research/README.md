@@ -12,6 +12,13 @@ fallback behavior.
 
 ## Files
 
+- [`ADAPTIVE_RL_BATCH_006_PROTOCOL.md`](ADAPTIVE_RL_BATCH_006_PROTOCOL.md)
+  freezes the unchanged matched scalar/PI screen on persistent internal active
+  storage, with Lexar used only for verified archives after process closure.
+- [`ADAPTIVE_RL_BATCH_005_RESULTS.md`](results/ADAPTIVE_RL_BATCH_005_RESULTS.md)
+  records an interrupted attempt with no admitted endpoint or evaluation. OS
+  evidence establishes a Lexar disconnection during execution; the precise
+  per-process failure sequence is unavailable. Raw partial evidence is retained.
 - [`ADAPTIVE_RL_BATCH_005_PROTOCOL.md`](ADAPTIVE_RL_BATCH_005_PROTOCOL.md)
   freezes a fresh repair replication of batch 004's matched scalar/PI design.
   It explicitly reuses development training seeds, preserves the unopened panel

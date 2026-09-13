@@ -2,12 +2,19 @@
 
 ## Product and research thesis
 
-Next prospective attempt: [batch 005](ADAPTIVE_RL_BATCH_005_PROTOCOL.md) replicates
-the aborted matched scalar/PI design with repaired forecast/supervision interfaces,
-fresh models and an exclusive new root. The training streams are explicitly reused
-development material, including the failed dusk issue; the development panel was
-never opened. Learner budget/settings, delivery and resource task remain fixed.
+Next prospective attempt: [batch 006](ADAPTIVE_RL_BATCH_006_PROTOCOL.md) preserves
+the matched scalar/PI design with fresh models and an exclusively claimed internal
+active-storage root. Gates, failure records and tools also move internal; Lexar is
+only a verified post-closure archive. Learner settings, seeds and task remain fixed.
 Implementation review, exact-source gate and prospective tools precede launch.
+
+Interrupted [batch 005](results/ADAPTIVE_RL_BATCH_005_RESULTS.md), 2026-09-13:
+both trainers were still active after 3 hours 56 minutes, but no final endpoint,
+process receipt or campaign closure survived. OS records establish Lexar USB
+termination at 16:08:48 and remount at 16:09:16 local time. Shared-volume loss is
+the likely interruption cause; exact process exceptions/signals are unavailable.
+No evaluation opened and no policy comparison follows. Preserve its partial graph
+and frozen source `776a98f`; do not resume the interrupted state.
 
 Aborted [batch 004](results/ADAPTIVE_RL_BATCH_004_RESULTS.md), 2026-09-13: the
 matched scalar/PI screen passed its 698-test scoped source gate, then stopped

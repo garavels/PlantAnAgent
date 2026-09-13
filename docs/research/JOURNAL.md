@@ -9191,3 +9191,87 @@ All repository changes are ready for a coherent repair commit and the exact clea
 revision gate. Training remains unopened until that gate and the independent
 prospective tool checks/archive are complete. Demand and all learner settings
 remain those frozen by batch 005; no checkpoint or partial batch is resumed.
+
+## 2026-09-13 — Batch 005 admitted, then interrupted by loss of active USB storage
+
+Clean source `776a98fa01b0cad5b85f0e532bbc6a3c660dbcd6`, tree
+`83c502a4138f6c4c579d056b4cf998deb42368cc`, passed its revision-bound gate:
+435 Python tests in 559.14 seconds plus final volume-fixture verification, Black,
+strict source MyPy, compilation, CLI and whitespace checks. Gate SHA256 is
+`8ea2b4dbf999d083815c5527449c9d5cdc9a08e110be733989b8bb8ad2c639e3`.
+The known Starlette/httpx deprecation warning remains recorded. The previous full
+repository/frontend gate remains `b5ea55e`; this was a scoped source gate.
+
+The prospective auditor and reporter passed 139 and 62 fixture tests, respectively,
+plus static/CLI checks. Their first complete check receipt remained unsuccessful
+because the supervision source changed during that process; the four detached
+tool sources did not change. A fresh-process actual-helper join passed against the
+final helper source, checking all 18 custody records and eight log hashes. The
+combined final receipt explicitly reuses unchanged fixture/static results; it does
+not claim the full suites reran against the later helper. Final receipt SHA256 is
+`8d0000954e574856418cd9e3c60fcaa0b5b38abc9dd71beac6635f0d260fe8ca`.
+
+Only declared source/tree/gate constants were filled after admission, and normalized
+AST equivalence to the tested pre-pin tools was verified. The first archive
+precheck failed before claiming its destination: it compared receipt dictionaries
+without allowing the final combined receipt's explicit reuse-provenance annotations.
+The original script/failure were retained; the corrected check validates those two
+annotations and exact equality of the remaining fields. No experiment or test was
+retried by that archive correction. The 36-file immutable tool archive's manifest
+SHA256 is `fc32123ab519ec29337803e8c08301e98cfab4fd1862c0b84c603c68620c9b90`.
+
+Batch 005 launched at 2026-09-13T10:03:31.763686 UTC from the frozen source on AC
+power, under root PID/PGID 96799, supervisors 96844/96845 and trainers 96884/96885.
+The launch claim SHA256 is
+`b83866fcd3e47a7c586e0a0814a43914822d2a982b243fd2b3c2516caacc2bfa`.
+Process-only snapshots kept both learners unopened and active through root elapsed
+03:56:55. The next snapshot found all five absent with no training-wave/report
+marker. An independent full process-table scan confirmed their groups closed
+before any artifact inventory. Source and tree were still clean and unchanged.
+
+Neither ordinary training receipt nor supervisor completion exists. All eight
+supervisor/trainer logs and the launcher log are empty. There are no final-policy
+endpoints or opened evaluation slots. Forty-four allocator reset records and three
+rollout-prefix/diagnostic/ledger files per arm survive; these counts do not establish
+exact final progress. Diagnostics and weights were hashed as opaque bytes, not
+interpreted. No normal auditor, reporter or policy evaluation was run.
+
+The immutable post-closure inventory covers 128 ordinary and 139 Apple metadata
+files in the batch, plus readiness and frozen tools. Its SHA256 is
+`a768e110eb1b0c7b4e6cf4d8e449adef33bca3b73aa8d314344c47fec1bf434e`.
+Narrow OS queries established USB-interface termination for Lexar at 16:08:48.726
+Europe/Rome, removal/unmount of disk4s1, device reappearance and system filesystem
+repair, then successful remount at 16:09:16.849. The exact OS evidence SHA256 is
+`7d4d97084054c116d6a8a88f2baae0a03a71023f61f601246a0cd36000281a5d`.
+The host had not rebooted. No relevant recent Python crash report or recorded
+per-process exit cause was found in the narrow checks.
+
+Independent source review found no four-hour shutdown timer. A handled isolated
+process failure should leave receipts/completions if cleanup and storage work.
+All active records depended on Lexar, so the proven volume loss is the likely
+interruption cause; the exact process exception/signal cascade and physical reason
+for USB disconnection remain unobserved. Do not call this a PPO learning failure
+or a successful training outcome. Preserve it in the [batch-005 result record](results/ADAPTIVE_RL_BATCH_005_RESULTS.md).
+
+## 2026-09-13 — Batch 006 internal-storage replication frozen before implementation
+
+The [prospective protocol](ADAPTIVE_RL_BATCH_006_PROTOCOL.md) keeps the two-arm
+65,536-transition/seed-101 scientific design, unchanged plant/delivery task and
+the same development streams. Fresh models/optimizers/allocators are required.
+No batch-005 partial state will be resumed. The development panel remains unopened.
+
+Use `/Users/filippogombac/Developer/PlantAnAgentResearch` for every active artifact,
+gate, prospective tool and failure record. OS inspection identified its parent and
+repository on internal, nonremovable APFS UUID
+`86093AA6-4234-4173-AD1C-F1762C98870E`; approximately 18.4 GiB was free. Historical
+batch-003/002 file contents occupy about 809/1,305 MiB, respectively. These sizing
+observations support an internally staged attempt, subject to the existing 10 GiB
+floor and bounded outputs. No user files will be deleted for space.
+
+The source change is confined to the matched runner's identity/provenance and
+internal-storage admission/periodic checks, with fixtures and detached tool joins.
+The helper already follows supplied paths and requires no behavior change. The
+gate must move too: periodic `require_plan` reads its original absolute path.
+Moving only checkpoints would retain the USB dependency. Closed archives preserve
+original bytes and embedded paths; internal originals remain through audit and
+publication. No production reset or batch-006 launch has occurred at this entry.

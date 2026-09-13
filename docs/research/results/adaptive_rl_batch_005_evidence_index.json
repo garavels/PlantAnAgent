@@ -1,0 +1,394 @@
+{
+  "admission": {
+    "auditor_fixture_tests": 139,
+    "checks": [
+      {
+        "exit_code": 0,
+        "log": "/Volumes/Lexar/PlantAnAgentResearch/mpc-constraint-005-readiness-776a98f/volume_fixture.log",
+        "log_sha256": "dc98937e1d6e26d57e90f91f2717a1da7455840a69ed4375deac4d97e566dd67",
+        "name": "volume_fixture",
+        "wall_seconds": 0.23054949997458607
+      },
+      {
+        "exit_code": 0,
+        "log": "/Volumes/Lexar/PlantAnAgentResearch/mpc-constraint-005-readiness-776a98f/black.log",
+        "log_sha256": "cb030f9cd7a40429e384a466ae9845a39bb7ec7c7e3d508d03aeb693bc2f5c85",
+        "name": "black",
+        "wall_seconds": 0.5158475419739261
+      },
+      {
+        "exit_code": 0,
+        "log": "/Volumes/Lexar/PlantAnAgentResearch/mpc-constraint-005-readiness-776a98f/mypy.log",
+        "log_sha256": "ab35ee42183d4d6d3ba483825ab037d18a5a15622d03be01d82220b1564851ff",
+        "name": "mypy",
+        "wall_seconds": 16.337654958013445
+      },
+      {
+        "exit_code": 0,
+        "log": "/Volumes/Lexar/PlantAnAgentResearch/mpc-constraint-005-readiness-776a98f/compile.log",
+        "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "name": "compile",
+        "wall_seconds": 0.09545416699256748
+      },
+      {
+        "exit_code": 0,
+        "log": "/Volumes/Lexar/PlantAnAgentResearch/mpc-constraint-005-readiness-776a98f/cli.log",
+        "log_sha256": "51b97fdd8e6dece1b4423f43e29f53fc850bd8b99b220153e091d6108bfc2f62",
+        "name": "cli",
+        "wall_seconds": 0.29924491699784994
+      },
+      {
+        "exit_code": 0,
+        "log": "/Volumes/Lexar/PlantAnAgentResearch/mpc-constraint-005-readiness-776a98f/whitespace.log",
+        "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "name": "whitespace",
+        "wall_seconds": 0.048998999991454184
+      },
+      {
+        "exit_code": 0,
+        "log": "/Volumes/Lexar/PlantAnAgentResearch/mpc-constraint-005-readiness-776a98f/python_regressions.log",
+        "log_sha256": "e9787f01541163ca5715f3b534c83c7bdb9eda09036607ba85f4fb422213d4cc",
+        "name": "python_regressions",
+        "wall_seconds": 559.9030474999454
+      }
+    ],
+    "constant_only_pinning": [
+      {
+        "after": "/private/tmp/plant-mpc-constraint-005-audit.py",
+        "after_sha256": "e729e03d0e7686e4243b32071b4666be406d11c10b04c0dc22dbab4d55aaef64",
+        "before": "/private/tmp/plant-mpc-constraint-005-audit.prepin.py",
+        "before_sha256": "c25f6382225ae175a509153651ca8d6b127e96d2ec034954606ea293417da632",
+        "normalized_ast_sha256": "0e97078592782db14a90faeb7573e8b630a444ce542031599b6e2a552ff9868a",
+        "pins": {
+          "PINNED_GATE_PATH": "/Volumes/Lexar/PlantAnAgentResearch/mpc-constraint-005-readiness-776a98f/gate.json",
+          "PINNED_GATE_SHA256": "8ea2b4dbf999d083815c5527449c9d5cdc9a08e110be733989b8bb8ad2c639e3",
+          "PINNED_HEAD": "776a98fa01b0cad5b85f0e532bbc6a3c660dbcd6",
+          "PINNED_TREE": "83c502a4138f6c4c579d056b4cf998deb42368cc"
+        }
+      },
+      {
+        "after": "/private/tmp/plant-mpc-constraint-005-report.py",
+        "after_sha256": "0306eb15063d54eed579699c4a30ae46f70546976955d353c20387a613b81214",
+        "before": "/private/tmp/plant-mpc-constraint-005-report.prepin.py",
+        "before_sha256": "910c13875e22a88f4e35af4ad3e31d22a3fd4fc79f36a4a0b83f8262e65c554f",
+        "normalized_ast_sha256": "ae6f4b291d4909b10f08fd58683431bf201dc1249322badc50f534c970586a0d",
+        "pins": {
+          "PINNED_HEAD": "776a98fa01b0cad5b85f0e532bbc6a3c660dbcd6"
+        }
+      }
+    ],
+    "fresh_final_helper_recheck_tests": 1,
+    "full_repository_frontend_gate_repeated": false,
+    "gate": {
+      "bytes": 8158,
+      "path": "/Volumes/Lexar/PlantAnAgentResearch/mpc-constraint-005-readiness-776a98f/gate.json",
+      "sha256": "8ea2b4dbf999d083815c5527449c9d5cdc9a08e110be733989b8bb8ad2c639e3"
+    },
+    "last_full_gate": "b5ea55e9c12571574f3452a6d145c6b8d51c2d87",
+    "python_regressions": {
+      "passed": 435,
+      "pytest_seconds": 559.14,
+      "warning": "StarletteDeprecationWarning for httpx test-client use",
+      "warnings": 1
+    },
+    "reporter_fixture_tests": 62,
+    "retained_dependency_transition": {
+      "changes_during_full_gate": [
+        {
+          "after": {
+            "bytes": 57567,
+            "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/backend/src/plant_backend/rl/v2/training/research_parallel_supervision.py",
+            "sha256": "69a9accb5b40a532a7f1e05d52c9f7e802d8112c7920db913bcbc1e7fa2a2c82"
+          },
+          "before": {
+            "bytes": 57567,
+            "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/backend/src/plant_backend/rl/v2/training/research_parallel_supervision.py",
+            "sha256": "e0cb3d6bd7c82b810fb46e98e732f8d71d7b4734d47442faf92453a613460139"
+          }
+        }
+      ],
+      "final_helper_recheck": {
+        "bytes": 3130,
+        "path": "/private/tmp/plant-mpc-constraint-005-helper-recheck.json",
+        "sha256": "9714f3a5521e21228ae98fa4b7d07c9759fb496082115f15939d3dbb4a938cec"
+      },
+      "full_gate_dependencies_unchanged": false,
+      "full_gate_passed_flag": false,
+      "full_gate_receipt": {
+        "bytes": 10116,
+        "path": "/private/tmp/plant-mpc-constraint-005-tool-checks.json",
+        "sha256": "44a61c395e004cbbe7bd041ff0070915c319a6406efa3eab18875a6fdf4918d0"
+      },
+      "interpretation": "All 139 auditor and 62 reporter tests passed on unchanged tool sources. The full tool gate still recorded failure because the helper changed during execution. One fresh-process helper/auditor integration test passed against the final unchanged helper. Other fabricated and static checks were retained as executed, not claimed rerun against the final dependency."
+    },
+    "tool_archive_files_excluding_manifest": 36,
+    "tool_checks": {
+      "bytes": 15926,
+      "path": "/Volumes/Lexar/PlantAnAgentResearch/mpc-constraint-005-analysis-tools-776a98f/plant-mpc-constraint-005-tool-checks-final.json",
+      "sha256": "8d0000954e574856418cd9e3c60fcaa0b5b38abc9dd71beac6635f0d260fe8ca"
+    },
+    "tool_manifest": {
+      "bytes": 18482,
+      "path": "/Volumes/Lexar/PlantAnAgentResearch/mpc-constraint-005-analysis-tools-776a98f/manifest.json",
+      "sha256": "fc32123ab519ec29337803e8c08301e98cfab4fd1862c0b84c603c68620c9b90"
+    },
+    "unsuccessful_checks_retained": true
+  },
+  "artifact_collections": [
+    {
+      "apple_metadata_files": 139,
+      "full_records_reference": {
+        "artifact": {
+          "bytes": 151368,
+          "path": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-005-analysis/interruption-inventory.json",
+          "sha256": "a768e110eb1b0c7b4e6cf4d8e449adef33bca3b73aa8d314344c47fec1bf434e"
+        },
+        "json_property": [
+          "records",
+          "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-005"
+        ]
+      },
+      "ordinary_files": 128,
+      "root": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-005"
+    },
+    {
+      "apple_metadata_files": 37,
+      "full_records_reference": {
+        "artifact": {
+          "bytes": 151368,
+          "path": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-005-analysis/interruption-inventory.json",
+          "sha256": "a768e110eb1b0c7b4e6cf4d8e449adef33bca3b73aa8d314344c47fec1bf434e"
+        },
+        "json_property": [
+          "records",
+          "/Volumes/Lexar/PlantAnAgentResearch/mpc-constraint-005-analysis-tools-776a98f"
+        ]
+      },
+      "ordinary_files": 37,
+      "root": "/Volumes/Lexar/PlantAnAgentResearch/mpc-constraint-005-analysis-tools-776a98f"
+    },
+    {
+      "apple_metadata_files": 11,
+      "full_records_reference": {
+        "artifact": {
+          "bytes": 151368,
+          "path": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-005-analysis/interruption-inventory.json",
+          "sha256": "a768e110eb1b0c7b4e6cf4d8e449adef33bca3b73aa8d314344c47fec1bf434e"
+        },
+        "json_property": [
+          "records",
+          "/Volumes/Lexar/PlantAnAgentResearch/mpc-constraint-005-readiness-776a98f"
+        ]
+      },
+      "ordinary_files": 11,
+      "root": "/Volumes/Lexar/PlantAnAgentResearch/mpc-constraint-005-readiness-776a98f"
+    }
+  ],
+  "completion_marker_existence": {
+    "initial-matching.json": false,
+    "report.json": false,
+    "training-wave.json": false
+  },
+  "interruption_inventory": {
+    "bytes": 151368,
+    "path": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-005-analysis/interruption-inventory.json",
+    "sha256": "a768e110eb1b0c7b4e6cf4d8e449adef33bca3b73aa8d314344c47fec1bf434e"
+  },
+  "kind": "closed-file forensic evidence; not a normal execution-custody audit",
+  "launch": {
+    "claim": {
+      "bytes": 963,
+      "path": "/Volumes/Lexar/PlantAnAgentResearch/mpc-constraint-005-readiness-776a98f/launch-claim.json",
+      "sha256": "b83866fcd3e47a7c586e0a0814a43914822d2a982b243fd2b3c2516caacc2bfa"
+    },
+    "exact_exit_time": null,
+    "exit_codes": null,
+    "first_absence_observed_before_utc": "2026-09-13T14:21:59.814329+00:00",
+    "last_live_root_elapsed": "03:56:55",
+    "launched_at_utc": "2026-09-13T10:03:31.763686+00:00",
+    "power_at_launch": "Now drawing from 'AC Power'\n -InternalBattery-0 (id=35127395)\t100%; charged; 0:00 remaining present: true\n",
+    "receipt": {
+      "bytes": 2023,
+      "path": "/Volumes/Lexar/PlantAnAgentResearch/mpc-constraint-005-readiness-776a98f/launch-receipt.json",
+      "sha256": "92f1f2c122432630ebe7c78c3eb727c268c35d598c30a67314c94d673fa65540"
+    },
+    "registered_process_ids_and_groups": [
+      96799,
+      96844,
+      96845,
+      96884,
+      96885
+    ],
+    "termination_signals": null
+  },
+  "limits": [
+    "Process liveness was verified after the interruption; there is no normal closed wave, batch report, receipt graph or trained endpoint.",
+    "OS records prove transient device loss/remount. Shared-volume interruption is the working inference; per-process signals, exact failure order and physical reason for USB termination remain unobserved.",
+    "Surviving diagnostic/rollout file counts are metadata, not admitted final learner progress or performance.",
+    "No comparison panel, policy ranking, convergence assessment or operational-benefit conclusion was produced.",
+    "Any future execution requires a separate prospective root/protocol/gate; consumed training seeds remain development material."
+  ],
+  "matched_reset_seed_and_manifest_metadata_across_arms": true,
+  "normal_auditor_executed": false,
+  "operational_benefit_claimed": false,
+  "os_evidence": {
+    "exact_process_failure_cause_established": false,
+    "host_boot_time_evidence": {
+      "command": [
+        "sysctl",
+        "kern.boottime"
+      ],
+      "output": "kern.boottime: { sec = 1788131613, usec = 887120 } Mon Aug 31 01:13:33 2026\n"
+    },
+    "inference": "Transient loss of the shared active artifact volume is the likely interruption cause. Exact per-process exceptions/signals and the physical cause of USB disconnection were not recorded.",
+    "observed": {
+      "device_reappeared_local": "2026-09-13T16:08:50.839+02:00",
+      "mounted_success_local": "2026-09-13T16:09:16.849+02:00",
+      "system_reported_filesystem_repair": true,
+      "unmounted_success_local": "2026-09-13T16:08:48.953+02:00",
+      "usb_interface_termination_local": "2026-09-13T16:08:48.726+02:00",
+      "volume_uuid": "9A20639E-4B81-3097-8262-D9B68AE02E30"
+    },
+    "query_display_timezone": "Europe/Rome (UTC+02:00)",
+    "query_exit_code": 0,
+    "record": {
+      "bytes": 6591,
+      "path": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-005-analysis/os-interruption-evidence.json",
+      "sha256": "7d4d97084054c116d6a8a88f2baae0a03a71023f61f601246a0cd36000281a5d"
+    }
+  },
+  "partial_training_metadata": {
+    "A-mpc-residual-scalar": {
+      "allocator_rollout_prefix_files": 3,
+      "diagnostic_files": 3,
+      "diagnostic_or_weight_payload_interpreted": false,
+      "exact_final_training_progress": null,
+      "final_checkpoint_present": false,
+      "first_seed": 9630000,
+      "ignored_framework_seed_all_null": true,
+      "initial_policy_tensor_file_present": true,
+      "last_seed": 9630043,
+      "ordinary_receipt_present": false,
+      "reset_count_by_environment": [
+        11,
+        11,
+        11,
+        11
+      ],
+      "reset_records": 44,
+      "rollout_ledger_files": 3,
+      "supervisor_completion_present": false
+    },
+    "B-mpc-residual-pi": {
+      "allocator_rollout_prefix_files": 3,
+      "diagnostic_files": 3,
+      "diagnostic_or_weight_payload_interpreted": false,
+      "exact_final_training_progress": null,
+      "final_checkpoint_present": false,
+      "first_seed": 9630000,
+      "ignored_framework_seed_all_null": true,
+      "initial_policy_tensor_file_present": true,
+      "last_seed": 9630043,
+      "ordinary_receipt_present": false,
+      "reset_count_by_environment": [
+        11,
+        11,
+        11,
+        11
+      ],
+      "reset_records": 44,
+      "rollout_ledger_files": 3,
+      "supervisor_completion_present": false
+    }
+  },
+  "performance_admitted": false,
+  "process_closure": {
+    "after_hashing": {
+      "command": [
+        "ps",
+        "-axo",
+        "pid=,ppid=,pgid=,stat=,etime=,command="
+      ],
+      "known_pids_and_groups": [
+        "96799",
+        "96844",
+        "96845",
+        "96884",
+        "96885"
+      ],
+      "matching_processes": [],
+      "observed_utc": "2026-09-13T14:26:03.944357+00:00"
+    },
+    "before_hashing": {
+      "command": [
+        "ps",
+        "-axo",
+        "pid=,ppid=,pgid=,stat=,etime=,command="
+      ],
+      "known_pids_and_groups": [
+        "96799",
+        "96844",
+        "96845",
+        "96884",
+        "96885"
+      ],
+      "matching_processes": [],
+      "observed_utc": "2026-09-13T14:26:02.235322+00:00"
+    },
+    "continuous_custody_reconstructed": false
+  },
+  "protocol": {
+    "bytes": 8996,
+    "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/ADAPTIVE_RL_BATCH_005_PROTOCOL.md",
+    "sha256": "28741f1d45bc666b64163516b5498b67f6a1b7ef02b5fe962b0a711adb7575dc"
+  },
+  "published_at_utc": "2026-09-13T14:31:59.103139+00:00",
+  "reporter_executed": false,
+  "resumable_endpoint_present": false,
+  "schema": "plant-adaptive-rl-batch-005-interruption-publication-v1",
+  "selected_policy": null,
+  "source_commit": "776a98fa01b0cad5b85f0e532bbc6a3c660dbcd6",
+  "source_tree": "83c502a4138f6c4c579d056b4cf998deb42368cc",
+  "status": "interrupted_without_completion_records",
+  "task": {
+    "arms": [
+      "A-mpc-residual-scalar",
+      "B-mpc-residual-pi"
+    ],
+    "delivery_count": 28,
+    "development_slots_opened": 0,
+    "horizon_hours": 168,
+    "optimizer_seed": 101,
+    "planned_development_seeds": [
+      9700300,
+      9700301,
+      9700302,
+      9700303,
+      9700304,
+      9700305,
+      9700306,
+      9700307
+    ],
+    "planned_training_seed_range": [
+      9630000,
+      9630099
+    ],
+    "planned_transitions_per_arm": 65536,
+    "registered_study_launched": false,
+    "requested_methane_kg": 6720
+  },
+  "verification": {
+    "all_preserved_collections_rehashed": true,
+    "allocator_content_read": "reset identity/seed/manifest joins only; no diagnostic or rollout-prefix metrics",
+    "apple_metadata_files_rehashed": 187,
+    "learner_diagnostics_and_weights": "opaque byte hashes only; no performance interpretation",
+    "no_resume_retry_or_new_experiment": true,
+    "ordinary_files_rehashed": 176,
+    "other_json_read": "forensic and OS inventories, gate, launch, tool manifest and validation metadata",
+    "publication_does_not_restore_execution_custody": true,
+    "run_files": {
+      "apple_metadata": 139,
+      "ordinary": 128
+    }
+  }
+}
