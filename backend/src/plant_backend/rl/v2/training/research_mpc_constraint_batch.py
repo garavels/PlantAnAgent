@@ -849,6 +849,12 @@ def capture_power_sample() -> dict[str, Any]:
         r"([a-z ]+); (?:\d+:\d{2} remaining|\(no estimate\)) present: (true|false)",
         lines[1],
     )
+    if battery is None:
+        battery = re.fullmatch(
+            r"\s*-InternalBattery-\d+ \(id=\d+\)\s+(\d{1,3})%; "
+            r"AC attached; (not charging) present: (true|false)",
+            lines[1],
+        )
     if source is None or battery is None:
         sample["code"] = "power_observation_malformed"
         return sample

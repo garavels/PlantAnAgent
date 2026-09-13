@@ -379,6 +379,13 @@ def power_output(percent=56, source="AC Power", state="charging", present="true"
     ).encode()
 
 
+# Exact native stdout retained by the first batch-007 source-admission refusal.
+AC_ATTACHED_POWER_OUTPUT = (
+    b"Now drawing from 'AC Power'\n"
+    b" -InternalBattery-0 (id=35127395)\t80%; AC attached; not charging present: true\n"
+)
+
+
 def power_result(stdout=None, stderr=b""):
     return SimpleNamespace(
         stdout=power_output() if stdout is None else stdout,
@@ -1342,6 +1349,24 @@ def test_power_ac_boundary_acceptance_has_bounded_query_timing(
     assert not failure_directory.exists()
 
 
+@pytest.mark.parametrize("percent", [20, 80, 100])
+def test_power_native_ac_attached_not_charging_uses_unchanged_policy(
+    tmp_path, monkeypatch, percent
+):
+    raw = AC_ATTACHED_POWER_OUTPUT.replace(b"80%;", f"{percent}%;".encode())
+    policy = batch.power_policy()
+    monkeypatch.setattr(batch.subprocess, "run", lambda *a, **kw: power_result(raw))
+    sample = batch.require_power(failure_directory=tmp_path, admission=True)
+    assert sample["status"] == "accepted"
+    assert sample["source"] == "AC Power"
+    assert sample["battery_state"] == "not charging"
+    assert sample["battery_percent"] == percent
+    assert sample["battery_present"] is True
+    assert sample["stdout"].encode() == raw
+    assert batch.power_policy() == policy
+    assert not list(tmp_path.iterdir())
+
+
 @pytest.mark.parametrize(
     "raw,code",
     [
@@ -1361,6 +1386,57 @@ def test_power_ac_boundary_acceptance_has_bounded_query_timing(
         (power_output().replace(b"true", b"unknown"), "power_observation_malformed"),
         (power_output().replace(b"charging", b"\xff"), "power_observation_malformed"),
         (b"x" * 8193, "power_observation_oversized"),
+        (
+            AC_ATTACHED_POWER_OUTPUT.replace(b"'AC Power'", b"'Battery Power'"),
+            "power_source_not_ac",
+        ),
+        (
+            AC_ATTACHED_POWER_OUTPUT.replace(b"'AC Power'", b"'UPS Power'"),
+            "power_source_not_ac",
+        ),
+        (AC_ATTACHED_POWER_OUTPUT.replace(b"80%;", b"19%;"), "power_reserve_low"),
+        (AC_ATTACHED_POWER_OUTPUT.replace(b"80%;", b"0%;"), "power_reserve_low"),
+        (
+            AC_ATTACHED_POWER_OUTPUT.replace(b"true", b"false"),
+            "power_battery_absent",
+        ),
+        (
+            AC_ATTACHED_POWER_OUTPUT.replace(b"80%;", b"101%;"),
+            "power_observation_malformed",
+        ),
+        (
+            AC_ATTACHED_POWER_OUTPUT.replace(b"80%;", b"-1%;"),
+            "power_observation_malformed",
+        ),
+        (
+            AC_ATTACHED_POWER_OUTPUT.replace(b"80%;", b"20.0%;"),
+            "power_observation_malformed",
+        ),
+        (
+            AC_ATTACHED_POWER_OUTPUT.replace(b"AC attached", b"AC detached"),
+            "power_observation_malformed",
+        ),
+        (
+            AC_ATTACHED_POWER_OUTPUT.replace(b"not charging", b"charging"),
+            "power_observation_malformed",
+        ),
+        (
+            AC_ATTACHED_POWER_OUTPUT.replace(b"not charging", b"discharging"),
+            "power_observation_malformed",
+        ),
+        (
+            AC_ATTACHED_POWER_OUTPUT.replace(b"not charging", b"unknown"),
+            "power_observation_malformed",
+        ),
+        (
+            AC_ATTACHED_POWER_OUTPUT.replace(b"not charging", b"not charging;"),
+            "power_observation_malformed",
+        ),
+        (
+            AC_ATTACHED_POWER_OUTPUT.replace(b"true\n", b"true extra\n"),
+            "power_observation_malformed",
+        ),
+        (AC_ATTACHED_POWER_OUTPUT * 2, "power_observation_malformed"),
     ],
 )
 def test_power_observation_refusals_keep_bounded_immutable_failure(

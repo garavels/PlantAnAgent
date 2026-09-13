@@ -9483,3 +9483,50 @@ identity before any later copy. Root helper formatting/compilation also passed.
 The exact clean-revision source gate, completed prospective tool gate and frozen
 internal archive remain required before launch. No new run is active at this
 entry. Power checks do not resume batch 006 or justify changed learner settings.
+
+## 2026-09-14 — Admission caught macOS's alternate AC-attached battery format
+
+The clean source gate at `5d61b9fe11411537e57bd7a89ea8c95515f3d271`, tree
+`c59bf7545e7ade6a815ea5d0a19710e20901c972`, passed all 239 Python tests in
+165.77 seconds and all five static/CLI/whitespace checks. Source/storage stayed
+unchanged. Admission nevertheless correctly remained **failed**: the final live
+power query reported `80%; AC attached; not charging present: true`, which the
+initial parser rejected as malformed. The initial gate sample had been charging
+at 79%. Gate SHA256 is
+`f44c469d3ac9dca1a036826cb7ef9338a677e4dc60ce1392dce57e5a6bb6ba45`.
+
+The concurrent detached gate also failed its actual-power fixture on that native
+format before starting the tiny helper wave. It retained 263 passing auditor
+tests and one failure (481.45 seconds), 71 passing reporter tests and all static
+checks; tool sources and dependencies remained unchanged. The driver closed
+normally with exit 1, and a full process-table query found no exact driver or
+descendants before edits. No process was manually terminated, no production root
+was claimed and no learner reset occurred.
+
+Twenty-three preparation files, including the tested tools, check logs/receipt,
+failed gate and exact native power-refusal fixture, were preserved before edits.
+Their manifest SHA256 is
+`5dab94d15f57de63d715651ba57804c51a09a7f7b7f89389069d2cee288b8474`.
+The correction is an exact alternate grammar branch mapping the native
+`AC attached; not charging` form to the already accepted `not charging` state.
+AC source, present battery, 20% reserve, observation bounds and all timeouts stay
+unchanged. The independent auditor needs the same explicit format support.
+This completes admission implementation within the frozen protocol; it does not
+relax power policy or change the scientific design. A new source gate and a
+separately named second tool-check receipt must pass before launch.
+
+The runner correction is a six-line alternate regex branch; the existing three
+captured battery fields still pass through unchanged source/state/reserve checks.
+Eighteen added cases cover accepted 20/80/100% readings and rejected source,
+reserve, presence, range and malformed-format variants. All 67 focused power
+tests passed in 1.45 seconds, with strict MyPy, Black, compilation and whitespace
+checks passing. A retained actual native query accepted AC/80%/not charging in
+approximately 9.64 ms. No real power setting was changed.
+
+The detached auditor independently added the same exact format support; 14
+focused format/producer cases passed in 0.82 seconds plus strict MyPy and Black.
+Its reporter and reporter tests did not change. The second full tool gate uses
+the distinct `tool-checks-002` receipt/log prefix and a fresh internal fixture
+claim. The failed first gate and tools remain immutable. The source comparison
+again confirms all 31 inherited scientific function bodies and 16 fixed
+scientific/budget declarations remain unchanged. No production run has opened.
