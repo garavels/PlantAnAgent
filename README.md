@@ -699,7 +699,11 @@ done this repository claims nothing about forecast quality.
 
 ## Current research path: controller-neutral Environment V2 RL
 
-The beta has executed exploratory PPO evidence. The latest
+The latest [matched scalar/PI attempt](docs/research/results/ADAPTIVE_RL_BATCH_004_RESULTS.md)
+aborted before its first optimizer update because of a forecast compatibility bug
+and incomplete supervisor failure reporting. It produced no final policy or
+evaluation; both issues have a bounded repair scope. The beta has executed earlier
+exploratory PPO evidence. The latest completed
 [MPC-residual screen](docs/research/results/ADAPTIVE_RL_BATCH_003_RESULTS.md)
 trained one policy for 32,768 transitions and retained all eight development scenarios.
 It matched its native-MPC initialization physically before learning and retained 8/8

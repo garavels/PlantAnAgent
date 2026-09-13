@@ -1,0 +1,126 @@
+{
+  "schema": "plant-adaptive-rl-batch-004-failure-publication-v1",
+  "source_commit": "4f908fcaeaeed417a793204778d87f62c29ec768",
+  "source_tree": "cf895192c295292d11220bbc3ce4a18d88838612",
+  "performance_admitted": false,
+  "kind": "closed-file forensic publication; normal closure auditor not executed",
+  "byte_identical_copies": [
+    {
+      "external": {
+        "path": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-004-analysis/abort-inventory.json",
+        "bytes": 26833,
+        "sha256": "43da491388c802597866703dc1030b0dacee30429e9c7de90a0b91f20dd9b017"
+      },
+      "git": {
+        "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/adaptive_rl_batch_004_results.json",
+        "bytes": 26833,
+        "sha256": "43da491388c802597866703dc1030b0dacee30429e9c7de90a0b91f20dd9b017"
+      }
+    },
+    {
+      "external": {
+        "path": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-004-analysis/forecast-diagnosis/plant-mpc-forecast-sampling-diagnosis.json",
+        "bytes": 13498,
+        "sha256": "61567cd02c3cd4ef2310871340ff2a04ee64e5e7530342354dfb2821891d5d1e"
+      },
+      "git": {
+        "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/adaptive_rl_batch_004_forecast_diagnosis.json",
+        "bytes": 13498,
+        "sha256": "61567cd02c3cd4ef2310871340ff2a04ee64e5e7530342354dfb2821891d5d1e"
+      }
+    }
+  ],
+  "gate": {
+    "path": "/Volumes/Lexar/PlantAnAgentResearch/mpc-constraint-readiness-4f908fc/gate.json",
+    "bytes": 8998,
+    "sha256": "98efb720738e434bdde7ad7b35a87c8268e706af22eb59af9103164dd7dcd91b"
+  },
+  "gate_checks": [
+    {
+      "name": "black",
+      "exit_code": 0,
+      "wall_seconds": 0.32311383297201246,
+      "log": "/Volumes/Lexar/PlantAnAgentResearch/mpc-constraint-readiness-4f908fc/black.log",
+      "log_sha256": "028d1398537ef51c8b06146d099cdd1279b5b627c238bc864630575d5f1dc9be"
+    },
+    {
+      "name": "mypy",
+      "exit_code": 0,
+      "wall_seconds": 15.598464083042927,
+      "log": "/Volumes/Lexar/PlantAnAgentResearch/mpc-constraint-readiness-4f908fc/mypy.log",
+      "log_sha256": "8b88f6d12bd312c1b024b66d07a7f7619a68482ac4d64e475759b1823199faa5"
+    },
+    {
+      "name": "compile",
+      "exit_code": 0,
+      "wall_seconds": 0.106741041992791,
+      "log": "/Volumes/Lexar/PlantAnAgentResearch/mpc-constraint-readiness-4f908fc/compile.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "cli",
+      "exit_code": 0,
+      "wall_seconds": 0.28713841701392084,
+      "log": "/Volumes/Lexar/PlantAnAgentResearch/mpc-constraint-readiness-4f908fc/cli.log",
+      "log_sha256": "4b767079e2a85010acb8153d77a056717233cab277962954ec5a92ddd2d10ba5"
+    },
+    {
+      "name": "whitespace",
+      "exit_code": 0,
+      "wall_seconds": 0.03168491704855114,
+      "log": "/Volumes/Lexar/PlantAnAgentResearch/mpc-constraint-readiness-4f908fc/whitespace.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "python_regressions",
+      "exit_code": 0,
+      "wall_seconds": 1141.5476806249935,
+      "log": "/Volumes/Lexar/PlantAnAgentResearch/mpc-constraint-readiness-4f908fc/python_regressions.log",
+      "log_sha256": "2a70dc13aa8c41e7b3d48739b70b3315417bb4143517488e6db078edb33f1543"
+    }
+  ],
+  "python_regressions": {
+    "passed": 698,
+    "pytest_seconds": 1140.75
+  },
+  "launch_claim": {
+    "path": "/Volumes/Lexar/PlantAnAgentResearch/mpc-constraint-readiness-4f908fc/launch-claim.json",
+    "bytes": 955,
+    "sha256": "3d5e7f06e19648f94e7bf844f90ada105fdca81c173a49b4c7776171e78e6500"
+  },
+  "launch_receipt": {
+    "path": "/Volumes/Lexar/PlantAnAgentResearch/mpc-constraint-readiness-4f908fc/launch-receipt.json",
+    "bytes": 1999,
+    "sha256": "0001efdce7284974e3e283334ea2f6d0ecb2c48166aabf792c84902fa928b63f"
+  },
+  "analysis_tools_manifest": {
+    "path": "/Volumes/Lexar/PlantAnAgentResearch/mpc-constraint-analysis-tools-4f908fc/manifest.json",
+    "bytes": 24205,
+    "sha256": "514d4c54482e864b45538361d94a839641b24c232799054928e2fe785ec8a60a"
+  },
+  "forecast_diagnosis_manifest": {
+    "path": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-004-analysis/forecast-diagnosis/manifest.json",
+    "bytes": 1274,
+    "sha256": "fc1ee1a173170e0c385eb8e79b3bc5e9c2bf884b2132b3fbe31bacdf6e1a806d"
+  },
+  "exfat_probe_manifest": {
+    "path": "/Volumes/Lexar/PlantAnAgentResearch/supervision-exfat-probe-004/manifest.json",
+    "bytes": 1975,
+    "sha256": "d7dc4dab0139813f40d776ac76fbf7de91d7879b4623eaabcf8462ceb235902d"
+  },
+  "reverified_file_counts": {
+    "batch_ordinary": 44,
+    "batch_macos_metadata": 55,
+    "tool_archive": 54,
+    "forecast_diagnosis": 3,
+    "exfat_probe": 12
+  },
+  "script": {
+    "path": "/private/tmp/plant-archive-batch-004-evidence.py",
+    "bytes": 4444,
+    "sha256": "fb10ba82fab510e9c3f77bad7fd03188343fdff9434aa1b050008a154b1c93fc"
+  },
+  "new_resets": 0,
+  "new_policy_inferences": 0,
+  "new_tests": 0
+}

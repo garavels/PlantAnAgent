@@ -2,14 +2,17 @@
 
 ## Product and research thesis
 
-Next prospective screen, 2026-09-13: [batch 004](ADAPTIVE_RL_BATCH_004_PROTOCOL.md)
-compares scalar and existing PI-Lagrangian PPO around the exact same MPC prior,
-with 65,536 transitions each, matched initial actor/reward tensors and fresh shared
-training streams. The seven-actor/eight-scenario panel retains every incumbent,
-delivery and daily resource outcome. This isolates method at the matched budget;
-cross-batch comparisons cannot isolate a budget effect. Two isolated training
-supervisors require dedicated custody tests before source freeze and launch.
-The original task, registered study and confirmation requirements remain unchanged.
+Aborted [batch 004](results/ADAPTIVE_RL_BATCH_004_RESULTS.md), 2026-09-13: the
+matched scalar/PI screen passed its 698-test scoped source gate, then stopped
+before the first PPO update. Scalar's prior rejected a valid minute-sampled dusk
+forecast against an analytic energy bound; PI was cancelled during custody loss.
+No endpoint or evaluation exists. A real Lexar probe also established that the
+monitor's fixed-inode assumption fails on normal exFAT allocation. The exact
+initiating parent ValueError cannot be identified because its detail was lost.
+The [bounded repair](ADAPTIVE_RL_BATCH_004_FAILURE_AND_REPAIR.md) versions the
+OperatingMPC projection and repairs monitoring/cancellation/receipt retention.
+Preserve batch 004 and the original task; require a new protocol/root and admission
+before another attempt. No policy or confirmation claim follows from this failure.
 
 Closed [batch 003](results/ADAPTIVE_RL_BATCH_003_RESULTS.md), 2026-09-13: one
 32,768-transition scalar MPC-residual policy completed its eight-scenario screen.

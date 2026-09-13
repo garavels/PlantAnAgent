@@ -1,0 +1,348 @@
+{
+  "causal_diagnosis": {
+    "cause": "legal sampled-window energy exceeds the continuous-integral admissibility cap at dusk",
+    "consumer": "mpc_forecast.py:81-122 analytically integrates continuous half-sine; lines 493-505 reject issued/analytic > 1 + 1e-12",
+    "cursor_lag_inference": "residual wrapper advances base then primes boundary341 (research_mpc_residual.py:715-724); allocator records only after inner step returns (episode_allocator.py:1527-1535); learner increments only after vector returns (constrained_ppo.py:3275-3277)",
+    "fallback": "projection fails during build_model, before the operating solver fallback try; residual wrapper raises MPCResidualIntegrityError",
+    "not_roundoff": true,
+    "prior_changes": {
+      "129624ad": "sampled forecast envelope introduced",
+      "a7d0233": "analytic projection and cap introduced",
+      "bda6c0a": "full public-issue digest binding; no sampling repair",
+      "c5b049b": "p10 reuses analytic projection; no sampling repair"
+    },
+    "producer": "config.py:275-290 samples left endpoints at dt_s; weather.py:755-765 averages resource paths times that sampled envelope",
+    "test_gap": "test_rl_v2_mpc_forecast.py:23-46 constructs compatible issues using the analytic integral itself",
+    "trailing_horizon": "not causal: forecast sampled envelope extends final issue plus24h; projection builds24h then takes an unrenormalized prefix; failure boundary341 is before terminal672"
+  },
+  "exact_failed_training_issue": {
+    "analytic_cap_excess_kwh": 0.44644100686610894,
+    "analytic_cap_excess_percent": 1.228147267506463,
+    "analytic_clear_mean": 0.00727015429953326,
+    "effective_resource_rejection_threshold": 0.9375176295869919,
+    "issued_mean": 0.007359442500906482,
+    "issued_over_analytic": 1.0122814726750646,
+    "issued_over_sampled": 0.949031726737156,
+    "matches_saved_alpha_exogenous_identity": true,
+    "p10": 0.007278474985295449,
+    "p10_over_analytic": 1.0011444991975924,
+    "projection_result": {
+      "exception_type": "ValueError",
+      "message": "forecast window 0-1h exceeds clear-sky energy"
+    },
+    "public_issue": {
+      "issue_time_basis": "seconds since episode start",
+      "issued_at_offset_s": 306900.0,
+      "issued_at_physics_boundary_step": 5115,
+      "windows": [
+        {
+          "end_offset_s_from_issue": 3600.0,
+          "mean_peak_power_fraction": 0.007359442500906482,
+          "name": "0-1h",
+          "offset_interval": "half-open [start, end)",
+          "p10_peak_power_fraction": 0.007278474985295449,
+          "start_offset_s_from_issue": 0.0
+        },
+        {
+          "end_offset_s_from_issue": 21600.0,
+          "mean_peak_power_fraction": 0.0,
+          "name": "1-6h",
+          "offset_interval": "half-open [start, end)",
+          "p10_peak_power_fraction": 0.0,
+          "start_offset_s_from_issue": 3600.0
+        },
+        {
+          "end_offset_s_from_issue": 43200.0,
+          "mean_peak_power_fraction": 0.019033101920693046,
+          "name": "6-12h",
+          "offset_interval": "half-open [start, end)",
+          "p10_peak_power_fraction": 0.01631637773061769,
+          "start_offset_s_from_issue": 21600.0
+        },
+        {
+          "end_offset_s_from_issue": 86400.0,
+          "mean_peak_power_fraction": 0.4518178463113053,
+          "name": "12-24h",
+          "offset_interval": "half-open [start, end)",
+          "p10_peak_power_fraction": 0.37926893648992754,
+          "start_offset_s_from_issue": 43200.0
+        }
+      ]
+    },
+    "public_issue_sha256": "be907c0bcfb1c20c8187cd993b2a6593d93504b5e18d9c43b02dfda729033bd0",
+    "reconstructed_alpha_exogenous_sha256": "20e126fe4e82571e54894814b6cb31075ea1cc39f7c85c78e09de81ab1f884c3",
+    "sampled_clear_mean": 0.007754685426807396,
+    "sampled_over_analytic": 1.0666466084915478
+  },
+  "failure_context": {
+    "allocator_consumed": [
+      1013,
+      1013,
+      1013,
+      1012
+    ],
+    "allocator_decision_offsets": [
+      341,
+      341,
+      341,
+      340
+    ],
+    "episode_seed": 9630007,
+    "failing_environment_index": 3,
+    "failure": {
+      "message": "MPC prior failed: forecast window 0-1h exceeds clear-sky energy",
+      "type": "MPCResidualIntegrityError"
+    },
+    "local_episode_ordinal": 1,
+    "num_timesteps": 4048,
+    "path": "/Volumes/Lexar/PlantAnAgentResearch/adaptive-rl-batch-004/training/A-mpc-residual-scalar/training-failure.json",
+    "rollout_ledger_count": 0,
+    "saved_alpha_exogenous_sha256": "20e126fe4e82571e54894814b6cb31075ea1cc39f7c85c78e09de81ab1f884c3",
+    "sha256": "66d6ec2a1dc6092e2b067c568723802d59447c02fa0729d94b252d21765f9489"
+  },
+  "fixed_inputs": {
+    "boundary_time_s": 328500.0,
+    "decision_index": 341,
+    "energy_tolerance": 1e-12,
+    "episode": {
+      "battery_soc": [
+        0.25,
+        0.65
+      ],
+      "ch4_coverage_h": [
+        3.0,
+        9.0
+      ],
+      "co2_fill": [
+        0.1,
+        0.4
+      ],
+      "decision_interval_s": 900.0,
+      "delivery_period_h": 6.0,
+      "delivery_rate_kg_h": 40.0,
+      "electrolyser_commitment": {
+        "calibration_basis": "literature-bounded/synthetic; not vendor-calibrated",
+        "cold_start_s": 3600.0,
+        "cooldown_s": 900.0,
+        "dynamics_version": "electrolyser-commitment-alpha-v3",
+        "hot_standby_load_frac": 0.02,
+        "hot_start_s": 300.0,
+        "low_load_threshold_frac": 0.6,
+        "min_down_s": 1800.0,
+        "min_stable_load_frac": 0.4,
+        "min_up_s": 3600.0,
+        "nominal_specific_energy_kwh_per_kg": 52.0,
+        "profile_id": "ael_pressurised_fixed_bop_alpha_v1",
+        "ramp_down_frac_per_min": 0.25,
+        "ramp_up_frac_per_min": 0.25,
+        "shortfall_grace_s": 120.0,
+        "specific_energy_multiplier_anchors": [
+          [
+            0.4,
+            1.12
+          ],
+          [
+            0.6,
+            1.06
+          ],
+          [
+            0.8,
+            1.02
+          ],
+          [
+            1.0,
+            1.0
+          ]
+        ],
+        "start_load_frac": 0.2,
+        "technology": "pressurised alkaline"
+      },
+      "h2_fill": [
+        0.05,
+        0.3
+      ],
+      "horizon_h": 168.0,
+      "start_hour": 6.0,
+      "weather": {
+        "autocorrelation_half_life_h": 1.0,
+        "forecast_analysis_latent_sd": 0.05,
+        "forecast_ensemble_members": 32,
+        "forecast_innovation_scale": 1.0,
+        "forecast_windows_h": [
+          [
+            0.0,
+            1.0
+          ],
+          [
+            1.0,
+            6.0
+          ],
+          [
+            6.0,
+            12.0
+          ],
+          [
+            12.0,
+            24.0
+          ]
+        ],
+        "latent_median_resource_factor": 0.7,
+        "latent_stationary_sd": 0.75
+      }
+    },
+    "issue_offset_s": 306900.0,
+    "local_clock": "day 4 at 19:15",
+    "physics_boundary_step": 5115,
+    "plant": {
+      "battery": {
+        "capacity_kwh": 8000.0,
+        "charge_efficiency": 0.96,
+        "discharge_efficiency": 0.96,
+        "initial_soc": 0.35,
+        "max_charge_kw": 2500.0,
+        "max_discharge_kw": 2500.0,
+        "min_soc": 0.05
+      },
+      "ch4_tank": {
+        "capacity_kg": 3000.0,
+        "initial_kg": 0.0
+      },
+      "co2_tank": {
+        "capacity_kg": 6000.0,
+        "initial_kg": 800.0
+      },
+      "dac": {
+        "rated_kw": 1200.0,
+        "specific_energy_kwh_per_kg": 2.0
+      },
+      "dt_s": 60.0,
+      "electrolyser": {
+        "ambient_temperature_c": 22.0,
+        "fault_temperature_rise_c": 45.0,
+        "min_load_frac": 0.15,
+        "nominal_temperature_c": 62.0,
+        "rated_kw": 3000.0,
+        "specific_energy_kwh_per_kg": 52.0
+      },
+      "h2_tank": {
+        "capacity_kg": 2000.0,
+        "initial_kg": 120.0
+      },
+      "methanator": {
+        "co2_kg_per_kg_ch4": 2.75,
+        "h2_kg_per_kg_ch4": 0.5,
+        "rated_kw": 180.0,
+        "specific_energy_kwh_per_kg": 1.2
+      },
+      "solar": {
+        "peak_kw": 5000.0,
+        "sunrise_h": 6.0,
+        "sunset_h": 19.5
+      }
+    },
+    "synthetic_constant_resource_factor": 0.95
+  },
+  "repair_recommendation_only": {
+    "bounded_validation": "seed-free sampled-envelope cases at sunrise, dusk, midnight, full daylight and shortened horizons, near-unit resource factors, plus retained exact failed public issue; no optimization or performance run required",
+    "implementation_performed": false,
+    "requirements": [
+      "retain complete public issue identity and band energies",
+      "retain darkness and full24h unrenormalized-prefix contract",
+      "keep firm-power denominator consistent with sampled interval means",
+      "reject truly impossible sampled-envelope issues",
+      "do not replace this mismatch with clipping, a wider tolerance, p10 substitution or fallback"
+    ],
+    "scope": "separately identified opt-in operating projection with minute-start sampled clear-sky aggregation; preserve frozen old versions, simulator, issuance, task and demand"
+  },
+  "schema": "plant-mpc-forecast-sampling-diagnosis-v1",
+  "scope": {
+    "environment_constructions_or_resets": 0,
+    "exogenous_reconstructions": [
+      9630007
+    ],
+    "future_truth_payload_emitted": false,
+    "optimizer_or_solver_calls": 0,
+    "performance_analysis": false,
+    "physical_advances": 0,
+    "policy_inference_calls": 0,
+    "protected_seeds_opened": 0,
+    "purpose": "reproduce a forecast-input integrity failure",
+    "seed_domain": "already-consumed contaminated fixture training context"
+  },
+  "source": {
+    "clean_before_and_after": true,
+    "commit": "4f908fcaeaeed417a793204778d87f62c29ec768",
+    "diagnosis_script_sha256": "3ca756d0116bbcdf95fa62a5b4a08e3e24db56919f91aad4a058e840d3a75616",
+    "files_sha256": {
+      "backend/src/plant_backend/operational_mpc.py": "e6b775394a88db4f6f56f64aa178dd459ea09550028739ff46eb42ad3bee914a",
+      "backend/src/plant_backend/rl/v2/beta_mpc_uncertainty.py": "2b85db33a53f878cb46199888c004d66dded777d85274a9fbb5bc6dec44262c8",
+      "backend/src/plant_backend/rl/v2/config.py": "f5cdc855e1a3caea86497761cf4808b725a730b979fce7ce4bad05b49c22249d",
+      "backend/src/plant_backend/rl/v2/mpc_forecast.py": "7473a60edc996e5f5ea8447509fba9a6709b6149e95c32f1cbdc9cf6a4490d5d",
+      "backend/src/plant_backend/rl/v2/training/constrained_ppo.py": "a8829dce44aa9aebe1cc7625f23cac3ec69b5d0520086abc5673dce4d78b7512",
+      "backend/src/plant_backend/rl/v2/training/episode_allocator.py": "1cdc7d8dca2d033ab516f9d9d21f889470df45efe07b736b27e27e1c04689f05",
+      "backend/src/plant_backend/rl/v2/training/research_mpc_constraint_batch.py": "45221a1c122842bdbd455ad962b5355e0cbdb262daa5bed775955d5403fab7f6",
+      "backend/src/plant_backend/rl/v2/training/research_mpc_residual.py": "aa2dd41454b642328e6d96c5e6e397b06873cc2d5b13ea34682ad80ff10864d5",
+      "backend/src/plant_backend/rl/v2/weather.py": "2553858f1fb34d72cb3ed69c1d89320886d21efbf1b3e2059a7c6feef0389cda",
+      "backend/tests/test_rl_v2_mpc_forecast.py": "93c76f9f05d01f8e8af5f1bb88ed3a16ebc531657adcee89011e6944370b5d33",
+      "simulator/src/plant_sim/components/solar.py": "69b24bafab36eb0a0d430340f20e59b8deb776412e1eaaee0b3b236f79089417",
+      "simulator/src/plant_sim/config.py": "c7ccb0af2fdc394ecd9fd2ea7f055c9aeddab2e5b9185d31a558fc40b1de0438"
+    }
+  },
+  "synthetic_case": {
+    "analytic_cap_excess_kwh": 0.48398427966882696,
+    "analytic_cap_excess_percent": 1.3314278066970386,
+    "analytic_clear_mean": 0.00727015429953326,
+    "effective_resource_rejection_threshold": 0.9375176295869919,
+    "issued_mean": 0.007366951155467026,
+    "issued_over_analytic": 1.0133142780669704,
+    "issued_over_sampled": 0.95,
+    "p10": 0.007366951155467026,
+    "p10_over_analytic": 1.0133142780669704,
+    "projection_result": {
+      "exception_type": "ValueError",
+      "message": "forecast window 0-1h exceeds clear-sky energy"
+    },
+    "public_issue": {
+      "issue_time_basis": "seconds since episode start",
+      "issued_at_offset_s": 306900.0,
+      "issued_at_physics_boundary_step": 5115,
+      "windows": [
+        {
+          "end_offset_s_from_issue": 3600.0,
+          "mean_peak_power_fraction": 0.007366951155467026,
+          "name": "0-1h",
+          "offset_interval": "half-open [start, end)",
+          "p10_peak_power_fraction": 0.007366951155467026,
+          "start_offset_s_from_issue": 0.0
+        },
+        {
+          "end_offset_s_from_issue": 21600.0,
+          "mean_peak_power_fraction": 0.0,
+          "name": "1-6h",
+          "offset_interval": "half-open [start, end)",
+          "p10_peak_power_fraction": 0.0,
+          "start_offset_s_from_issue": 3600.0
+        },
+        {
+          "end_offset_s_from_issue": 43200.0,
+          "mean_peak_power_fraction": 0.028204948957006978,
+          "name": "6-12h",
+          "offset_interval": "half-open [start, end)",
+          "p10_peak_power_fraction": 0.028204948957006978,
+          "start_offset_s_from_issue": 21600.0
+        },
+        {
+          "end_offset_s_from_issue": 86400.0,
+          "mean_peak_power_fraction": 0.6656701417298888,
+          "name": "12-24h",
+          "offset_interval": "half-open [start, end)",
+          "p10_peak_power_fraction": 0.6656701417298888,
+          "start_offset_s_from_issue": 43200.0
+        }
+      ]
+    },
+    "public_issue_sha256": "f50c76e53b6e734d6d44ca08024aa1c5a083e9a25f15d7117fe889dfea15450d",
+    "sampled_clear_mean": 0.007754685426807396,
+    "sampled_over_analytic": 1.0666466084915478
+  }
+}

@@ -12,12 +12,14 @@ fallback behavior.
 
 ## Files
 
-- [`ADAPTIVE_RL_BATCH_004_PROTOCOL.md`](ADAPTIVE_RL_BATCH_004_PROTOCOL.md)
-  fixes the next matched scalar/PI MPC-residual screen: 65,536 transitions per arm,
-  equal initialization and seed streams, unchanged delivery/resource task and
-  seven actors on eight fresh scenarios. Two isolated training supervisors precede
-  sequential evaluation/replay. Implementation and exact-revision admission must
-  complete before launch; this is not a selected or confirmed policy.
+- [`ADAPTIVE_RL_BATCH_004_RESULTS.md`](results/ADAPTIVE_RL_BATCH_004_RESULTS.md)
+  records the aborted matched scalar/PI attempt at `4f908fc`: scalar's MPC prior
+  rejected a valid dusk forecast before its first optimizer update; PI was cancelled.
+  No final checkpoint or evaluation exists. The [forensic inventory](results/adaptive_rl_batch_004_results.json)
+  retains the incomplete custody graph and both recovered receipts. The
+  [bounded repair](ADAPTIVE_RL_BATCH_004_FAILURE_AND_REPAIR.md) covers sampled
+  OperatingMPC forecasts and Lexar-compatible supervision. The unchanged
+  [protocol](ADAPTIVE_RL_BATCH_004_PROTOCOL.md) remains the record of that attempt.
 - [`ADAPTIVE_RL_BATCH_003_RESULTS.md`](results/ADAPTIVE_RL_BATCH_003_RESULTS.md)
   closes one MPC-residual policy and all 48 evaluation/replay slots at `4072959`.
   Initial residual and native MPC match physically in all eight scenarios. The

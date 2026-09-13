@@ -8973,3 +8973,109 @@ All four new source/test files are stable for commit. The protocol and admission
 record bind the new timings, and the detached tool owner is aligning its fabricated
 fixtures. No production root has been claimed. Source freeze is followed by the
 exact-revision scoped gate and prospective tool archive before any training starts.
+
+## 2026-09-13 — Batch 004 admission, abort and bounded repair
+
+Committed the matched runner, isolated supervision and frozen protocol as
+`4f908fcaeaeed417a793204778d87f62c29ec768`, tree
+`cf895192c295292d11220bbc3ce4a18d88838612`. The exact clean-source gate passed
+698 Python tests in 1,140.75 seconds, plus Black, strict source MyPy, compilation,
+CLI and whitespace checks. All source/host checks remained unchanged. The gate
+is `/Volumes/Lexar/PlantAnAgentResearch/mpc-constraint-readiness-4f908fc/gate.json`,
+SHA-256 `98efb720738e434bdde7ad7b35a87c8268e706af22eb59af9103164dd7dcd91b`.
+This was a scoped dependency gate; the last full repository/frontend gate remains
+`b5ea55e` with 3,052 Python tests. Native HiGHS output after pytest was retained.
+
+Prospective tool review corrected a copied allocator schema expectation, added
+the missing candidate column to the two-arm noninferiority table, restored the
+preregistered PI-minus-scalar direction and made cost-critic reconstruction claims
+conditional on available initialization. A producer-generated null-framework-seed
+fixture guards the schema seam. The final tool checks passed 105 auditor tests
+in 406.07 seconds and 62 reporter tests in 33.79 seconds. The final check receipt
+SHA is `ad4f2f7b20b87bf7974d1c5ba8041571aed15ad257ebbb81bf8bb238b28a06cc`.
+
+Superseded checks remain preserved: a review-triggered controlled interruption
+after 26 passing tests; a 103/104 auditor run whose test guard misclassified a
+monkeypatched fixture root; and an earlier mid-edit self-hash rejection. The
+fixture guard now captures the true production root before monkeypatching and
+has explicit allowed/rejected-path cases. Unchanged source/CLI checks were reused
+only with recorded source identity; no production outcomes were opened. Pinning
+the checked tools to source/tree/gate changed only declared constants, verified
+by normalized AST equality, then Black/compilation; tests were not claimed rerun.
+The 54-file prelaunch archive manifest SHA is
+`514d4c54482e864b45538361d94a839641b24c232799054928e2fe785ec8a60a` under
+`mpc-constraint-analysis-tools-4f908fc/` on Lexar.
+
+The exclusively claimed batch launched at 07:24:38.443830 UTC on AC power with
+approximately 312 GiB free. Root PID/group was 83363, supervisors 83403/83404,
+trainers 83443/83444. The launch claim SHA is
+`3d5e7f06e19648f94e7bf844f90ada105fdca81c173a49b4c7776171e78e6500`.
+Both arms used seed 101, 65,536 transitions, four synchronous environments and
+isolated supervision. An ad hoc process-only glob initially encountered an
+AppleDouble file and failed UTF-8 decoding; it was corrected to the two exact
+declared start-record names. The frozen auditor already handled metadata files.
+This did not read performance data or change source. Subsequent process-only
+checks found both trainers alive. Quiet waiting retained the outcome-blind rule.
+
+The campaign aborted at 08:00:47.756700 UTC, discovered by later closure-only
+monitoring. All five registered process IDs and groups were independently verified
+absent before reading artifacts. Scalar's stderr identified an MPC prior forecast
+failure; its ordinary receipt records exit 86 after 2,165.68 seconds. The learner
+snapshot has 4,048 timesteps and zero rollout/optimizer ledgers. PI was cancelled
+with signal 15 after 2,165.70 seconds and has no exact progress snapshot. There
+are no final checkpoints, completed policy comparisons or development evaluations.
+The original report SHA is
+`f4b7c3a4796f99f45686db1ea6fe9d6250a260c79d4511094a7e88c7072a68f3`.
+
+The parent recorded only a ValueError type, losing the initiating message/site.
+Scalar's supervisor was interrupted during completion publication, leaving zero
+bytes; PI's socket shutdown raised ENOTCONN before publication. Two valid ordinary
+receipts survived, but the parent returned an empty receipt list because completion
+parsing precedes receipt extraction. Read-only forensic recovery retains this
+failure, rather than admitting or repairing the execution graph. The closed-file
+inventory covers 44 ordinary files and 55 macOS metadata files, SHA
+`43da491388c802597866703dc1030b0dacee30429e9c7de90a0b91f20dd9b017`.
+No normal-closure auditor/reporter was run on the aborted batch.
+
+A source-only diagnosis and one exact public-issue reconstruction proved the
+forecast mismatch. Weather issuance averages minute-start clear-sky samples;
+MPC validation uses a continuous half-sine integral. Already consumed seed
+9,630,007 at decision 341/day 4 19:15 issued first-band mean
+0.007359442500906482 against sampled clear mean 0.007754685426807396, whereas
+the analytic bound is 0.00727015429953326. The issue is legal at 94.903% of its
+producer envelope but rejected at 101.228% of the consumer envelope. Its exogenous
+identity matches the saved allocator. A seed-free 95%-resource sampled fixture
+also fails. No environment reset, physical advance, policy inference, solver call
+or future-truth payload was used. Terminal-prefix handling is not the cause.
+The diagnostic archive manifest SHA is
+`fc1ee1a173170e0c385eb8e79b3bc5e9c2bf884b2132b3fbe31bacdf6e1a806d`.
+
+A separately claimed tiny Lexar fixture proved a second compatibility defect:
+exFAT/FSKit changes an empty file's inode on normal allocation/fsync while a held
+reader continues following the same file. Replacing a path leaves its old reader
+behind; truncation can change both identities and reduce size. The monitor's
+cached initial inode requirement can therefore reject valid writes. The original
+parent's first ValueError remains unproven because its detail was discarded.
+The 11-snapshot probe used 38,204 bytes including metadata, no training/reset, and
+left the old root/source unchanged. Its manifest SHA is
+`d7dc4dab0139813f40d776ac76fbf7de91d7879b4623eaabcf8462ceb235902d`.
+
+Before implementation, the [repair scope](ADAPTIVE_RL_BATCH_004_FAILURE_AND_REPAIR.md)
+fixes two bounded changes: a separately versioned sampled OperatingMPC projection,
+shared by the incumbent and residual prior, and descriptor/prefix-based monitoring
+with cancellation-safe failure publication and independent receipt retention after
+group closure. Old M24/E-beta projection outputs, physics, weather, demand, reward,
+learner settings and authority remain fixed. Scoped owners work in parallel after
+diagnostic archives close. Any future training needs a new protocol/root, clean
+source gate and prospective analysis tools; batch 004 cannot resume or retry.
+
+The [aborted result](results/ADAPTIVE_RL_BATCH_004_RESULTS.md), exact inventory and
+forecast diagnosis are published with a compact admission/evidence index. The
+publication script reverified 99 batch files, 54 archived tool files, three
+diagnosis files, 12 probe files and gate logs. Git inventory and diagnosis copies
+are byte-identical to the originals. The evidence index SHA is
+`38438c9058fbf472ddf69ed357ee77f42aa16a1795610b7705f1cefdc87ba5e7`.
+No tests or experiments were rerun merely for publication. Delivery remains
+6,720 kg/168 hours/28 obligations. High incumbent fulfillment makes preserved-
+service cost, wear and recovery improvement the objective; no policy qualifies
+for confirmation and no operational-benefit claim follows from this abort.
