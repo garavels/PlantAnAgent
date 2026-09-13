@@ -9302,3 +9302,111 @@ absence before making an immutable external copy. Its receipt and own logs must
 live outside the copied collections. Full prospective tool checks, a tiny actual
 internal-volume helper fixture, final source admission and archival-tool checks
 remain required before launch.
+
+## 2026-09-13 — Batch 006 admitted on internal storage, then aborted after low-power hibernation
+
+Clean implementation `c59ba89aa301b863e50be7246fe5003c6fb731dc`, tree
+`a4468ece118b9b2b4f67cb03e81207e929b61ca1`, passed its exact-source scoped gate:
+189 Python tests in 164.09 seconds, plus Black, strict source MyPy, compilation,
+CLI and whitespace checks. Gate SHA256 is
+`c538927a3fd026523ced6007d00cfeebe136306bb0be5031b1768cb6367dfbc5`.
+Source/storage identities were rechecked before and after admission. The last
+complete repository/frontend gate remains `b5ea55e`; no frontend changed.
+
+Detached auditor/reporter checks passed 173 tests in 440.13 seconds and 66 tests
+in 33.48 seconds, respectively, plus static/CLI checks. Receipt SHA256 is
+`feb2f27cd82e22aa46d96b92ebf79423501deec547b1a831a3712c77cd7b5dd1`.
+An actual internal-volume fixture used two tiny child commands, validated 18
+custody records/eight log hashes and preserved 24 files; its manifest SHA256 is
+`7823545041affa46b4ec7bed83e720d4833f07f5f55495e44c947789203a282d`.
+It performed no plant reset, learner update or inference.
+
+The post-closure archive helper's final gate passed 49 tests in 0.43 seconds plus
+static/CLI checks, receipt SHA256
+`f5f0239de50565877c3618181ccaeb5406db9bdeb41016a2bc9a5f95b24fa313`.
+Its earlier 46/47-test receipts and failed preparation checks remain archived.
+Initial OS probes incorrectly assumed arbitrary-directory diskutil support, a
+Mounted key, and ordinary ismount semantics for an APFS firmlink. Final checks
+use actual diskutil UUID/Internal/MountPoint, exact DeviceNode/mount rows and
+child device identity. A preliminary receipt inspection expected `commands`
+instead of that helper's native `checks` and raised KeyError before admission;
+the freezer handles both explicitly. No archive destination was claimed.
+
+Only declared pin constants were changed after tool testing; normalized AST
+equivalence was verified, without claiming a full post-pin retest. The internal
+archive contains 70 files plus manifest SHA256
+`056fed6ecc596e726244a334ee98987b54aca07087f162fbc9891ffa0ff55633`.
+The archive includes original/pre-pin sources, tests, all check receipts/logs,
+the fixture, volume proofs and launch/pin/freeze helpers. Final freeze succeeded.
+No archive copy was executed. Batch-005's separate publication script was retained
+beside its earlier inventory after that inventory; it did not modify old run files.
+
+Batch 006 launched at 2026-09-13T15:07:12.693144 UTC, AC/battery 100%, with
+root PID/PGID 26019, supervisors 26063/26064 and trainers 26109/26110. Claim SHA256
+is `aa33a29296cdf0b330a0de2301e328f98fd223cbc8d20e78ca08e3afa6c80b86`.
+Only process state/closure markers were inspected while running. Source remained
+clean and unchanged until all groups closed; no learner outcomes informed edits.
+
+Report closure at 2026-09-13T21:29:55.775801 UTC is `aborted`, with
+TrainingIntegrityError / `log_verification_overdue` at `log.budget`, naming B
+stdout. Both ordinary receipts record SIGTERM (-15) and `root_custody_lost`;
+both supervisors retain completion records (exit 86), closed trainer/supervisor
+groups and `admitted_success=false`. ENOTCONN cleanup details are retained.
+Full process-table checks independently confirmed absence of all known IDs/groups
+and the exact runner module before opening progress metadata or preserving files.
+
+Narrow OS power evidence establishes Low Power Sleep at 20:45:21 Europe/Rome,
+on battery at 1%, followed by Wake from Hibernate at 23:29:54 on AC at 20%.
+The reported sleep interval is 9,873 seconds. Cancellation receipts appeared at
+21:29:54.786 UTC, immediately after wake, and the batch report followed within
+one second. Low-power hibernation is the highly likely precipitating cause.
+The approximately 6h23m civil duration and 3h39m runtime timer differ materially;
+neither establishes an exact active-learning duration or hibernate clock behavior.
+
+Independent source review found no demonstrated hash-throughput defect: maximum
+recorded poll duration was 24.052 ms, maximum poll bytes 452,150 and maximum
+recorded backlog zero. The overdue check runs before rescheduling a scan; B is
+the first nonempty stream and its name does not establish arm-specific failure.
+Whole synchronous integrity-callback spans, last poll/verification and failure
+clock snapshots were not persisted, so the precise mechanism cannot be recovered.
+Final log verification succeeded but does not repair the earlier deadline loss.
+The local caffeinate manual confirms that -s applies on AC and -i prevents idle
+sleep; these launch assertions do not ensure continuous power or prevent forced
+low-battery hibernation. No deadline was relaxed and no state resumed.
+
+After closure, an independent metadata-only review and reproducible publication
+query established three completed post-update ledgers per arm: 24,576 transitions
+and 960 minibatch optimizer steps, 37.5% of the fixed budget. Allocator prefixes
+corroborate 6,144 decisions/environment; 40 reset records cover 9,630,000–9,630,039,
+ten per environment. Partial fourth-rollout progress is unavailable. Neither arm
+has a final trained endpoint, result or failure-state snapshot; evaluation is
+empty and initial matching never ran. Only allowlisted progress fields were
+interpreted. Rewards, costs, learning-quality diagnostics, weights and trajectories
+remain uninterpreted. This is not a normal training attestation or PPO ranking.
+
+The immutable forensic inventory preserves 126 run files, ten readiness files
+and 71 frozen-tool files, with no Apple metadata files. Inventory SHA256 is
+`e19ff6d6f37c452af00e43125a0ab7be109e5218ad988c2fd1c0a40e1f9e66fe`;
+OS evidence SHA256 is
+`51b02b6fd7823534cf20053afe717bab1350e6e0733e100d80aac9deeea1365a`.
+Publication rehashed all 207 files and preserved its exact script separately in
+the analysis directory. Independent preservation review found no publication
+blocker and confirmed that the original preservation's second pass checked
+metadata/inventory, not every byte again. Current process absence does not
+reconstruct historical custody. Normal auditor/reporter/archive admission was
+not attempted for this aborted wave. See the [result record](results/ADAPTIVE_RL_BATCH_006_RESULTS.md)
+and [compact index](results/adaptive_rl_batch_006_evidence_index.json).
+
+The supported next engineering scope is reliable continuous power, periodic
+power checks and fixed-size interruption/timing evidence, with prospective tiny
+fixtures and unchanged integrity deadlines. No next protocol, implementation or
+experiment has been admitted. The development evaluation panel and original
+registered/protected seeds remain unopened. No new learning result follows;
+batch 003's service/resource regressions remain unresolved.
+
+Publication validation passed 138 local Markdown links, JSON/progress assertions,
+nine compact evidence-reference hashes and whitespace checks. The index SHA256 is
+`a8533ef871ec48da3395032b19cbe073ac164768c7a9852905afba2aa011b63c`.
+Independent final review found no material claim inaccuracies. This publication
+changes six documentation/evidence files only; no runtime test rerun or new
+training admission is claimed.

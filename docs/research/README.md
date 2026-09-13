@@ -12,6 +12,12 @@ fallback behavior.
 
 ## Files
 
+- [`ADAPTIVE_RL_BATCH_006_RESULTS.md`](results/ADAPTIVE_RL_BATCH_006_RESULTS.md)
+  records a closed abort after host low-battery hibernation. Both arms recorded
+  three completed rollouts (24,576 transitions, 37.5%); neither saved a final
+  trained endpoint and no evaluation opened. The monitor rejected overdue prefix
+  verification immediately after wake. Partial evidence, closure records and
+  narrowly scoped OS events are preserved without interpreting learner outcomes.
 - [`ADAPTIVE_RL_BATCH_006_PROTOCOL.md`](ADAPTIVE_RL_BATCH_006_PROTOCOL.md)
   freezes the unchanged matched scalar/PI screen on persistent internal active
   storage, with Lexar used only for verified archives after process closure.

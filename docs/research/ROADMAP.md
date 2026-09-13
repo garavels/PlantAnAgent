@@ -2,11 +2,21 @@
 
 ## Product and research thesis
 
-Next prospective attempt: [batch 006](ADAPTIVE_RL_BATCH_006_PROTOCOL.md) preserves
-the matched scalar/PI design with fresh models and an exclusively claimed internal
-active-storage root. Gates, failure records and tools also move internal; Lexar is
-only a verified post-closure archive. Learner settings, seeds and task remain fixed.
-Implementation review, exact-source gate and prospective tools precede launch.
+Aborted [batch 006](results/ADAPTIVE_RL_BATCH_006_RESULTS.md), 2026-09-13: the
+internal-storage scalar/PI replication recorded three completed rollouts per arm
+(24,576/65,536 transitions, 37.5%; 960 minibatch updates). The host entered
+low-power hibernation on battery at 1% and woke approximately 2h45m later. The
+monitor rejected overdue prefix verification immediately after wake and cancelled
+both trainers. Their receipts and closure graph survive; final policies and
+evaluation are absent. Exact progress within the next rollout is unavailable.
+
+The power event is the highly likely precipitating cause; exact failure-clock
+and synchronous integrity-check timings were not persisted. The evidence does
+not show hash corruption or a learning failure. Preserve this attempt and its
+unopened development panel. A fresh attempt needs reliable continuous power,
+prospective power/interruption checks and bounded timing evidence, with the
+existing integrity deadlines and scientific task retained. No next protocol or
+execution has been admitted; do not resume the interrupted state.
 
 Interrupted [batch 005](results/ADAPTIVE_RL_BATCH_005_RESULTS.md), 2026-09-13:
 both trainers were still active after 3 hours 56 minutes, but no final endpoint,

@@ -699,13 +699,14 @@ done this repository claims nothing about forecast quality.
 
 ## Current research path: controller-neutral Environment V2 RL
 
-The latest [matched scalar/PI attempt](docs/research/results/ADAPTIVE_RL_BATCH_005_RESULTS.md)
-was interrupted during a documented Lexar USB disconnection. It produced no final
-policy, process closure records or evaluation. The next
-[prospective attempt](docs/research/ADAPTIVE_RL_BATCH_006_PROTOCOL.md) preserves
-the scientific design while moving all active evidence to internal storage and
-using Lexar for verified archives after closure. The beta has executed earlier
-exploratory PPO evidence. The latest completed
+The latest [matched scalar/PI attempt](docs/research/results/ADAPTIVE_RL_BATCH_006_RESULTS.md)
+used internal active storage and recorded 24,576 of 65,536 transitions per arm
+(37.5%) before low-battery hibernation interrupted the host. A verification-age
+failure immediately after wake cancelled both arms; closure records and partial
+evidence survived, but neither a final trained policy nor evaluation exists.
+No new learning result follows. Continuous power and interruption handling need
+to be addressed before a fresh, prospectively admitted attempt. The beta has
+executed earlier exploratory PPO evidence. The latest completed
 [MPC-residual screen](docs/research/results/ADAPTIVE_RL_BATCH_003_RESULTS.md)
 trained one policy for 32,768 transitions and retained all eight development scenarios.
 It matched its native-MPC initialization physically before learning and retained 8/8
