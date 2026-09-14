@@ -9708,3 +9708,105 @@ bound. Reviewed source is now ready to commit. Actual checkpoint import, the
 exact clean-revision source gate and both immutable tool bundles remain required
 before launch; their runtime receipts stay outside Git while source must remain
 unchanged, and will be journalled in the closure publication.
+
+## 2026-09-14 — Batch 008 admitted, closed and independently audited
+
+The evaluation-only recovery ran at clean revision
+`d0eab3667312454dbb42c1d667239593539cbbcf`, tree
+`9d35e79c5fc21e14d209caf2797882e5f2763a70`, after protocol commit
+`248e2f5575d19821d510c5be3c7d5ac63d7946ac`. The completed import independently
+verified both exact 65,536-transition endpoints, their training supervision and
+initial matching, without simulator resets, policy inference or learning. All
+284 consumed source-artifact records were retained. This admits the fixed inputs
+for batch 008; the original batch 007 remains aborted and its old allocation
+verifier failure is preserved.
+
+The exact clean-source gate passed **323 Python tests** in 157.78 seconds, Black,
+strict MyPy, compilation, CLI, whitespace, source-invariance and import checks.
+Its SHA256 is `3a601952efc67a9ed22cca9defd0b435ee516ad88cf7a2552b02d2fab925c0a0`.
+The separately completed **204 detached-tool tests** are recorded above. The
+import-tool bundle was frozen before actual checkpoint interpretation; final
+source/gate constant pinning retained normalized-AST equality evidence and tested
+prepin sources. No full postpin test repetition or new full repository/frontend
+gate is claimed. Import admission SHA256 is
+`aab2021040648aaaa10d83a7b8e9d58265f7f931ec7769dba4ba08379da14a56`;
+import and final-analysis manifest digests are respectively
+`f8bfee680d74035b6d5d2eab10a885c6d2c26b3657afb11784a642068fdfe5da` and
+`b31a9f012b81836b21e884c3bb8467f3feaa6cda9de36d657cc334a0025247a6`.
+All raw gates, tests, failed preparation checks, immutable tools and checkpoints
+remain outside Git on internal storage.
+
+The launcher recorded startup at **2026-09-14 14:20:15 UTC (16:20 Rome)**,
+root PID/PGID 33115, under `caffeinate -i -s`. AC/100%/charged and the internal APFS
+storage contract passed admission. The independently launched completion worker
+(PID/PGID 33418) waited for writer closure without reading outcomes. The root
+closed normally at **20:19:09 UTC (22:19 Rome)**, with no root failure. The
+completion worker observed writer closure at 20:19:28 UTC, ran the frozen audit
+(exit zero, 376.17 seconds) and reporter (exit zero), and completed at
+**20:25:45 UTC (22:25 Rome)**. Its outcome-blind flag confirms no outcomes read
+while writers were active. A process snapshot at 20:36:51 UTC found no surviving
+known root/completion processes or exact evaluation-module writers. Source
+remained clean at the execution revision before this publication.
+
+The closed audit reports **56 evaluation slots, 56 replay slots, two imported
+training endpoints, zero new training slots and 905 hashed artifacts**, with
+integrity verified. These are executed and verified slots, not 56 successful
+full plant weeks. M24 stopped in all eight cases because degraded/offline DAC
+is unsupported; E-beta stopped in all eight with service-maximization
+infeasibility. Their retained prefixes are not included in full-week means or
+counted as RL victories. All other five actors completed and replayed eight
+weeks. Initial residual and native OperatingMPC matched in every full physical
+projection, including minute states, commands, economics and settlements after
+only the predefined provenance/clock projection.
+
+The [closed results](results/ADAPTIVE_RL_BATCH_008_RESULTS.md) are negative for
+preserved-service PPO benefit. OperatingMPC delivered 89.4478% of the unchanged
+6,720 kg weekly obligation, with mean simulated value EUR -6,611.812620/week.
+Scalar A and PI B each passed strict safety on all eight development scenarios,
+but mean value relative to OperatingMPC was **EUR -60.401764** and
+**EUR -77.536731/week**. Both slightly reduced total delivered methane. They
+reduced mean battery throughput by 1,438.309551 and 2,238.541510 kWh/week, but
+lost service value and incurred greater shortfall penalties. Both worsened
+individual deliveries and daily resource deficits, so neither qualifies for
+confirmation. No completed actor satisfied every absolute daily return.
+
+This establishes completed, audited PPO training/evaluation capability and an
+observed operating trade-off; it does not establish an economic hedge over MPC.
+The OperatingMPC prior used recovery/fallback throughout this development panel;
+M24/E-beta incompleteness remains a comparator limitation. The next investigation
+should localize residual decisions responsible for lost service and examine the
+constraint-learning diagnostics before proposing another frozen training design.
+This is a prospective investigation direction, not a causal diagnosis or an
+approved replacement protocol. No new training, confirmation, registered study,
+protected evaluation or deployment was launched during this status/publication
+turn. Single optimizer seed 101 and reused adaptive development cases do not
+support algorithm superiority, site generalization or commercial savings.
+
+Root report SHA256:
+`afbf5bd9ed918b877985713eaa22acf972a88502ff024596098adc9cd51e8052`.
+Detached audit SHA256:
+`22aff1c0aa3b7c4a3b9bf78d6ec9a7825c14b88534dbe77537021bd66f6d9536`.
+Frozen analysis JSON SHA256:
+`9b4e86afe39148a9ad5f9877c8a2ddcdb5e135bbb104ba6043d51a76da56934c`.
+The compact result index retains the remaining publication evidence and all
+actor/failure summaries; full diagnostics and physical archives remain external.
+
+Independent read-only publication review at 20:43:35 UTC verified 1,241 unique
+content records, including all 905 auditor-declared artifacts, frozen tool and
+source dependencies, closure packets and both generated report files. It matched
+all 112 disk receipts to the root report and the fixed 56+56 order; all exited
+zero without integrity codes, with the longest child at 431.478 seconds under
+the 600-second bound. Source/gate pins matched the execution revision and a live
+process scan found no remaining writers. This repeated content verification did
+not rerun the frozen auditor, reporter, controllers or physics and did not compare
+physical allocation as content identity. Completion-record SHA256 is
+`d0554ba8dd2da0e5f2fc0ab01af1bb0aff97cf98da1d8cd618cd851de36682bc`.
+
+Publication validation passed 2,348 copied-value comparisons against the frozen
+report, 17 referenced content digests and 131 local Markdown links, plus clean
+whitespace. An initial publication-check helper incorrectly required reduced
+training-diagnostic rows to equal full report rows; it failed before digest/link
+checks. The corrected helper compares copied fields recursively and leaves
+explicitly derived diagnostic summaries to the report author's independent
+checks. No result values were changed to pass validation. This is documentation
+verification, not an additional runtime regression gate or experiment.

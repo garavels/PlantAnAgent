@@ -12,6 +12,15 @@ fallback behavior.
 
 ## Files
 
+- [`ADAPTIVE_RL_BATCH_008_RESULTS.md`](results/ADAPTIVE_RL_BATCH_008_RESULTS.md)
+  closes all 56 fresh evaluation/replay pairs using the two preserved batch-007
+  endpoints. The detached integrity audit passed and initial/native-MPC physical
+  parity held on all eight cases. Both trained policies passed strict safety but
+  lost mean value versus OperatingMPC (scalar EUR 60.40/week; PI EUR 77.54/week)
+  and regressed in individual deliveries and daily resource deficits. Lower
+  battery throughput did not establish preserved-service benefit. No endpoint
+  qualifies for confirmation; the [compact evidence](results/adaptive_rl_batch_008_results.json)
+  retains failed comparators, paired outcomes and source/artifact digests.
 - [`ADAPTIVE_RL_BATCH_008_PROTOCOL.md`](ADAPTIVE_RL_BATCH_008_PROTOCOL.md)
   freezes evaluation-only recovery from the two exact completed batch-007
   checkpoints. It retains the aborted source attempt, verifies imported content
