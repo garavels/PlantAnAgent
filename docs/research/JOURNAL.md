@@ -9616,3 +9616,20 @@ local Markdown links across the three publication files, and clean whitespace.
 Independent review corrected the unknown timing of the allocation change and
 confirmed the failure cause and process counts. These are documentation checks;
 no runtime test rerun, repair admission or new experiment is claimed.
+
+## 2026-09-14 — Batch 008 evaluation-only recovery frozen before implementation
+
+The user authorized the proposed recovery. The [new protocol](ADAPTIVE_RL_BATCH_008_PROTOCOL.md)
+fixes the two exact batch-007 final checkpoints and A's initial policy, unchanged
+task/controller semantics and all 56 evaluation/replay pairs. It permits no
+learning or endpoint selection. The partly opened panel is explicitly reused
+development material; batch 007 remains aborted.
+
+The implementation scope is exact `finishing charge` acceptance under the existing
+AC/reserve requirements, a dedicated evaluation-only runner, and prospective
+post-closure content verification separating logical bytes/SHA from allocation
+metadata. The old allocation-verifier failure remains evidence, not a waived
+pass. Independently verify the full imported training graph and checkpoint
+contracts before launch. Agents are reviewing runner and detached-verifier seams
+read-only while the root freezes this protocol. No implementation, checkpoint
+interpretation or evaluation reset has preceded this protocol commit.
