@@ -9877,3 +9877,43 @@ no sensitivity grid, inclusion rule, gamma test or selection rule changed.
 The raw-audit preservation inventory SHA256 is
 `a8aff679f873ad06198b150b4e05bbd128d5d1a25e26244ce4b293b018712a0b`
 (13 files, 3,197,482 bytes; originals retained).
+
+
+## 2026-09-14 — Prospective batch-009 runner and deadline admission
+
+The new `research_reward_alignment_batch` runner implements the frozen two-arm
+screen without modifying inherited simulator, controllers, training algorithms,
+reward coefficients or frontend source. Per-arm configurations bind gamma 0.995
+and 1.0, fresh matched initialization, 16,384 transitions, 28 allocated resets,
+two rollouts and 640 minibatch updates. Endpoint loading checks the actual gamma,
+optimizer/allocator ledger and complete source provenance before evaluation.
+The reference packet requires the immutable batch-008 analysis/audit and initial
+checkpoint bindings. No production reset has occurred at this entry.
+
+The runner adds absolute UTC and monotonic deadline admission, a common bounded
+parallel-training timeout, individual stage deadline sidecars and independent
+cleanup/report cutoffs. Old producer schemas remain where unchanged producer
+functions are reused; the new outer plan binds the actual per-arm configuration.
+Eighty runner fixtures, Black, strict MyPy, compilation and CLI checks passed.
+The retained initial fixture failures concerned exception type expectations,
+JSON tuple/list comparisons and strict typing; no scientific threshold changed.
+
+Detached reference, audit, report, freezer, launch and completion tools are being
+frozen outside Git. Independent review found and corrected three normal-input
+joins before admission: the reference manifest's source object, the legacy
+compact-JSON audit digest versus its separately bound pretty-JSON file digest,
+and the `_train_wave` stage in actual producer deadline records. The corrected
+reference join passes on the real closed batch-008 evidence. Producer-generated
+wave, trainer and evaluation deadline records pass the detached consumer.
+Ninety launcher/completion fixtures include real tiny escaped-session child
+cleanup, deadline cancellation, no outcome access before closure, process
+identity retention across reparenting and tampered custody inputs. Seven freezer
+fixtures passed. Later typing/closure-reserve edits will receive the final full
+tool gate before admission; these preparation checks are not the launch gate.
+
+The final launch still requires a clean committed source, immutable checked tools,
+real internal-volume custody fixture, exact-source scoped regression gate,
+scientific-source invariance and a fully bound historical reference packet.
+Preparation logs and failed checks remain available outside Git. No full-repo or
+frontend test pass is inferred from this focused gate. Source will remain frozen
+through all production execution and detached reporting.
