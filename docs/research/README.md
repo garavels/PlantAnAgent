@@ -12,6 +12,11 @@ fallback behavior.
 
 ## Files
 
+- [`ADAPTIVE_RL_BATCH_008_PROTOCOL.md`](ADAPTIVE_RL_BATCH_008_PROTOCOL.md)
+  freezes evaluation-only recovery from the two exact completed batch-007
+  checkpoints. It retains the aborted source attempt, verifies imported content
+  under an explicit post-closure allocation policy, fixes `finishing charge`
+  acceptance, and requires all 56 fresh evaluation/replay pairs without training.
 - [`ADAPTIVE_RL_BATCH_007_RESULTS.md`](results/ADAPTIVE_RL_BATCH_007_RESULTS.md)
   records completed scalar/PI training at 65,536 transitions per arm, followed by
   an evaluation abort: the power guard rejected AC/99%/`finishing charge`.

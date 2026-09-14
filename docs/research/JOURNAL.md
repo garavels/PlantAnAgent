@@ -9633,3 +9633,78 @@ pass. Independently verify the full imported training graph and checkpoint
 contracts before launch. Agents are reviewing runner and detached-verifier seams
 read-only while the root freezes this protocol. No implementation, checkpoint
 interpretation or evaluation reset has preceded this protocol commit.
+
+The inherited runner's sole source change is the exact additional accepted power
+state `finishing charge`; 81 focused power tests passed in 2.07 seconds, including
+the captured AC/99% incident and unchanged reserve/source/presence refusals.
+A source comparison confirms the rest of that module's AST and all other
+inherited production sources remain unchanged. The new evaluation runner uses
+the old checkpoint configuration, loaders and scientific evaluation/replay
+functions, with separate output paths and no training CLI or global monkeypatch.
+
+Prospective import verification records physical allocation separately from
+content identity while retaining stable nonsymlink/single-link reads, complete
+historical training supervision, fixed endpoint contracts and initial matching.
+The power refusal and old allocation-verifier failure stay explicit. New and
+training source/runtime provenance are separate. Imported checkpoint/result
+bindings are checked before root claim and at stage boundaries.
+
+The detached launcher now uses explicit rejection checks, stable evidence reads,
+semantic gate/tool/import joins, exclusive claims, process checks and bounded
+startup/cleanup. A separately frozen completion worker will wait without reading
+outcomes, then run the fixed auditor and reporter only after writer closure and
+a normal closed report. This local experiment pipeline avoids conversational
+polling; it cannot retry or select a policy. Abort/timeout permits status and
+forensic evidence only. All helpers and fixtures must pass before either launches.
+
+Root preparation retained failed MyPy checks: the first invocation omitted
+MYPYPATH and exposed an optional AST-value typing error; subsequent gate checks
+found a missing power-helper export and an implicit source-module export.
+Explicit narrowing and a direct import resolved these issues; the final root
+helper MyPy preparation passed. Seven content-binding/literal-pinning fixtures
+passed in 0.23 seconds. These are preparation checks in a changing worktree,
+not clean-revision admission. No models have been loaded and no production
+episode has been executed by this implementation work.
+
+The completed new runner passed 52 fixtures in 0.89 seconds, strict source MyPy,
+Black, compilation, CLI and whitespace checks. Coverage includes fixed imported
+bytes, missing/redirected/hardlinked dependencies, changed physical allocation
+with identical contents, stable-read races, all 112 planned children, final fatal
+receipt retention and no training/resume route. Cross-review of its detached
+consumer is ongoing; no production admission follows from these fixture passes.
+
+Independent cross-review found two nonfixture audit integration errors before
+launch: validating the final auditor's path against the separate import-tool
+manifest, and retaining a batch-007 readiness prefix for batch 008. The detached
+tool owner corrected both and added direct regressions. No inherited training,
+allocator, optimizer, monitor or initial-tensor check was removed. Historical
+runtime equality excludes only the deliberately changed Git source identities
+and their derived digest; package/interpreter/runtime fields remain checked.
+
+Detached preparation passed 122 import/audit/report fixtures in 106.09 seconds,
+11 targeted new regressions in 1.06 seconds and one actual-produced fake packet
+to runner cross-check in 2.67 seconds. Launcher/freezer/completion preparation
+passed 70 fixtures in 3.47 seconds, plus static/CLI checks. Its first preparation
+attempt retained a sandbox-denied process-table probe (39 passes, one failure);
+the authorized process check subsequently passed. The launcher startup bound was
+prospectively set to 60 seconds before the final gate to include model admission.
+
+The actual internal fixture at `mpc-constraint-008-internal-fixture-001` passed:
+one bounded Python child, two stable log streams, verified internal APFS identity
+and prospective content verification with explicitly differing recorded
+allocation. It loaded no model and performed no simulator reset or inference.
+The root's final detached gate binds this fixture and all tool/production-source
+snapshots, preserving all preparation records separately. No production run
+has been admitted at this entry.
+
+The final prospective detached gate passed **204 tests**: 30 import, 29 audit,
+75 reporter and 70 launcher/completion/freezer fixtures. Black, strict MyPy,
+compilation and all CLI checks passed. All 18 tool-source records and 262
+production dependency records remained unchanged, as did the actual fixture's
+inputs and evidence. Gate receipt SHA256 is
+`2e25ff7bb0224f04da02804e0766c815a2ed07b72daaac8d6ad41ebbd3c91995`.
+This gate includes the new nonfixture path regressions and 60-second startup
+bound. Reviewed source is now ready to commit. Actual checkpoint import, the
+exact clean-revision source gate and both immutable tool bundles remain required
+before launch; their runtime receipts stay outside Git while source must remain
+unchanged, and will be journalled in the closure publication.

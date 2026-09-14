@@ -1280,7 +1280,12 @@ def test_power_policy_is_literal_and_dynamic_samples_do_not_change_identity(
         "command": ["/usr/bin/pmset", "-g", "batt"],
         "required_source": "AC Power",
         "minimum_battery_percent": 20,
-        "accepted_battery_states": ["charging", "charged", "not charging"],
+        "accepted_battery_states": [
+            "charging",
+            "charged",
+            "not charging",
+            "finishing charge",
+        ],
         "command_timeout_seconds": 2.0,
         "maximum_observation_bytes": 8192,
         "training_check_interval_seconds": 30.0,
@@ -1309,8 +1314,10 @@ def test_power_policy_is_literal_and_dynamic_samples_do_not_change_identity(
     assert batch.power_policy()["command"] == ["/usr/bin/pmset", "-g", "batt"]
 
 
-@pytest.mark.parametrize("percent", [20, 56, 100])
-@pytest.mark.parametrize("state", ["charging", "charged", "not charging"])
+@pytest.mark.parametrize("percent", [20, 56, 99, 100])
+@pytest.mark.parametrize(
+    "state", ["charging", "charged", "not charging", "finishing charge"]
+)
 def test_power_ac_boundary_acceptance_has_bounded_query_timing(
     tmp_path, monkeypatch, percent, state
 ):
@@ -1365,6 +1372,38 @@ def test_power_native_ac_attached_not_charging_uses_unchanged_policy(
     assert sample["stdout"].encode() == raw
     assert batch.power_policy() == policy
     assert not list(tmp_path.iterdir())
+
+
+@pytest.mark.parametrize(
+    "old,new,expected_code",
+    [
+        (b"99%;", b"99%;", None),
+        (b"99%;", b"20%;", None),
+        (b"99%;", b"19%;", "power_reserve_low"),
+        (b"'AC Power'", b"'Battery Power'", "power_source_not_ac"),
+        (b"true", b"false", "power_battery_absent"),
+        (b"finishing charge", b"finishing discharge", "power_battery_state_rejected"),
+        (b"finishing charge", b"finishing charging", "power_battery_state_rejected"),
+    ],
+)
+def test_recorded_finishing_charge_incident_preserves_power_boundaries(
+    monkeypatch, old, new, expected_code
+):
+    raw = (
+        b"Now drawing from 'AC Power'\n"
+        b" -InternalBattery-0 (id=35127395)\t99%; finishing charge; "
+        b"0:07 remaining present: true\n"
+    ).replace(old, new)
+    monkeypatch.setattr(batch.subprocess, "run", lambda *a, **kw: power_result(raw))
+    sample = batch.capture_power_sample()
+    assert sample["stdout"].encode() == raw
+    assert sample["code"] == expected_code
+    assert sample["status"] == ("accepted" if expected_code is None else "refused")
+    if expected_code is None:
+        batch.validate_power_admission(sample)
+    else:
+        with pytest.raises(ValueError, match="initial power admission"):
+            batch.validate_power_admission(sample)
 
 
 @pytest.mark.parametrize(
