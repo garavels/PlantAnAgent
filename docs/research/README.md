@@ -12,6 +12,13 @@ fallback behavior.
 
 ## Files
 
+- [`ADAPTIVE_RL_BATCH_007_RESULTS.md`](results/ADAPTIVE_RL_BATCH_007_RESULTS.md)
+  records completed scalar/PI training at 65,536 transitions per arm, followed by
+  an evaluation abort: the power guard rejected AC/99%/`finishing charge`.
+  Both final checkpoints survive with matching hashes. A separate stdout
+  allocation-metadata mismatch prevents full frozen supervision admission despite
+  identical log contents. Checkpoint reuse requires a separately frozen evaluation;
+  no complete performance comparison or new operational-benefit claim follows.
 - [`ADAPTIVE_RL_BATCH_007_PROTOCOL.md`](ADAPTIVE_RL_BATCH_007_PROTOCOL.md)
   freezes the user-requested fresh scalar/PI replication after power restoration.
   It adds runner-only AC/20% reserve checks during training and at stage boundaries,

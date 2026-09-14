@@ -9530,3 +9530,89 @@ the distinct `tool-checks-002` receipt/log prefix and a fresh internal fixture
 claim. The failed first gate and tools remain immutable. The source comparison
 again confirms all 31 inherited scientific function bodies and 16 fixed
 scientific/budget declarations remain unchanged. No production run has opened.
+
+## 2026-09-14 — Batch 007 completed training; evaluation rejected finishing charge
+
+The final source gate at clean `61b97851637a0f5a16e56c479e1a436cd30cf68d`, tree
+`311f8d3b5d048643e4a38b638c73ef95363b4d27`, passed 257 Python tests in 166.15
+seconds plus Black, strict source MyPy, compilation, CLI and whitespace checks.
+Both power observations accepted AC/80%/not charging. Gate SHA256 is
+`5423dd18ef203c3f944cef26ec7e615d3050d5779ec00216d554e719ec7ca611`.
+The second detached gate passed 277 auditor tests in 473.14 seconds and 71
+reporter tests in 35.60 seconds plus static/CLI checks. Its actual internal
+fixture checked 24 files, 18 custody records and eight log hashes. The unchanged
+archive-helper gate passed 58 tests. Source/gate pins were checked by normalized
+AST equivalence; no full post-pinning retest is claimed. This scoped admission
+does not replace the last complete repository/frontend gate at `b5ea55e`.
+
+The 101-file frozen tool archive, plus its manifest, retains the failed first
+admission and preparation evidence. Manifest SHA256 is
+`2868597eddee177459fa81e6e285b97600ad3ed4483ee77274aa3fd8f2601d69`.
+Launch was 2026-09-13 22:48:47.964 UTC (September 14, 00:48 Rome), under
+`caffeinate -i -s`, using the authorized fresh internal root and unchanged
+scientific protocol. The root PID was 55735. Process-only checks during execution
+did not inspect learner outcomes. The training wave later closed with both
+supervisors reporting admitted success, ordinary exit zero, closed trainer and
+supervisor groups, no fatal error and no cleanup failures.
+
+The root campaign nevertheless aborted at 2026-09-14 10:45:29.396 UTC
+(12:45 Rome). Post-replay sampling reported AC Power, battery present at 99%,
+state `finishing charge`; the new power guard parsed this state but rejected it
+because it was absent from the accepted-state list. The query exited zero within
+approximately 12.3 ms. This is a guard implementation defect, not evidence of
+power loss or a learner failure. The last replay child exited 86 after 394.94
+seconds, without signal or timeout. Its disk receipt survives even though the
+root report omits that last receipt: the reserved integrity exit raises before
+the completed child is appended to the root's receipt list.
+
+Full process-table checks found all known groups and the exact runner module
+absent before interpreting allowlisted completion metadata. Both arms completed
+65,536 transitions, eight rollouts, 2,560 minibatch optimizer updates and 100
+allocator resets covering seeds 9,630,000–9,630,099. Final checkpoints and results
+exist; checkpoint hashes match their result records. There is no pending or
+aborted training ledger or training-failure record. These checks establish saved
+training endpoints, not an admitted complete experiment or model quality.
+
+A metadata-only invocation of the frozen supervision verifier failed on A's
+stdout allocation field: recorded 589,824 bytes versus current 581,632 bytes.
+Logical size (580,389 bytes) and SHA256 match exactly. The reason for the physical
+allocation difference and when it occurred are unestablished. This post-closure
+verification failure is separate from the recorded power refusal and is not
+waived. The full frozen supervision check remains
+failed even though the wave's producer completion records report success.
+
+The partial campaign opened 26 of 56 evaluation slots and 26 of 56 replay slots.
+All 26 evaluation processes and 25 replay processes exited zero; the last replay
+failed its post-replay integrity check. These are process counts, not
+successful-week, safety or service results. Development seeds 9,700,300–9,700,302
+reached all seven actors;
+9,700,303 reached the initial residual, after all four baseline pairs. Remaining
+slots were not attempted. Rewards, costs, quality diagnostics, weights and
+trajectories remain uninterpreted in this closure review. The original registered
+study and protected seeds remain unopened; this partial development panel must
+not subsequently be represented as unseen held-out evidence.
+
+Forensic preservation hashed 568 run files, ten readiness files and 102 frozen
+tool files as opaque bytes, with path/FD identity checks and a subsequent
+metadata/inventory pass. All 680 originals remain on internal storage; no raw
+artifacts entered Git. Inventory SHA256 is
+`37d2ec6f25f0ff6d7f3dd949bfd97cd657378298ac93ab4ef067c7c09ef26f95`;
+power-refusal evidence SHA256 is
+`3bb591413ca3bffe09f1a3338713ef9fbab029caf0ff6ed2320ce6ec1c5957a4`.
+The exact preservation script is retained alongside them. The normal auditor,
+reporter and archive-copy helper were not run to admit this aborted campaign.
+Source remained clean and unchanged through preservation, before this publication.
+
+The supported next step is a prospective guard correction and explicit treatment
+of allocation metadata, followed by independently verified reuse of the exact
+saved endpoints in a separately frozen evaluation. There is no demonstrated
+metadata-based need to repeat training. Neither that repair nor a new run has
+been launched. Batch 007 stays aborted. See the [result record](results/ADAPTIVE_RL_BATCH_007_RESULTS.md).
+The fixed 6,720 kg/168-hour/28-delivery task is unchanged. No complete new
+comparison or preserved-service operational benefit has been established.
+
+Publication checks verified six evidence digests and their JSON records, 125
+local Markdown links across the three publication files, and clean whitespace.
+Independent review corrected the unknown timing of the allocation change and
+confirmed the failure cause and process counts. These are documentation checks;
+no runtime test rerun, repair admission or new experiment is claimed.
