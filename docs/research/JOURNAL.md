@@ -9810,3 +9810,70 @@ checks. The corrected helper compares copied fields recursively and leaves
 explicitly derived diagnostic summaries to the report author's independent
 checks. No result values were changed to pass validation. This is documentation
 verification, not an additional runtime regression gate or experiment.
+
+## 2026-09-14 — Ten-hour scope and completed economic/reward-timing audit
+
+The user imposed a ten-hour final investigation window, then use the existing
+trained policies. The window began at 21:01:28 UTC and ends at 07:01:28 UTC on
+September 15 (09:01:28 Rome). The existing endpoints remain immutable fallback
+artifacts, with their scientific limitations retained. No cloud spending,
+protected seeds, weakened obligations or automatic live promotion is included.
+
+The saved-trajectory audit plan was written before new calculations and committed
+as `b810622`. The [analysis](results/batch009_economic_audit_results.md) reads the
+closed batch-008 report and all 56 bound gzip histories, with no simulator or
+learner execution. All history/component sums reconcile; the 16 stopped M24 and
+E-beta prefixes remain excluded from complete-week means. Twenty-four arithmetic,
+reader and extraction fixtures, Black, strict MyPy, compilation and independent
+export checks passed. The initial extractor failures (empty zero-decision
+component map and the actual `info.reward` field) were fixed and retained before
+the final 100.78-second scan. Initial-residual and OperatingMPC timing rows match
+exactly on all eight cases.
+
+Observed operating savings were already credited. Fixed-trajectory battery-wear
+mean break-even multipliers are 1.7391 (scalar) and 1.6096 (PI); shortfall-penalty
+multipliers are 0.7369 and 0.6591 with the service credit unchanged. These are
+mathematical sensitivities, not calibrated credible ranges or an altered task.
+Even doubling the battery charge leaves a negative worst paired value difference.
+Battery throughput per produced kilogram improves substantially, while accepted
+process energy per produced kilogram improves only about 0.17% and 0.14%.
+Inventory restoration remains unresolved, so these are intensity proxies rather
+than certified steady-state efficiency or avoided lifetime degradation.
+
+At the actual gamma 0.995, saved scalar and PI trajectories still lose to
+OperatingMPC by mean discounted EUR 33.579 and 26.722. MPC remains above both at
+all fixed gammas 0.99, 0.995, 0.999 and 1.0. There is no hidden discounted PPO win
+that the undiscounted report suppressed. Much of the service loss occurs in day
+three, not uniquely at episode termination. Temporal objective alignment remains
+a controlled learning hypothesis; the observed results do not establish it as
+the cause or a repair.
+
+[Batch 009](ADAPTIVE_RL_BATCH_009_PROTOCOL.md), committed as `e83a9de` before
+implementation, fixes two fresh matched scalar learners with gamma 0.995 versus
+1.0, 16,384 transitions each, all other learner/task settings unchanged. This
+budget follows measured batch-007/008 runtime: approximately 2.32 hours of paired
+training plus 3.27 hours for both new endpoints' evaluation/replay. It prioritizes
+a complete short diagnostic over an overlong attempt. Both fixed final endpoints
+must complete all eight reused development cases and independent replays;
+existing batch-008 baselines are explicitly reused, not rerun or relabelled.
+The source/gate/frozen-tool admission remains required. Latest launch is 23:15 UTC,
+production cutoff 06:30 UTC and final pipeline cutoff 07:01:28 UTC. No new training
+has started at this entry. Deadline cancellation cannot admit an incomplete
+checkpoint or partial panel. The original registered study remains unopened.
+
+The full economic audit SHA256 is
+`2360c2a843c8aadbb61d0c050f105994736b91e91009e9d0baa05f984480aab8`.
+Raw probe, final analysis, validation logs and scripts are copied with verified
+content into internal `reward-alignment-009-economic-audit-20260914`; originals
+remain in place. The analysis code, fixtures, compact results and validation
+record are committed together. The separate new training runner and detached
+execution/audit tools are being implemented and checked prospectively.
+
+Publication distinguishes one descriptive extension: accepted process and solar
+energy normalization was added after the original audit-plan commit. Its timing
+relative to first inspecting those raw fields is not separately attested. The
+original plan text is retained and an explicit addendum records the extension;
+no sensitivity grid, inclusion rule, gamma test or selection rule changed.
+The raw-audit preservation inventory SHA256 is
+`a8aff679f873ad06198b150b4e05bbd128d5d1a25e26244ce4b293b018712a0b`
+(13 files, 3,197,482 bytes; originals retained).

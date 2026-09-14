@@ -12,6 +12,15 @@ fallback behavior.
 
 ## Files
 
+- [`Batch 009 economic audit`](results/batch009_economic_audit_results.md)
+  reconciles all 56 saved histories, values existing operating savings, and
+  separates battery intensity from plant energy intensity. Both PPO policies
+  remain behind OperatingMPC at every tested discount. Cost sensitivity can
+  reverse mean value but cannot restore lost delivery/resources.
+- [`ADAPTIVE_RL_BATCH_009_PROTOCOL.md`](ADAPTIVE_RL_BATCH_009_PROTOCOL.md)
+  freezes the final ten-hour investigation: a short matched scalar gamma
+  0.995/1.0 screen, unchanged economics and obligations, explicit reused
+  baselines, and an absolute deadline with the existing policies as fallback.
 - [`ADAPTIVE_RL_BATCH_008_RESULTS.md`](results/ADAPTIVE_RL_BATCH_008_RESULTS.md)
   closes all 56 fresh evaluation/replay pairs using the two preserved batch-007
   endpoints. The detached integrity audit passed and initial/native-MPC physical

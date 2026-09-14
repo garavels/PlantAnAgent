@@ -16,3 +16,8 @@ Use the frozen `adaptive-rl-batch-008-analysis/report/analysis.json`, SHA-256 `9
 ## Validation and limits
 
 Small fixtures validate field extraction, negative component signs, reconciliation, ratios, analytic break-even arithmetic and discount indexing. Source data must be stable, nonsymlink, singly linked regular files with exact path/size/hash checks; decompression is bounded. All deviations and unavailable fields are recorded. No economic coefficients are changed in the environment. Existing safety, individual-delivery and daily-resource regressions remain binding, regardless of rescored mean value. Root owns any subsequent training protocol, admission, conclusions and commits.
+
+
+## Recorded descriptive extension
+
+The original committed plan named battery throughput and electrolyser nonproductive energy. During implementation, the analysis additionally normalized accepted solar and accepted process energy by produced/delivered methane to distinguish cycling from plant energy intensity. This extension was added after the original plan commit; its timing relative to the first inspection of those raw fields is not separately attested. It is explicitly additional descriptive analysis, not a preregistered selection criterion. The original sensitivity grid, gamma grid, actor/seed inclusion and no-selection rules are unchanged.
