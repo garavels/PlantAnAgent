@@ -17,6 +17,20 @@ dist/
 # RL runs: checkpoints and training output are generated, often large, never source
 runs/
 
+# Private research workspace: experiments, evidence exports, and their supporting
+# implementation remain local until they are explicitly cleared for publication.
+/docs/research/
+/demo/
+/tools/publish_feasible25_demo.py
+/backend/src/plant_backend/mission_mpc.py
+/backend/src/plant_backend/research_playback.py
+/backend/tests/test_feasible25_*.py
+/backend/tests/test_feasible_benchmark_v1.py
+/backend/tests/test_feasible_mission.py
+/backend/tests/test_mission_mpc.py
+/backend/tests/test_physical_feasibility_assessment.py
+/backend/tests/test_research_playback.py
+
 # Tooling
 .DS_Store
 .env
