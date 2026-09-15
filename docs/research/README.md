@@ -12,9 +12,18 @@ fallback behavior.
 
 ## Files
 
+- [`ADAPTIVE_RL_BATCH_009_RESULTS.md`](results/ADAPTIVE_RL_BATCH_009_RESULTS.md)
+  closes the final paired reward-discount screen: both 16,384-transition policies
+  improve mean simulated weekly value versus OperatingMPC (EUR 143.87 and 145.48)
+  and pass strict safety in all eight reused development cases. Individual
+  deliveries and daily resource returns still regress; neither qualifies for
+  promotion. The baseline ran in recovery/fallback throughout. Gamma 1.0 adds
+  only EUR 1.61 on average versus the matched 0.995 arm.
+  The [compact evidence](results/adaptive_rl_batch_009_results.json) retains all
+  cases, explicit historical comparators, training budgets and artifact digests.
 - [`Batch 009 economic audit`](results/batch009_economic_audit_results.md)
   reconciles all 56 saved histories, values existing operating savings, and
-  separates battery intensity from plant energy intensity. Both PPO policies
+  separates battery intensity from plant energy intensity. Both older PPO endpoints
   remain behind OperatingMPC at every tested discount. Cost sensitivity can
   reverse mean value but cannot restore lost delivery/resources.
 - [`ADAPTIVE_RL_BATCH_009_PROTOCOL.md`](ADAPTIVE_RL_BATCH_009_PROTOCOL.md)

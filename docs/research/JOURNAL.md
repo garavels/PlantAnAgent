@@ -9917,3 +9917,104 @@ scientific-source invariance and a fully bound historical reference packet.
 Preparation logs and failed checks remain available outside Git. No full-repo or
 frontend test pass is inferred from this focused gate. Source will remain frozen
 through all production execution and detached reporting.
+
+
+## 2026-09-15 — Final paired PPO screen completed before the deadline
+
+Batch 009 launched at 21:39:37 UTC on September 14 after clean source
+`a8602d9256182469f6abb9ced2d62012e8cdc592`, tree
+`520cd4e0d6462e216ddcd875ed29842fe34c063b`, passed its exact scoped gate.
+All 351 source regression tests passed in 167.45 seconds, alongside Black,
+strict MyPy, compilation, CLI, whitespace, reference verification and the
+scientific invariance check. All inherited backend/simulator/frontend production
+files match the prior execution baseline; only the new runner was added.
+The separate detached-tool gate passed 174 fixtures (17 reference, 49 audit,
+11 report and 97 launcher/completion/freezer) plus static and CLI checks. Its
+first full attempt caught a wrong exception type introduced by a typing fix in
+the deadline worker; the original typed failure contract was restored before the
+complete passing rerun. The first actual reference-admission invocation lacked
+its output directory, wrote no packet and was repeated unchanged after creating
+the exclusive directory. All failures and preparation artifacts remain retained.
+
+The reference admission binds 907 previous closed artifacts. Source-gate SHA256
+is `1e471a67cfcec5fe9eccd7be105156c4afcaa528c2d6811f32fd273226b8921f`;
+final frozen-tool manifest SHA256 is
+`db7b5981a706ec2461e723f3fc8da659bb0c7425c8244edac22479817186545f`.
+A separate frozen completion worker began after validated startup, while a
+single scheduled follow-up preserved outcome blindness without agent polling.
+Both fresh scalar arms completed their fixed two-rollout budgets. All 16 new
+evaluations and 16 independent replays closed, with no retry, source change,
+interim selection, protected seed use or altered economic coefficient.
+
+Production closed normally at 03:05:42 UTC on September 15. The completion worker
+verified writer closure at 03:05:58, then ran the frozen audit and report in
+135.67 and 99.02 seconds respectively. Both exited zero and their process groups
+closed. Completion was recorded at 03:09:53 UTC, ahead of the 06:30 production
+cutoff and 07:01:28 final deadline. The outcome-read-while-writers-active flag is
+false. At the 05:15 scheduled review no production or completion writer remained.
+No frozen analysis, training, simulator or evaluation is rerun for publication.
+
+The [results](results/ADAPTIVE_RL_BATCH_009_RESULTS.md) show a positive average
+signal with unresolved operational constraints. Relative to OperatingMPC, mean
+undiscounted value improves by EUR 143.8664 (gamma 0.995, six of eight value wins)
+and EUR 145.4767 (gamma 1.0, five wins). Both pass strict safety in all eight
+cases. Mean delivery is only 0.5990 and 0.7024 kg/week lower, but averaging hides
+23 and 28 individual-delivery regressions out of 224, with worst single losses
+of 32.879 and 42.855 kg. Both also worsen individual daily resource deficits.
+The worst paired weekly value differences remain EUR -717.33 and -695.91.
+No endpoint satisfies the frozen every-delivery/every-resource checks.
+
+The OperatingMPC baseline executed zero scheduled-mode decisions on this panel:
+5,327 recovery and 49 fallback decisions. The gamma-0.995 endpoint has the same
+mode counts; gamma 1.0 has 5,343 recovery and 33 fallback decisions. The average
+gain therefore compares against this controller in its observed recovery/fallback
+regime; superiority over an actively scheduled MPC optimizer remains untested.
+
+The matched gamma-1.0 minus gamma-0.995 contrast is only EUR +1.6103 on average,
+with three of eight wins, median EUR -40.77 and worst difference EUR -939.95.
+It does not establish reward-discount alignment as a successful repair. The new
+endpoints rank above MPC on undiscounted value but below it under gamma 0.995;
+this observed ordering differs from the older endpoints, which the saved-history
+audit found behind MPC at every tested discount. Different trajectory scoring
+and a causal training improvement are separate claims.
+
+Both short-run endpoints have better mean value than the older 65,536-transition
+policies, but this is not a matched training-budget comparison or proof that
+longer training causes degradation. One optimizer seed and eight reused adaptive
+development cases support a descriptive result only. M24 and E-beta remain
+stopped historical comparisons with unavailable full-week values; they are not
+counted as eight demonstrated unsafe episodes. No policy is selected, promoted
+or described as commercially superior. Existing policies remain preserved as
+the user's fallback; no new experiment or confirmation is launched.
+
+
+Independent publication verification passed on 1,634 unique content records,
+including all 1,614 audit-declared records, 907 inherited reference records and
+all 312 batch-root files (overlapping sets, not additive counts). All 34 receipts
+match: two trainers, 16 evaluations and 16 replays, with exact order, no integrity
+codes and matching deadline sidecars. The trainers took 8,223.97 and 8,228.70
+seconds under the 12,600-second limit; the longest serial child took 410.43
+seconds under 600. Source/tree/gate/tool bindings and both compact-JSON versus
+file digest joins pass. Current process scans are empty. Initial source was
+captured clean before the declared post-closure publication edits.
+
+The separate compact-publication check passed 1,755 exact/arithmetic comparisons
+and 138 local Markdown links. It checks all nine actors, 15 contrasts, every
+negative delivery row, every positive resource row, seed-level tails, checkpoint
+records and displayed paired value metrics. Two initial helper failures confused
+a maximum-deficit record with its numeric value; the final helper checks the
+full seed/cycle/value record. A relative output path was then rejected by the
+custody writer before repository validation publication; the absolute path
+succeeded. Published research values were not changed by these helper fixes.
+These are publication checks, not new runtime regression suites or experiments.
+
+The raw independent verification SHA256 is
+`becd43fdf4855d3a6fb3b5e37d54bffa5dc05a0e30ea6d55786bbe388e92867e`.
+Eight publication scripts, reports and logs are preserved with originals retained
+under internal `reward-alignment-009-publication-20260915`; inventory SHA256 is
+`ba5bed51a964f95c7ac2fd7522de52cae23f42fab08826180fc3f08eec2c297d`.
+The compact repository validation record is
+`results/adaptive_rl_batch_009_validation.json`. No further training is scheduled;
+the one-shot review is closed after publishing this result. The final ten-hour
+investigation is complete, with positive average evidence and all failed
+qualification checks retained.
