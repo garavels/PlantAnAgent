@@ -9967,8 +9967,9 @@ No endpoint satisfies the frozen every-delivery/every-resource checks.
 The OperatingMPC baseline executed zero scheduled-mode decisions on this panel:
 5,327 recovery and 49 fallback decisions. The gamma-0.995 endpoint has the same
 mode counts; gamma 1.0 has 5,343 recovery and 33 fallback decisions. The average
-gain therefore compares against this controller in its observed recovery/fallback
-regime; superiority over an actively scheduled MPC optimizer remains untested.
+gain compares against 5,327 accepted optimized MPC plans and 49 heuristic
+fallbacks. Recovery remains active optimization; the correction below retracts
+the initial publication's contrary inference from the mode label.
 
 The matched gamma-1.0 minus gamma-0.995 contrast is only EUR +1.6103 on average,
 with three of eight wins, median EUR -40.77 and worst difference EUR -939.95.
@@ -10018,3 +10019,34 @@ The compact repository validation record is
 the one-shot review is closed after publishing this result. The final ten-hour
 investigation is complete, with positive average evidence and all failed
 qualification checks retained.
+
+
+## 2026-09-15 — Correction: Recovery is active MPC optimization
+
+The initial batch-009 publication and conversational summaries incorrectly
+inferred that zero `scheduled` labels meant comparison against an active MPC
+optimizer remained untested. This was an interpretation error, not an execution
+or accounting defect. `operational_mpc.py` calls the economic solver, issues the
+accepted plan's first optimized targets, and only then labels that plan Recovery
+when current/projected inventories or deliveries show deficits. Only a rejected
+plan uses the heuristic Fallback. The existing real-plan recovery test explicitly
+checks a nonempty plan, Recovery mode and absence of solver failure. The controller
+source is identical to frozen execution revision `a8602d9`.
+
+The actual baseline executed 5,327 accepted optimized plans (99.09%) and 49
+heuristic fallbacks. The comparison therefore was against actively optimizing
+MPC, predominantly under recovery conditions. Numerical outcomes, strict safety,
+delivery/resource regressions, the no-promotion decision and all raw frozen
+artifacts are unchanged. The authored report, compact interpretation, README and
+this journal clarify the mode semantics; the prior publication remains preserved
+in commit `4a3f31c` and its archived validation evidence. No experiment, inference,
+simulator or frozen analysis rerun is needed for this correction.
+
+The correction passed the same 1,755 compact-publication comparisons and 138
+local-link checks. Only one explanatory compact-JSON limit changed; all other
+fields, including every metric and selection flag, are identical. Original
+validation and new checks are preserved under internal
+`reward-alignment-009-interpretation-correction-20260915`; inventory SHA256 is
+`f99f71081221536e1a1c59fba726bcb59b72193978cf987e7cc2e34a5da66040`.
+The repository validation binds the corrected prose and preserves the earlier
+validation separately. No runtime regression rerun is claimed.

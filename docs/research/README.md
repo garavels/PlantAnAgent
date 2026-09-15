@@ -17,7 +17,8 @@ fallback behavior.
   improve mean simulated weekly value versus OperatingMPC (EUR 143.87 and 145.48)
   and pass strict safety in all eight reused development cases. Individual
   deliveries and daily resource returns still regress; neither qualifies for
-  promotion. The baseline ran in recovery/fallback throughout. Gamma 1.0 adds
+  promotion. The MPC baseline accepted optimized recovery plans in 99.09% of
+  decisions; only the remaining fallbacks used the heuristic. Gamma 1.0 adds
   only EUR 1.61 on average versus the matched 0.995 arm.
   The [compact evidence](results/adaptive_rl_batch_009_results.json) retains all
   cases, explicit historical comparators, training budgets and artifact digests.

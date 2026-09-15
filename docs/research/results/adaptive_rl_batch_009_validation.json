@@ -138,16 +138,16 @@
   },
   "compact_publication_validation": {
     "compact_results": {
-      "bytes": 417691,
+      "bytes": 417894,
       "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/adaptive_rl_batch_009_results.json",
-      "sha256": "118787fef3edaf6fffdcef87f2f29876ed17f71802eb90b3ebc380e04b5f6c08"
+      "sha256": "1b6df673ca1ac3df03f16a11d01f454251b75f8f9b5a1efed92f27de9058d217"
     },
     "exact_or_arithmetic_comparisons": 1755,
     "local_markdown_links": 138,
     "markdown_results": {
-      "bytes": 13716,
+      "bytes": 14038,
       "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/ADAPTIVE_RL_BATCH_009_RESULTS.md",
-      "sha256": "3251a9e2c811d1fbbe4b005066a884a2274d2e85169b025619c5435baadc8e71"
+      "sha256": "e46f6475a645d755f2317e6f5eaeac93801812403030caf76aca761ff70f604e"
     },
     "passed": true,
     "production_rerun": false,
@@ -157,6 +157,35 @@
       "path": "/Users/filippogombac/Developer/PlantAnAgentResearch/adaptive-rl-batch-009-analysis/report/analysis.json",
       "sha256": "285f53d1ae6f3a07a4b6c657071711b338c9ef206fa9a0575fc122f34ccb7f31"
     }
+  },
+  "interpretation_correction": {
+    "all_non_limits_compact_fields_unchanged": true,
+    "evidence_inventory": {
+      "bytes": 2271,
+      "path": "/Users/filippogombac/Developer/PlantAnAgentResearch/reward-alignment-009-interpretation-correction-20260915/inventory.json",
+      "sha256": "f99f71081221536e1a1c59fba726bcb59b72193978cf987e7cc2e34a5da66040"
+    },
+    "existing_semantics_test_rerun": false,
+    "new_experiments": false,
+    "numeric_results_unchanged": true,
+    "previous_validation": {
+      "bytes": 7477,
+      "path": "/Users/filippogombac/Developer/PlantAnAgentResearch/reward-alignment-009-interpretation-correction-20260915/adaptive_rl_batch_009_validation.json",
+      "sha256": "72bce4034062fc4145c45c009916a253530fbdee8469d5885da4ed9cefeb6fe0"
+    },
+    "reason": "Recovery is an accepted optimized MPC plan; only Fallback invokes the heuristic. The initial publication incorrectly inferred inactive optimization from zero scheduled labels.",
+    "source_semantics": [
+      {
+        "bytes": 20824,
+        "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/backend/src/plant_backend/operational_mpc.py",
+        "sha256": "f19076d0a355aa75344680b465240cb245d57ab101fb6c3d2e9167c76fde0bb0"
+      },
+      {
+        "bytes": 20990,
+        "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/backend/tests/test_operational_mpc.py",
+        "sha256": "3d2b80d2fbbcd56bbeb9a5639050e42cb8aa1d2565095658f378fa12440db0fd"
+      }
+    ]
   },
   "no_production_rerun": true,
   "passed": true,

@@ -13908,7 +13908,7 @@
     "Strict delivery/resource regression cannot be waived by economic reweighting.",
     "The comparison with earlier 65,536-transition endpoints is descriptive; the earlier training budget is four times larger.",
     "M24 and E-beta supply stopped prefixes only. Their complete-episode safety is unavailable, not eight demonstrated unsafe episodes.",
-    "OperatingMPC and both fresh residual policies have zero scheduled-mode decisions on this panel; comparisons concern recovery/fallback operation.",
+    "OperatingMPC accepted 5,327 optimized recovery plans and used 49 heuristic fallbacks. Recovery remains active MPC optimization with current/projected resource deficits or forecast delivery shortfalls; zero scheduled labels does not mean zero optimization. The comparison is against actively optimizing MPC, predominantly under recovery conditions.",
     "Positive average simulated value is not evidence of site-calibrated commercial savings."
   ],
   "schema": "plant-adaptive-reward-alignment-batch-009-compact-results-v1",
