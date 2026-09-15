@@ -27,6 +27,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from . import authoring
+from .adaptive_learning import router as adaptive_learning_router
 from .hepa.api import configure as configure_hepa
 from .hepa.api import router as hepa_router
 from .orchestration import Broadcaster, PlantRuntime, SimulationClock
@@ -66,6 +67,7 @@ configure_hepa(lambda: list(runtime.session.history))
 app.include_router(v2_demo_router)
 app.include_router(ppo_evidence_router)
 app.include_router(ppo_evaluation_router)
+app.include_router(adaptive_learning_router)
 
 # Dev only: the Vite dev server proxies /api, but allow direct calls too.
 app.add_middleware(

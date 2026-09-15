@@ -1,0 +1,150 @@
+.w-learning-tabs {
+  display: flex;
+  gap: 26px;
+  border-bottom: 1px solid var(--hairline);
+  margin: 25px 0 0;
+}
+.w-learning-tabs button {
+  padding: 0 0 13px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 13px;
+}
+.w-learning-tabs button[aria-selected="true"] {
+  border-bottom-color: var(--accent);
+  color: var(--text);
+}
+.w-learning-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 18px;
+  margin: 25px 0;
+}
+.w-learning-toolbar label {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+.w-learning-toolbar select {
+  max-width: 100%;
+  min-width: 200px;
+}
+.w-learning-context {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px 20px;
+  color: var(--text-dim);
+  font-size: 12px;
+}
+.w-learning-context p {
+  margin: 0;
+}
+.w-learning-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 25px;
+  margin: 26px 0;
+}
+.w-learning-summary dt {
+  color: var(--text-dim);
+  font-size: 12px;
+}
+.w-learning-summary dd {
+  margin: 11px 0 0;
+  font-size: 24px;
+  font-weight: 400;
+  letter-spacing: -0.025em;
+}
+.w-learning-summary small {
+  display: block;
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 0;
+  line-height: 1.5;
+}
+.w-learning-panel > .w-section:first-child {
+  margin-top: 0;
+  border-top: 0;
+}
+.w-learning-panel .w-table caption {
+  text-align: left;
+  padding-bottom: 12px;
+  color: var(--text-dim);
+  font-size: 11px;
+}
+.w-learning-panel .w-table td {
+  font-variant-numeric: tabular-nums;
+}
+.w-learning-panel .w-table td.w-amber {
+  color: var(--solar);
+}
+.w-learning-selected > th,
+.w-learning-selected > td {
+  background: rgba(179, 203, 146, 0.04);
+}
+.w-learning-panel .w-table th:first-child {
+  min-width: 120px;
+}
+.w-learning-state {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-dim);
+}
+.w-learning-detail {
+  margin: 16px 0;
+  font-size: 12px;
+}
+.w-learning-detail > summary {
+  cursor: pointer;
+  color: var(--accent);
+  padding: 5px 0;
+}
+.w-learning-issues {
+  padding: 0 0 0 18px;
+  color: var(--text-dim);
+  font-size: 12px;
+  line-height: 1.7;
+}
+.w-learning-mobile-label {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.w-learning-updating {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+@media (max-width: 900px) {
+  .w-learning-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .w-learning-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+@media (max-width: 540px) {
+  .w-learning-tabs {
+    gap: 23px;
+  }
+  .w-learning-toolbar label,
+  .w-learning-toolbar select {
+    width: 100%;
+  }
+  .w-learning-summary {
+    gap: 20px 16px;
+  }
+  .w-learning-summary dd {
+    font-size: 21px;
+  }
+}

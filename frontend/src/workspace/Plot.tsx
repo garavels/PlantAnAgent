@@ -12,6 +12,9 @@ export function Plot({
   unit,
   series,
   domain,
+  yDomain,
+  valueDigits,
+  showPoints = false,
   cursor,
   onSelect,
   band,
@@ -22,6 +25,9 @@ export function Plot({
   unit: string;
   series: Series[];
   domain?: [number, number];
+  yDomain?: [number, number];
+  valueDigits?: number;
+  showPoints?: boolean;
   cursor?: number;
   onSelect?: (x: number) => void;
   band?: { x: number; low: number; high: number }[];
@@ -46,12 +52,14 @@ export function Plot({
     start + 0.25,
     domain?.[1] ?? Math.max(1, ...pts.map((p) => p.x)),
   );
-  const lo = Math.min(
+  const validYDomain = yDomain && Number.isFinite(yDomain[0]) &&
+    Number.isFinite(yDomain[1]) && yDomain[0] < yDomain[1];
+  const lo = validYDomain ? yDomain[0] : Math.min(
     0,
     ...pts.map((p) => p.y),
     ...(band?.map((p) => p.low) ?? []),
   );
-  const hi = Math.max(
+  const hi = validYDomain ? yDomain[1] : Math.max(
     1,
     ...pts.map((p) => p.y),
     ...(band?.map((p) => p.high) ?? []),
@@ -62,6 +70,11 @@ export function Plot({
   const x = (v: number) =>
     left + ((v - start) / (end - start)) * (right - left);
   const y = (v: number) => bottom - ((v - lo) / (hi - lo)) * (bottom - 25);
+  const valueLabel = (value: number, defaultDigits: number) =>
+    valueDigits !== undefined && value !== 0 &&
+    Math.abs(value) < 0.5 * 10 ** -valueDigits
+      ? value.toExponential(1)
+      : n(value, valueDigits ?? defaultDigits);
   const path = (p: Series["points"], step = false) =>
     p
       .map((v, i) =>
@@ -129,7 +142,7 @@ export function Plot({
               className="w-gridline"
             />
             <text x={left - 9} y={y(v) + 4} textAnchor="end">
-              {n(v, 0)}
+              {valueLabel(v, 0)}
             </text>
           </g>
         ))}
@@ -154,14 +167,15 @@ export function Plot({
                 strokeWidth="2"
                 strokeDasharray={s.dashed ? "5 4" : undefined}
               />
-              {s.points.length === 1 && (
+              {(showPoints || s.points.length === 1) && s.points.map((point, index) => (
                 <circle
-                  cx={x(s.points[0].x)}
-                  cy={y(s.points[0].y)}
-                  r="4"
+                  key={index}
+                  cx={x(point.x)}
+                  cy={y(point.y)}
+                  r={showPoints ? 3 : 4}
                   fill={s.color}
                 />
-              )}
+              ))}
             </g>
           ))}
           {current !== undefined && current !== null && (
@@ -195,7 +209,7 @@ export function Plot({
           <span key={s.label}>
             <i style={{ background: s.color }} />
             {s.label}
-            {hover !== null && s.value ? ` ${n(s.value.y)} ${unit}` : ""}
+            {hover !== null && s.value ? ` ${valueLabel(s.value.y, 1)} ${unit}` : ""}
           </span>
         ))}
         {band && <span>p10–p90 range</span>}

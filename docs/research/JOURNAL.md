@@ -10050,3 +10050,74 @@ validation and new checks are preserved under internal
 `f99f71081221536e1a1c59fba726bcb59b72193978cf987e7cc2e34a5da66040`.
 The repository validation binds the corrected prose and preserves the earlier
 validation separately. No runtime regression rerun is claimed.
+
+## 2026-09-15 — Learning product evidence projection (prospective)
+
+The user authorizes populating the existing Learning page with the completed
+adaptive PPO runs. The implementation will preserve the workspace identity and
+separate recorded training diagnostics, development evaluation and campaign
+history. A portable, checksummed JSON projection will bind the closed batch-008
+and batch-009 reports, the four latest evaluated endpoints and all nine actors
+on eight reused development scenarios. Earlier attempts, interruptions, negative
+comparisons, stopped prefixes and individual delivery/resource regressions stay
+visible. Recovery retains its actual meaning: an accepted optimized MPC plan.
+
+The projection is a read-only product integration. It does not launch training,
+reopen protected seeds, select or promote a policy, load a checkpoint, or enable
+live residual PPO control. The 139-input MPC-residual models remain experimental;
+the original 15-policy registered study remains pending. Raw research stays
+outside Git. Validation will cover source pins, deterministic projection, API
+contract and paired arithmetic, frontend checks and visual inspection of the
+finished Learning page. Existing unrelated plant-3D/style edits are preserved.
+
+### Implementation and validation
+
+Learning now has Training, Evaluation and History views backed by the portable
+package export. It includes four endpoints, nine actors, 72 scenario records,
+26 published contrasts (208 paired cases), and the pilot plus all nine adaptive
+campaigns. Scalar placeholders are not displayed as active multipliers. Stopped
+M24/E-beta cases keep their failure reasons and observed prefixes; full-week
+metrics remain unavailable. Batch 006 and 007 retain aborted campaign status.
+The two completed batch-007 endpoints identify their later batch-008 evaluation.
+The registered study remains pending and no control path changed.
+
+The deterministic export is 392,493 bytes, canonical evidence SHA256
+`848ab87d44d5f22d2539dce52ba8a0d0726b0afdb50aec24781dd925a7ee7b88`,
+file SHA256
+`e00a96ddd1f0fb579b46e367f9720ba866c32eec64ffa22ac4fbc954280132a1`.
+A second projection reproduced the packaged bytes exactly, with no absolute host
+paths. A built backend wheel contains the identical JSON. An independent read-only
+review matched 1,979 recorded delivery/resource rows and all 208 paired cases to
+the frozen reports; the API validates every paired regression arithmetically.
+No model, simulator, protected seed or experiment was opened by this publication.
+
+The new API/projection and existing registered public-evidence/evaluation suites
+passed **79 Python tests**. Strict MyPy passed for both new source modules; Black
+and whitespace checks passed. The frontend production build, lint and **11 Node
+tests** passed, including real exported results, negative tails, unavailable
+comparisons, fractional diagnostic scales and unchanged default Plot behavior.
+Existing warnings remain: the 3D bundle exceeds Vite's size threshold and
+Starlette reports the existing test-client dependency deprecation.
+
+Browser inspection covered Training, Evaluation, History, policy/comparator
+selection, an adverse scenario's 28 individual deliveries, stopped M24 evidence,
+evidence refresh and the unopened registered panel at desktop and narrow widths.
+It exposed rounded fractional chart ticks; Learning now opts into precise axes
+and markers for only its actual two/eight observations. Other Plot users retain
+their defaults. Critic curves are labeled pre-update MSE in squared scaled-reward
+units rather than optimizer loss. Tiny nonzero regressions preserve their sign.
+
+Implementation preparation failures remain explicit: the first export validation
+rejected structured source failure objects against the public string contract;
+the publisher now preserves their kind, phase, type and message in readable text
+and retains unfamiliar records as JSON. An initial test invocation named two
+nonexistent files and ran no tests; the corrected suite passed above. The runtime
+venv lacked Hatchling for a packaging check; the already cached build tool was
+used successfully without installing dependencies. Local Vite needed the normal
+loopback-listener sandbox escalation. No evidence or test failure was waived.
+
+Concurrent economics, plant-3D and delivery-marker work is preserved outside this
+commit; the shared Plot commit includes only Learning's opt-in axis/point changes.
+This completes the requested Learning evidence integration, not residual-policy
+playback or live deployment. Scientific claims and qualification outcomes are
+unchanged.

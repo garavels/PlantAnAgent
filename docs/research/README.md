@@ -12,6 +12,12 @@ fallback behavior.
 
 ## Files
 
+- [`LEARNING_PRODUCT_EVIDENCE.md`](LEARNING_PRODUCT_EVIDENCE.md) documents the
+  populated Learning workspace: four evaluated PPO endpoints, recorded training
+  diagnostics, all 26 published development contrasts and the full campaign
+  history. It serves portable verified evidence without loading models or changing
+  operational authority; failed qualification and unopened registered study remain
+  explicit.
 - [`ADAPTIVE_RL_BATCH_009_RESULTS.md`](results/ADAPTIVE_RL_BATCH_009_RESULTS.md)
   closes the final paired reward-discount screen: both 16,384-transition policies
   improve mean simulated weekly value versus OperatingMPC (EUR 143.87 and 145.48)
