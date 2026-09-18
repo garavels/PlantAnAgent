@@ -1,4 +1,4 @@
-.PHONY: help setup dev backend frontend sim test eval foresight-eval rl-eval rl-ceiling v2-eval v2-weather-eval v2-controller-eval v2-planner v2-mpc v2-mpc-report v2-mpc-setpoint v2-economic-smoke v2-economic-robustness v2-economic-robustness-verify v2-full-day-horizon-repair v2-full-day-horizon-repair-verify v2-train-dry v2-train v2-rl-eval v2-controller-benchmark v2-beta-controller-benchmark v2-beta-controller-benchmark-verify v2-beta-rl-capacity v2-beta-rl-capacity-verify train-dry train \
+.PHONY: setup-research test-research research-smoke test-frontend help setup dev backend frontend sim test eval foresight-eval rl-eval rl-ceiling v2-eval v2-weather-eval v2-controller-eval v2-planner v2-mpc v2-mpc-report v2-mpc-setpoint v2-economic-smoke v2-economic-robustness v2-economic-robustness-verify v2-full-day-horizon-repair v2-full-day-horizon-repair-verify v2-train-dry v2-train v2-rl-eval v2-controller-benchmark v2-beta-controller-benchmark v2-beta-controller-benchmark-verify v2-beta-rl-capacity v2-beta-rl-capacity-verify train-dry train \
 	hepa-collect hepa-pretrain-dry hepa-pretrain hepa-finetune-dry hepa-finetune \
 	hepa-eval build clean
 
@@ -6,8 +6,20 @@ help:             ## list targets
 	@grep -E '^[a-z0-9-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*##/\t/'
 
 setup:            ## install python + node dependencies
-	uv sync
-	cd frontend && npm install
+	uv sync --frozen --group optimisation
+	cd frontend && npm ci
+
+setup-research:   ## install the optional training and experiment dependencies
+	uv sync --frozen --group train --group optimisation
+
+test-research:    ## verify frozen experiment code in its own interpreter
+	uv run --frozen --group train --group optimisation python tools/test_backend.py research
+
+research-smoke:   ## short model/physics check; no full experiment or retraining
+	uv run --no-sync python tools/reproduce.py smoke --output $(or $(OUT),output/reproduction-smoke)
+
+test-frontend:    ## run frontend regression tests
+	cd frontend && npm test
 
 backend:          ## run the control backend on :8000
 	uv run uvicorn plant_backend.app:app --reload --port 8000
@@ -213,7 +225,7 @@ hepa-eval:        ## score a stage-2 checkpoint per event and per horizon
 		--dataset $(or $(DATASET),datasets/hepa)
 
 test:             ## simulator + backend test suite
-	uv run pytest -q
+	uv run --frozen --group train --group optimisation python tools/test_backend.py app
 
 build:            ## typecheck + build the frontend
 	cd frontend && npm run build

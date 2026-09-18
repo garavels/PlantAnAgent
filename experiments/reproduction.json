@@ -1,0 +1,890 @@
+{
+  "schema": "plant-reproduction-v1",
+  "primary": {
+    "recipe": "cem-ridge-bias-g16",
+    "reference": "storage-m48-b60-r3"
+  },
+  "seeds": [
+    52000000,
+    52000001,
+    52000002,
+    52000003,
+    52000004,
+    52000005,
+    52000006,
+    52000007,
+    52000008,
+    52000009,
+    52000010,
+    52000011,
+    52000012,
+    52000013,
+    52000014,
+    52000015,
+    52000016,
+    52000017,
+    52000018,
+    52000019,
+    52000020,
+    52000021,
+    52000022,
+    52000023,
+    52000024,
+    52000025,
+    52000026,
+    52000027,
+    52000028,
+    52000029,
+    52000030,
+    52000031
+  ],
+  "conditions": [
+    "ordinary",
+    "control",
+    "pv6",
+    "pv18",
+    "pv36",
+    "meth24",
+    "meth48"
+  ],
+  "selected_generation": 15,
+  "optimizer_seeds": [
+    5901,
+    5902,
+    5903
+  ],
+  "gaussian": {
+    "behavior_clone": {
+      "batch_size": 512,
+      "critic_epochs": 15,
+      "critic_learning_rate": 0.0003,
+      "epochs": 60,
+      "learning_rate": 0.001,
+      "off_target_margin": 0.3,
+      "on_target_margin": 0.0
+    },
+    "checkpoint_steps": 65536,
+    "dataset": "demonstrations/original-storage/demonstrations.npz",
+    "entropy_end": 0.0,
+    "entropy_start": 0.0002,
+    "environments": 4,
+    "extra_source_paths": [],
+    "freeze_observation_statistics": true,
+    "initial_checkpoint": null,
+    "initialization": "behavior_clone",
+    "learning_rate_end": 1e-05,
+    "learning_rate_start": 0.0001,
+    "mixture_weights": {
+      "meth24": 0.1,
+      "meth48": 0.1,
+      "ordinary": 0.5,
+      "pv18": 0.1,
+      "pv36": 0.1,
+      "pv6": 0.1
+    },
+    "n_steps": 2048,
+    "normalization": {
+      "clip_obs": 10.0,
+      "epsilon": 1e-08,
+      "norm_obs": true,
+      "norm_reward": false
+    },
+    "optimizer_seed": 901,
+    "ppo": {
+      "batch_size": 256,
+      "clip_range": 0.2,
+      "gae_lambda": 0.99,
+      "gamma": 1.0,
+      "max_grad_norm": 0.5,
+      "n_epochs": 10,
+      "policy_kwargs": {
+        "log_std_init": -2.5,
+        "net_arch": {
+          "pi": [
+            128,
+            128
+          ],
+          "vf": [
+            128,
+            128
+          ]
+        }
+      },
+      "target_kl": null,
+      "vf_coef": 0.5
+    },
+    "reset_log_std": null,
+    "reward_scale": 0.001,
+    "scenario_sampler_seed": 9100,
+    "total_timesteps": 262144
+  },
+  "hybrid": {
+    "behavior_clone": {
+      "batch_size": 512,
+      "critic_epochs": 20,
+      "critic_learning_rate": 0.0003,
+      "epochs": 300,
+      "gate_confidence_weight": 0.25,
+      "gate_logit_target": 6.0,
+      "gate_loss_weight": 1.0,
+      "learning_rate": 0.001,
+      "magnitude_loss_weight": 1.0,
+      "relative_magnitude_floor": 0.05
+    },
+    "checkpoint_steps": 8192,
+    "dataset": "demonstrations/original-plus-dagger/demonstrations.npz",
+    "entropy_end": 0.0,
+    "entropy_start": 0.0,
+    "environments": 4,
+    "extra_source_paths": [],
+    "freeze_observation_statistics": true,
+    "initial_checkpoint": null,
+    "initialization": "behavior_clone",
+    "learning_rate_end": 1e-05,
+    "learning_rate_start": 3e-05,
+    "mixture_weights": {
+      "meth24": 0.1,
+      "meth48": 0.1,
+      "ordinary": 0.5,
+      "pv18": 0.1,
+      "pv36": 0.1,
+      "pv6": 0.1
+    },
+    "n_steps": 2048,
+    "normalization": {
+      "clip_obs": 10.0,
+      "epsilon": 1e-08,
+      "norm_obs": true,
+      "norm_reward": false
+    },
+    "optimizer_seed": 903,
+    "ppo": {
+      "batch_size": 256,
+      "clip_range": 0.2,
+      "gae_lambda": 0.995,
+      "gamma": 1.0,
+      "max_grad_norm": 0.5,
+      "n_epochs": 10,
+      "policy_kwargs": {
+        "initial_off_probability": 0.5,
+        "initial_on_std": 0.001,
+        "max_on_std": 0.1,
+        "min_on_std": 0.0001,
+        "net_arch": {
+          "pi": [
+            256,
+            256
+          ],
+          "vf": [
+            128,
+            128
+          ]
+        }
+      },
+      "target_kl": 0.02,
+      "vf_coef": 0.5
+    },
+    "reset_log_std": null,
+    "reward_scale": 0.001,
+    "scenario_sampler_seed": 9100,
+    "total_timesteps": 8192
+  },
+  "search": {
+    "antithetic_pairs": 7,
+    "condition_weights": {
+      "meth24": 0.1,
+      "meth48": 0.1,
+      "ordinary": 0.5,
+      "pv18": 0.1,
+      "pv36": 0.1,
+      "pv6": 0.1
+    },
+    "elite_count": 4,
+    "extra_source_paths": [],
+    "gate_parameter_scale": 2.0,
+    "generations": 20,
+    "initial_std": 1.0,
+    "mean_scale_cap": 0.05,
+    "mean_scale_floor": 0.001,
+    "mean_scale_multiplier": 0.03,
+    "minimum_std": 0.15,
+    "optimizer_seed": 5901,
+    "parent_checkpoint": "initialization/hybrid-solar-ridge/training/initial-policy.zip",
+    "population": 16,
+    "search_seed": 5901,
+    "smoothing": 0.5,
+    "training_dataset": "demonstrations/original-plus-dagger/demonstrations.npz",
+    "training_seed_pairs": [
+      [
+        50380000,
+        50380001
+      ],
+      [
+        50380002,
+        50380003
+      ],
+      [
+        50380004,
+        50380005
+      ],
+      [
+        50380006,
+        50380007
+      ],
+      [
+        50380008,
+        50380009
+      ],
+      [
+        50380010,
+        50380011
+      ],
+      [
+        50380012,
+        50380013
+      ],
+      [
+        50380014,
+        50380015
+      ],
+      [
+        50380016,
+        50380017
+      ],
+      [
+        50380018,
+        50380019
+      ],
+      [
+        50380020,
+        50380021
+      ],
+      [
+        50380022,
+        50380023
+      ],
+      [
+        50380024,
+        50380025
+      ],
+      [
+        50380026,
+        50380027
+      ],
+      [
+        50380028,
+        50380029
+      ],
+      [
+        50380030,
+        50380031
+      ],
+      [
+        50380032,
+        50380033
+      ],
+      [
+        50380034,
+        50380035
+      ],
+      [
+        50380036,
+        50380037
+      ],
+      [
+        50380038,
+        50380039
+      ]
+    ],
+    "validation_seeds": [
+      50390000,
+      50390001,
+      50390002,
+      50390003
+    ],
+    "workers": 3
+  },
+  "original-storage": {
+    "cases": [
+      {
+        "condition": "ordinary",
+        "seed": 50100000
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50100001
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50100002
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50100003
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50100004
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50100005
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50100006
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50100007
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50100008
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50100009
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50100010
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50100011
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50100012
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50100013
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50100014
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50100015
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50100016
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50100017
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50100018
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50100019
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50100020
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50100021
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50100022
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50100023
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50100024
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50100025
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50100026
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50100027
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50100028
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50100029
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50100030
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50100031
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50100032
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50100033
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50100034
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50100035
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50100036
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50100037
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50100038
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50100039
+      },
+      {
+        "condition": "pv6",
+        "seed": 50100100
+      },
+      {
+        "condition": "pv6",
+        "seed": 50100101
+      },
+      {
+        "condition": "pv6",
+        "seed": 50100102
+      },
+      {
+        "condition": "pv6",
+        "seed": 50100103
+      },
+      {
+        "condition": "pv6",
+        "seed": 50100104
+      },
+      {
+        "condition": "pv6",
+        "seed": 50100105
+      },
+      {
+        "condition": "pv6",
+        "seed": 50100106
+      },
+      {
+        "condition": "pv6",
+        "seed": 50100107
+      },
+      {
+        "condition": "pv18",
+        "seed": 50100100
+      },
+      {
+        "condition": "pv18",
+        "seed": 50100101
+      },
+      {
+        "condition": "pv18",
+        "seed": 50100102
+      },
+      {
+        "condition": "pv18",
+        "seed": 50100103
+      },
+      {
+        "condition": "pv18",
+        "seed": 50100104
+      },
+      {
+        "condition": "pv18",
+        "seed": 50100105
+      },
+      {
+        "condition": "pv18",
+        "seed": 50100106
+      },
+      {
+        "condition": "pv18",
+        "seed": 50100107
+      },
+      {
+        "condition": "pv36",
+        "seed": 50100100
+      },
+      {
+        "condition": "pv36",
+        "seed": 50100101
+      },
+      {
+        "condition": "pv36",
+        "seed": 50100102
+      },
+      {
+        "condition": "pv36",
+        "seed": 50100103
+      },
+      {
+        "condition": "pv36",
+        "seed": 50100104
+      },
+      {
+        "condition": "pv36",
+        "seed": 50100105
+      },
+      {
+        "condition": "pv36",
+        "seed": 50100106
+      },
+      {
+        "condition": "pv36",
+        "seed": 50100107
+      },
+      {
+        "condition": "meth24",
+        "seed": 50100100
+      },
+      {
+        "condition": "meth24",
+        "seed": 50100101
+      },
+      {
+        "condition": "meth24",
+        "seed": 50100102
+      },
+      {
+        "condition": "meth24",
+        "seed": 50100103
+      },
+      {
+        "condition": "meth24",
+        "seed": 50100104
+      },
+      {
+        "condition": "meth24",
+        "seed": 50100105
+      },
+      {
+        "condition": "meth24",
+        "seed": 50100106
+      },
+      {
+        "condition": "meth24",
+        "seed": 50100107
+      },
+      {
+        "condition": "meth48",
+        "seed": 50100100
+      },
+      {
+        "condition": "meth48",
+        "seed": 50100101
+      },
+      {
+        "condition": "meth48",
+        "seed": 50100102
+      },
+      {
+        "condition": "meth48",
+        "seed": 50100103
+      },
+      {
+        "condition": "meth48",
+        "seed": 50100104
+      },
+      {
+        "condition": "meth48",
+        "seed": 50100105
+      },
+      {
+        "condition": "meth48",
+        "seed": 50100106
+      },
+      {
+        "condition": "meth48",
+        "seed": 50100107
+      }
+    ],
+    "teacher_parameters": {
+      "battery_capacity_kwh": 8000.0,
+      "battery_charge_efficiency": 0.96,
+      "battery_discharge_efficiency": 0.96,
+      "battery_floor_soc": 0.05,
+      "battery_max_charge_kw": 2500.0,
+      "battery_max_discharge_kw": 2500.0,
+      "battery_target_soc": 0.35,
+      "ch4_capacity_kg": 3000.0,
+      "co2_capacity_kg": 6000.0,
+      "co2_per_ch4": 2.75,
+      "cold_start_h": 1.0,
+      "dac_rated_kw": 1200.0,
+      "dac_readiness_kwh": 120.0,
+      "dac_specific_energy_kwh_per_kg": 2.0,
+      "dac_standby_kw": 60.0,
+      "dac_startup_heater_kw": 300.0,
+      "decision_h": 0.25,
+      "delivery_period_h": 6.0,
+      "downstream_dynamics": true,
+      "electrolyser_min_stable_kw": 1200.0,
+      "electrolyser_rated_kw": 3000.0,
+      "electrolyser_retention_max_h": 2.0,
+      "electrolyser_specific_energy_kwh_per_kg": 52.0,
+      "electrolyser_standby_kw": 60.0,
+      "electrolyser_start_kw": 600.0,
+      "feedstock_buffer_h": 12.0,
+      "h2_capacity_kg": 2000.0,
+      "h2_per_ch4": 0.5,
+      "methanator_rated_kw": 180.0,
+      "methanator_readiness_kwh": 72.0,
+      "methanator_specific_energy_kwh_per_kg": 1.2,
+      "methanator_standby_kw": 18.0,
+      "methanator_startup_heater_kw": 90.0,
+      "methane_buffer_h": 48.0,
+      "minimum_up_h": 1.0,
+      "replenish_h": 6.0,
+      "shared_bus": true,
+      "solar_peak_kw": 5000.0,
+      "sunrise_h": 6.0,
+      "sunset_h": 19.5,
+      "support_rounding_margin_kw": 0.001
+    },
+    "teacher_probability": 1.0,
+    "sampling_seed": 7301
+  },
+  "dagger-original-storage": {
+    "cases": [
+      {
+        "condition": "ordinary",
+        "seed": 50110000
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50110001
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50110002
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50110003
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50110004
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50110005
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50110006
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50110007
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50110008
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50110009
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50110010
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50110011
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50110012
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50110013
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50110014
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50110015
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50110016
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50110017
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50110018
+      },
+      {
+        "condition": "ordinary",
+        "seed": 50110019
+      },
+      {
+        "condition": "pv6",
+        "seed": 50110100
+      },
+      {
+        "condition": "pv6",
+        "seed": 50110101
+      },
+      {
+        "condition": "pv6",
+        "seed": 50110102
+      },
+      {
+        "condition": "pv6",
+        "seed": 50110103
+      },
+      {
+        "condition": "pv18",
+        "seed": 50110100
+      },
+      {
+        "condition": "pv18",
+        "seed": 50110101
+      },
+      {
+        "condition": "pv18",
+        "seed": 50110102
+      },
+      {
+        "condition": "pv18",
+        "seed": 50110103
+      },
+      {
+        "condition": "pv36",
+        "seed": 50110100
+      },
+      {
+        "condition": "pv36",
+        "seed": 50110101
+      },
+      {
+        "condition": "pv36",
+        "seed": 50110102
+      },
+      {
+        "condition": "pv36",
+        "seed": 50110103
+      },
+      {
+        "condition": "meth24",
+        "seed": 50110100
+      },
+      {
+        "condition": "meth24",
+        "seed": 50110101
+      },
+      {
+        "condition": "meth24",
+        "seed": 50110102
+      },
+      {
+        "condition": "meth24",
+        "seed": 50110103
+      },
+      {
+        "condition": "meth48",
+        "seed": 50110100
+      },
+      {
+        "condition": "meth48",
+        "seed": 50110101
+      },
+      {
+        "condition": "meth48",
+        "seed": 50110102
+      },
+      {
+        "condition": "meth48",
+        "seed": 50110103
+      }
+    ],
+    "teacher_parameters": {
+      "battery_capacity_kwh": 8000.0,
+      "battery_charge_efficiency": 0.96,
+      "battery_discharge_efficiency": 0.96,
+      "battery_floor_soc": 0.05,
+      "battery_max_charge_kw": 2500.0,
+      "battery_max_discharge_kw": 2500.0,
+      "battery_target_soc": 0.35,
+      "ch4_capacity_kg": 3000.0,
+      "co2_capacity_kg": 6000.0,
+      "co2_per_ch4": 2.75,
+      "cold_start_h": 1.0,
+      "dac_rated_kw": 1200.0,
+      "dac_readiness_kwh": 120.0,
+      "dac_specific_energy_kwh_per_kg": 2.0,
+      "dac_standby_kw": 60.0,
+      "dac_startup_heater_kw": 300.0,
+      "decision_h": 0.25,
+      "delivery_period_h": 6.0,
+      "downstream_dynamics": true,
+      "electrolyser_min_stable_kw": 1200.0,
+      "electrolyser_rated_kw": 3000.0,
+      "electrolyser_retention_max_h": 2.0,
+      "electrolyser_specific_energy_kwh_per_kg": 52.0,
+      "electrolyser_standby_kw": 60.0,
+      "electrolyser_start_kw": 600.0,
+      "feedstock_buffer_h": 12.0,
+      "h2_capacity_kg": 2000.0,
+      "h2_per_ch4": 0.5,
+      "methanator_rated_kw": 180.0,
+      "methanator_readiness_kwh": 72.0,
+      "methanator_specific_energy_kwh_per_kg": 1.2,
+      "methanator_standby_kw": 18.0,
+      "methanator_startup_heater_kw": 90.0,
+      "methane_buffer_h": 48.0,
+      "minimum_up_h": 1.0,
+      "replenish_h": 6.0,
+      "shared_bus": true,
+      "solar_peak_kw": 5000.0,
+      "sunrise_h": 6.0,
+      "sunset_h": 19.5,
+      "support_rounding_margin_kw": 0.001
+    },
+    "teacher_probability": 0.0,
+    "sampling_seed": 7301
+  },
+  "reference": {
+    "path": "experiments/reference-evaluation.json",
+    "sha256": "3c4ea2825ac99249605fd7c925f0af2d366b4f6dd4761e8c51cc59b0b5da468c",
+    "interpretation": "Re-execution of a published comparison; not new held-out evidence. Original training budgets; predetermined generation-015 evaluation checkpoints."
+  }
+}

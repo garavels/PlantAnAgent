@@ -6,6 +6,13 @@ import sys
 from plant_backend import demo_recordings, operational_mpc, record_demo
 
 
+def test_source_archive_has_unknown_git_identity_even_inside_another_checkout(tmp_path):
+    (tmp_path / ".git").mkdir()
+    source = tmp_path / "downloaded-source"
+    source.mkdir()
+    assert record_demo.git_provenance(source) == {"git_revision": None, "git_dirty": None}
+
+
 def test_wall_limit_bypasses_solver_fallback_and_retains_completed_prefix(
     monkeypatch, tmp_path
 ):

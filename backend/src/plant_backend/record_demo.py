@@ -25,6 +25,20 @@ class RehearsalTimeout(BaseException):
     """Stop the rehearsal even inside a solver's ordinary exception boundary."""
 
 
+def git_provenance(root: Path) -> dict[str, str | bool | None]:
+    """A downloaded source ZIP has source hashes, but no Git identity."""
+    if not (root / ".git").exists():
+        return {"git_revision": None, "git_dirty": None}
+    return {
+        "git_revision": subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=root, text=True
+        ).strip(),
+        "git_dirty": bool(subprocess.check_output(
+            ["git", "status", "--porcelain"], cwd=root, text=True
+        ).strip()),
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("controller", choices=("H", "MPC"))
@@ -46,14 +60,7 @@ def main() -> None:
         "horizon_hours": 168,
         "wall_limit_seconds": WALL_LIMIT_SECONDS,
         "started_utc": datetime.now(timezone.utc).isoformat(),
-        "git_revision": subprocess.check_output(
-            ["git", "rev-parse", "HEAD"], cwd=root, text=True
-        ).strip(),
-        "git_dirty": bool(
-            subprocess.check_output(
-                ["git", "status", "--porcelain"], cwd=root, text=True
-            ).strip()
-        ),
+        **git_provenance(root),
         "python_source_sha256": hashlib.sha256(
             json.dumps(source, sort_keys=True).encode()
         ).hexdigest(),

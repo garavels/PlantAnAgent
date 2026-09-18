@@ -1,0 +1,50 @@
+[
+  {
+    "label": "cem-ridge-bias-g16-5901",
+    "kind": "learned",
+    "checkpoint": "experiments/checkpoints/cem-ridge-bias-g16-5901/generation-015.zip",
+    "group": "cem-ridge-bias-g16",
+    "optimizer_seed": 5901
+  },
+  {
+    "label": "cem-ridge-bias-g16-5902",
+    "kind": "learned",
+    "checkpoint": "experiments/checkpoints/cem-ridge-bias-g16-5902/generation-015.zip",
+    "group": "cem-ridge-bias-g16",
+    "optimizer_seed": 5902
+  },
+  {
+    "label": "cem-ridge-bias-g16-5903",
+    "kind": "learned",
+    "checkpoint": "experiments/checkpoints/cem-ridge-bias-g16-5903/generation-015.zip",
+    "group": "cem-ridge-bias-g16",
+    "optimizer_seed": 5903
+  },
+  {
+    "label": "imitation-parent-903",
+    "kind": "learned",
+    "checkpoint": "experiments/checkpoints/imitation-parent-903/initial-policy.zip",
+    "group": "initialization-reference",
+    "optimizer_seed": 903
+  },
+  {
+    "label": "original-daylight",
+    "kind": "baseline",
+    "baseline": "daylight"
+  },
+  {
+    "label": "original-storage",
+    "kind": "baseline",
+    "baseline": "storage"
+  },
+  {
+    "label": "storage-m48-b60-r3",
+    "kind": "baseline",
+    "baseline": "storage",
+    "config": {
+      "methane_buffer_h": 48,
+      "battery_target_soc": 0.6,
+      "replenish_h": 3
+    }
+  }
+]
