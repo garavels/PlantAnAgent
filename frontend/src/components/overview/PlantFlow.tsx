@@ -235,7 +235,7 @@ function TankNode({ x, y, w, h, title, accent, status, levelKg, capacityKg, fill
   )
 }
 
-export function PlantFlow({ state, config }: { state: PlantState; config: PlantConfig | null }) {
+export function PlantFlow({ state, config, commitmentMode }: { state: PlantState; config: PlantConfig | null; commitmentMode?: string }) {
   const peakKw = config?.solar.peak_kw ?? 5000
   const ratedKw = config?.electrolyser.rated_kw ?? 3000
   const minLoadKw = config?.electrolyser_min_load_kw ?? 450
@@ -479,7 +479,7 @@ export function PlantFlow({ state, config }: { state: PlantState; config: PlantC
         h={140}
         title="Electrolyser"
         accent="var(--feed)"
-        status={{ text: stackStatus, live: state.electrolyser_online }}
+        status={{ text: commitmentMode?.replaceAll('_', ' ') ?? stackStatus, live: state.electrolyser_online }}
         value={kw(state.electrolyser_power_kw)}
         unit="kW"
         fill={state.electrolyser_power_kw / ratedKw}

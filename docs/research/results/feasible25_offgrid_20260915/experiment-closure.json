@@ -1,0 +1,892 @@
+{
+  "schema": "feasible25-experiment-closure-v1",
+  "closed_at_unix_s": 1789477466.534399,
+  "evaluation_freeze_sha256": "0f6edd0ecce230343cca6c9c157b453d585c185ac874c433ef22c93f901c0144",
+  "controller_evaluation_recordings": 128,
+  "held_out_controller_case_pairs": 80,
+  "all_published_recording_pins_verified": true,
+  "all_frozen_sources_and_endpoint_pins_revalidated": true,
+  "ppo_transitions": 196608,
+  "ppo_minibatch_updates": 7680,
+  "groups": [
+    {
+      "split": "development",
+      "controller": "coverage-ppo-101",
+      "label": "PPO \u00b7 seed101",
+      "cases": 8,
+      "complete_weeks": 8,
+      "full_missions": 8,
+      "safe_full_weeks": 8,
+      "passing_daily_returns": 56,
+      "mean_unmet_kg_complete_weeks": 0.0,
+      "mean_contribution_eur_complete_weeks": 14911.322295199401
+    },
+    {
+      "split": "development",
+      "controller": "coverage-ppo-211",
+      "label": "PPO \u00b7 seed211",
+      "cases": 8,
+      "complete_weeks": 8,
+      "full_missions": 8,
+      "safe_full_weeks": 8,
+      "passing_daily_returns": 56,
+      "mean_unmet_kg_complete_weeks": 0.0,
+      "mean_contribution_eur_complete_weeks": 14910.307006251187
+    },
+    {
+      "split": "development",
+      "controller": "coverage-ppo-307",
+      "label": "PPO \u00b7 seed307",
+      "cases": 8,
+      "complete_weeks": 8,
+      "full_missions": 8,
+      "safe_full_weeks": 8,
+      "passing_daily_returns": 56,
+      "mean_unmet_kg_complete_weeks": 0.0,
+      "mean_contribution_eur_complete_weeks": 14902.428588751533
+    },
+    {
+      "split": "development",
+      "controller": "daily-coverage-feasibility-v2",
+      "label": "Original coverage (development diagnostic)",
+      "cases": 8,
+      "complete_weeks": 8,
+      "full_missions": 6,
+      "safe_full_weeks": 8,
+      "passing_daily_returns": 54,
+      "mean_unmet_kg_complete_weeks": 0.0,
+      "mean_contribution_eur_complete_weeks": 14932.549217162743
+    },
+    {
+      "split": "development",
+      "controller": "daily-coverage-offgrid-v1",
+      "label": "Coverage reference",
+      "cases": 8,
+      "complete_weeks": 8,
+      "full_missions": 8,
+      "safe_full_weeks": 8,
+      "passing_daily_returns": 56,
+      "mean_unmet_kg_complete_weeks": 0.0,
+      "mean_contribution_eur_complete_weeks": 14905.16336667073
+    },
+    {
+      "split": "development",
+      "controller": "daily-return-mission-mpc-v1",
+      "label": "Strict MPC",
+      "cases": 8,
+      "complete_weeks": 3,
+      "full_missions": 3,
+      "safe_full_weeks": 3,
+      "passing_daily_returns": 36,
+      "mean_unmet_kg_complete_weeks": 0.0,
+      "mean_contribution_eur_complete_weeks": 15072.848166060745
+    },
+    {
+      "split": "held_out",
+      "controller": "coverage-ppo-101",
+      "label": "PPO \u00b7 seed101",
+      "cases": 16,
+      "complete_weeks": 16,
+      "full_missions": 14,
+      "safe_full_weeks": 16,
+      "passing_daily_returns": 110,
+      "mean_unmet_kg_complete_weeks": 0.0,
+      "mean_contribution_eur_complete_weeks": 14906.964839847666
+    },
+    {
+      "split": "held_out",
+      "controller": "coverage-ppo-211",
+      "label": "PPO \u00b7 seed211",
+      "cases": 16,
+      "complete_weeks": 16,
+      "full_missions": 14,
+      "safe_full_weeks": 16,
+      "passing_daily_returns": 110,
+      "mean_unmet_kg_complete_weeks": 0.0,
+      "mean_contribution_eur_complete_weeks": 14903.416671215491
+    },
+    {
+      "split": "held_out",
+      "controller": "coverage-ppo-307",
+      "label": "PPO \u00b7 seed307",
+      "cases": 16,
+      "complete_weeks": 16,
+      "full_missions": 14,
+      "safe_full_weeks": 16,
+      "passing_daily_returns": 110,
+      "mean_unmet_kg_complete_weeks": 0.0,
+      "mean_contribution_eur_complete_weeks": 14904.227007243579
+    },
+    {
+      "split": "held_out",
+      "controller": "daily-coverage-offgrid-v1",
+      "label": "Coverage reference",
+      "cases": 16,
+      "complete_weeks": 16,
+      "full_missions": 14,
+      "safe_full_weeks": 16,
+      "passing_daily_returns": 110,
+      "mean_unmet_kg_complete_weeks": 0.0,
+      "mean_contribution_eur_complete_weeks": 14903.009106983109
+    },
+    {
+      "split": "held_out",
+      "controller": "daily-return-mission-mpc-v1",
+      "label": "Strict MPC",
+      "cases": 16,
+      "complete_weeks": 6,
+      "full_missions": 6,
+      "safe_full_weeks": 6,
+      "passing_daily_returns": 60,
+      "mean_unmet_kg_complete_weeks": 0.0,
+      "mean_contribution_eur_complete_weeks": 14979.51111020105
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/training-closure.json",
+      "bytes": 20976,
+      "sha256": "58412f79d40a29b8417b633f7bd6a04d5b73ffaec60e3c8df5624c6bca4a3e2a"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/endpoints-frozen.json",
+      "bytes": 2111,
+      "sha256": "831065e439d18eb0176d2e3a3aef970943167040f97fa5e98524eb0718d81308"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/supplemental-runtime-source-witness.json",
+      "bytes": 3550,
+      "sha256": "0574c101c9936ba99277638a606087a90455e4c42a82a2c31deda43eb409b091"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/evaluation-freeze.json",
+      "bytes": 5669,
+      "sha256": "fd6c84941f82724d13e31cb032adfe60c2a1f2ab1543223fcdeb7c119cb6acfc"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/frozen-evaluation-sources.json",
+      "bytes": 84247,
+      "sha256": "c2509190a614a6b175ea2d86182cc256a70dc226a8f968d3468667e7bc954bca"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/frozen-evaluation-sources.tar.gz",
+      "bytes": 1239260,
+      "sha256": "6b889bf5a34858e796445429e41bced28a23bc886af56829f8aaf6c81867c8cf"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/inspection-data.json",
+      "bytes": 891162,
+      "sha256": "ea9650d2dfcc79330d29c40f3d8274ee70db304af3ab4400417da322c48a208c"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/paired-outcomes.json",
+      "bytes": 129585,
+      "sha256": "c36d58bf07ab620310421a11ed769632f5149dfb8bf081acec2fb0ad68b7508a"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/failed-held-out-energy-diagnosis.json",
+      "bytes": 55752,
+      "sha256": "43e6a3c8362290e803984d7272afda09e4108c2c45726e8a7317b10db50cadf5"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/initial-verification-development-closure.json",
+      "bytes": 1201,
+      "sha256": "7aec7a100a58fbd454e97b3a7a526f7628c051af4cf4fc66d02b23568fa2462d"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/initial-verification-held-out-closure.json",
+      "bytes": 1303,
+      "sha256": "220f7b9b3b1d4363da6167cb5bcf4abbcd46ac924c68fe98c190809613a35e05"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/independent-ppo-replay-audit/audit-closure.json",
+      "bytes": 2047,
+      "sha256": "1b7c6086c126f9d11e108c0d8848cbeb51c15ac4cdfc22c892108df8662374da"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/offgrid-coverage-development/replay-verification.json",
+      "bytes": 14325,
+      "sha256": "24bbcc1de61a4d9e6f9144c585e221fadec62679e85207aa43824fdb9c49a5a2"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/mission-mpc-held-out/summary.json",
+      "bytes": 29985,
+      "sha256": "d8c5e2df78bb7f76b7c97af778625b167b73e5fad2f98caf0554d3b0a4d70111"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/mission-mpc-held-out/analysis.json",
+      "bytes": 58661,
+      "sha256": "1131bcbe4bd97c9502bb84f65c82227831797a132cd1969ec01ee8831d1f1bdc"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/mission-mpc-held-out/validation-record.json",
+      "bytes": 1637,
+      "sha256": "11b630dd84d37e02a94ff5f7320dcd09576673dd4a49b4054ce083f83324db63"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/evaluation-admission-repair/evidence.json",
+      "bytes": 2257,
+      "sha256": "4e9150752c28b0d98171e72e50e9cb53a3748690065d70a74e4f37d20ba123b3"
+    }
+  ],
+  "report": {
+    "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/FEASIBLE25_OFFGRID_20260915.md",
+    "bytes": 15034,
+    "sha256": "5d0b723f2dc36adf6cae7210258b0d5f41821692250b409057a8aa5604bbeb0a"
+  },
+  "analysis_sources": [
+    {
+      "path": "docs/research/tools/summarize_feasible25_v1.py",
+      "bytes": 9073,
+      "sha256": "1dfe68b53a7041eb4d7f1a9ff01fb2e232597e3062497def9613de1610cf88b9"
+    },
+    {
+      "path": "docs/research/tools/analyze_feasible25_outcomes.py",
+      "bytes": 7308,
+      "sha256": "0ceecd2c4de720ed7c551b12b477cd5b67309a6f6014ab32ce89e5b4f081656d"
+    }
+  ],
+  "recordings": [
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-development/9920000.json.gz",
+      "bytes": 1598325,
+      "sha256": "dbdf72df70d78bad8c7247d68bd92d9a2850321ca715c741e3a60a27b661a1bb"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-development/9920001.json.gz",
+      "bytes": 1595500,
+      "sha256": "019c1fd67f665266be979a589db210c4480b14581452ab60baa8a7a11388940c"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-development/9920002.json.gz",
+      "bytes": 1558217,
+      "sha256": "c90fe0ac04e769595f1d6d0b7ddbccb6db9e0fe30dc4da74414c0219d49b8eb9"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-development/9920003.json.gz",
+      "bytes": 1604244,
+      "sha256": "28f7442415ac04fd4f65d8f463c7efd1d8547b57d2a15545cdc7c3c45f5142c2"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-development/9920004.json.gz",
+      "bytes": 1631880,
+      "sha256": "17d1f548e3da5fd219f9b801b08dcdef4249bfe8de068b2832a1c10762f52edb"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-development/9920005.json.gz",
+      "bytes": 1568246,
+      "sha256": "a61d661d4a6953d103bff1274a97ef71347e62d3d0c3d184fc38d8838a56abfd"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-development/9920006.json.gz",
+      "bytes": 1607396,
+      "sha256": "979b44d9841564fced6cfe2941bd8a236ca4b02bee0baa53ec328fc9cf9983fc"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-development/9920007.json.gz",
+      "bytes": 1668196,
+      "sha256": "6ff30d773d7a7216a83e10677851cc882a902334e467bdbb33d09d17161fdea8"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-held-out-a/9930000.json.gz",
+      "bytes": 1601928,
+      "sha256": "2d28b36e85cfb06973adfbf378b707a45ba6916b980d738a8cea55d25b7df0fd"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-held-out-a/9930001.json.gz",
+      "bytes": 1785779,
+      "sha256": "55069be7404eb65144167519a7c683f531a9eff7ad2444bf155a9f14d75b81f2"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-held-out-a/9930002.json.gz",
+      "bytes": 1533234,
+      "sha256": "cbd14d2e13a02985bd0e201d3d2cd87a040587019e1d3f5f1282f3eee9cbeb26"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-held-out-a/9930003.json.gz",
+      "bytes": 1619913,
+      "sha256": "4e530fcc95538fa108bf54a0ec9c24da959f9d14c6a6c0a00cef57be91184c1e"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-held-out-a/9930004.json.gz",
+      "bytes": 1653963,
+      "sha256": "c8f0b37e48e148186e604668d6f9ba22b2b216f17e8fe47b04bb6531c73c108b"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-held-out-a/9930005.json.gz",
+      "bytes": 1619492,
+      "sha256": "a4cd9e0fb4e6a8d56c7a46340e24f70a4ec817231bbe403dfd1a856a61523672"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-held-out-a/9930006.json.gz",
+      "bytes": 1591126,
+      "sha256": "e81df975a2e1e3decf9377fb409cfb1320dad7299bbfe48a6891ca9437cbb1ff"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-held-out-a/9930007.json.gz",
+      "bytes": 1626301,
+      "sha256": "a666262d8afc14a989e7b090505af048349ea8ecd4248efa0cf85d4774f9c0bc"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-held-out-b/9930008.json.gz",
+      "bytes": 1590752,
+      "sha256": "0f87e5714f72b54811b3790f59275930ed864f8d619a2a0de050a3204f08c92f"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-held-out-b/9930009.json.gz",
+      "bytes": 1644579,
+      "sha256": "d934b2da5bd8cf5f7b5f68cc60ca25e2f478921cac79183452b7e670fde42b93"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-held-out-b/9930010.json.gz",
+      "bytes": 1587309,
+      "sha256": "3f1cea88eb11518bda64ef55b0d785b6c76ae71732be175766bca5d7da0c6bbc"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-held-out-b/9930011.json.gz",
+      "bytes": 1684852,
+      "sha256": "d9df455852afbb9a624caa5b47cef0d958849c312a9311d1489b79006028c93f"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-held-out-b/9930012.json.gz",
+      "bytes": 1618478,
+      "sha256": "56c71ba6ca0ec109e0fa6612dbd26691588d89754ce6a816e81b73c217881dc8"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-held-out-b/9930013.json.gz",
+      "bytes": 1613871,
+      "sha256": "04219807f830a5651f94ecec7340d896904cc691184f1ecaa717094cc613e95e"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-held-out-b/9930014.json.gz",
+      "bytes": 1605061,
+      "sha256": "4005f9be7382b6e9976b88cd6a314df7a2f11db9c86663c14143a03f0e7c954e"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-held-out-b/9930015.json.gz",
+      "bytes": 1566303,
+      "sha256": "3fe0a930ed2d4f2d39f6546fe5f7933551ca668c5beb1ea79fc303e61c44b2de"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/mission-mpc-development/9920000.json.gz",
+      "bytes": 5289851,
+      "sha256": "28fb3428d1353c88c863f4898d4264926e50fadc02a23930a299589396997063"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/mission-mpc-development/9920001.json.gz",
+      "bytes": 2839680,
+      "sha256": "b125044de5590fd1f3e1d94366d700177b23da8bdf80dee0e9d0e9f886a5f511"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/mission-mpc-development/9920002.json.gz",
+      "bytes": 5123353,
+      "sha256": "5f0ed005c96ccc791cc00996bc5ac2ebb6ed6f1e014556c9b7f5b27a30619748"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/mission-mpc-development/9920003.json.gz",
+      "bytes": 520409,
+      "sha256": "0a42869835d87d2c1f9330a984bf2a181869cdefd0803b03e58854fd3493c01d"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/mission-mpc-development/9920004.json.gz",
+      "bytes": 411848,
+      "sha256": "9b5cc89225a4be5be06414cc6383bd2f5cecdc3217aeee15b635add661dfc39e"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/mission-mpc-development/9920005.json.gz",
+      "bytes": 5244132,
+      "sha256": "4f5c7420da34743f6f3f27deab714b90dec392ea2c2d4dcb12c6e05b804b2e53"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/mission-mpc-development/9920006.json.gz",
+      "bytes": 5271029,
+      "sha256": "fe951e692edd0016ead44551ec807ec9f76f7b2b4f07a746d5ea06aab925874e"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/mission-mpc-development/9920007.json.gz",
+      "bytes": 5317730,
+      "sha256": "864eef8553b4775227af12f96b9f9d91ed89c09cabc49bed269ca9e10cc1bb0a"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/mission-mpc-held-out/9930000.json.gz",
+      "bytes": 5305685,
+      "sha256": "2bf6be070c599ff08d71a956f19ba64c9fef6973b4a5f83ef0e23f756ad87dc3"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/mission-mpc-held-out/9930001.json.gz",
+      "bytes": 323192,
+      "sha256": "c3aa81e8f63b46ee4eb2714fc40978f9cbb4575f643f01ead5c30ffabb581e96"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/mission-mpc-held-out/9930002.json.gz",
+      "bytes": 5160285,
+      "sha256": "4d8dcb3158c6c4a181f0680f2f500e46d186107359f501baa3e1fda46ca33a36"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/mission-mpc-held-out/9930003.json.gz",
+      "bytes": 1397568,
+      "sha256": "40fc14c705366c32cb0fa83cdce4cc110e9a412075fcbc10ab082573875fcf2c"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/mission-mpc-held-out/9930004.json.gz",
+      "bytes": 1286008,
+      "sha256": "736a0e16d22f4459dac1bd6f9c7c94f14c93736c3b4a82498ded3a9ccbc43649"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/mission-mpc-held-out/9930005.json.gz",
+      "bytes": 4498956,
+      "sha256": "3ab42ee0b22757e42c89d1c1dd14498bb7894c27e1a48276c9e69c32398b7665"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/mission-mpc-held-out/9930006.json.gz",
+      "bytes": 632534,
+      "sha256": "77fcb04e3cd1504f471fd45902240907daa9842ab11154a52986bba59fe40583"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/mission-mpc-held-out/9930007.json.gz",
+      "bytes": 2141332,
+      "sha256": "75dd97517d715605d8688747e1e6bbdb7c94f1eac2467c9759b491db693d3ec9"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/mission-mpc-held-out/9930008.json.gz",
+      "bytes": 4472659,
+      "sha256": "88efede580720a7bddaa75334a8defb3031145058d8587cb670cbaf207e194d9"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/mission-mpc-held-out/9930009.json.gz",
+      "bytes": 5408487,
+      "sha256": "81d3a1b00cb6274ff82a25d41117a698f43b729033d176585cc1e3ce29852d5f"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/mission-mpc-held-out/9930010.json.gz",
+      "bytes": 5280097,
+      "sha256": "038a5ff163352b202181854913fa378c3bac93740875130002e4861c87113fcd"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/mission-mpc-held-out/9930011.json.gz",
+      "bytes": 409615,
+      "sha256": "caad27fbf728ea9731e28e29cff7f613389cf98611288b8593d2812f42308f8f"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/mission-mpc-held-out/9930012.json.gz",
+      "bytes": 5292684,
+      "sha256": "6496bc1f49ba272c50f56b7a3539211bbf4bc01761766efd687829de142c92a6"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/mission-mpc-held-out/9930013.json.gz",
+      "bytes": 514557,
+      "sha256": "2af026963bf9593362fffd5914b48f343b8de28dd761c2566e935da73afeb2c6"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/mission-mpc-held-out/9930014.json.gz",
+      "bytes": 3652153,
+      "sha256": "68d2b66e356df3220c254d22c384c508f4f000f79bc0a9fb19e0219393887a7c"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/mission-mpc-held-out/9930015.json.gz",
+      "bytes": 5196261,
+      "sha256": "dda3075cba2b2c75ff48596a6c48c5ee70c8b4347fc2562af3e066b0af9ceea6"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/offgrid-coverage-development/9920000.json.gz",
+      "bytes": 1616988,
+      "sha256": "bfb099aedd27a7eac912e61742014c50287be8726f4974be8a5fc14555c4211d"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/offgrid-coverage-development/9920001.json.gz",
+      "bytes": 1599555,
+      "sha256": "a93fca5877981a81a490e173fcef1292e24934cc3fe7f7be27c6fd4d9c9879d7"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/offgrid-coverage-development/9920002.json.gz",
+      "bytes": 1571452,
+      "sha256": "e2bf9db1b86918bb950682c6cbdb72f9c6aa395110ac48f79cae5beae7fb3515"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/offgrid-coverage-development/9920003.json.gz",
+      "bytes": 1587449,
+      "sha256": "5742e7e5f4d2546336def24d3a5ea0a07f25513c8c9da46d23e5be461e389c81"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/offgrid-coverage-development/9920004.json.gz",
+      "bytes": 1655001,
+      "sha256": "3fbff41adf97f37dac794050fa7bd7903e645e2217a1e752b09625b1415459af"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/offgrid-coverage-development/9920005.json.gz",
+      "bytes": 1579193,
+      "sha256": "249914724eb9b79c8222ee2fbd871c0e28793ddb6da06b622ddc7c3ad4f7583c"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/offgrid-coverage-development/9920006.json.gz",
+      "bytes": 1616966,
+      "sha256": "264f64d594d292936375629bd69ebe2202c578cc4934d7da76cd1745f2db9fe2"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/offgrid-coverage-development/9920007.json.gz",
+      "bytes": 1671391,
+      "sha256": "cb7137dede720b686dbd7883fea3ab8dcf2fc3f720fbed7941db713b7d4022de"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-101-development-final/9920000.json.gz",
+      "bytes": 1979542,
+      "sha256": "f43557aca88f72b824a900d3f3a4b29dbd51db40772256309bb51be710637fe8"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-101-development-final/9920001.json.gz",
+      "bytes": 1950192,
+      "sha256": "5dccd0f9c0ca6db1fc3dc39857799412b0db9a7d5827af73b6b21d76dc42c9f9"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-101-development-final/9920002.json.gz",
+      "bytes": 1940133,
+      "sha256": "a01e8ae4b7d4cc7fc069496908af033c22116ed232fe7d433abe544de44a1316"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-101-development-final/9920003.json.gz",
+      "bytes": 1967395,
+      "sha256": "084c0df226472a367826eab4cfcad68cbe5060e7143be824c3525754aa324ed9"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-101-development-final/9920004.json.gz",
+      "bytes": 2018645,
+      "sha256": "3ee085b5ff67717d0df55ed3a3d82f73235971793ac54f0b932f4b4537bcbb4f"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-101-development-final/9920005.json.gz",
+      "bytes": 1939916,
+      "sha256": "203a459205a4a516bdf80da94c61a22770f81f8b06b6c6ee3c9b1552c9a8fb66"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-101-development-final/9920006.json.gz",
+      "bytes": 1967891,
+      "sha256": "ebd6f3ab1496fd92c9bfa73a0b8b3f3824283ee288337c65b5f18a6b20e00dbf"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-101-development-final/9920007.json.gz",
+      "bytes": 2035760,
+      "sha256": "c02851bae35ef5294a83d00e0f43026ad874cb652f878d204462dffcf82ec687"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-101-held-out/9930000.json.gz",
+      "bytes": 1959299,
+      "sha256": "68229f0f6ad24de5a541409bad9e671b66ec998c57ca38bf31a5e0d2f647a548"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-101-held-out/9930001.json.gz",
+      "bytes": 2146179,
+      "sha256": "610d436879b950c66e3047b7f69f7d2e3a583c3ee6a7c7686b1af42f70ed9da0"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-101-held-out/9930002.json.gz",
+      "bytes": 1897604,
+      "sha256": "cd7888e0ede4c162114df14412d590c279772ca428f43206653addf0756a57c3"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-101-held-out/9930003.json.gz",
+      "bytes": 1988637,
+      "sha256": "b5ed6ad5383b4c7b934079faf48b186a1e12dc94893ee9f140804c9ea6844196"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-101-held-out/9930004.json.gz",
+      "bytes": 2007418,
+      "sha256": "dc599439c22d97e52404ed6b13fd5d986f4dbf45205db7bd855bfedc8a4766a4"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-101-held-out/9930005.json.gz",
+      "bytes": 1986989,
+      "sha256": "7770636d5d5c1301890e172111fe4cc197ff498e77224d89cf66882df0feaf59"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-101-held-out/9930006.json.gz",
+      "bytes": 1968451,
+      "sha256": "d20c1a1a9579f94ce9854748e4b0300e343dc7f3a3f72a3e0d10bd5d7439602b"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-101-held-out/9930007.json.gz",
+      "bytes": 1994417,
+      "sha256": "6d562747ec444a83eecd2a46e0e995487db92b857e4960c64ebaa79a3570954e"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-101-held-out/9930008.json.gz",
+      "bytes": 1950138,
+      "sha256": "79dada55031cc7017f988a40616919c28dc4ffde92c6c444538303ae8c8c2646"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-101-held-out/9930009.json.gz",
+      "bytes": 2005834,
+      "sha256": "78925cd2a2a6918a18676e9a5b4d7885a62d6ca4d54f51f0c998bfce7aff011b"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-101-held-out/9930010.json.gz",
+      "bytes": 1943255,
+      "sha256": "21c5524df1e0ca2d1864a2481eff5a3681344d66e16b49e9206dd932d2820d41"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-101-held-out/9930011.json.gz",
+      "bytes": 2040342,
+      "sha256": "04d56a0e161a0cac60929443fe0e8fb60d83a16ffecf5750d2fd7167f0d547bf"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-101-held-out/9930012.json.gz",
+      "bytes": 1988256,
+      "sha256": "5345b3c51627ae6a62a422e1d4701ff7e7c16402cfc8cf24bd7a750fa364245f"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-101-held-out/9930013.json.gz",
+      "bytes": 1978397,
+      "sha256": "e1aec829e9f06de53568b89aa87668aec6c72f47154ea15491da18a53e104fd9"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-101-held-out/9930014.json.gz",
+      "bytes": 1976972,
+      "sha256": "e99a68c1266a2a46f0841c7bd0eddbce88bf69fa78d8648ab63400d8075d31d2"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-101-held-out/9930015.json.gz",
+      "bytes": 1932030,
+      "sha256": "a5cc2016bd15985c79bb948ca90464f3403acbd0c469942fe84ae17945c6a965"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-211-development-final/9920000.json.gz",
+      "bytes": 1980898,
+      "sha256": "1634913b4b04d0dc2ebeb84ffc45a0e302eff86d6ab74d31255e8deeb68252e5"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-211-development-final/9920001.json.gz",
+      "bytes": 1939515,
+      "sha256": "08c7bc9ecbc7bbfb97338823f4daf7a9ee3dcf134bf7ec251755bc3485c21f54"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-211-development-final/9920002.json.gz",
+      "bytes": 1941428,
+      "sha256": "c550b90e4354dee7fe478e2f7e3f6556e996bd22ed7359813161bb8b50bb744d"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-211-development-final/9920003.json.gz",
+      "bytes": 1971159,
+      "sha256": "2f740c77711f7b87af79d70ba0026901e4e665e74e265b6b38780158ac2372a9"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-211-development-final/9920004.json.gz",
+      "bytes": 2019078,
+      "sha256": "a3e6efaba172c16a691f53ee088096b0cccf6df7c4bd8306f256c2b6c5dd8823"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-211-development-final/9920005.json.gz",
+      "bytes": 1936207,
+      "sha256": "bbbe33eed173ca0df9e71c77a926d86b195f5698c73232e9312ea9ca847aa398"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-211-development-final/9920006.json.gz",
+      "bytes": 1971033,
+      "sha256": "86d5fe175e9c0efcdf128bd53ca46582054f0857de900ec5bf0a3d3a1b8e32b6"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-211-development-final/9920007.json.gz",
+      "bytes": 2051313,
+      "sha256": "c98688b7cd41e35ac71565957527841b22de968dbc7fcca9188f7eff8a50b2bd"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-211-held-out/9930000.json.gz",
+      "bytes": 1967188,
+      "sha256": "4872f12f922146abd88830538a92ecd0075e787994cc7ff7d8071d6e39d02f73"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-211-held-out/9930001.json.gz",
+      "bytes": 2151505,
+      "sha256": "ce165ba113d00871328fbcdfd77cc5f5ff377b23016cafc799b70d6e4e47a79b"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-211-held-out/9930002.json.gz",
+      "bytes": 1887817,
+      "sha256": "de41da02f3a486cdf937da824e10435f32112dc848c67e10b7b24f00444fe6dc"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-211-held-out/9930003.json.gz",
+      "bytes": 1976030,
+      "sha256": "943db8795dd46fbc9320ce231ebdf9ab89371b25f3bee2f371ad41fbb91cf7f4"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-211-held-out/9930004.json.gz",
+      "bytes": 2013853,
+      "sha256": "11cd7f531dea33563c98b24c0c663c7c801e8ef175ee92f2381cb44af2e9e046"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-211-held-out/9930005.json.gz",
+      "bytes": 1990041,
+      "sha256": "21b55af69df7d9a98c6f06fb00b8c4baf5d72fd848255def60e1d651d5b91c71"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-211-held-out/9930006.json.gz",
+      "bytes": 1967032,
+      "sha256": "5e23f95827c12a70d3d6eb09e999e86e2c8090c114b72b44a96ac8f3fa8a8376"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-211-held-out/9930007.json.gz",
+      "bytes": 1995419,
+      "sha256": "3bb7c83ae45259f3a2cdaec0bad4e4c2bb6bc691bd3b5577717c96257a3b5aa5"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-211-held-out/9930008.json.gz",
+      "bytes": 1950617,
+      "sha256": "b179f4a333fb241da0ccc59a986a918a835dd88b50e23d92c593d607eaa5eaf8"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-211-held-out/9930009.json.gz",
+      "bytes": 2017190,
+      "sha256": "a67160fdf2bc01a506d3300dae25bd07cf73c5047154f96ee9326d62efe1b44c"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-211-held-out/9930010.json.gz",
+      "bytes": 1958290,
+      "sha256": "668d202bc2f8c42cc930f253203cb343c9a4ee92bc07bdf86777d69a7e500374"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-211-held-out/9930011.json.gz",
+      "bytes": 2036650,
+      "sha256": "77925758a9cedf1d83d6ce7f45984b06e2c8f3728f4d93983bf90a5b5e5361e7"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-211-held-out/9930012.json.gz",
+      "bytes": 1995466,
+      "sha256": "110697e53c7a7e135fe1739b073e69e0d929b1903a228fd9130c2ba61c67fe51"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-211-held-out/9930013.json.gz",
+      "bytes": 1977796,
+      "sha256": "2e6146dd65f4aff0bf635ba6f07b8d84c7b988f002933889b578f42636ffedbb"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-211-held-out/9930014.json.gz",
+      "bytes": 1976398,
+      "sha256": "4741d7c064a6c25db19bad0773447e11e32429687208ed19615da84e0acb70bd"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-211-held-out/9930015.json.gz",
+      "bytes": 1933213,
+      "sha256": "5c3914f6620916c3af334d5afb33d600a26fda910d950e83f01411da0fb99613"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-307-development-final/9920000.json.gz",
+      "bytes": 1996644,
+      "sha256": "d179ae9fb67ab135fbd010bcd1f49b45eb4f770dad8c95812953a0f28f17e0d4"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-307-development-final/9920001.json.gz",
+      "bytes": 1970354,
+      "sha256": "06bc2918d1dbb239d7d7b437ed1285ac7c521a461fad837f3d87427a9d44bbc5"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-307-development-final/9920002.json.gz",
+      "bytes": 1960912,
+      "sha256": "3616d5b9fde711117b420b23c03fcc287996eee09aeba23c8d8241ff16af9f76"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-307-development-final/9920003.json.gz",
+      "bytes": 1986686,
+      "sha256": "36ed096f4b8b2efa87bd24c901803446e2890c2381e5f03708aa9a4900e47fa7"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-307-development-final/9920004.json.gz",
+      "bytes": 2033138,
+      "sha256": "01310d5b88abaed0347e4289853bacc2468b7db0f5d3fa703fccdde0403ed20d"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-307-development-final/9920005.json.gz",
+      "bytes": 1965041,
+      "sha256": "2a23cce1af8d8758381618ce8bcfc0d228822102679c356867ae05b69f97d901"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-307-development-final/9920006.json.gz",
+      "bytes": 1988357,
+      "sha256": "c609ffaa9925c6ed9b29e01978ce68e05a3623a3d94a14b2517e22a629a1211b"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-307-development-final/9920007.json.gz",
+      "bytes": 2063036,
+      "sha256": "bba57383c5123839d1ba60ab9de8c473be2524684680d65a1f5acf302a03bbf3"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-307-held-out/9930000.json.gz",
+      "bytes": 1991828,
+      "sha256": "1e6173902fe068223c04b792ad6814e6fff1fe9819548279ab540ec074b76dd6"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-307-held-out/9930001.json.gz",
+      "bytes": 2159124,
+      "sha256": "bece19b8fa3f27bb4ed1bef5cca865e5b9d1b17b10a33cd27c993263e75d2089"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-307-held-out/9930002.json.gz",
+      "bytes": 1917854,
+      "sha256": "cf8cb8caa7c345e140b8ed6f317b355a7299d1966018837627d78af8ebcd7268"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-307-held-out/9930003.json.gz",
+      "bytes": 2007643,
+      "sha256": "a815538aaf03a2a5ba7acbc7008a6fcee6e1dd94a1241f7be55ce4dc2f2122b2"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-307-held-out/9930004.json.gz",
+      "bytes": 2025016,
+      "sha256": "66e25cbd95f701b7d464ab3700ffb24291709d2a31aad8e0b76b17841833fab7"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-307-held-out/9930005.json.gz",
+      "bytes": 2008245,
+      "sha256": "fab38b3e432ce6cefd068df390391a687337606cbfd8c901ced0e4b4bad7903b"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-307-held-out/9930006.json.gz",
+      "bytes": 1989413,
+      "sha256": "0726fd18fc80653b0600b0e4ebec44a0aafaba54b3e73ec9c192db5f41077329"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-307-held-out/9930007.json.gz",
+      "bytes": 2020840,
+      "sha256": "f2f56cdc8adb7cbfb8274335ba8f26417cd58570426c95bb008dd906554630e3"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-307-held-out/9930008.json.gz",
+      "bytes": 1969812,
+      "sha256": "9ad46f6609f9af8c841c3747c1ce8c55dde46a1f2b55adfe5ea76bd19bcce51c"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-307-held-out/9930009.json.gz",
+      "bytes": 2036860,
+      "sha256": "041dbbdb346f5d7afbb815528b0adbc56301c11ebcd33b49f3e7d017ac4f1fa8"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-307-held-out/9930010.json.gz",
+      "bytes": 1967788,
+      "sha256": "f3871a1a0566dbddd3ac73ac9a2359d4591f488fbaeb790a6a9566f0d77aabe1"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-307-held-out/9930011.json.gz",
+      "bytes": 2064274,
+      "sha256": "7167093d433edeff0486cd49294355a847f40029575087827f15912eea57cc5f"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-307-held-out/9930012.json.gz",
+      "bytes": 2017868,
+      "sha256": "d34e65d8f5bb65bc7f398f800bc763d95197866efbbf3a928f9acf98364ee79c"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-307-held-out/9930013.json.gz",
+      "bytes": 1985937,
+      "sha256": "2660443431c997769757c4a94506ec718bd606129aa5ca4bbd75dbb0eb0184d4"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-307-held-out/9930014.json.gz",
+      "bytes": 1994499,
+      "sha256": "6d4b8912df385840265c152643458b674908190e9c14e82bd77bad567914097e"
+    },
+    {
+      "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/ppo-307-held-out/9930015.json.gz",
+      "bytes": 1953141,
+      "sha256": "583dcec5a37fab4408625f01b9bc7ea45b2dc8d173f7ec6ab2f4b19eb42c1bce"
+    }
+  ],
+  "claims": "All3 trained endpoints passed22of24 fullmissions each, including14of16 held-out. StrictMPC passed6of16 held-out. No universally passing controller, business-profit calibration or operational promotion is claimed."
+}

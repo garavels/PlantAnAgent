@@ -41,7 +41,7 @@ export function PowerHub({ flows }: PowerHubProps) {
 
   return (
     <group position={[UNIT_POSITIONS.hub.x, 0, UNIT_POSITIONS.hub.z]}>
-      <UnitChrome id="hub" name="Power hub" accent={CARRIER.solar} plateHeight={3.1} rows={rows}>
+      <UnitChrome id="hub" name="Power bus" accent={CARRIER.solar} plateHeight={3.1} rows={rows}>
         {(active) => (
           <group>
             {/* plinth */}

@@ -297,9 +297,26 @@ class FaultRegistry:
 
     def effect_for(self, component: str) -> ComponentEffect:
         """Combine every active fault aimed at `component` (worst one wins)."""
+        return self._combined_effect(self.active(), component)
+
+    def effect_for_at(self, component: str, time_s: float) -> ComponentEffect:
+        """Project an effect at ``time_s`` without advancing fault lifecycle.
+
+        This read-only view is used by the actuator guard to inspect the same
+        solar health that the next physical step will apply, including a fault
+        that begins or ends exactly on the current boundary.
+        """
+        return self._combined_effect(
+            (fault for fault in self._faults if fault.should_run(time_s)),
+            component,
+        )
+
+    @staticmethod
+    def _combined_effect(faults: Iterable[Fault], component: str) -> ComponentEffect:
+        """Combine one fault view for ``component`` (the worst effect wins)."""
         degradation = 0.0
         offline = False
-        for fault in self.active():
+        for fault in faults:
             kind = fault.spec.kind
             if kind.target != component:
                 continue

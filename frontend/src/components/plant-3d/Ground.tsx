@@ -23,9 +23,10 @@ const LAMP_POSITIONS: [number, number][] = [
 
 interface GroundProps {
   sun: PlantVisuals['sun']
+  surroundings?: boolean
 }
 
-export function Ground({ sun }: GroundProps) {
+export function Ground({ sun, surroundings = false }: GroundProps) {
   // One shared material so every lamp head brightens together.
   const lampMat = useMemo(
     () =>
@@ -92,9 +93,18 @@ export function Ground({ sun }: GroundProps) {
     <group>
       {/* open terrain */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-2, -0.02, -4]} receiveShadow>
-        <planeGeometry args={[130, 130]} />
+        <planeGeometry args={surroundings ? [320, 320] : [130, 130]} />
         <meshStandardMaterial color={SURFACE.terrain} roughness={1} metalness={0} />
       </mesh>
+      {surroundings && <group>
+        {/* Synthetic land parcels provide context, without implying a real site. */}
+        {([
+          [-48, -34, 32, 42, '#34412d'], [-48, 21, 32, 58, '#3d4632'],
+          [43, -31, 34, 46, '#414b36'], [43, 26, 34, 60, '#303b2c'],
+          [-7, -48, 47, 23, '#45503a'], [-7, 39, 47, 30, '#38432e'],
+        ] as const).map(([x, z, width, depth, color], i) => <mesh key={i} position={[x, -.012, z]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[width, depth]} /><meshStandardMaterial color={color} roughness={1} /></mesh>)}
+        <mesh position={[23, -.005, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><planeGeometry args={[3, 130]} /><meshStandardMaterial color="#5b5b4b" roughness={1} /></mesh>
+      </group>}
       {/* gravel pad */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[PAD.origin.x, 0, PAD.origin.z]} receiveShadow>
         <planeGeometry args={[PAD.w, PAD.d]} />

@@ -6,7 +6,7 @@ import math
 
 import pytest
 
-from plant_sim import Action, PlantConfig, PlantSimulator, StorageConfig
+from plant_sim import Action, PlantConfig, PlantSimulator, StorageConfig, dispatch
 from plant_sim.config import BatteryConfig, MethanatorConfig, SolarConfig
 
 NOON = SolarConfig().sunrise_h + (SolarConfig().sunset_h - SolarConfig().sunrise_h) / 2
@@ -87,6 +87,36 @@ def test_hydrogen_matches_energy_consumed(sim: PlantSimulator) -> None:
     state = sim.step(Action.all_to_electrolyser())
     expected = state.electrolyser_power_kw / sim.config.electrolyser.specific_energy_kwh_per_kg
     assert state.h2_production_kg_h == pytest.approx(expected)
+
+
+def test_methanator_round_trip_never_manufactures_bus_power_or_negative_spill(
+    sim: PlantSimulator,
+) -> None:
+    # This exact binary64 offer previously reconstructed one ULP too high after
+    # kW -> kg -> kW conversion, exposing impossible negative curtailment.
+    offered_kw = float.fromhex("0x1.2e35a8ccf9062p+6")
+    flows = dispatch(
+        Action(
+            battery_share=0.0,
+            electrolyser_share=0.0,
+            dac_share=0.0,
+            methanator_share=1.0,
+        ),
+        offered_kw,
+        battery=sim.battery,
+        electrolyser=sim.electrolyser,
+        h2_tank=sim.h2_tank,
+        dac=sim.dac,
+        co2_tank=sim.co2_tank,
+        methanator=sim.methanator,
+        ch4_tank=sim.ch4_tank,
+        dt_h=sim.config.dt_h,
+    )
+
+    assert flows.methanator_power_kw == offered_kw
+    assert flows.solar_to_methanator_kw == offered_kw
+    assert flows.solar_to_battery_kw == 0.0
+    assert flows.solar_curtailed_kw == 0.0
 
 
 # --- storage --------------------------------------------------------------

@@ -1,13 +1,25 @@
-.PHONY: help setup dev backend frontend sim test eval foresight-eval rl-eval train-dry train \
+.PHONY: setup-research test-research research-smoke test-frontend help setup dev backend frontend sim test eval foresight-eval rl-eval rl-ceiling v2-eval v2-weather-eval v2-controller-eval v2-planner v2-mpc v2-mpc-report v2-mpc-setpoint v2-economic-smoke v2-economic-robustness v2-economic-robustness-verify v2-full-day-horizon-repair v2-full-day-horizon-repair-verify v2-train-dry v2-train v2-rl-eval v2-controller-benchmark v2-beta-controller-benchmark v2-beta-controller-benchmark-verify v2-beta-rl-capacity v2-beta-rl-capacity-verify train-dry train \
 	hepa-collect hepa-pretrain-dry hepa-pretrain hepa-finetune-dry hepa-finetune \
 	hepa-eval build clean
 
 help:             ## list targets
-	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*##/\t/'
+	@grep -E '^[a-z0-9-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*##/\t/'
 
 setup:            ## install python + node dependencies
-	uv sync
-	cd frontend && npm install
+	uv sync --frozen --group optimisation
+	cd frontend && npm ci
+
+setup-research:   ## install the optional training and experiment dependencies
+	uv sync --frozen --group train --group optimisation
+
+test-research:    ## verify frozen experiment code in its own interpreter
+	uv run --frozen --group train --group optimisation python tools/test_backend.py research
+
+research-smoke:   ## short model/physics check; no full experiment or retraining
+	uv run --no-sync python tools/reproduce.py smoke --output $(or $(OUT),output/reproduction-smoke)
+
+test-frontend:    ## run frontend regression tests
+	cd frontend && npm test
 
 backend:          ## run the control backend on :8000
 	uv run uvicorn plant_backend.app:app --reload --port 8000
@@ -27,6 +39,149 @@ foresight-eval:   ## compare controller / +supervisor / +HEPA (fixture forecasts
 rl-eval:          ## evaluate the heuristic baseline (add CHECKPOINT=<dir> for a policy)
 	uv run python -m plant_backend.rl.evaluation --seeds 1 2 3 --hours 24 \
 		$(if $(CHECKPOINT),--checkpoint $(CHECKPOINT),)
+
+rl-ceiling:       ## diagnose whether CH4 tank headroom caps the V1 benchmark
+	uv run python -m plant_backend.rl.evaluation.ceiling --seed-start 0 \
+		--count $(or $(SEEDS),100) --hours $(or $(HOURS),48) \
+		$(if $(CHECKPOINT),--checkpoint $(CHECKPOINT),) $(if $(JSON),--json $(JSON),)
+
+v2-eval:          ## run paired transparent baselines on the V2 commitment alpha
+	uv run python -m plant_backend.rl.v2 --seed-start $(or $(SEED_START),0) \
+		--count $(or $(SEEDS),20) --hours $(or $(HOURS),168) \
+		--delivery-rate $(or $(DELIVERY_RATE),40) $(if $(JSON),--json $(JSON),)
+
+v2-weather-eval: v2-eval  ## compatibility alias for the pre-commitment target name
+
+v2-controller-eval: ## compare causal delivery-aware controllers on the development task
+	uv run python -m plant_backend.rl.v2.compare \
+		--seed-start $(or $(SEED_START),0) --count $(or $(SEEDS),3) \
+		--hours $(or $(HOURS),72) --delivery-rate $(or $(DELIVERY_RATE),35) \
+		$(if $(ALLOW_DIRTY_DEVELOPMENT),--allow-dirty-development,) \
+		$(if $(ACKNOWLEDGE_SEED_CONTAMINATION),--acknowledge-seed-contamination,) \
+		$(if $(JSON),--json $(JSON),)
+
+v2-planner:       ## run one registered future-information planner cell (external OUTPUT required)
+	$(if $(OUTPUT),,$(error OUTPUT=/absolute/path/outside/repository.json is required))
+	uv run --frozen python -m plant_backend.rl.v2.planner \
+		--delivery-rate $(or $(DELIVERY_RATE),35) --seed $(or $(SEED),0) \
+		--output $(OUTPUT)
+
+v2-mpc:           ## run one registered causal service-MPC cell (external OUTPUT required)
+	$(if $(OUTPUT),,$(error OUTPUT=/absolute/path/outside/repository.json is required))
+	uv run --frozen python -m plant_backend.rl.v2.mpc_experiment \
+		--delivery-rate $(or $(DELIVERY_RATE),35) --seed $(or $(SEED),0) \
+		--output $(OUTPUT)
+
+v2-mpc-report:    ## aggregate six registered causal service-MPC cells (external paths required)
+	$(if $(CELL_35_0),,$(error CELL_35_0=/absolute/rate35-seed0.json is required))
+	$(if $(CELL_35_1),,$(error CELL_35_1=/absolute/rate35-seed1.json is required))
+	$(if $(CELL_35_2),,$(error CELL_35_2=/absolute/rate35-seed2.json is required))
+	$(if $(CELL_42_0),,$(error CELL_42_0=/absolute/rate42-seed0.json is required))
+	$(if $(CELL_42_1),,$(error CELL_42_1=/absolute/rate42-seed1.json is required))
+	$(if $(CELL_42_2),,$(error CELL_42_2=/absolute/rate42-seed2.json is required))
+	$(if $(OUTPUT),,$(error OUTPUT=/absolute/path/outside/repository.json is required))
+	uv run --frozen python -m plant_backend.rl.v2.mpc_report \
+		--cell $(CELL_35_0) --cell $(CELL_35_1) --cell $(CELL_35_2) \
+		--cell $(CELL_42_0) --cell $(CELL_42_1) --cell $(CELL_42_2) \
+		--output $(OUTPUT)
+
+v2-mpc-setpoint:  ## run the single frozen absolute-setpoint mechanism cell (external OUTPUT required)
+	$(if $(OUTPUT),,$(error OUTPUT=/absolute/path/outside/repository.json is required))
+	uv run --frozen python -m plant_backend.rl.v2.mpc_setpoint_experiment \
+		--output $(OUTPUT)
+
+v2-economic-smoke: ## run the single frozen heuristic/MPC economic mechanism cell
+	$(if $(OUTPUT),,$(error OUTPUT=/absolute/path/outside/repository.json is required))
+	uv run --frozen python -m plant_backend.rl.v2.economic_smoke_experiment $(OUTPUT)
+
+v2-economic-robustness: ## run the frozen 20-cell task-robustness tournament
+	$(if $(OUTPUT),,$(error OUTPUT=/absolute/new/directory/outside/repository is required))
+	uv run --frozen python -m plant_backend.rl.v2.economic_robustness_experiment \
+		run $(OUTPUT)
+
+v2-economic-robustness-verify: ## deeply verify a robustness report and all cell artifacts
+	$(if $(REPORT),,$(error REPORT=/absolute/path/to/report.json is required))
+	uv run --frozen python -m plant_backend.rl.v2.economic_robustness_experiment \
+		verify $(REPORT)
+
+v2-full-day-horizon-repair: ## run the frozen ten-cell M24 horizon-only probe
+	$(if $(REFERENCE_REPORT),,$(error REFERENCE_REPORT=/absolute/path/to/historical/report.json is required))
+	$(if $(OUTPUT),,$(error OUTPUT=/absolute/new/directory/outside/repository is required))
+	uv run --frozen python -m plant_backend.rl.v2.full_day_horizon_repair_experiment \
+		run $(REFERENCE_REPORT) $(OUTPUT)
+
+v2-full-day-horizon-repair-verify: ## deeply verify an M24 report and both evidence directories
+	$(if $(REPORT),,$(error REPORT=/absolute/path/to/report.json is required))
+	uv run --frozen python -m plant_backend.rl.v2.full_day_horizon_repair_experiment \
+		verify $(REPORT)
+
+v2-train-dry:     ## identify the controller-neutral RL task; trains nothing
+	uv run --frozen python -m plant_backend.rl.v2.training --dry-run \
+		$(if $(CONFIG),--config $(CONFIG),)
+
+v2-train:         ## train PPO through the four-target door (long; opt-in)
+	uv run --frozen python -m plant_backend.rl.v2.training \
+		$(if $(CONFIG),--config $(CONFIG),) $(if $(OUTPUT),--output $(OUTPUT),)
+
+v2-rl-eval:       ## pair a compatible four-target checkpoint with the heuristic
+	$(if $(CHECKPOINT),,$(error CHECKPOINT=<checkpoint-directory> is required))
+	uv run --frozen python -m plant_backend.rl.v2.policy_evaluation \
+		--checkpoint $(CHECKPOINT) --seed-start $(or $(SEED_START),0) \
+		--count $(or $(SEEDS),1) $(if $(JSON),--json $(JSON),)
+
+v2-controller-benchmark: ## compare H, M24, economic MPC, and trained PPO (exclusive OUTPUT required)
+	$(if $(CHECKPOINT),,$(error CHECKPOINT=<trained-checkpoint-directory> is required))
+	$(if $(OUTPUT),,$(error OUTPUT=/absolute/new/report.json is required))
+	uv run --frozen --group train --group optimisation \
+		python -m plant_backend.rl.v2.controller_benchmark \
+		--checkpoint $(CHECKPOINT) --seed-start $(or $(SEED_START),0) \
+		--count $(or $(SEEDS),1) --json $(OUTPUT)
+
+v2-beta-controller-benchmark: ## compare H, M24, beta economic MPC, and trained PPO
+	$(if $(CHECKPOINT),,$(error CHECKPOINT=<trained-beta-checkpoint-directory> is required))
+	$(if $(OUTPUT),,$(error OUTPUT=/absolute/new/report.json is required))
+	uv run --frozen --group train --group optimisation \
+		python -m plant_backend.rl.v2.beta_controller_benchmark \
+		--checkpoint $(CHECKPOINT) --seed-start $(or $(SEED_START),0) \
+		--count $(or $(SEEDS),1) --json $(OUTPUT)
+
+v2-beta-controller-benchmark-verify: ## deeply verify one beta controller report
+	$(if $(REPORT),,$(error REPORT=/absolute/path/to/report.json is required))
+	uv run --frozen --group optimisation \
+		python -m plant_backend.rl.v2.beta_controller_benchmark_verifier $(REPORT)
+
+v2-beta-rl-capacity: ## run the three frozen fixture-only RL capacity cells
+	$(if $(OUTPUT),,$(error OUTPUT=/absolute/new/directory/outside/repository is required))
+	$(if $(filter yes,$(ASSERT_EXCLUSIVE)),,$(error ASSERT_EXCLUSIVE=yes is required after checking no benchmark is running))
+	$(if $(filter yes,$(ASSERT_FIRST_ATTEMPT)),,$(error ASSERT_FIRST_ATTEMPT=yes is required after checking this revision has no prior attempt))
+	uv run --frozen --group train \
+		python -m plant_backend.rl.v2.training.capacity_benchmark run $(OUTPUT) \
+		--assert-exclusive --assert-first-attempt
+
+.PHONY: v2-beta-rl-registered v2-beta-rl-registered-verify v2-beta-rl-registered-inspect
+
+v2-beta-rl-registered: ## consume the committed registered-training authorization once
+	$(if $(OUTPUT),,$(error OUTPUT=/absolute/new/campaign/root is required))
+	$(if $(filter yes,$(ASSERT_EXCLUSIVE)),,$(error ASSERT_EXCLUSIVE=yes is required))
+	$(if $(filter yes,$(ASSERT_FIRST_ATTEMPT)),,$(error ASSERT_FIRST_ATTEMPT=yes is required))
+	$(if $(filter yes,$(ASSERT_AUTHORIZED)),,$(error ASSERT_AUTHORIZED=yes is required after committed user authorization))
+	uv run --frozen --group train --group optimisation \
+		python -m plant_backend.rl.v2.training.registered_campaign run "$(OUTPUT)" \
+		--assert-exclusive --assert-first-attempt --assert-authorized
+
+v2-beta-rl-registered-verify: ## independently verify registered custody without a reset
+	$(if $(REPORT),,$(error REPORT=/absolute/campaign/root/report.json is required))
+	uv run --frozen --group train --group optimisation \
+		python -m plant_backend.rl.v2.training.registered_campaign verify "$(REPORT)"
+
+v2-beta-rl-registered-inspect: ## inspect interrupted custody without permitting retry
+	$(if $(OUTPUT),,$(error OUTPUT=/absolute/campaign/root is required))
+	uv run --frozen python -m plant_backend.rl.v2.training.registered_campaign inspect "$(OUTPUT)"
+
+v2-beta-rl-capacity-verify: ## verify one fixture-only RL capacity report
+	$(if $(REPORT),,$(error REPORT=/absolute/path/to/report.json is required))
+	uv run --frozen --group train \
+		python -m plant_backend.rl.v2.training.capacity_benchmark verify $(REPORT)
 
 train-dry:        ## build the RL environment and print the training plan; trains nothing
 	uv run python -m plant_backend.rl.training.train --dry-run
@@ -70,7 +225,7 @@ hepa-eval:        ## score a stage-2 checkpoint per event and per horizon
 		--dataset $(or $(DATASET),datasets/hepa)
 
 test:             ## simulator + backend test suite
-	uv run pytest -q
+	uv run --frozen --group train --group optimisation python tools/test_backend.py app
 
 build:            ## typecheck + build the frontend
 	cd frontend && npm run build

@@ -1,0 +1,280 @@
+{
+  "actor_mean_tensor_sha256": "aa5ff0dd0c4b9777396d163dd4c60a369e979ee8e51011392bfc227aade3cc45",
+  "actor_tensor_sha256": "aa5ff0dd0c4b9777396d163dd4c60a369e979ee8e51011392bfc227aade3cc45",
+  "checkpoint": {
+    "bytes": 621604,
+    "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/learned_control_20260918/runs/cem-ridge-bias-cohort/seed-5902/training/checkpoints/generation-015.zip",
+    "sha256": "6a3b67bdfb7f2dfd8543330f10970fe07f62ba18b4ce275ddf51bb289d827afe"
+  },
+  "checkpoint_reopen_verified": true,
+  "container_format": "SB3PPOserialization for shared actor inference only",
+  "created_at": "2026-09-18T04:27:51.541651+00:00",
+  "deterministic_prediction_reopen_verified": true,
+  "environment_identity": {
+    "action": {
+      "controller_guard": false,
+      "high": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "hold_seconds": 900,
+      "low": [
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0
+      ],
+      "mapping": "four solar shares normalized jointly; three battery power shares normalized jointly against shared 2500kW rating, then physically capped by available stored energy",
+      "order": [
+        "battery_solar_share",
+        "electrolyser_solar_share",
+        "dac_solar_share",
+        "methanator_solar_share",
+        "battery_support",
+        "battery_dac_support",
+        "battery_methanator_support"
+      ],
+      "physics_seconds": 60,
+      "size": 7
+    },
+    "arm": "shared-dynamic",
+    "changes": [
+      "seed admission",
+      "training condition sampling probabilities"
+    ],
+    "condition_implementation": {
+      "control_and_stress": "tail_stress_v1.environment.TailStressEnv, with unchanged prescribed schedules",
+      "ordinary": "wholeplant_ppo_v1.environment.WholePlantEnv, with original random DAC faults"
+    },
+    "condition_visible_to_policy": false,
+    "conditions": {
+      "control": {
+        "duration_h": 0.0,
+        "end_h": null,
+        "family": "control",
+        "onset_h": null
+      },
+      "meth24": {
+        "duration_h": 24.0,
+        "end_h": 86.0,
+        "family": "methanator",
+        "onset_h": 62.0
+      },
+      "meth48": {
+        "duration_h": 48.0,
+        "end_h": 86.0,
+        "family": "methanator",
+        "onset_h": 38.0
+      },
+      "ordinary": {
+        "duration_h": 0.0,
+        "end_h": null,
+        "family": "ordinary",
+        "onset_h": null,
+        "random_component_faults": true
+      },
+      "pv18": {
+        "duration_h": 18.0,
+        "end_h": 66.0,
+        "family": "pv",
+        "onset_h": 48.0
+      },
+      "pv36": {
+        "duration_h": 36.0,
+        "end_h": 84.0,
+        "family": "pv",
+        "onset_h": 48.0
+      },
+      "pv6": {
+        "duration_h": 6.0,
+        "end_h": 54.0,
+        "family": "pv",
+        "onset_h": 48.0
+      }
+    },
+    "default_training_mixture": {
+      "meth24": 0.1,
+      "meth48": 0.1,
+      "ordinary": 0.5,
+      "pv18": 0.1,
+      "pv36": 0.1,
+      "pv6": 0.1
+    },
+    "environment_id": "plant-learned-control-fixed-environments-v1",
+    "episode_decisions": 672,
+    "final_gate": "pinned selected recipe and matching source/environment identity required before any final reset",
+    "horizon_h": 168.0,
+    "observation": {
+      "base_size": 135,
+      "extra_order": [
+        "dac_readiness_fraction",
+        "dac_off",
+        "dac_starting",
+        "dac_standby",
+        "dac_producing",
+        "dac_power_fraction",
+        "methanator_readiness_fraction",
+        "methanator_off",
+        "methanator_starting",
+        "methanator_standby",
+        "methanator_producing",
+        "methanator_power_fraction",
+        "battery_to_dac_fraction",
+        "battery_to_methanator_fraction"
+      ],
+      "size": 149,
+      "source": "causal public boundary measurements and forecasts; downstream readiness measured"
+    },
+    "ordinary_environment_identity_sha256": "700e415439a4c8927718c1522279404c41c423deb9f6b1b2bfc046fa979be615",
+    "schema": "learned-control-fixed-environment-v1",
+    "splits": {
+      "development": [
+        51000000,
+        51000001,
+        51000002,
+        51000003,
+        51000004,
+        51000005,
+        51000006,
+        51000007,
+        51000008,
+        51000009,
+        51000010,
+        51000011,
+        51000012,
+        51000013,
+        51000014,
+        51000015
+      ],
+      "final": [
+        52000000,
+        52000001,
+        52000002,
+        52000003,
+        52000004,
+        52000005,
+        52000006,
+        52000007,
+        52000008,
+        52000009,
+        52000010,
+        52000011,
+        52000012,
+        52000013,
+        52000014,
+        52000015,
+        52000016,
+        52000017,
+        52000018,
+        52000019,
+        52000020,
+        52000021,
+        52000022,
+        52000023,
+        52000024,
+        52000025,
+        52000026,
+        52000027,
+        52000028,
+        52000029,
+        52000030,
+        52000031
+      ],
+      "train": {
+        "first": 50000000,
+        "stop_exclusive": 51000000
+      }
+    },
+    "tail_environment_identity_sha256": "9248433ce8e9a2ff702ab71d044b5ec3dce561af7fe17d80592fbf691677aa9a",
+    "unchanged": [
+      "physics",
+      "capacities",
+      "episode duration",
+      "delivery schedule",
+      "scalar economic reward",
+      "observations",
+      "actions",
+      "fault schedules",
+      "weather generation",
+      "initial-state distribution"
+    ]
+  },
+  "gaussian_log_std": null,
+  "generation": 15,
+  "gradient_updates_this_run": 0,
+  "kind": "generation-incumbent",
+  "normalizer": {
+    "bytes": 5662,
+    "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/learned_control_20260918/runs/cem-ridge-bias-cohort/seed-5902/training/checkpoints/generation-015.vecnormalize.pkl",
+    "sha256": "f9e9d8fdf66e9724845e6b2a50ac189ebb3baeb7ec3be3e0bb4a611e4f6b36a2"
+  },
+  "normalizer_bytes_identical_to_parent": true,
+  "num_timesteps": 0,
+  "optimizer_algorithm": "cross_entropy_search",
+  "optimizer_family": "CEM parameter-space search",
+  "optimizer_seed": 5902,
+  "optimizer_state_sha256": "829b18b3fdaa93e2069910edff97d8d22a88f2ad08ce9203b369cdf7f59bbdd8",
+  "parameters": [
+    0.7613219865203358,
+    0.04545486947267835,
+    1.5099878311045807,
+    -1.665426414804104,
+    0.3976088886109911,
+    -0.19208101874446884,
+    -0.1991080674461157,
+    -0.1608499109631188,
+    3.1774724188513304,
+    -0.5063953292696707,
+    0.5639048988640892,
+    1.0638381724017376,
+    0.3309267361354613,
+    1.2825752404372324
+  ],
+  "parent_training_seed": 903,
+  "plan_sha256": "b647a9f46adc6e76216f71925fe54fe8b7312b948b924bf27235b7da5d7f92e9",
+  "policy_distribution": {
+    "coordinates": 7,
+    "deterministic_rule": "Choose learned OFF gate mode atq>=0.5; otherwise clip learned continuous mean intoBox",
+    "endpoint_half_ulp": 2.9802322387695312e-08,
+    "endpoint_numerics": "Float32 endpoint-rounding intervals are included in the endpoint masses",
+    "entropy": "Marginal Shannon endpoint terms plus interior differential entropy",
+    "interior_density": "(1-q)*NormalPDF(action;mean,scale)",
+    "learned_parameters_per_coordinate": [
+      "off_gate_logit",
+      "on_mean",
+      "on_scale_logit"
+    ],
+    "legacy_inference_field_semantics": "Existing replay fields unclipped_mean/raw_mean contain the hierarchical deterministic action for this hybrid actor,not the continuousONmean",
+    "maximum_mass": "(1-q)*(1-Phi((upper_censor-mean)/scale))",
+    "off_mass": "q+(1-q)*Phi((lower_censor-mean)/scale)",
+    "on_distribution": "Normal(mean,state-dependent_scale), censored into existing[-1,1]Box",
+    "physical_action_support": "All seven originalBox coordinates,including exact-1 and+1",
+    "plant_specific_inference_logic": false,
+    "schema": "learned-off-censored-gaussian-v1",
+    "teacher_at_inference": false
+  },
+  "policy_tensor_sha256": "ad1ea1c98fe3c7621b41e29c9518652dff27a4440ee3b3f1eb5dd999a731131c",
+  "ppo_update_count_inherited_from_parent": 0,
+  "ppo_updates_this_run": 0,
+  "schema": "learned-control-cem-bias-search-v1",
+  "search_ledger": {
+    "completed_rollouts": 3072,
+    "gradient_updates": 0,
+    "physical_decisions": 2064384,
+    "physical_minutes": 30965760,
+    "ppo_updates": 0,
+    "scheduled_rollouts": 3072,
+    "started_rollouts": 3072,
+    "unknown_partial_rollouts": 0
+  },
+  "timestep_field_semantics": "Inherited parent gradient-training counter; actual search/validation effort is recorded separately insearch_ledger",
+  "unchanged_tensor_sha256": "e47af3d2557221b33ee1f8637a147c314276c4698bceb1afafa864b7c4098518"
+}

@@ -15,7 +15,10 @@ and kilowatts by `actions.py`.
 
 from __future__ import annotations
 
+import hashlib
+import json
 from dataclasses import dataclass
+from typing import Mapping
 
 import numpy as np
 
@@ -263,6 +266,9 @@ OBSERVATION_SIZE = len(OBSERVATION_FIELDS)
 ACTION_SIZE = len(ACTION_FIELDS)
 #: Bumped whenever the meaning of a slot changes rather than a slot being added.
 SPEC_VERSION = 1
+#: Stable identity for this observation/action interface. It deliberately does
+#: not promise compatibility of the reward function or plant dynamics.
+ENVIRONMENT_ID = "plant-env-v1"
 
 
 def observation_low() -> np.ndarray:
@@ -281,8 +287,12 @@ def action_high() -> np.ndarray:
     return np.array([field.high for field in ACTION_FIELDS], dtype=np.float32)
 
 
-def describe() -> dict[str, object]:
-    """The whole contract as JSON: what the docs, the API and the tests read."""
+def contract_payload() -> dict[str, object]:
+    """Return the machine-readable observation/action contract to be hashed.
+
+    The digest covers the ordered fields and their semantics, but intentionally
+    does not cover rewards, episode construction, or the simulator's dynamics.
+    """
     return {
         "spec_version": SPEC_VERSION,
         "observation_size": OBSERVATION_SIZE,
@@ -292,10 +302,36 @@ def describe() -> dict[str, object]:
     }
 
 
+def contract_digest(payload: Mapping[str, object] | None = None) -> str:
+    """Return the SHA-256 of a canonical JSON representation of the contract."""
+    canonical = json.dumps(
+        contract_payload() if payload is None else payload,
+        allow_nan=False,
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8")
+    return hashlib.sha256(canonical).hexdigest()
+
+
+ENVIRONMENT_CONTRACT_DIGEST = contract_digest()
+
+
+def describe() -> dict[str, object]:
+    """Describe this observation/action interface, including its identity."""
+    return {
+        "environment_id": ENVIRONMENT_ID,
+        "environment_contract_digest": ENVIRONMENT_CONTRACT_DIGEST,
+        **contract_payload(),
+    }
+
+
 __all__ = [
     "ACTION_FIELDS",
     "ACTION_NAMES",
     "ACTION_SIZE",
+    "ENVIRONMENT_CONTRACT_DIGEST",
+    "ENVIRONMENT_ID",
     "OBSERVATION_FIELDS",
     "OBSERVATION_NAMES",
     "OBSERVATION_SIZE",
@@ -304,6 +340,8 @@ __all__ = [
     "ObservationField",
     "action_high",
     "action_low",
+    "contract_digest",
+    "contract_payload",
     "describe",
     "observation_high",
     "observation_low",

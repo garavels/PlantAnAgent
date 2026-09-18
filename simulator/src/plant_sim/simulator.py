@@ -17,7 +17,7 @@ distinction between the truth (`state`) and what an observer is told
 from __future__ import annotations
 
 from dataclasses import replace
-from typing import Any
+from typing import Any, Iterable, Mapping
 
 from . import scenarios as scenario_library
 from . import telemetry as telemetry_module
@@ -32,8 +32,14 @@ from .components import (
     SolarArray,
 )
 from .config import PlantConfig
+from .commitment import (
+    ElectrolyserCommitmentProfile,
+    ElectrolyserCommitmentSnapshot,
+)
+from .delivery import DeliveryCommitment, DeliveryLedger, DeliveryStepResult
 from .events import EventLog
 from .faults import Fault, FaultRegistry, FaultSpec
+from .forcing import SolarFactorTape
 from .scenarios import Scenario
 from .state import (
     CRITICAL,
@@ -60,11 +66,20 @@ class PlantSimulator:
     tank on the material side.
     """
 
-    def __init__(self, config: PlantConfig | None = None) -> None:
+    def __init__(
+        self,
+        config: PlantConfig | None = None,
+        *,
+        electrolyser_commitment: ElectrolyserCommitmentProfile | None = None,
+    ) -> None:
         self.config = config or PlantConfig()
         self.solar = SolarArray(self.config.solar)
         self.battery = Battery(self.config.battery)
-        self.electrolyser = Electrolyser(self.config.electrolyser)
+        self.electrolyser = Electrolyser(
+            self.config.electrolyser,
+            commitment=electrolyser_commitment,
+        )
+        self.electrolyser.validate_commitment_timestep(self.config.dt_h)
         self.h2_tank = GasStorage(self.config.h2_tank, name="h2_tank", species="H2")
         self.dac = DirectAirCapture(self.config.dac)
         self.co2_tank = GasStorage(self.config.co2_tank, name="co2_tank", species="CO2")
@@ -90,10 +105,14 @@ class PlantSimulator:
         self.faults = FaultRegistry()
         #: What the plant noticed, oldest first.
         self.events = EventLog()
+        #: Opt-in methane delivery schedule and accounting, kept outside V1 state.
+        self.delivery_ledger = DeliveryLedger()
         #: Id of the scenario in force, if any.
         self.scenario: str | None = None
         #: Last reported plant status, so status changes emit exactly one event.
         self._status = NORMAL
+        #: Optional episode-relative exogenous solar resource trajectory.
+        self._solar_factor_tape: SolarFactorTape | None = None
 
         self.step_index = 0
         self.time_s = 0.0
@@ -105,19 +124,36 @@ class PlantSimulator:
         self.state = self.reset()
 
     # --- interface --------------------------------------------------------
-    def reset(self, *, keep_faults: bool = False) -> PlantState:
+    def reset(
+        self,
+        *,
+        keep_faults: bool = False,
+        solar_factor_tape: SolarFactorTape | None = None,
+    ) -> PlantState:
         """Return the plant to its initial condition and report the state.
 
         Faults, the event stream and any loaded scenario go with it: a reset
         plant is a healthy plant unless a caller explicitly keeps the faults.
+        A solar factor tape is opt-in and scoped to this episode; passing
+        ``None`` retains the exact clear-sky V1 behaviour.
         """
+        if solar_factor_tape is not None:
+            if not isinstance(solar_factor_tape, SolarFactorTape):
+                raise TypeError("solar_factor_tape must be a SolarFactorTape or None")
+            if solar_factor_tape.dt_s != self.config.dt_s:
+                raise ValueError(
+                    "solar factor tape timestep mismatch: "
+                    f"tape dt_s={solar_factor_tape.dt_s}, simulator dt_s={self.config.dt_s}"
+                )
         for component in self.components.values():
             component.reset()
         if not keep_faults:
             self.faults.clear_all()
             self.scenario = None
         self.events.clear()
+        self.delivery_ledger.clear()
         self._status = NORMAL
+        self._solar_factor_tape = solar_factor_tape
         self.step_index = 0
         self.time_s = 0.0
         self.energy_produced_kwh = 0.0
@@ -126,7 +162,7 @@ class PlantSimulator:
         self.co2_captured_total_kg = 0.0
         self.ch4_produced_total_kg = 0.0
         self._apply_faults()
-        self.solar.update(self.time_s)
+        self._update_solar(step_index=0)
         self.state = self._build_state(
             PowerFlows(
                 solar_available_kw=self.solar.power_kw,
@@ -153,9 +189,14 @@ class PlantSimulator:
         safe_action = Action.sanitised(action)
         dt_h = self.config.dt_h
 
+        # Exhaustion is checked before advancing faults, events, or equipment,
+        # so a failed call cannot leave a partially advanced episode behind.
+        if self._solar_factor_tape is not None:
+            self._solar_factor_tape.for_interval(self.step_index)
+
         self.events.at(self.time_s, self.state.clock)
         self._apply_faults()
-        solar_kw = self.solar.update(self.time_s)
+        solar_kw = self._update_solar(step_index=self.step_index + 1)
         flows = dispatch(
             safe_action,
             solar_kw,
@@ -177,6 +218,16 @@ class PlantSimulator:
         self.co2_captured_total_kg += flows.co2_captured_kg
         self.ch4_produced_total_kg += flows.ch4_produced_kg
 
+        # A tick-n deadline sits after production over [n - 1, n), so methane
+        # made in this dispatch is available to the delivery.  Tick indices,
+        # rather than float timestamps, make the boundary unambiguous.
+        delivery = self.delivery_ledger.settle(
+            self.step_index,
+            available_kg=self.ch4_tank.level_kg,
+        )
+        if delivery.delivered_kg > 0.0:
+            self.ch4_tank.withdraw(delivery.delivered_kg)
+
         self.state = self._build_state(flows, safe_action)
         self.events.at(self.time_s, self.state.clock)
         self._observe_conditions(self.state)
@@ -196,6 +247,68 @@ class PlantSimulator:
         agents and the control room should read *this*, not `state`.
         """
         return self.telemetry
+
+    @property
+    def electrolyser_commitment(self) -> ElectrolyserCommitmentSnapshot | None:
+        """Immutable commitment audit state, absent on the legacy simulator."""
+        return self.electrolyser.commitment_snapshot
+
+    def next_dispatch_solar_kw(self) -> float:
+        """Return the exact solar bus the next :meth:`step` will dispatch.
+
+        This is a read-only actuator view: it does not advance time, faults,
+        events, the forcing tape, or any component. Controllers must continue
+        to decide from telemetry. The fast guard uses this value to enforce
+        absolute kW caps against the contemporaneous bus across sunrise,
+        weather ramps, and the end of a solar disturbance.
+        """
+        resource_factor = (
+            1.0
+            if self._solar_factor_tape is None
+            else self._solar_factor_tape.for_interval(self.step_index)
+        )
+        solar_effect = self.faults.effect_for_at("solar", self.time_s)
+        return (
+            self.solar.clear_sky_kw(self.time_s)
+            * resource_factor
+            * solar_effect.health
+        )
+
+    # --- deliveries ------------------------------------------------------
+    def set_delivery_schedule(
+        self,
+        commitments: Iterable[DeliveryCommitment | Mapping[str, Any]],
+        *,
+        freeze: bool = False,
+    ) -> DeliveryStepResult:
+        """Install an episode-relative methane delivery schedule atomically.
+
+        ``due_step`` values are counted from the most recent ``reset()`` or
+        ``load_scenario()``.  When installing after the episode has advanced,
+        every deadline must still be in the future.  A reset or scenario load
+        clears both the schedule and all delivery accounting.
+        """
+        result = self.delivery_ledger.set_schedule(
+            commitments,
+            current_step=self.step_index,
+        )
+        if freeze:
+            self.delivery_ledger.freeze()
+        return result
+
+    @property
+    def delivery_step(self) -> DeliveryStepResult:
+        """Immutable delivery result for the current simulator boundary."""
+        return self.delivery_ledger.current
+
+    @property
+    def next_delivery(self) -> DeliveryCommitment | None:
+        """Next pending commitment, without exposing the whole future tape."""
+        return self.delivery_ledger.next_pending
+
+    def delivery_audit(self) -> dict[str, Any]:
+        """Serialize the full schedule, settlements, and cumulative totals."""
+        return self.delivery_ledger.audit()
 
     # --- faults and scenarios ---------------------------------------------
     def inject_fault(self, spec: FaultSpec | dict[str, Any]) -> Fault:
@@ -228,10 +341,15 @@ class PlantSimulator:
         self.events.emit("info", "fault.cleared_all", "All faults cleared by operator")
         self._apply_faults()
 
-    def load_scenario(self, scenario: Scenario | str) -> PlantState:
+    def load_scenario(
+        self,
+        scenario: Scenario | str,
+        *,
+        solar_factor_tape: SolarFactorTape | None = None,
+    ) -> PlantState:
         """Reset the plant into a repeatable situation and schedule its faults."""
         chosen = scenario_library.get(scenario)
-        self.reset()
+        self.reset(solar_factor_tape=solar_factor_tape)
         self.scenario = chosen.id
         self.time_s = chosen.start_hour * SECONDS_PER_HOUR
 
@@ -254,7 +372,7 @@ class PlantSimulator:
 
         self.events.at(self.time_s, _clock(self.time_s))
         self._apply_faults()
-        self.solar.update(self.time_s)
+        self._update_solar(step_index=0)
         self.state = self._build_state(
             PowerFlows(
                 solar_available_kw=self.solar.power_kw,
@@ -279,6 +397,21 @@ class PlantSimulator:
         return self.state
 
     # --- internals --------------------------------------------------------
+    def _update_solar(self, *, step_index: int) -> float:
+        """Apply one episode-boundary resource factor at the legacy solar time.
+
+        Tape lookup intentionally uses the episode-relative integer step, not
+        the absolute scenario clock.  The clear-sky curve keeps its established
+        V1 sampling convention so an all-ones tape is exactly equivalent to no
+        tape at all.
+        """
+        resource_factor = (
+            1.0
+            if self._solar_factor_tape is None
+            else self._solar_factor_tape.at_boundary(step_index)
+        )
+        return self.solar.update(self.time_s, resource_factor=resource_factor)
+
     def _apply_faults(self) -> None:
         """Advance fault lifecycles and hand each component its current effect."""
         for transition, fault in self.faults.update(self.time_s):

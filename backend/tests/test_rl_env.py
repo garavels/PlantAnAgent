@@ -6,6 +6,8 @@ translation layer, not the plant: the physics already has its own suite.
 
 from __future__ import annotations
 
+import json
+
 import numpy as np
 import pytest
 from plant_sim import Action, PlantConfig, PlantSimulator
@@ -40,6 +42,16 @@ def test_field_contract_is_self_consistent() -> None:
     # every field documents where it came from and how it was normalised
     for field in spaces.OBSERVATION_FIELDS:
         assert field.source and field.unit and field.normalisation
+
+
+def test_environment_contract_digest_is_deterministic_and_described() -> None:
+    assert spaces.ENVIRONMENT_ID == "plant-env-v1"
+    assert spaces.contract_digest() == spaces.contract_digest(spaces.contract_payload())
+    assert len(spaces.ENVIRONMENT_CONTRACT_DIGEST) == 64
+    int(spaces.ENVIRONMENT_CONTRACT_DIGEST, 16)
+    described = spaces.describe()
+    assert described["environment_id"] == spaces.ENVIRONMENT_ID
+    assert described["environment_contract_digest"] == spaces.ENVIRONMENT_CONTRACT_DIGEST
 
 
 def test_reset_returns_a_member_of_the_observation_space(env: PlantEnv) -> None:
@@ -145,6 +157,38 @@ def test_action_decode_flags_and_clips_out_of_range_output() -> None:
     assert decoded.clipped
     assert decoded.action == Action.sanitised(decoded.action)
     assert 0.0 <= decoded.action.battery_share <= 1.0
+
+
+@pytest.mark.parametrize(
+    ("invalid", "audit_value"),
+    [
+        (float("nan"), "nan"),
+        (float("inf"), "+inf"),
+        (-float("inf"), "-inf"),
+    ],
+)
+def test_non_finite_policy_output_fails_to_zero_authority(
+    invalid: float,
+    audit_value: str,
+) -> None:
+    adapter = ActionAdapter(PlantConfig())
+    decoded = adapter.decode(
+        np.full(spaces.ACTION_SIZE, invalid),
+        constraints=Constraints(),
+        solar_available_kw=5_000.0,
+    )
+
+    assert decoded.clipped
+    assert decoded.action == Action.idle()
+    assert decoded.requested_kw == {
+        "battery": 0.0,
+        "electrolyser": 0.0,
+        "dac": 0.0,
+        "methanator": 0.0,
+        "battery_support": 0.0,
+    }
+    assert decoded.raw_policy_vector == (audit_value,) * spaces.ACTION_SIZE
+    json.dumps(decoded.to_dict(), allow_nan=False)
 
 
 def test_action_encode_is_the_inverse_of_decode() -> None:

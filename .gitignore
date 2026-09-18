@@ -1,4 +1,4 @@
-# Python
+# Local environments and generated build files
 __pycache__/
 *.py[cod]
 .venv/
@@ -7,17 +7,100 @@ venv/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
-
-# Node
 node_modules/
 dist/
 .vite/
 *.tsbuildinfo
-
-# RL runs: checkpoints and training output are generated, often large, never source
-runs/
-
-# Tooling
 .DS_Store
 .env
-.env.local
+.env.*
+!.env.example
+
+# Submission excludes manuscripts, private notes and generated exports.
+/paper/
+/output/
+/datasets/
+/checkpoints/
+/tmp/
+/.impeccable/
+/PRODUCT.md
+/docs/*
+!/docs/research/
+/docs/research/*
+!/docs/research/tools/
+!/docs/research/benchmarks/
+!/docs/research/results/
+/docs/research/tools/**
+!/docs/research/tools/**/
+!/docs/research/tools/**/*.py
+/docs/research/benchmarks/*
+!/docs/research/benchmarks/*.json
+/docs/research/results/**
+!/docs/research/results/**/
+
+# Immutable protocol bytes consumed by experiment validation.
+!/docs/research/AUTHORITY_PPO_V2_PROTOCOL.md
+!/docs/research/BETA_MPC_DELIVERY_MODEL_REPAIR.md
+!/docs/research/BETA_MPC_UNCERTAINTY_REPAIR.md
+!/docs/research/CAUSAL_SERVICE_MPC_ACTUATION_BRIDGE_PROTOCOL.md
+!/docs/research/CAUSAL_SERVICE_MPC_SETPOINT_DISPATCH_CLARIFICATION_001.md
+!/docs/research/CAUSAL_SERVICE_MPC_SETPOINT_DISPATCH_PROTOCOL.md
+!/docs/research/COMPARISON_PPO_V2_PROTOCOL.md
+!/docs/research/CONSTRAINED_RL_BETA_PROTOCOL.md
+!/docs/research/CONSTRAINED_RL_CAPACITY_PROTOCOL.md
+!/docs/research/CONSTRAINED_RL_CAPACITY_REPAIR_001.md
+!/docs/research/CONSTRAINED_RL_CAPACITY_REPAIR_002.md
+!/docs/research/CONSTRAINED_RL_CAPACITY_REPAIR_CLARIFICATION_001.md
+!/docs/research/CONSTRAINED_RL_CAPACITY_REPAIR_CLARIFICATION_002.md
+!/docs/research/CONSTRAINED_RL_REGISTERED_TRAINING_CUSTODY_PROTOCOL.md
+!/docs/research/CONSTRAINED_RL_STUDY_CAPACITY_FIXTURE.md
+!/docs/research/CONSTRAINED_RL_STUDY_CAPACITY_RETURN_BOUNDS_FIXTURE.md
+!/docs/research/COVERAGE_PPO_V1_PROTOCOL.md
+!/docs/research/ECONOMIC_MECHANISM_SMOKE_PROTOCOL.md
+!/docs/research/ECONOMIC_ROBUSTNESS_TOURNAMENT_PROTOCOL.md
+!/docs/research/FEASIBLE_PLANNER_PROTOCOL.md
+!/docs/research/FORECAST_ABLATION_V1_PROTOCOL.md
+!/docs/research/FREE_PPO_V1_PROTOCOL.md
+!/docs/research/FULL_DAY_HORIZON_REPAIR_CLARIFICATION_001.md
+!/docs/research/FULL_DAY_HORIZON_REPAIR_CLARIFICATION_002.md
+!/docs/research/FULL_DAY_HORIZON_REPAIR_PROTOCOL.md
+!/docs/research/LEARNED_CONTROL_V1_PROTOCOL.md
+!/docs/research/STARTUP_STRESS_V1_PROTOCOL.md
+!/docs/research/TAIL_STRESS_V1_PROTOCOL.md
+!/docs/research/WHOLEPLANT_PPO_V1_PROTOCOL.md
+
+# Small fixtures used by app evidence tests and executable audits.
+!/docs/research/results/v2_feasible_planner_matrix_564002c.json
+!/docs/research/results/feasible25_offgrid_20260915/ppo-101-held-out/9930000.json.gz
+!/docs/research/results/batch009_economic_audit.py
+!/docs/research/results/batch009_economic_audit_test.py
+!/docs/research/results/feasible25_offgrid_20260915/coverage-held-out-a/summary.json
+!/docs/research/results/feasible25_offgrid_20260915/coverage-held-out-b/summary.json
+!/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/endpoints-frozen.json
+!/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/training-closure.json
+!/docs/research/results/feasible25_offgrid_20260915/experiment-closure.json
+!/docs/research/results/feasible25_offgrid_20260915/ppo-101-held-out/summary.json
+
+# Demo runtime data only; video production assets stay local.
+/demo/*
+!/demo/recordings/
+/demo/recordings/*
+!/demo/recordings/cd1ff361-33ac-5f84-9c94-8363ffdbe12f.json
+
+# The dated snapshot is required experimental source, not a training run.
+/runs/*
+!/runs/authority-source-20260917/
+/runs/authority-source-20260917/**
+!/runs/authority-source-20260917/**/
+!/runs/authority-source-20260917/**/*.py
+!/runs/authority-source-20260917/**/*.json
+!/runs/authority-source-20260917/**/*.toml
+!/runs/authority-source-20260917/uv.lock
+
+# LaTeX build intermediates, wherever they are produced.
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz

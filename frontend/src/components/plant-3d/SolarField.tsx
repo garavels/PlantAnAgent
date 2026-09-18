@@ -87,13 +87,15 @@ export function SolarField({ solar, peakKw }: SolarFieldProps) {
     { label: 'Power', value: `${Math.round(solar.kw).toLocaleString('en-US')} kW` },
     {
       label: 'Status',
-      value: solar.status === 'nominal' ? (solar.daylight ? 'Generating' : 'Night') : 'Reduced irradiance',
+      value: solar.status === 'nominal'
+        ? (solar.daylight ? 'Generating' : solar.referenceKind === 'forecast_pv' ? 'No PV output' : 'Night')
+        : 'Reduced irradiance',
     },
     { label: 'Array peak', value: `${Math.round(peakKw).toLocaleString('en-US')} kW` },
   ]
   if (solar.degradation > 0) {
     rows_out.push({
-      label: 'Clear sky',
+      label: solar.referenceKind === 'forecast_pv' ? 'Forecast PV' : 'Clear sky',
       value: `${Math.round(solar.potentialKw).toLocaleString('en-US')} kW`,
     })
   }

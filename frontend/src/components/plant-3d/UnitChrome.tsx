@@ -63,7 +63,7 @@ function Beacon({ tint, height }: { tint: string; height: number }) {
 }
 
 export function UnitChrome({ id, name, accent, plateHeight, plateOffset, rows, status = 'nominal', children }: UnitChromeProps) {
-  const { selected, select } = useUnitSelection()
+  const { selected, select, hideLabels, externalInspector, guidedUnit } = useUnitSelection()
   const [hovered, setHovered] = useState(false)
   useCursor(hovered)
 
@@ -87,15 +87,15 @@ export function UnitChrome({ id, name, accent, plateHeight, plateOffset, rows, s
     >
       {children(active)}
       {tint && <Beacon tint={tint} height={plateHeight - 0.7} />}
-      <Html
+      {!hideLabels && (id !== guidedUnit || !!tint) && (!externalInspector || active || !!tint) && <Html
         position={[plateOffset?.[0] ?? 0, plateHeight, plateOffset?.[1] ?? 0]}
         center
-        distanceFactor={13}
+        distanceFactor={externalInspector ? undefined : 13}
         zIndexRange={[20, 0]}
         className="unit-plate-anchor"
       >
         <div
-          className={`unit-plate${active ? ' unit-plate--on' : ''}${tint ? ` unit-plate--${status}` : ''}`}
+          className={`unit-plate${externalInspector ? ' unit-plate--inspected' : ''}${active ? ' unit-plate--on' : ''}${tint ? ` unit-plate--${status}` : ''}`}
           style={{ '--unit-accent': tint ?? accent } as CSSProperties}
         >
           <span className="unit-plate__head">
@@ -103,16 +103,16 @@ export function UnitChrome({ id, name, accent, plateHeight, plateOffset, rows, s
             {name}
             {tint && <em className="unit-plate__flag">{status}</em>}
           </span>
-          <dl className={`unit-plate__rows${active ? ' unit-plate__rows--on' : ''}`}>
+          {!externalInspector && <dl aria-hidden={!active} className={`unit-plate__rows${active ? ' unit-plate__rows--on' : ''}`}>
             {rows.map((row) => (
               <div key={row.label} className="unit-plate__row">
                 <dt>{row.label}</dt>
                 <dd className="mono">{row.value}</dd>
               </div>
             ))}
-          </dl>
+          </dl>}
         </div>
-      </Html>
+      </Html>}
     </group>
   )
 }

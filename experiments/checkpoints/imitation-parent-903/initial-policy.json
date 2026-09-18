@@ -1,0 +1,538 @@
+{
+  "actor_mean_tensor_sha256": "2deb9eafa12da9bbf266d316c7dec171863b509b44c94e44f17a841244afb5af",
+  "actor_tensor_sha256": "2deb9eafa12da9bbf266d316c7dec171863b509b44c94e44f17a841244afb5af",
+  "additional_timesteps": 0,
+  "checkpoint": {
+    "bytes": 620593,
+    "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/learned_control_20260918/initialization/hybrid-solar-ridge/training/initial-policy.zip",
+    "sha256": "dcd89517ba049b5b8a9c563d6e8eb66e2ce051b06172e36ea49791c478b31d14"
+  },
+  "checkpoint_reopen_verified": true,
+  "created_at": "2026-09-18T01:24:09.127710+00:00",
+  "environment_identity": {
+    "action": {
+      "controller_guard": false,
+      "high": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "hold_seconds": 900,
+      "low": [
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0
+      ],
+      "mapping": "four solar shares normalized jointly; three battery power shares normalized jointly against shared 2500kW rating, then physically capped by available stored energy",
+      "order": [
+        "battery_solar_share",
+        "electrolyser_solar_share",
+        "dac_solar_share",
+        "methanator_solar_share",
+        "battery_support",
+        "battery_dac_support",
+        "battery_methanator_support"
+      ],
+      "physics_seconds": 60,
+      "size": 7
+    },
+    "arm": "shared-dynamic",
+    "changes": [
+      "seed admission",
+      "training condition sampling probabilities"
+    ],
+    "condition_implementation": {
+      "control_and_stress": "tail_stress_v1.environment.TailStressEnv, with unchanged prescribed schedules",
+      "ordinary": "wholeplant_ppo_v1.environment.WholePlantEnv, with original random DAC faults"
+    },
+    "condition_visible_to_policy": false,
+    "conditions": {
+      "control": {
+        "duration_h": 0.0,
+        "end_h": null,
+        "family": "control",
+        "onset_h": null
+      },
+      "meth24": {
+        "duration_h": 24.0,
+        "end_h": 86.0,
+        "family": "methanator",
+        "onset_h": 62.0
+      },
+      "meth48": {
+        "duration_h": 48.0,
+        "end_h": 86.0,
+        "family": "methanator",
+        "onset_h": 38.0
+      },
+      "ordinary": {
+        "duration_h": 0.0,
+        "end_h": null,
+        "family": "ordinary",
+        "onset_h": null,
+        "random_component_faults": true
+      },
+      "pv18": {
+        "duration_h": 18.0,
+        "end_h": 66.0,
+        "family": "pv",
+        "onset_h": 48.0
+      },
+      "pv36": {
+        "duration_h": 36.0,
+        "end_h": 84.0,
+        "family": "pv",
+        "onset_h": 48.0
+      },
+      "pv6": {
+        "duration_h": 6.0,
+        "end_h": 54.0,
+        "family": "pv",
+        "onset_h": 48.0
+      }
+    },
+    "default_training_mixture": {
+      "meth24": 0.1,
+      "meth48": 0.1,
+      "ordinary": 0.5,
+      "pv18": 0.1,
+      "pv36": 0.1,
+      "pv6": 0.1
+    },
+    "environment_id": "plant-learned-control-fixed-environments-v1",
+    "episode_decisions": 672,
+    "final_gate": "pinned selected recipe and matching source/environment identity required before any final reset",
+    "horizon_h": 168.0,
+    "observation": {
+      "base_size": 135,
+      "extra_order": [
+        "dac_readiness_fraction",
+        "dac_off",
+        "dac_starting",
+        "dac_standby",
+        "dac_producing",
+        "dac_power_fraction",
+        "methanator_readiness_fraction",
+        "methanator_off",
+        "methanator_starting",
+        "methanator_standby",
+        "methanator_producing",
+        "methanator_power_fraction",
+        "battery_to_dac_fraction",
+        "battery_to_methanator_fraction"
+      ],
+      "size": 149,
+      "source": "causal public boundary measurements and forecasts; downstream readiness measured"
+    },
+    "ordinary_environment_identity_sha256": "700e415439a4c8927718c1522279404c41c423deb9f6b1b2bfc046fa979be615",
+    "schema": "learned-control-fixed-environment-v1",
+    "splits": {
+      "development": [
+        51000000,
+        51000001,
+        51000002,
+        51000003,
+        51000004,
+        51000005,
+        51000006,
+        51000007,
+        51000008,
+        51000009,
+        51000010,
+        51000011,
+        51000012,
+        51000013,
+        51000014,
+        51000015
+      ],
+      "final": [
+        52000000,
+        52000001,
+        52000002,
+        52000003,
+        52000004,
+        52000005,
+        52000006,
+        52000007,
+        52000008,
+        52000009,
+        52000010,
+        52000011,
+        52000012,
+        52000013,
+        52000014,
+        52000015,
+        52000016,
+        52000017,
+        52000018,
+        52000019,
+        52000020,
+        52000021,
+        52000022,
+        52000023,
+        52000024,
+        52000025,
+        52000026,
+        52000027,
+        52000028,
+        52000029,
+        52000030,
+        52000031
+      ],
+      "train": {
+        "first": 50000000,
+        "stop_exclusive": 51000000
+      }
+    },
+    "tail_environment_identity_sha256": "9248433ce8e9a2ff702ab71d044b5ec3dce561af7fe17d80592fbf691677aa9a",
+    "unchanged": [
+      "physics",
+      "capacities",
+      "episode duration",
+      "delivery schedule",
+      "scalar economic reward",
+      "observations",
+      "actions",
+      "fault schedules",
+      "weather generation",
+      "initial-state distribution"
+    ]
+  },
+  "gaussian_log_std": null,
+  "gradient_updates_this_run": 0,
+  "kind": "supervised-solar-mean-refit",
+  "normalizer": {
+    "bytes": 5662,
+    "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/learned_control_20260918/initialization/hybrid-solar-ridge/training/initial-policy.vecnormalize.pkl",
+    "sha256": "f9e9d8fdf66e9724845e6b2a50ac189ebb3baeb7ec3be3e0bb4a611e4f6b36a2"
+  },
+  "normalizer_bytes_identical_to_parent": true,
+  "normalizer_observation_count": 80640.0001,
+  "num_timesteps": 0,
+  "optimizer_algorithm": "Supervised parent-centered ridge mean-head correction, conditional on teacher ON labels; no PPO or gradient steps",
+  "optimizer_seed": 903,
+  "optimizer_state_sha256": "829b18b3fdaa93e2069910edff97d8d22a88f2ad08ce9203b369cdf7f59bbdd8",
+  "plan_sha256": "9594c888c6a10292ec99366921177696ea3ec99622534e3af18b8f2dea9b0922",
+  "policy_distribution": {
+    "coordinates": 7,
+    "deterministic_rule": "Choose learned OFF gate mode atq>=0.5; otherwise clip learned continuous mean intoBox",
+    "endpoint_half_ulp": 2.9802322387695312e-08,
+    "endpoint_numerics": "Float32 endpoint-rounding intervals are included in the endpoint masses",
+    "entropy": "Marginal Shannon endpoint terms plus interior differential entropy",
+    "interior_density": "(1-q)*NormalPDF(action;mean,scale)",
+    "learned_parameters_per_coordinate": [
+      "off_gate_logit",
+      "on_mean",
+      "on_scale_logit"
+    ],
+    "legacy_inference_field_semantics": "Existing replay fields unclipped_mean/raw_mean contain the hierarchical deterministic action for this hybrid actor,not the continuousONmean",
+    "maximum_mass": "(1-q)*(1-Phi((upper_censor-mean)/scale))",
+    "off_mass": "q+(1-q)*Phi((lower_censor-mean)/scale)",
+    "on_distribution": "Normal(mean,state-dependent_scale), censored into existing[-1,1]Box",
+    "physical_action_support": "All seven originalBox coordinates,including exact-1 and+1",
+    "plant_specific_inference_logic": false,
+    "schema": "learned-off-censored-gaussian-v1",
+    "teacher_at_inference": false
+  },
+  "policy_tensor_sha256": "3650fcc1516235af54939596db090c5be15ff65ca3ebdcc57208378ab204d6b0",
+  "ppo_update_count": 0,
+  "ppo_updates_this_run": 0,
+  "schema": "learned-control-mean-head-refit-v1",
+  "seed_semantics": "Inherit original neural-training seed; ridge solve is deterministic and is not an independent optimizer replicate",
+  "training_plan": {
+    "bytes": 96965,
+    "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/learned_control_20260918/initialization/hybrid-solar-ridge/plan.json",
+    "sha256": "0e57172ed9909863250b39f6a1768af144c1857f71f09b016ffbf9c579675432"
+  },
+  "witness": {
+    "action_witness_observations": 80640,
+    "all_other_tensors_bitwise_unchanged": true,
+    "fit": {
+      "1": {
+        "coefficient_correction_norm": 0.32939645938149464,
+        "fit_rows": 27831
+      }
+    },
+    "fit_episode_indices": [
+      1,
+      2,
+      3,
+      4,
+      6,
+      7,
+      8,
+      9,
+      11,
+      12,
+      13,
+      14,
+      16,
+      17,
+      18,
+      19,
+      21,
+      22,
+      23,
+      24,
+      26,
+      27,
+      28,
+      29,
+      31,
+      32,
+      33,
+      34,
+      36,
+      37,
+      38,
+      39,
+      41,
+      42,
+      43,
+      44,
+      46,
+      47,
+      48,
+      49,
+      51,
+      52,
+      53,
+      54,
+      56,
+      57,
+      58,
+      59,
+      61,
+      62,
+      63,
+      64,
+      66,
+      67,
+      68,
+      69,
+      71,
+      72,
+      73,
+      74,
+      76,
+      77,
+      78,
+      79,
+      81,
+      82,
+      83,
+      84,
+      86,
+      87,
+      88,
+      89,
+      91,
+      92,
+      93,
+      94,
+      96,
+      97,
+      98,
+      99,
+      101,
+      102,
+      103,
+      104,
+      106,
+      107,
+      108,
+      109,
+      111,
+      112,
+      113,
+      114,
+      116,
+      117,
+      118,
+      119
+    ],
+    "metrics": {
+      "all_training_rows": {
+        "after": {
+          "mean_absolute_action_error": 0.007832277566194534,
+          "on_mean_absolute_error": [
+            0.039762016385793686,
+            0.04668241739273071,
+            0.03615061938762665,
+            0.015564772300422192,
+            0.022899067029356956,
+            0.007400501053780317,
+            0.003647063858807087
+          ],
+          "on_to_exact_off_fraction": [
+            0.018618714194780395,
+            0.00017250797849400535,
+            0.0002883644927187966,
+            0.04435233675014271,
+            0.06735299249694643,
+            0.029980013324450366,
+            0.004780915767164474
+          ],
+          "rows": 80640
+        },
+        "before": {
+          "mean_absolute_action_error": 0.009116682223975658,
+          "on_mean_absolute_error": [
+            0.039762016385793686,
+            0.06761403381824493,
+            0.03615061938762665,
+            0.015564772300422192,
+            0.022899067029356956,
+            0.007400501053780317,
+            0.003647063858807087
+          ],
+          "on_to_exact_off_fraction": [
+            0.018618714194780395,
+            0.0027026249964060838,
+            0.0002883644927187966,
+            0.04435233675014271,
+            0.06735299249694643,
+            0.029980013324450366,
+            0.004780915767164474
+          ],
+          "rows": 80640
+        }
+      },
+      "fit_rows": {
+        "after": {
+          "mean_absolute_action_error": 0.007786495611071587,
+          "on_mean_absolute_error": [
+            0.03911357372999191,
+            0.04683820158243179,
+            0.03578600287437439,
+            0.015393059700727463,
+            0.022367805242538452,
+            0.007387750782072544,
+            0.003605225821956992
+          ],
+          "on_to_exact_off_fraction": [
+            0.01963927855711423,
+            0.00021558693543171284,
+            0.000270554637005862,
+            0.045454545454545456,
+            0.06706244503078276,
+            0.02833099579242637,
+            0.004772234273318872
+          ],
+          "rows": 64512
+        },
+        "before": {
+          "mean_absolute_action_error": 0.009062978439033031,
+          "on_mean_absolute_error": [
+            0.03911357372999191,
+            0.0676579624414444,
+            0.03578600287437439,
+            0.015393059700727463,
+            0.022367805242538452,
+            0.007387750782072544,
+            0.003605225821956992
+          ],
+          "on_to_exact_off_fraction": [
+            0.01963927855711423,
+            0.0026948366928964103,
+            0.000270554637005862,
+            0.045454545454545456,
+            0.06706244503078276,
+            0.02833099579242637,
+            0.004772234273318872
+          ],
+          "rows": 64512
+        }
+      },
+      "repair_holdout": {
+        "after": {
+          "mean_absolute_action_error": 0.008015403524041176,
+          "on_mean_absolute_error": [
+            0.04226256534457207,
+            0.046058572828769684,
+            0.03760337457060814,
+            0.01624435745179653,
+            0.02494148723781109,
+            0.007448958232998848,
+            0.003809570334851742
+          ],
+          "on_to_exact_off_fraction": [
+            0.014683153013910355,
+            0.0,
+            0.00035932446999640676,
+            0.039990156269226036,
+            0.06846999154691462,
+            0.03624733475479744,
+            0.004814636494944632
+          ],
+          "rows": 16128
+        },
+        "before": {
+          "mean_absolute_action_error": 0.009331499226391315,
+          "on_mean_absolute_error": [
+            0.04226256534457207,
+            0.06743810325860977,
+            0.03760337457060814,
+            0.01624435745179653,
+            0.02494148723781109,
+            0.007448958232998848,
+            0.003809570334851742
+          ],
+          "on_to_exact_off_fraction": [
+            0.014683153013910355,
+            0.002733812949640288,
+            0.00035932446999640676,
+            0.039990156269226036,
+            0.06846999154691462,
+            0.03624733475479744,
+            0.004814636494944632
+          ],
+          "rows": 16128
+        }
+      }
+    },
+    "other_action_coordinates_bitwise_unchanged": [
+      0,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "ppo_optimizer_exactly_preserved": true,
+    "repair_holdout_episode_indices": [
+      0,
+      5,
+      10,
+      15,
+      20,
+      25,
+      30,
+      35,
+      40,
+      45,
+      50,
+      55,
+      60,
+      65,
+      70,
+      75,
+      80,
+      85,
+      90,
+      95,
+      100,
+      105,
+      110,
+      115
+    ]
+  }
+}

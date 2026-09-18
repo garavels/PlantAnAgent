@@ -37,6 +37,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from .commitment import COMMITMENT_INTENT_DEADBAND_FRAC
 from .components import Battery, DirectAirCapture, Electrolyser, GasStorage, Methanator
 from .state import Action
 
@@ -83,34 +84,84 @@ def dispatch(
     to_methanator = action.methanator_share * solar_kw
     curtailed = max(0.0, solar_kw - to_battery - to_electrolyser - to_dac - to_methanator)
 
-    # 2. battery support, clamped by both ends of the wire
-    intake_limit_kw = electrolyser.intake_limit_kw(dt_h, h2_tank.headroom_kg)
-    support_kw = min(
-        action.battery_support_kw,
-        battery.discharge_headroom_kw(dt_h),
-        max(0.0, intake_limit_kw - to_electrolyser),
-    )
+    if electrolyser.commitment_enabled:
+        # The committed unit may refuse routed power because it is starting,
+        # standing by, cooling down, ramp-limited, or storage-constrained.
+        # Offer potential battery support without discharging it yet; only the
+        # power actually accepted by the component is withdrawn below.
+        intake_limit_kw = electrolyser.intake_limit_kw(dt_h, h2_tank.headroom_kg)
+        offered_support_kw = min(
+            action.battery_support_kw,
+            battery.discharge_headroom_kw(dt_h),
+            max(0.0, intake_limit_kw - to_electrolyser),
+        )
 
-    # 3. cancel the round trip: send that solar to the stack directly instead
-    overlap_kw = min(support_kw, to_battery)
-    to_battery -= overlap_kw
-    to_electrolyser += overlap_kw
-    support_kw -= overlap_kw
+        # Cancel a requested battery round trip before advancing the component:
+        # this part of the battery share is already solar on the same bus.
+        overlap_kw = min(offered_support_kw, to_battery)
+        to_battery -= overlap_kw
+        to_electrolyser += overlap_kw
+        offered_support_kw -= overlap_kw
 
-    # 4. electrolyser, capped by rated power and tank headroom
-    spill_kw = max(0.0, to_electrolyser - intake_limit_kw)
-    to_electrolyser -= spill_kw
+        spill_kw = max(0.0, to_electrolyser - intake_limit_kw)
+        to_electrolyser -= spill_kw
+        offered_solar_kw = to_electrolyser
+        offered_electrolyser_kw = offered_solar_kw + offered_support_kw
+        # Keep intent in stack-relative kW even when the upstream bus is
+        # resized.  The strict boundary leaves a finite, reachable off command.
+        commitment_intent = (
+            offered_electrolyser_kw
+            > COMMITMENT_INTENT_DEADBAND_FRAC * electrolyser.config.rated_kw
+        )
+        result = electrolyser.advance_commitment(
+            offered_electrolyser_kw,
+            dt_h,
+            h2_headroom_kg=h2_tank.headroom_kg,
+            commitment_intent=commitment_intent,
+        )
 
-    if to_electrolyser + support_kw < electrolyser.min_load_kw:
-        # not worth starting the stack: retract support, spill its solar
-        support_kw = 0.0
-        spill_kw += to_electrolyser
-        to_electrolyser = 0.0
-        electrolyser.run(0.0, dt_h)
-        h2_kg = 0.0
+        # Solar has priority.  Any unused support is retracted before the one
+        # and only battery discharge; refused solar rejoins the normal spill
+        # path.  This makes the reported electrical identity exact.
+        solar_used_kw = min(offered_solar_kw, result.accepted_power_kw)
+        support_kw = max(0.0, result.accepted_power_kw - solar_used_kw)
+        spill_kw += offered_solar_kw - solar_used_kw
+        to_electrolyser = solar_used_kw
+        if support_kw > 0.0:
+            discharged_kw = battery.discharge(support_kw, dt_h)
+            if abs(discharged_kw - support_kw) > 1e-9:
+                raise RuntimeError("committed battery support changed after reservation")
+            support_kw = discharged_kw
+        h2_kg = h2_tank.store(result.h2_produced_kg)
     else:
-        support_kw = battery.discharge(support_kw, dt_h) if support_kw > 0.0 else 0.0
-        h2_kg = h2_tank.store(electrolyser.run(to_electrolyser + support_kw, dt_h))
+        # 2. battery support, clamped by both ends of the wire
+        intake_limit_kw = electrolyser.intake_limit_kw(dt_h, h2_tank.headroom_kg)
+        support_kw = min(
+            action.battery_support_kw,
+            battery.discharge_headroom_kw(dt_h),
+            max(0.0, intake_limit_kw - to_electrolyser),
+        )
+
+        # 3. cancel the round trip: send that solar to the stack directly instead
+        overlap_kw = min(support_kw, to_battery)
+        to_battery -= overlap_kw
+        to_electrolyser += overlap_kw
+        support_kw -= overlap_kw
+
+        # 4. electrolyser, capped by rated power and tank headroom
+        spill_kw = max(0.0, to_electrolyser - intake_limit_kw)
+        to_electrolyser -= spill_kw
+
+        if to_electrolyser + support_kw < electrolyser.min_load_kw:
+            # not worth starting the stack: retract support, spill its solar
+            support_kw = 0.0
+            spill_kw += to_electrolyser
+            to_electrolyser = 0.0
+            electrolyser.run(0.0, dt_h)
+            h2_kg = 0.0
+        else:
+            support_kw = battery.discharge(support_kw, dt_h) if support_kw > 0.0 else 0.0
+            h2_kg = h2_tank.store(electrolyser.run(to_electrolyser + support_kw, dt_h))
 
     # 5. DAC, capped by rated power and CO2 tank headroom; refusal spills
     dac_limit_kw = dac.intake_limit_kw(dt_h, co2_tank.headroom_kg)

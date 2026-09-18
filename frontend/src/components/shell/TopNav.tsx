@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 
 import { usePlant } from '../../state/plantContext'
 import { VIEWS } from '../../views'
@@ -13,6 +13,7 @@ const LINK_CHIP = {
 /** Logo, views, and the two lamps that say whether anything is alive. */
 export function TopNav() {
   const { playing, link } = usePlant()
+  const isV2 = useLocation().pathname === '/v2'
   const linkChip = LINK_CHIP[link]
 
   return (
@@ -42,14 +43,20 @@ export function TopNav() {
       </ul>
 
       <div className="nav__status">
-        <span className={`chip ${playing ? 'chip--live' : 'chip--idle'}`}>
-          <i className="chip__led" style={playing ? { animation: 'breathe 1.8s infinite' } : undefined} />
-          {playing ? 'Running' : 'Paused'}
-        </span>
-        <span className={linkChip.className}>
-          <i className="chip__led" />
-          {linkChip.text}
-        </span>
+        {isV2 ? (
+          <span className="chip chip--idle">V2 simulation</span>
+        ) : (
+          <>
+            <span className={`chip ${playing ? 'chip--live' : 'chip--idle'}`}>
+              <i className="chip__led" style={playing ? { animation: 'breathe 1.8s infinite' } : undefined} />
+              {playing ? 'Running' : 'Paused'}
+            </span>
+            <span className={linkChip.className}>
+              <i className="chip__led" />
+              {linkChip.text}
+            </span>
+          </>
+        )}
       </div>
     </nav>
   )

@@ -32,6 +32,22 @@ from .config import (
     SolarConfig,
     StorageConfig,
 )
+from .commitment import (
+    COMMITMENT_DYNAMICS_VERSION,
+    COMMITMENT_INTENT_DEADBAND_FRAC,
+    DEFAULT_ELECTROLYSER_COMMITMENT_PROFILE,
+    ElectrolyserCommitmentProfile,
+    ElectrolyserCommitmentSnapshot,
+    ElectrolyserCommitmentState,
+    ElectrolyserCommitmentStep,
+    ElectrolyserMode,
+)
+from .delivery import (
+    DeliveryCommitment,
+    DeliveryLedger,
+    DeliverySettlement,
+    DeliveryStepResult,
+)
 from .events import Event, EventLevel, EventLog
 from .faults import (
     CATALOGUE as FAULT_CATALOGUE,
@@ -43,12 +59,13 @@ from .faults import (
     FaultRegistry,
     FaultSpec,
 )
+from .forcing import SOLAR_FORCING_VERSION, SolarFactorTape
 from .scenarios import SCENARIOS, InitialState, Scenario
 from .simulator import PlantSimulator
 from .state import Action, ComponentHealth, PlantState
 from .telemetry import SENSOR_CHANNELS, observe
 
-__version__ = "0.4.0"
+__version__ = "0.5.2"
 
 __all__ = [
     "Action",
@@ -57,10 +74,22 @@ __all__ = [
     "Component",
     "ComponentEffect",
     "ComponentHealth",
+    "COMMITMENT_DYNAMICS_VERSION",
+    "COMMITMENT_INTENT_DEADBAND_FRAC",
     "DACConfig",
+    "DEFAULT_ELECTROLYSER_COMMITMENT_PROFILE",
     "DirectAirCapture",
+    "DeliveryCommitment",
+    "DeliveryLedger",
+    "DeliverySettlement",
+    "DeliveryStepResult",
     "Electrolyser",
+    "ElectrolyserCommitmentProfile",
+    "ElectrolyserCommitmentSnapshot",
+    "ElectrolyserCommitmentState",
+    "ElectrolyserCommitmentStep",
     "ElectrolyserConfig",
+    "ElectrolyserMode",
     "Event",
     "EventLevel",
     "EventLog",
@@ -79,9 +108,11 @@ __all__ = [
     "PowerFlows",
     "SCENARIOS",
     "SENSOR_CHANNELS",
+    "SOLAR_FORCING_VERSION",
     "Scenario",
     "SolarArray",
     "SolarConfig",
+    "SolarFactorTape",
     "StorageConfig",
     "dispatch",
     "observe",

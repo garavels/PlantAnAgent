@@ -20,9 +20,10 @@ const STACKS = 3
 interface ElectrolyserUnitProps {
   electrolyser: PlantVisuals['electrolyser']
   minLoadFrac: number
+  mode?: string
 }
 
-export function ElectrolyserUnit({ electrolyser, minLoadFrac }: ElectrolyserUnitProps) {
+export function ElectrolyserUnit({ electrolyser, minLoadFrac, mode }: ElectrolyserUnitProps) {
   // One shared seam material: every stack face brightens together.
   const seamMat = useMemo(
     () =>
@@ -51,7 +52,7 @@ export function ElectrolyserUnit({ electrolyser, minLoadFrac }: ElectrolyserUnit
   })
 
   const status =
-    electrolyser.status === 'offline' ? 'Offline' : electrolyser.online ? 'Running' : 'Standby'
+    mode ? mode.replaceAll('_', ' ') : electrolyser.status === 'offline' ? 'Offline' : electrolyser.online ? 'Running' : 'Standby'
   const rows: InspectRow[] = [
     { label: 'Power', value: `${Math.round(electrolyser.powerKw).toLocaleString('en-US')} kW` },
     { label: 'Status', value: status },

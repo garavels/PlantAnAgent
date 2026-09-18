@@ -13,13 +13,14 @@ from .base import Component
 class SolarArray(Component):
     """Deterministic half-sine day curve: zero at sunrise/sunset, peak at solar noon.
 
-    Weather is a *disturbance*, not a fault: a `solar_drop` derates the array,
-    so `potential_kw` keeps reporting the clear-sky curve while `power_kw`
-    reports what the plant actually gets. The gap between them is exactly the
-    uncertainty an intermittently powered plant has to live with.
+    ``resource_factor`` represents exogenous irradiance/weather relative to
+    the clear-sky curve without making the equipment itself degraded.  An
+    active ``solar_drop`` fault contributes the component health separately;
+    the two effects multiply.  ``potential_kw`` therefore remains clear-sky
+    power while ``power_kw`` reports what the bus actually receives.
 
-    Extension point: swap `power_at` for an irradiance/weather model (seasons,
-    forecast noise) without touching anything downstream.
+    Extension point: improve ``clear_sky_kw`` with location or seasonal
+    geometry without touching downstream dispatch.
     """
 
     name = "solar"
@@ -28,15 +29,17 @@ class SolarArray(Component):
         self.config = config or SolarConfig()
         self.power_kw = 0.0
         self.potential_kw = 0.0
+        self.resource_factor = 1.0
 
     def reset(self) -> None:
         self.power_kw = 0.0
         self.potential_kw = 0.0
+        self.resource_factor = 1.0
 
     @property
     def output_factor(self) -> float:
-        """Fraction of the clear-sky curve currently reaching the bus, 0..1."""
-        return max(0.0, self.health)
+        """Combined resource and equipment factor reaching the bus, 0..1."""
+        return self.resource_factor * max(0.0, self.health)
 
     def clear_sky_kw(self, time_s: float) -> float:
         """Undisturbed power at an absolute simulation time (kW)."""
@@ -51,8 +54,19 @@ class SolarArray(Component):
         """Power actually available at `time_s`, after any active disturbance."""
         return self.clear_sky_kw(time_s) * self.output_factor
 
-    def update(self, time_s: float) -> float:
+    def update(self, time_s: float, *, resource_factor: float = 1.0) -> float:
         """Advance the array to `time_s` and return what it is generating."""
+        if isinstance(resource_factor, bool):
+            raise TypeError("resource_factor must be a real number")
+        try:
+            resource = float(resource_factor)
+        except (TypeError, ValueError, OverflowError) as exc:
+            raise TypeError("resource_factor must be a real number") from exc
+        if not math.isfinite(resource):
+            raise ValueError("resource_factor must be finite")
+        if not 0.0 <= resource <= 1.0:
+            raise ValueError("resource_factor must be between 0 and 1")
+        self.resource_factor = resource
         self.potential_kw = self.clear_sky_kw(time_s)
         self.power_kw = self.potential_kw * self.output_factor
         return self.power_kw
@@ -61,6 +75,7 @@ class SolarArray(Component):
         return {
             "power_kw": self.power_kw,
             "potential_kw": self.potential_kw,
+            "resource_factor": self.resource_factor,
             "output_factor": self.output_factor,
             "peak_kw": self.config.peak_kw,
             **self.health_snapshot(),

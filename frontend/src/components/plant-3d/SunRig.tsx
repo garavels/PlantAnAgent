@@ -1,9 +1,7 @@
-/** Sky, sun and site lighting, driven by the simulator's own solar curve.
- *
- * `visuals.sun` is derived from `time_of_day_h` against the config's
- * sunrise/sunset, so the twin's light can never disagree with the plant's
- * generation: panels glow exactly when the light says they should. Night
- * falls back to a low cool fill plus the site lamps (wired up in Ground).
+/** Sky and light follow the visual adapter. Site sun direction uses the selected
+ * coordinates and recorded calendar time; brightness follows actual PV power.
+ * Synthetic runs retain their configured daylight curve. Neither path invents
+ * cloud measurements or changes the plant's weather input.
  */
 
 import { useFrame } from '@react-three/fiber'
@@ -15,11 +13,12 @@ import { damp, type PlantVisuals } from './visuals'
 
 interface SunRigProps {
   sun: PlantVisuals['sun']
+  attenuation?: number
 }
 
 const SUN_DIST = 120
 
-export function SunRig({ sun }: SunRigProps) {
+export function SunRig({ sun, attenuation = 0 }: SunRigProps) {
   const lightRef = useRef<THREE.DirectionalLight>(null)
   const hemiRef = useRef<THREE.HemisphereLight>(null)
   const discRef = useRef<THREE.Mesh>(null)
@@ -54,18 +53,20 @@ export function SunRig({ sun }: SunRigProps) {
       scene.fog.far = 100 + d * 45
     }
 
-    // the sun rides the same half-sine the simulator generates from
+    // Site direction is east/up/south. Only synthetic runs use the half-sine arc.
     const azimuth = Math.PI * (0.12 + 0.76 * sun.phase)
-    const sx = Math.cos(azimuth) * SUN_DIST
-    const sy = Math.max(4, Math.sin(Math.PI * sun.phase) * SUN_DIST * 0.62)
-    const sz = -SUN_DIST * 0.45
+    const sx = sun.direction ? sun.direction[0] * SUN_DIST : Math.cos(azimuth) * SUN_DIST
+    const sy = sun.direction ? sun.direction[1] * SUN_DIST : Math.max(4, Math.sin(Math.PI * sun.phase) * SUN_DIST * 0.62)
+    const sz = sun.direction ? sun.direction[2] * SUN_DIST : -SUN_DIST * 0.45
 
     const light = lightRef.current
     if (light) {
       if (elev > 0.001) {
-        light.position.set(sx * 0.5, Math.max(8, sy * 0.5), sz * 0.5)
+        light.position.set(sx * 0.5, sun.siteMode ? sy * 0.5 : Math.max(8, sy * 0.5), sz * 0.5)
         light.color.lerpColors(colors.sunLow, colors.sunNoon, elev)
-        light.intensity = 0.25 + elev * 2.6
+        light.intensity = sun.siteMode
+          ? 3.0 * (sun.directFactor ?? 0)
+          : 0.25 + elev * 2.6 * (1 - attenuation * .85)
       } else {
         // moonlight: fixed, cool, faint
         light.position.set(-30, 42, -18)
@@ -76,7 +77,7 @@ export function SunRig({ sun }: SunRigProps) {
     if (hemiRef.current) hemiRef.current.intensity = 0.36 + d * 0.49
     if (discRef.current) {
       discRef.current.position.set(sx, sy, sz)
-      discRef.current.visible = elev > 0.001
+      discRef.current.visible = sun.discVisible ?? elev > 0.001
       const mat = discRef.current.material as THREE.MeshBasicMaterial
       mat.color.lerpColors(colors.sunLow, colors.sunNoon, elev)
     }

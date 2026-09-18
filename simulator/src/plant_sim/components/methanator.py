@@ -92,7 +92,11 @@ class Methanator(Component):
             max(0.0, ch4_headroom_kg),
         )
         # draw only the power the actual production needs; the rest spills back
-        self.power_kw = ch4_kg * self.config.specific_energy_kwh_per_kg / dt_h if dt_h > 0 else 0.0
+        reconstructed_power_kw = ch4_kg * self.config.specific_energy_kwh_per_kg / dt_h if dt_h > 0 else 0.0
+        # The kg -> kW round trip can exceed ``offered`` by one binary64 ULP.
+        # Power accepted from the bus is authoritative, so never manufacture
+        # energy or a negative downstream spill from that representation noise.
+        self.power_kw = min(offered, reconstructed_power_kw)
         self.online = ch4_kg > 0.0
         return MethanatorResult(
             ch4_kg=ch4_kg,
