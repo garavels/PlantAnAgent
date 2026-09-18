@@ -1,0 +1,46 @@
+{
+  "endpoints": [
+    {
+      "checkpoint": {
+        "bytes": 1376172,
+        "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-101/final-policy.zip",
+        "sha256": "6c36cc24692a7d46528436f6f5fabcff1e1bed2862153a49eb5e1bd8cc49ba27"
+      },
+      "optimizer_seed": 101,
+      "result": {
+        "bytes": 434994,
+        "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-101/result.json",
+        "sha256": "1c1647cf934e4b8a4f19e289215d6300e931266408e40b9d2b8ddfd7b5fc1373"
+      }
+    },
+    {
+      "checkpoint": {
+        "bytes": 1376142,
+        "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-211/final-policy.zip",
+        "sha256": "61890916802c018e9502dbd7f2fe00fa705281478b807a84fe13354b8e0a5903"
+      },
+      "optimizer_seed": 211,
+      "result": {
+        "bytes": 434941,
+        "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-211/result.json",
+        "sha256": "a626a7dae2f5dceb9e93c89fb404998b2e7b64c0e919795db61a1ce15b6b6469"
+      }
+    },
+    {
+      "checkpoint": {
+        "bytes": 1376075,
+        "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-307/final-policy.zip",
+        "sha256": "ecf420e62bce88fd91115fd56a00a829fcf06e2bd10efffbec6c74e21521fc1d"
+      },
+      "optimizer_seed": 307,
+      "result": {
+        "bytes": 434932,
+        "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-307/result.json",
+        "sha256": "5a0a42cb76c2571772ce5ed82065fa4048d53760b947a8a5189e3b33d5a04625"
+      }
+    }
+  ],
+  "frozen_at": "2026-09-15T12:36:49.573568+00:00",
+  "schema": "coverage-residual-full-mission-ppo-v1",
+  "selection": "All three fixed final endpoints; no exclusions."
+}

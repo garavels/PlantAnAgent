@@ -1,0 +1,36 @@
+# Workspace root: not a package itself, just a convenient place to install
+# `simulator` + `backend` together into a single .venv for local development.
+[project]
+name = "plant-an-agent"
+version = "0.1.0"
+description = "Autonomous, intermittently powered industrial plant: digital twin + control room."
+requires-python = ">=3.11"
+dependencies = ["plant-sim", "plant-backend"]
+
+[dependency-groups]
+dev = ["pytest>=8.0", "httpx>=0.27"]  # httpx: fastapi's TestClient
+# Training only, and installed on purpose (`uv sync --group train`): it pulls
+# torch, and nothing in the backend, the simulator or the tests needs it. The RL
+# environment itself is a normal backend dependency (gymnasium + numpy).
+train = ["stable-baselines3>=2.4,<3"]
+# V9: HEPA. Same reasoning as `train` -- torch is only needed to build, train or
+# run the HEPA network, so it is installed on purpose (`uv sync --group hepa`).
+# Everything in the HEPA package that does not touch a tensor (telemetry schema,
+# event definitions, labels, dataset format, collection, metrics) is torch-free.
+hepa = ["torch>=2.6,<3"]
+# Sparse HiGHS-backed LP/MILP research comparators. Kept opt-in so the plant,
+# API and ordinary test suite do not acquire an optimisation runtime dependency.
+optimisation = ["scipy>=1.14,<2"]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["simulator", "backend"]
+
+[tool.uv.sources]
+plant-sim = { workspace = true }
+plant-backend = { workspace = true }
+
+[tool.pytest.ini_options]
+testpaths = ["simulator/tests", "backend/tests"]

@@ -1,0 +1,363 @@
+{
+  "all_endpoints_frozen": {
+    "bytes": 2111,
+    "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/endpoints-frozen.json",
+    "sha256": "831065e439d18eb0176d2e3a3aef970943167040f97fa5e98524eb0718d81308"
+  },
+  "claim": "All three prospectively fixed PPO training endpoints completed with actual nonzero learned action heads. Performance remains subject to complete mission evaluation.",
+  "completed_at": "2026-09-15T12:36:49.574411+00:00",
+  "pre_training_evidence_unchanged": true,
+  "rows": [
+    {
+      "action_head_bias_max_abs": 0.008099826984107494,
+      "action_head_bias_nonzero": 4,
+      "action_head_weight_max_abs": 0.02633208967745304,
+      "action_head_weight_nonzero": 256,
+      "actor_parameters_changed": true,
+      "checkpoint_reopen_verified": true,
+      "diagnostics": [
+        {
+          "bytes": 17608,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-101/diagnostics/diagnostic-001.json",
+          "sha256": "dc200e9697d57deabfadd57eba57bd400389391dd38b26ce1a1fc3995b44bfe8"
+        },
+        {
+          "bytes": 18243,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-101/diagnostics/diagnostic-002.json",
+          "sha256": "26154b3a71086fdfc452244c24f76666d6b5ee517d14f731a9639ed46af86f1a"
+        },
+        {
+          "bytes": 18561,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-101/diagnostics/diagnostic-003.json",
+          "sha256": "4bd99a5cac7513cef26eb85e56b8b9a9f1da6665583144161de408621579e230"
+        },
+        {
+          "bytes": 18333,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-101/diagnostics/diagnostic-004.json",
+          "sha256": "c947e01a0894a6c250ae4d9fc40c8f6e4796cde5bc4dfeb34061946987ccf6ec"
+        },
+        {
+          "bytes": 18432,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-101/diagnostics/diagnostic-005.json",
+          "sha256": "050cabcf96f1140f74c3dba5043e18c3ac2a3311cbf3dfb9d1015dfb6232571f"
+        },
+        {
+          "bytes": 18289,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-101/diagnostics/diagnostic-006.json",
+          "sha256": "1d8aaf5aec0df9cfe934fd6c54c0e1eb3ed79419b699a57282bb80d5240bdb81"
+        },
+        {
+          "bytes": 18294,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-101/diagnostics/diagnostic-007.json",
+          "sha256": "d330ac55041533bc5bc7f975101962584a8599a3b759373d47ae0dd1ac445d32"
+        },
+        {
+          "bytes": 18599,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-101/diagnostics/diagnostic-008.json",
+          "sha256": "50e8879461cf9a211b4d2e3b88776377c129d659bbdb071e2df6c3b703037b35"
+        },
+        {
+          "bytes": 1274,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-101/diagnostics/rollout-001.json",
+          "sha256": "e9279b6eaf118934ba05a70aa3e5bbfccec5e3151065d01a7b319a7603b69817"
+        },
+        {
+          "bytes": 1337,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-101/diagnostics/rollout-002.json",
+          "sha256": "25a7a1ab5fdfaf449e8ed5e5e6492d11e18cbee329a69fe53d9418b7c2cf575c"
+        },
+        {
+          "bytes": 1468,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-101/diagnostics/rollout-003.json",
+          "sha256": "10a613577a433908c97cd182c7f45c45c0a77e0b2495f6040ef9548be3982f2e"
+        },
+        {
+          "bytes": 1453,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-101/diagnostics/rollout-004.json",
+          "sha256": "8018832e3d92f19bf1b2b980fb00c38445ce61dff4f81bceed5b0d069cbab6b0"
+        },
+        {
+          "bytes": 1481,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-101/diagnostics/rollout-005.json",
+          "sha256": "7547372ab1277396cc192adc2b3700476071230bf41e688117100f977027985e"
+        },
+        {
+          "bytes": 1432,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-101/diagnostics/rollout-006.json",
+          "sha256": "fecb8e45aa558b69eee6e4514d8815e8822a14122ffabb53f77a94e20dd6196b"
+        },
+        {
+          "bytes": 1433,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-101/diagnostics/rollout-007.json",
+          "sha256": "5f7685dcd469ca380ad9b89c9951232ab3171016f58e5b9d1d7ee278fa37c795"
+        },
+        {
+          "bytes": 1541,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-101/diagnostics/rollout-008.json",
+          "sha256": "be7e2de0c4f93205f9ae831d670ce87daa44d18a3b8ae8ca8ac648ec009db0ef"
+        }
+      ],
+      "elapsed_s": 1198.4405039998237,
+      "final_checkpoint": {
+        "bytes": 1376172,
+        "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-101/final-policy.zip",
+        "sha256": "6c36cc24692a7d46528436f6f5fabcff1e1bed2862153a49eb5e1bd8cc49ba27"
+      },
+      "initial_checkpoint": {
+        "bytes": 330420,
+        "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-101/initial-policy.pt",
+        "sha256": "263f21d2111f5382f8e93ef9b3d401a33e735c8d0dfa33cc56524f0b9a9a5029"
+      },
+      "minibatch_updates": 2560,
+      "num_timesteps": 65536,
+      "optimizer_seed": 101,
+      "result": {
+        "bytes": 434994,
+        "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-101/result.json",
+        "sha256": "1c1647cf934e4b8a4f19e289215d6300e931266408e40b9d2b8ddfd7b5fc1373"
+      },
+      "stdout_log": {
+        "bytes": 449678,
+        "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-101/stdout.log",
+        "sha256": "2c0e3a01128847a69452d3be8732c65ec755cc3240e98f7d439f7fc18031b084"
+      }
+    },
+    {
+      "action_head_bias_max_abs": 0.008997834287583828,
+      "action_head_bias_nonzero": 4,
+      "action_head_weight_max_abs": 0.022335834801197052,
+      "action_head_weight_nonzero": 256,
+      "actor_parameters_changed": true,
+      "checkpoint_reopen_verified": true,
+      "diagnostics": [
+        {
+          "bytes": 17660,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-211/diagnostics/diagnostic-001.json",
+          "sha256": "38b07f2d9218a0657e30ee4e2e2cbbdd4d400bf710109915a48bd37a026d28fb"
+        },
+        {
+          "bytes": 18307,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-211/diagnostics/diagnostic-002.json",
+          "sha256": "3d78cbb5a6e085e763e1a8d4d56a4677ee10d11eb34cf7b2f56c27b2ab276de3"
+        },
+        {
+          "bytes": 18609,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-211/diagnostics/diagnostic-003.json",
+          "sha256": "c03ecd431284bc865483ee67042b7feab847e84edd9b042aee229cf63b5d2921"
+        },
+        {
+          "bytes": 18344,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-211/diagnostics/diagnostic-004.json",
+          "sha256": "9874e0146a45e9c1bcb985a3677148c634b3ae3da7ce52e6803d973c8139323f"
+        },
+        {
+          "bytes": 18479,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-211/diagnostics/diagnostic-005.json",
+          "sha256": "0e4db29151d2aed3a0e1b3caa73a1db99d66cdd5632359947eb0b7ab7195f133"
+        },
+        {
+          "bytes": 18345,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-211/diagnostics/diagnostic-006.json",
+          "sha256": "397944d85468deaf1a7db694e073e2d79afc10399164bb73da7f700f3eeb4726"
+        },
+        {
+          "bytes": 18312,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-211/diagnostics/diagnostic-007.json",
+          "sha256": "aa97e62255800e96f7685250f8dbd4b96aa4bc72d5abf51dc6546fd2ad4ec08c"
+        },
+        {
+          "bytes": 18673,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-211/diagnostics/diagnostic-008.json",
+          "sha256": "14a4d308c21346966eaccd4bf12fa0cb0e44f9fe9a239c429a8b22504abb88ff"
+        },
+        {
+          "bytes": 1275,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-211/diagnostics/rollout-001.json",
+          "sha256": "3547daa7234a2156fdb3462f1e38dfb88079165d8f360e536cd4004c20efa6f8"
+        },
+        {
+          "bytes": 1337,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-211/diagnostics/rollout-002.json",
+          "sha256": "cc7e3751f6d1650c3ea83e2b3e2ac76405394248fa1fefe759e8019f312628ef"
+        },
+        {
+          "bytes": 1468,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-211/diagnostics/rollout-003.json",
+          "sha256": "3b01741ed21dad31cf61e1e1e70d34a28980f3e776111f19f2fda6f18cb546a6"
+        },
+        {
+          "bytes": 1451,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-211/diagnostics/rollout-004.json",
+          "sha256": "307c528cdf1e83e23c079d9d60046236cf574eca7d2f004930785f91c028b8f6"
+        },
+        {
+          "bytes": 1485,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-211/diagnostics/rollout-005.json",
+          "sha256": "c1edab8919169037dc21f9eef8ed05206b90d01666557b18e48f32f96e501bb0"
+        },
+        {
+          "bytes": 1429,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-211/diagnostics/rollout-006.json",
+          "sha256": "ab008eb68f724271151967e5cf256cbefa62611589e57a59a0214484c823ccc9"
+        },
+        {
+          "bytes": 1432,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-211/diagnostics/rollout-007.json",
+          "sha256": "82815c3f2260034d83fcee1d806276ba9bc9dcf958bd93a097e386de34264393"
+        },
+        {
+          "bytes": 1535,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-211/diagnostics/rollout-008.json",
+          "sha256": "1e2395dff4532db93ac7a7d05acbd7ca647a84d07205d03ceabaf358317e79fa"
+        }
+      ],
+      "elapsed_s": 1192.96108275,
+      "final_checkpoint": {
+        "bytes": 1376142,
+        "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-211/final-policy.zip",
+        "sha256": "61890916802c018e9502dbd7f2fe00fa705281478b807a84fe13354b8e0a5903"
+      },
+      "initial_checkpoint": {
+        "bytes": 330420,
+        "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-211/initial-policy.pt",
+        "sha256": "808abfa91d7a34915ef2908e6287550eaed66339ea7b098615865688dabaa8a1"
+      },
+      "minibatch_updates": 2560,
+      "num_timesteps": 65536,
+      "optimizer_seed": 211,
+      "result": {
+        "bytes": 434941,
+        "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-211/result.json",
+        "sha256": "a626a7dae2f5dceb9e93c89fb404998b2e7b64c0e919795db61a1ce15b6b6469"
+      },
+      "stdout_log": {
+        "bytes": 449542,
+        "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-211/stdout.log",
+        "sha256": "7dc40034a053b82be734fc00659af5f2a5b9611b01af8c97f8dede6ef7eec998"
+      }
+    },
+    {
+      "action_head_bias_max_abs": 0.012960975989699364,
+      "action_head_bias_nonzero": 4,
+      "action_head_weight_max_abs": 0.027820907533168793,
+      "action_head_weight_nonzero": 256,
+      "actor_parameters_changed": true,
+      "checkpoint_reopen_verified": true,
+      "diagnostics": [
+        {
+          "bytes": 17686,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-307/diagnostics/diagnostic-001.json",
+          "sha256": "09d9ce47ab03a5e6c3580ada5f4a367f7f3370c780e7d13b1a712dd8c49f2572"
+        },
+        {
+          "bytes": 18283,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-307/diagnostics/diagnostic-002.json",
+          "sha256": "8167bc99a16b290b417e339d6e0cec07196191a0b27cab6515a956ed6e97c155"
+        },
+        {
+          "bytes": 18596,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-307/diagnostics/diagnostic-003.json",
+          "sha256": "1ee4d56d07541d3d8047f70085f1a584d0942084326316f747a53ac48afb0e0d"
+        },
+        {
+          "bytes": 18351,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-307/diagnostics/diagnostic-004.json",
+          "sha256": "dc232d11c34edb58ad112d8e6dfef505d8fd8dd5b82504fe215e6d41fc14c04a"
+        },
+        {
+          "bytes": 18463,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-307/diagnostics/diagnostic-005.json",
+          "sha256": "da6ecc2a28ce438a67f291cf7c4e55368159aabc74745ec9a3ab2443834c680d"
+        },
+        {
+          "bytes": 18315,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-307/diagnostics/diagnostic-006.json",
+          "sha256": "3bf93db79b7d8412959dab494b4772cb7cecd36ccd95d7bec383d3cceec8847d"
+        },
+        {
+          "bytes": 18354,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-307/diagnostics/diagnostic-007.json",
+          "sha256": "1c56708e0d8cad43aa8a157f015d1f9b9750bad2cdb4392fc0d964d0f21af4d5"
+        },
+        {
+          "bytes": 18612,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-307/diagnostics/diagnostic-008.json",
+          "sha256": "9bbe9f183daaa760ef23ca8a9d96d3863770a1b7eb78315d05a3629384f424df"
+        },
+        {
+          "bytes": 1273,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-307/diagnostics/rollout-001.json",
+          "sha256": "ce7bae122d10b34cd6f40dbb80055e22b2f9b9ea0aa7076e3421aaed360780d4"
+        },
+        {
+          "bytes": 1336,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-307/diagnostics/rollout-002.json",
+          "sha256": "ddbd7c4bec9ca358e62295f07e0fbb492744d8013b05de4d6953ec821272f5d4"
+        },
+        {
+          "bytes": 1466,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-307/diagnostics/rollout-003.json",
+          "sha256": "43fe7e074d9ba1a2dd9a33ec0c25372392b1a36a46ef3760dd6d5c2850adc652"
+        },
+        {
+          "bytes": 1448,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-307/diagnostics/rollout-004.json",
+          "sha256": "5ea62930f4698810319a4bf167cc494a2be90d87209e988c4aa715407a747a33"
+        },
+        {
+          "bytes": 1478,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-307/diagnostics/rollout-005.json",
+          "sha256": "238085627fe845b20575a72b05692e55fa0dd5be37d39fed150c424a6a80ec1c"
+        },
+        {
+          "bytes": 1431,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-307/diagnostics/rollout-006.json",
+          "sha256": "2fd3e8c5a881d6445107b45f4a37bedafad3986020c5cb9d54efa10cec110755"
+        },
+        {
+          "bytes": 1432,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-307/diagnostics/rollout-007.json",
+          "sha256": "c22157c0b5de56da130914222743a7b895767e1f46fcef332a24fdca2e4d2280"
+        },
+        {
+          "bytes": 1537,
+          "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-307/diagnostics/rollout-008.json",
+          "sha256": "9a4965c59d1dfa29f5afc2765149dab5d95258ea0fe5633e0db4dc32dd340321"
+        }
+      ],
+      "elapsed_s": 1191.6070399160963,
+      "final_checkpoint": {
+        "bytes": 1376075,
+        "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-307/final-policy.zip",
+        "sha256": "ecf420e62bce88fd91115fd56a00a829fcf06e2bd10efffbec6c74e21521fc1d"
+      },
+      "initial_checkpoint": {
+        "bytes": 330420,
+        "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-307/initial-policy.pt",
+        "sha256": "033c8fe77b11539a4b3d1db32dc1fa290f3e57cde6715c6474f7aeb14baa8db4"
+      },
+      "minibatch_updates": 2560,
+      "num_timesteps": 65536,
+      "optimizer_seed": 307,
+      "result": {
+        "bytes": 434932,
+        "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-307/result.json",
+        "sha256": "5a0a42cb76c2571772ce5ed82065fa4048d53760b947a8a5189e3b33d5a04625"
+      },
+      "stdout_log": {
+        "bytes": 449532,
+        "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/seed-307/stdout.log",
+        "sha256": "e96872c123043311aee32037dda0cdc3b8ccb309d15082843910e69a78c0702d"
+      }
+    }
+  ],
+  "schema": "coverage-ppo-three-fixed-endpoints-closure-v1",
+  "source_supplement_reverified": {
+    "bytes": 3550,
+    "path": "/Users/filippogombac/Developer/GitHub/PlantAnAgent/docs/research/results/feasible25_offgrid_20260915/coverage-ppo-v1/supplemental-runtime-source-witness.json",
+    "sha256": "0574c101c9936ba99277638a606087a90455e4c42a82a2c31deda43eb409b091"
+  },
+  "supplemental_source_unchanged": true,
+  "total_actual_transitions": 196608,
+  "total_minibatch_updates": 7680
+}

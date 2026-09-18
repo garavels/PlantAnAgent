@@ -1,0 +1,45 @@
+# Learning direct plant operation from scratch
+
+Authorized on 17 September 2026: a full reinforcement-learning run with freedom to choose plant operation, using local compute for at most four hours. Campaign start: 2026-09-17 10:22:55 UTC. Hard finish: 2026-09-17 14:22:55 UTC. This is a separate experiment; it does not amend the earlier hybrid-controller results.
+
+## Question from first principles
+
+The plant converts intermittent sunlight, water and captured carbon dioxide into methane. Electricity can be consumed immediately or stored in a battery; hydrogen, carbon dioxide and methane can also be stored. The controller must choose when to operate each conversion stage while methane deliveries fall due every six hours. Good decisions must account for future sunlight, finite inventories, conversion losses, startup delays and equipment use.
+
+Can a policy trained from random weights discover useful operating behavior without consulting a handcrafted controller? The experiment measures learning and operational outcomes separately. Improved reward does not by itself establish reliable delivery, and a poor result under this budget would not establish that reinforcement learning cannot solve the task.
+
+## What the policy is free to choose
+
+The policy receives only the 135 public observation fields (plant state, time, commitments, causal forecast information and task accounting). It receives no handcrafted controller targets. Five continuous outputs independently request solar shares for electrolysis, carbon capture, methanation and battery charging, plus battery support for electrolysis. The first four requests map into the nonnegative solar-allocation simplex; a request exceeding the available solar bus is normalized only to enforce conservation. The fifth spans the battery's modeled discharge rating. Decisions are held for 15 minutes and the plant evolves every minute.
+
+There is no residual action envelope, imitation initialization, minimum daily stock-restoration objective, Lagrange multiplier, commitment-preserving projector or controller-prior call in the learner. The additional operator battery reserve falls from 15% to the battery model's 5% floor. The policy can request zero production, start and stop equipment, select low-power operation, use the full allowed battery range, accumulate stocks or run them down. Failed deliveries and forced stops do not end an episode early.
+
+Equipment capacity, conversion stoichiometry, nonnegative finite inventories, efficiencies, modeled startup/shutdown/ramp behavior, faults and the modeled battery floor remain. These are explicit simulator assumptions, not proof of real equipment safety. The battery-to-electrolyser-only connection is part of the modeled plant architecture. The simulator's automatic routing of refused process power into battery charging is also removed: charging cannot exceed the policy's explicit allocation after the existing electrical-bus netting of simultaneous solar charging and battery support. Unaccepted power is curtailed. A local simulator adapter makes this change without altering the frozen historical source. Applied actions and physical consequences are audited; remaining automatic action transformations are documented in the frozen environment identity.
+
+## Task and scalar objective
+
+Use the original physical distribution preserved in `runs/authority-source-20260917`: 5 MW peak PV, an 8 MWh battery, 3 MW electrolysis, 1.2 MW carbon capture, 180 kW methanation, stochastic weather and DAC outages. Preserve opening stock sampling and 25 kg/h equivalent methane demand: 28 deliveries of 150 kg in each seven-day episode. Dedicated PV has no purchase or export settlement.
+
+Optimize the existing interval economic contribution, scaled by 0.001 for numerical conditioning. Delivered methane is valued at EUR 4/kg and missed delivery charged EUR 20/kg. Modeled battery-throughput and electrolyser-use/start/stop wear reserves remain soft reward costs. Endowment liabilities retain the original methane-equivalent material and battery accounting; their stepwise changes telescope to end-of-episode depletion liabilities. They prevent free credit for consuming starting stocks. They are objective assumptions, not action prohibitions. Daily stock deficits and forced stops are descriptive outcomes, with no separate pass condition or constrained learner. Fixed solar capital and operating costs remain unestimated and excluded.
+
+## Training and budget
+
+Use standard Stable-Baselines3 PPO, a fresh random network for each optimizer seed 101, 211 and 307, and no imported policy weights. Architecture: two 64-unit tanh layers; learning rate 0.0003; gamma 1; GAE lambda 0.95; four environments; 2,048 rollout steps per environment; minibatch 256; ten epochs; clip 0.2; entropy coefficient 0.01; value coefficient 0.5; maximum gradient norm 0.5. Normalize observations using training data only and retain the normalizer with each checkpoint; do not normalize rewards. Use one Torch intra-op and inter-op thread per process on local CPU.
+
+An engineering pilot using training scenarios and discarded weights measured 141.7 transitions/second per learner with three concurrent workers, including one complete rollout, optimizer updates and checkpoint verification. Before production training, the budget is fixed at **786,432 transitions for each of three policies** (2,359,296 in total). Each run has 96 rollouts and 30,720 optimizer minibatches. The observed projection is 92.5 minutes for the three-worker wave; a 25% allowance is 115.6 minutes. Each policy experiences 1,168 complete seven-day episodes and four partial final episodes, using the same scenario sequence. Every final endpoint is retained. Save checkpoints every 65,536 transitions; prospectively evaluate development checkpoints at 0, 65,536, 393,216 and the fixed 786,432 final endpoint. Intermediate checkpoints describe learning and cannot replace a final endpoint. The initial seed-101 policy is the fixed untrained held-out comparator; each seed's own initial checkpoint is also used for its development curve. The pilot's reward outcomes do not select hyperparameters or models.
+
+Training stops by 13:15 UTC, reserving at least 67 minutes for final evaluation and reporting. An interrupted or failed attempt is retained and labeled incomplete, never presented as a full-budget run. No result-dependent extension, winning-seed selection or held-out-driven tuning is allowed.
+
+## Scenario separation and comparison
+
+Training and engineering fixtures use seeds starting at 10000000. Development seeds are 10100000 through 10100007. Held-out seeds are 10200000 through 10200031. These are fresh namespaces disjoint from all earlier campaigns. Development requires a frozen source/protocol gate; held-out evaluation additionally requires every final endpoint and its normalizer to be frozen. A run may not read a future disturbance tape through its observations.
+
+Evaluate all final policies, the fixed untrained seed-101 policy, and the existing coverage controller translated to direct controls on all 32 held-out scenarios. Translation uses the controller's public-state setpoint decision and the existing allocator once at the 15-minute decision boundary; the resulting direct action is held exactly as for PPO. Label this comparator explicitly because the historical baseline recomputed allocation every minute. Learned and untrained policies do not invoke that allocator or controller. Test cases are never screened or removed based on outcomes.
+
+## Outcomes and evidence
+
+Report complete-episode counts; delivered methane and unmet commitments; whether all 28 deliveries were met; modeled economic contribution decomposed into delivery value, missed-delivery cost, wear and endowment liabilities; forced stops; inventory and power trajectories; and exact-minute physical invariant checks. Report daily stock changes descriptively. Do not reuse the old daily-restoration/zero-forced-stop mission qualification as the new success definition.
+
+Compare initial, fixed intermediate and final checkpoints on the eight development scenarios where time permits. Report each final training seed individually and summarize the three without selecting a winner. For paired contrasts, average optimizer-seed outcomes within each weather scenario before resampling the 32 scenarios. Bootstrap uncertainty conditions on these trained policies and does not establish algorithm-wide reliability or account for all retraining uncertainty.
+
+Audit all minute states online. Retain compact per-case ledgers and trajectory hashes for all cases, plus full compressed minute/action traces for the prospectively selected first held-out scenario of every controller. Freeze training/evaluation source, configurations, dependency versions, model and normalizer hashes. Verify checkpoints reopen and reproduce deterministic actions. Deliver actual trained artifacts, a reproducible analysis, a learning figure, an inspectable trajectory and an accessible research note; report negative findings if learning falls short.

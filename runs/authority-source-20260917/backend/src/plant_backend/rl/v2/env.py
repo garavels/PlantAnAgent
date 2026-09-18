@@ -1,0 +1,796 @@
+"""Commitment-aware Environment V2 alpha around the shared plant simulator.
+
+One policy decision is held for several one-minute physics steps.  The guard is
+re-run before every physical step because storage and availability can change
+while the requested action remains constant.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import math
+import time
+from copy import deepcopy
+from dataclasses import replace
+from numbers import Integral
+from typing import Any
+
+import gymnasium as gym
+import numpy as np
+from gymnasium.spaces import Box
+from plant_sim import (
+    Action,
+    DeliverySettlement,
+    PlantConfig,
+    PlantSimulator,
+    PlantState,
+)
+from plant_sim.state import CRITICAL, OFFLINE
+
+from ...controllers.base import Constraints
+from ...safety.validation import validate
+from ..actions import ActionAdapter, DecodedAction
+from . import spaces
+from .accounting import IntervalPowerAccounting
+from .boundary import (
+    CommitmentExposureV2,
+    ControlStateV2,
+    IntervalTelemetryAccumulator,
+)
+from .config import EpisodeConfigV2, EpisodeV2, sample_episode
+from .control import ControllerObservationV2, DeliveryObservation
+from .contract import describe_checkpoint_contract
+from .metrics import EpisodeMetricsV2
+from .mpc_execution import public_observation_sha256
+from .mpc_forecast import public_forecast_issue_sha256
+from .mpc_setpoint_execution import (
+    MPCMinuteApplicationV1,
+    MPCSetpointIntervalExecutionV1,
+    record_minute_application,
+)
+from .mpc_setpoints import (
+    MPCProcessSetpointsV1,
+    dispatch_mpc_setpoints,
+    resolve_setpoint_envelope,
+)
+from .observation import ObservationEncoderV2
+from .reward import OBJECTIVE_VERSION, IntervalOutcome, RewardWeightsV2, compute
+from .setpoint_command import (
+    ProcessSetpointCommandV1,
+    dispatch_process_setpoint_command,
+    resolve_process_setpoint_envelope,
+)
+from .setpoint_execution import (
+    ProcessSetpointIntervalExecutionV1,
+    ProcessSetpointMinuteApplicationV1,
+    record_process_setpoint_application,
+)
+from .weather import PublicForecastIssueV2
+
+
+class PlantEnvV2(gym.Env[np.ndarray, np.ndarray]):
+    """Delivery service under uncertain solar and stateful equipment dynamics."""
+
+    metadata: dict[str, Any] = {"render_modes": []}
+
+    def __init__(
+        self,
+        *,
+        config: PlantConfig | None = None,
+        episode: EpisodeConfigV2 | None = None,
+        constraints: Constraints | None = None,
+        weights: RewardWeightsV2 | None = None,
+    ) -> None:
+        self.config = config or PlantConfig()
+        self.episode_config = (episode or EpisodeConfigV2()).validate(self.config)
+        self.constraints = constraints or Constraints()
+        self.weights = (weights or RewardWeightsV2()).validate()
+        self._checkpoint_contract = describe_checkpoint_contract(
+            plant=self.config,
+            episode=self.episode_config,
+            constraints=self.constraints,
+            weights=self.weights,
+        )
+
+        self.simulator = PlantSimulator(
+            self.config,
+            electrolyser_commitment=self.episode_config.electrolyser_commitment,
+        )
+        self.encoder = ObservationEncoderV2(
+            self.config,
+            self.episode_config.electrolyser_commitment,
+        )
+        self.adapter = ActionAdapter(self.config)
+        self.observation_space = Box(
+            low=spaces.observation_low(),
+            high=spaces.observation_high(),
+            dtype=np.float32,
+        )
+        self.action_space = Box(
+            low=spaces.action_low(),
+            high=spaces.action_high(),
+            shape=(spaces.ACTION_SIZE,),
+            dtype=np.float32,
+        )
+
+        # Full weather truth and future forecast vintages are deliberately
+        # private. Controllers receive only ``current_forecast``.
+        self._episode: EpisodeV2 | None = None
+        self.control_state: ControlStateV2 | None = None
+        self.metrics = EpisodeMetricsV2()
+        self.physics_steps_taken = 0
+        self.decisions_taken = 0
+        self.episode_physics_steps = self.episode_config.physics_steps(self.config)
+        self.episode_decisions = self.episode_config.decision_steps(self.config)
+        self._last_setpoint_execution: MPCSetpointIntervalExecutionV1 | None = None
+        self._last_process_setpoint_execution: (
+            ProcessSetpointIntervalExecutionV1 | None
+        ) = None
+        # Full minute truth is deliberately kept out of the frozen common
+        # execution schema.  Evidence-grade research runners may retain this
+        # read-only trace under their own versioned report contract.
+        self._last_minute_truth_states: tuple[PlantState, ...] | None = None
+
+    def reset(
+        self,
+        *,
+        seed: int | None = None,
+        options: dict[str, Any] | None = None,
+    ) -> tuple[np.ndarray, dict[str, Any]]:
+        """Draw a replayable episode without returning its private future tape."""
+        if seed is not None and (
+            isinstance(seed, bool) or not isinstance(seed, Integral) or seed < 0
+        ):
+            raise ValueError("seed must be a non-negative integer or None")
+        super().reset(seed=seed)
+        if seed is None:
+            episode_seed = int(
+                self.np_random.integers(0, np.iinfo(np.uint32).max, dtype=np.uint32)
+            )
+        else:
+            episode_seed = int(seed)
+        drawn = self._sample_episode(episode_seed)
+        self._episode = drawn
+        self.episode_physics_steps = drawn.physics_steps
+        self.episode_decisions = drawn.physics_steps // drawn.decision_stride
+        self.simulator.load_scenario(
+            drawn.scenario,
+            solar_factor_tape=drawn.weather.tape,
+        )
+        # Evaluation episodes are immutable after reset. Allowing schedule
+        # replacement would erase settlement history while retaining the
+        # originally sampled manifest identity.
+        self.simulator.set_delivery_schedule(drawn.commitments, freeze=True)
+        self.encoder.reset()
+        initial = self.telemetry
+        self.metrics = EpisodeMetricsV2(
+            initial_h2_kg=initial.h2_level_kg,
+            initial_co2_kg=initial.co2_level_kg,
+            initial_ch4_kg=initial.ch4_level_kg,
+            initial_battery_soc=initial.battery_soc,
+            initial_battery_energy_kwh=initial.battery_energy_kwh,
+            terminal_h2_kg=initial.h2_level_kg,
+            terminal_co2_kg=initial.co2_level_kg,
+            terminal_ch4_kg=initial.ch4_level_kg,
+            terminal_battery_soc=initial.battery_soc,
+            terminal_battery_energy_kwh=initial.battery_energy_kwh,
+            min_battery_soc=initial.battery_soc,
+        )
+        self.physics_steps_taken = 0
+        self.decisions_taken = 0
+        self._last_setpoint_execution = None
+        self._last_process_setpoint_execution = None
+        self._last_minute_truth_states = None
+        self.control_state = ControlStateV2(
+            boundary=self.telemetry,
+            electrolyser_commitment=self.simulator.electrolyser_commitment,
+        )
+        return self._observe(), self._public_info()
+
+    def _sample_episode(self, seed: int) -> EpisodeV2:
+        """Construct the immutable physical episode used by :meth:`reset`.
+
+        The default implementation is deliberately a one-line delegation so
+        the established V2 alpha sampling contract and random streams remain
+        byte-for-byte unchanged.  Separately versioned environments may
+        override this protected seam to attach additional exogenous schedules
+        before the simulator is loaded, without changing the alpha generator.
+        """
+
+        return sample_episode(self.episode_config, self.config, seed=seed)
+
+    def step(
+        self,
+        action: np.ndarray,
+    ) -> tuple[np.ndarray, float, bool, bool, dict[str, Any]]:
+        decoded = self.adapter.decode(
+            action,
+            constraints=self.constraints,
+            solar_available_kw=self.telemetry.solar_available_kw,
+        )
+        return self._apply(decoded)
+
+    def step_action(
+        self,
+        action: Action,
+        *,
+        controller_invalid: bool = False,
+    ) -> tuple[np.ndarray, float, bool, bool, dict[str, Any]]:
+        """Controller door sharing the exact V2 guard, reward, and metrics path."""
+        if not isinstance(controller_invalid, bool):
+            raise TypeError("controller_invalid must be a bool")
+        safe = Action.sanitised(action)
+        bus_kw = max(0.0, self.telemetry.solar_available_kw)
+        decoded = DecodedAction(
+            action=safe,
+            clipped=safe != action or controller_invalid,
+            requested_kw={
+                "battery": safe.battery_share * bus_kw,
+                "electrolyser": safe.electrolyser_share * bus_kw
+                + safe.battery_support_kw,
+                "dac": safe.dac_share * bus_kw,
+                "methanator": safe.methanator_share * bus_kw,
+                "battery_support": safe.battery_support_kw,
+            },
+        )
+        return self._apply(decoded)
+
+    def step_setpoints(
+        self,
+        setpoints: MPCProcessSetpointsV1,
+    ) -> tuple[np.ndarray, float, bool, bool, dict[str, Any]]:
+        """Apply one observation-bound absolute command on the physics grid.
+
+        This is an opt-in research door. The command is checked against the
+        current public observation, forecast issue, decision index, cadence,
+        and active authority envelope before any physical state is advanced.
+        A deterministic dispatcher then converts the held absolute targets to
+        a fresh guarded action for every one-minute plant step.
+        """
+
+        if not isinstance(setpoints, MPCProcessSetpointsV1):
+            raise TypeError("setpoints must be MPCProcessSetpointsV1")
+        if self._episode is None:
+            raise RuntimeError("reset() must be called before step_setpoints()")
+        if setpoints.decision_index != self.decisions_taken:
+            raise ValueError("setpoint decision index is stale or from another run")
+
+        observation = self.controller_observation
+        if setpoints.observation_sha256 != public_observation_sha256(observation):
+            raise ValueError(
+                "setpoint does not belong to the current public observation"
+            )
+        if observation.forecast is None:
+            raise RuntimeError("setpoint execution requires a public forecast issue")
+        if setpoints.public_forecast_sha256 != public_forecast_issue_sha256(
+            observation.forecast
+        ):
+            raise ValueError("setpoint does not belong to the current forecast issue")
+
+        expected_hold_s = self._episode.decision_stride * self.config.dt_s
+        if not math.isclose(
+            setpoints.hold_duration_s,
+            expected_hold_s,
+            rel_tol=0.0,
+            abs_tol=1e-9,
+        ):
+            raise ValueError(
+                "setpoint hold duration differs from the environment cadence"
+            )
+        active_envelope = resolve_setpoint_envelope(
+            constraints=self.constraints,
+            config=self.config,
+        )
+        if setpoints.envelope.sha256 != active_envelope.sha256:
+            raise ValueError("setpoint authority envelope is stale")
+        return self._apply_setpoints(setpoints)
+
+    def _apply_setpoints(
+        self,
+        setpoints: MPCProcessSetpointsV1,
+    ) -> tuple[np.ndarray, float, bool, bool, dict[str, Any]]:
+        """Internal typed door kept separate from the historical action path."""
+
+        return self._apply(None, setpoints=setpoints)
+
+    def step_process_setpoints(
+        self,
+        command: ProcessSetpointCommandV1,
+        *,
+        controller_invalid: bool = False,
+    ) -> tuple[np.ndarray, float, bool, bool, dict[str, Any]]:
+        """Apply one controller-neutral observation-bound target command."""
+
+        if not isinstance(command, ProcessSetpointCommandV1):
+            raise TypeError("command must be ProcessSetpointCommandV1")
+        if not isinstance(controller_invalid, bool):
+            raise TypeError("controller_invalid must be a bool")
+        if self._episode is None:
+            raise RuntimeError("reset() must be called before step_process_setpoints()")
+        if command.decision_index != self.decisions_taken:
+            raise ValueError(
+                "process setpoint decision index is stale or from another run"
+            )
+        observation = self.controller_observation
+        if command.observation_sha256 != public_observation_sha256(observation):
+            raise ValueError("process setpoint command belongs to another observation")
+        expected_hold_s = self._episode.decision_stride * self.config.dt_s
+        if not math.isclose(
+            command.hold_duration_s,
+            expected_hold_s,
+            rel_tol=0.0,
+            abs_tol=1e-9,
+        ):
+            raise ValueError("process setpoint hold differs from environment cadence")
+        active_envelope = resolve_process_setpoint_envelope(
+            constraints=self.constraints,
+            config=self.config,
+        )
+        if command.envelope != active_envelope:
+            raise ValueError("process setpoint authority envelope is stale")
+        return self._apply(
+            None,
+            process_command=command,
+            process_controller_invalid=controller_invalid,
+        )
+
+    def _apply(
+        self,
+        decoded: DecodedAction | None,
+        *,
+        setpoints: MPCProcessSetpointsV1 | None = None,
+        process_command: ProcessSetpointCommandV1 | None = None,
+        process_controller_invalid: bool = False,
+    ) -> tuple[np.ndarray, float, bool, bool, dict[str, Any]]:
+        request_count = sum(
+            item is not None for item in (decoded, setpoints, process_command)
+        )
+        if request_count != 1:
+            raise ValueError("exactly one action or setpoint request is required")
+        if not isinstance(process_controller_invalid, bool):
+            raise TypeError("process_controller_invalid must be a bool")
+        if process_command is None and process_controller_invalid:
+            raise ValueError("process invalidity requires a common setpoint command")
+        if self._episode is None:
+            raise RuntimeError("reset() must be called before step()")
+        remaining = self.episode_physics_steps - self.physics_steps_taken
+        inner_steps = min(self._episode.decision_stride, remaining)
+        if inner_steps <= 0:
+            raise RuntimeError("episode is already terminated; call reset()")
+        self._last_setpoint_execution = None
+        self._last_process_setpoint_execution = None
+        self._last_minute_truth_states = None
+
+        before = self.simulator.state
+        commitment_before = self.simulator.electrolyser_commitment
+        min_soc = before.battery_soc
+        battery_discharged_kwh = 0.0
+        shutdown_steps = 0
+        adjustments: list[str] = []
+        corrected_steps = 0
+        settlements: list[DeliverySettlement] = []
+        requested_kg = delivered_kg = unmet_kg = 0.0
+        last_applied = Action.idle()
+        power = IntervalPowerAccounting()
+        interval_telemetry = IntervalTelemetryAccumulator()
+        setpoint_applications: list[MPCMinuteApplicationV1] = []
+        process_applications: list[ProcessSetpointMinuteApplicationV1] = []
+        dispatcher_elapsed_ns: list[int] = []
+        minute_truth_states: list[PlantState] = [deepcopy(self.telemetry)]
+
+        for ordinal in range(inner_steps):
+            step_before = self.telemetry
+            minute_dispatch = None
+            process_dispatch = None
+            minute_commitment_before = None
+            if decoded is not None:
+                assert decoded is not None
+                requested_action = decoded.action
+                validated = validate(
+                    decoded.action,
+                    step_before,
+                    constraints=self.constraints,
+                    config=self.config,
+                    dispatch_solar_available_kw=(
+                        self.simulator.next_dispatch_solar_kw()
+                    ),
+                )
+            elif setpoints is not None:
+                dispatch_solar_kw = self.simulator.next_dispatch_solar_kw()
+                dispatch_started_ns = time.perf_counter_ns()
+                minute_dispatch = dispatch_mpc_setpoints(
+                    setpoints,
+                    step_before,
+                    solar_available_kw=dispatch_solar_kw,
+                    constraints=self.constraints,
+                    config=self.config,
+                )
+                dispatcher_elapsed_ns.append(
+                    time.perf_counter_ns() - dispatch_started_ns
+                )
+                requested_action = minute_dispatch.action
+                validated = validate(
+                    requested_action,
+                    step_before,
+                    constraints=self.constraints,
+                    config=self.config,
+                    dispatch_solar_available_kw=dispatch_solar_kw,
+                )
+                minute_commitment_before = self.simulator.electrolyser_commitment
+            else:
+                assert process_command is not None
+                dispatch_solar_kw = self.simulator.next_dispatch_solar_kw()
+                dispatch_started_ns = time.perf_counter_ns()
+                process_dispatch = dispatch_process_setpoint_command(
+                    process_command,
+                    step_before,
+                    solar_available_kw=dispatch_solar_kw,
+                    constraints=self.constraints,
+                    config=self.config,
+                )
+                dispatcher_elapsed_ns.append(
+                    time.perf_counter_ns() - dispatch_started_ns
+                )
+                requested_action = process_dispatch.action
+                validated = validate(
+                    requested_action,
+                    step_before,
+                    constraints=self.constraints,
+                    config=self.config,
+                    dispatch_solar_available_kw=dispatch_solar_kw,
+                )
+            last_applied = validated.action
+            if validated.adjustments:
+                corrected_steps += 1
+                adjustments.extend(validated.adjustments)
+            after_step = self.simulator.step(validated.action)
+            next_boundary = self.telemetry
+            minute_truth_states.append(deepcopy(next_boundary))
+            interval_telemetry.record(next_boundary, dt_h=self.config.dt_h)
+            power.record(
+                requested_action,
+                validated.action,
+                after=after_step,
+                dt_h=self.config.dt_h,
+            )
+            if minute_dispatch is not None:
+                setpoint_applications.append(
+                    record_minute_application(
+                        ordinal=ordinal,
+                        before=step_before,
+                        dispatch=minute_dispatch,
+                        validated=validated,
+                        after=after_step,
+                        next_boundary=next_boundary,
+                        commitment_before=minute_commitment_before,
+                        commitment_after=self.simulator.electrolyser_commitment,
+                    )
+                )
+            elif process_dispatch is not None:
+                process_applications.append(
+                    record_process_setpoint_application(
+                        ordinal=ordinal,
+                        before=step_before,
+                        dispatch=process_dispatch,
+                        validated=validated,
+                        after=after_step,
+                        next_boundary=next_boundary,
+                    )
+                )
+            delivery = self.simulator.delivery_step
+            settlements.extend(delivery.settlements)
+            requested_kg += delivery.requested_kg
+            delivered_kg += delivery.delivered_kg
+            unmet_kg += delivery.unmet_kg
+            battery_discharged_kwh += (
+                max(0.0, -after_step.battery_power_kw) * self.config.dt_h
+            )
+            min_soc = min(min_soc, after_step.battery_soc)
+            shutdown_steps += int(after_step.plant_status in (CRITICAL, OFFLINE))
+
+        after = self.simulator.state
+        commitment_after = self.simulator.electrolyser_commitment
+        self.physics_steps_taken += inner_steps
+        self.decisions_taken += 1
+        commitment_exposure = CommitmentExposureV2.between(
+            commitment_before,
+            commitment_after,
+            interval_s=inner_steps * self.config.dt_s,
+        )
+        self.control_state = ControlStateV2(
+            boundary=self.telemetry,
+            previous_interval=interval_telemetry.summary(),
+            electrolyser_commitment=commitment_after,
+        )
+        terminated = self.physics_steps_taken >= self.episode_physics_steps
+        outcome = IntervalOutcome(
+            hours=inner_steps * self.config.dt_h,
+            physical_steps=inner_steps,
+            requested_kg=requested_kg,
+            delivered_kg=delivered_kg,
+            unmet_kg=unmet_kg,
+            produced_kg=max(
+                0.0, after.ch4_produced_total_kg - before.ch4_produced_total_kg
+            ),
+            solar_kwh=max(0.0, after.energy_produced_kwh - before.energy_produced_kwh),
+            curtailed_kwh=max(
+                0.0, after.energy_curtailed_kwh - before.energy_curtailed_kwh
+            ),
+            battery_discharged_kwh=battery_discharged_kwh,
+            min_battery_soc=min_soc,
+            shutdown_steps=shutdown_steps,
+            corrections=len(adjustments),
+            guard_intervention_kwh=power.guard_intervention_l1_kwh,
+            dispatch_gap_kwh=power.dispatch_gap_integral_l1_kwh,
+            request_application_gap_kwh=(power.request_application_integral_l1_kwh),
+            out_of_range=(
+                decoded.clipped if decoded is not None else process_controller_invalid
+            ),
+            terminal_ch4_kg=after.ch4_level_kg,
+            reference_delivery_kg=self.episode_config.delivery_amount_kg,
+            reference_period_h=self.episode_config.delivery_period_h,
+            commitment=commitment_exposure,
+        )
+        breakdown = compute(
+            outcome,
+            config=self.config,
+            constraints=self.constraints,
+            terminal=terminated,
+            weights=self.weights,
+        )
+        self.metrics.record(
+            outcome,
+            breakdown,
+            settlements,
+            corrected_physics_steps=corrected_steps,
+            battery_charge_applied_kwh=power.applied_kwh["battery"],
+            battery_support_applied_kwh=power.applied_kwh["battery_support"],
+            electrolyser_applied_energy_kwh=power.applied_kwh["electrolyser"],
+            dac_applied_energy_kwh=power.applied_kwh["dac"],
+            methanator_applied_energy_kwh=power.applied_kwh["methanator"],
+            terminal_state=after,
+        )
+        if decoded is not None:
+            requested = decoded.to_dict()
+            requested["requested_kw_basis"] = (
+                "latest completed one-minute solar sample at the decision boundary; "
+                "authoritative interval energy is reported in interval_power"
+            )
+        elif setpoints is not None:
+            requested = setpoints.to_dict()
+            requested["requested_kw_basis"] = (
+                "absolute process targets held at the decision boundary; each "
+                "one-minute action is independently dispatched and guarded"
+            )
+        else:
+            assert process_command is not None
+            requested = process_command.to_dict()
+            requested["requested_kw_basis"] = (
+                "controller-neutral absolute targets held at the decision boundary; "
+                "each one-minute action is independently dispatched and guarded"
+            )
+        info = {
+            **self._public_info(),
+            "requested": requested,
+            "guarded_action": last_applied.to_dict(),
+            "guard": {
+                "interventions": len(adjustments),
+                "corrected_physics_steps": corrected_steps,
+                "out_of_range": (
+                    decoded.clipped
+                    if decoded is not None
+                    else process_controller_invalid
+                ),
+                "intervention_l1_kwh": power.guard_intervention_l1_kwh,
+            },
+            "interval_power": power.to_dict(),
+            "control_authority": {
+                "guard_intervention_integral_l1_kwh": (
+                    power.guard_intervention_integral_l1_kwh
+                ),
+                "dispatch_gap_integral_l1_kwh": (power.dispatch_gap_integral_l1_kwh),
+                "request_application_integral_l1_kwh": (
+                    power.request_application_integral_l1_kwh
+                ),
+            },
+            "adjustments": adjustments,
+            "delivery": {
+                "commitments_settled": len(settlements),
+                "requested_kg": requested_kg,
+                "delivered_kg": delivered_kg,
+                "unmet_kg": unmet_kg,
+            },
+            "electrolyser_commitment_interval": commitment_exposure.to_dict(),
+            "reward": breakdown.to_dict(),
+            "metrics": self.metrics.to_dict(),
+            "plant_status": after.plant_status,
+        }
+        if setpoints is not None:
+            execution = MPCSetpointIntervalExecutionV1(
+                setpoints=setpoints,
+                physics_step_s=self.config.dt_s,
+                applications=tuple(setpoint_applications),
+            )
+            self._last_setpoint_execution = execution
+            info["setpoint_execution"] = execution.to_dict()
+            info["dispatcher_elapsed_ns"] = dispatcher_elapsed_ns
+        elif process_command is not None:
+            process_execution = ProcessSetpointIntervalExecutionV1(
+                command=process_command,
+                physics_step_s=self.config.dt_s,
+                applications=tuple(process_applications),
+            )
+            self._last_process_setpoint_execution = process_execution
+            info["process_setpoint_execution"] = process_execution.to_dict()
+            info["dispatcher_elapsed_ns"] = dispatcher_elapsed_ns
+        if setpoints is not None or process_command is not None:
+            self._last_minute_truth_states = tuple(minute_truth_states)
+        # The contract horizon is part of the finite-horizon MDP and pays a
+        # one-time inventory salvage value. It is therefore a true termination,
+        # not an external time-limit truncation that an RL library may bootstrap.
+        return self._observe(), breakdown.total, terminated, False, info
+
+    @property
+    def telemetry(self) -> PlantState:
+        raw = self.simulator.get_telemetry()
+        # The simulator retains the private resource factor even when the
+        # clear-sky envelope is zero. A PV meter cannot observe that latent
+        # cloud state at night, so V2 exposes only the measured power ratio.
+        measured_factor = (
+            raw.solar_available_kw / raw.solar_potential_kw
+            if raw.solar_potential_kw > 1e-12
+            else 0.0
+        )
+        return replace(raw, solar_output_factor=measured_factor)
+
+    @property
+    def current_forecast(self) -> PublicForecastIssueV2:
+        """Latest immutable public issuance available to online controllers."""
+        if self._episode is None:
+            raise RuntimeError("reset() must be called before requesting a forecast")
+        return self._episode.weather.current_issue(self.physics_steps_taken).public()
+
+    @property
+    def progress(self) -> float:
+        if self.episode_decisions <= 0:
+            return 0.0
+        return min(1.0, self.decisions_taken / self.episode_decisions)
+
+    @property
+    def delivery_observation(self) -> DeliveryObservation:
+        """Current-deadline view, separated from the private delivery schedule."""
+        if self._episode is None:
+            raise RuntimeError(
+                "reset() must be called before requesting delivery state"
+            )
+        next_delivery = self.simulator.next_delivery
+        current = self.simulator.delivery_step
+        return DeliveryObservation(
+            steps_to_next=(
+                None
+                if next_delivery is None
+                else max(0, next_delivery.due_step - self.simulator.step_index)
+            ),
+            delivery_period_steps=self.episode_config.delivery_stride(self.config),
+            next_requested_kg=(
+                0.0 if next_delivery is None else next_delivery.requested_kg
+            ),
+            cumulative_requested_kg=current.cumulative_requested_kg,
+            cumulative_delivered_kg=current.cumulative_delivered_kg,
+        )
+
+    @property
+    def controller_observation(self) -> ControllerObservationV2:
+        """Detached common causal source for RL, heuristics and optimisers."""
+        if self._episode is None or self.control_state is None:
+            raise RuntimeError("reset() must be called before observing")
+        # PlantState is frozen but intentionally contains a mutable health map.
+        # A deep copy prevents an in-process controller from changing a later
+        # observation or any simulator-owned nested value through aliasing.
+        return ControllerObservationV2(
+            state=deepcopy(self.control_state),
+            delivery=self.delivery_observation,
+            forecast=self.current_forecast,
+            progress=self.progress,
+            decision_interval_s=self.episode_config.decision_interval_s,
+        )
+
+    def _observe(self) -> np.ndarray:
+        return self.encoder.encode_controller_observation(
+            self.controller_observation,
+            constraints=self.constraints,
+        )
+
+    def _public_info(self) -> dict[str, Any]:
+        if self._episode is None:
+            raise RuntimeError("reset() must be called before requesting public info")
+        next_delivery = self.simulator.next_delivery
+        return {
+            "environment_id": spaces.ENVIRONMENT_ID,
+            "environment_contract_digest": spaces.ENVIRONMENT_CONTRACT_DIGEST,
+            "checkpoint_contract_digest": self.checkpoint_contract_digest,
+            "stage": spaces.STAGE,
+            "clock": self.telemetry.clock,
+            "decision_index": self.decisions_taken,
+            "physics_step": self.physics_steps_taken,
+            "forecast": self.current_forecast.to_dict(),
+            "electrolyser_commitment": (
+                None
+                if self.simulator.electrolyser_commitment is None
+                else self.simulator.electrolyser_commitment.to_dict()
+            ),
+            "next_delivery": (
+                None
+                if next_delivery is None
+                else {
+                    "steps_until_due": next_delivery.due_step
+                    - self.simulator.step_index,
+                    "requested_kg": next_delivery.requested_kg,
+                }
+            ),
+        }
+
+    def audit_manifest(self) -> dict[str, Any]:
+        """Private reproducibility record, deliberately separate from Gym info."""
+        if self._episode is None:
+            raise RuntimeError("reset() must be called before requesting a manifest")
+        immutable = {
+            "manifest_schema_version": 3,
+            "environment": spaces.describe(),
+            "checkpoint_contract": self.checkpoint_contract,
+            "objective_version": OBJECTIVE_VERSION,
+            "episode_config": self.episode_config.to_dict(),
+            "plant_config": self.config.to_dict(),
+            "constraints": self.constraints.to_dict(),
+            "reward_weights": self.weights.to_dict(),
+            "episode": self._episode.audit_manifest(),
+            "provenance_gaps": [
+                "source revision and dependency-lock digest must be added by the experiment runner"
+            ],
+        }
+        canonical = json.dumps(
+            immutable,
+            allow_nan=False,
+            ensure_ascii=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode("utf-8")
+        return {
+            "manifest_sha256": hashlib.sha256(canonical).hexdigest(),
+            "exogenous_episode_sha256": self._episode.exogenous_episode_sha256,
+            **immutable,
+            "delivery_accounting": self.simulator.delivery_audit(),
+        }
+
+    @property
+    def checkpoint_contract_digest(self) -> str:
+        return str(self._checkpoint_contract["checkpoint_contract_digest"])
+
+    @property
+    def checkpoint_contract(self) -> dict[str, Any]:
+        """Detached full identity that every future V2 checkpoint must declare."""
+        return deepcopy(self._checkpoint_contract)
+
+    @property
+    def last_setpoint_execution(self) -> MPCSetpointIntervalExecutionV1 | None:
+        """Latest immutable opt-in execution record, absent on action paths."""
+
+        return self._last_setpoint_execution
+
+    @property
+    def last_process_setpoint_execution(
+        self,
+    ) -> ProcessSetpointIntervalExecutionV1 | None:
+        """Latest common-command execution record, absent on other action paths."""
+
+        return self._last_process_setpoint_execution
+
+    @property
+    def last_minute_truth_states(self) -> tuple[PlantState, ...] | None:
+        """Detached minute states for versioned evidence runners, never Gym info."""
+
+        return deepcopy(self._last_minute_truth_states)
+
+
+__all__ = ["PlantEnvV2"]
