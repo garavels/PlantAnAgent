@@ -1,0 +1,53 @@
+.w-models {
+  max-width: 620px;
+}
+.w-model-options {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.w-model-option {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 22px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--r-card);
+  background: var(--card);
+  cursor: pointer;
+}
+.w-model-option:has(input:checked) {
+  border-color: var(--accent);
+}
+.w-model-option input {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+.w-model-option strong {
+  display: block;
+  font-size: 20px;
+  font-weight: 500;
+}
+.w-model-option small {
+  display: block;
+  margin-top: 6px;
+  color: var(--text-dim);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.w-model-play {
+  margin-top: 20px;
+  min-height: 40px;
+  padding-inline: 22px;
+}
+.w-model-message {
+  margin-top: 16px;
+  font-size: 13px;
+  color: var(--solar);
+}

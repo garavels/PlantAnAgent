@@ -2,17 +2,19 @@ import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useWorkspace } from "./context";
-import { duration, time } from "./format";
+import { duration } from "./format";
+import { missionDescription } from "./recording";
 const PANELS = [
   ["/", "Overview", "◈"],
   ["/plant", "Plant", "⬡"],
   ["/weather", "Weather", "☁"],
+  ["/site", "Location study", "◎"],
+  ["/scenarios", "Scenarios", "◇"],
   ["/planning", "Planning", "≋"],
   ["/deliveries", "Deliveries & resources", "◫"],
   ["/economics", "Economics", "€"],
   ["/events", "Events", "≡"],
-  ["/learning", "Learning", "∿"],
-  ["/evidence", "Evidence", "◇"],
+  ["/models", "Models", "∿"],
 ] as const;
 export function WorkspaceShell({ children }: { children: ReactNode }) {
   const w = useWorkspace(),
@@ -20,6 +22,17 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
   const [setup, setSetup] = useState(false),
     [controller, setController] = useState<"H" | "MPC">("MPC");
   const [menu, setMenu] = useState(false);
+  const siteStudy = location.pathname === "/site";
+  const scenarios = location.pathname === "/scenarios";
+  const models = ["/models", "/learning", "/evidence"].includes(location.pathname);
+  const configuration = siteStudy || models || scenarios;
+  const { setPlaying, setRunning } = w;
+  useEffect(() => {
+    if (models || scenarios) {
+      setPlaying(false);
+      setRunning(false);
+    }
+  }, [models, scenarios, setPlaying, setRunning]);
   useEffect(() => {
     document.querySelector(".workspace-main")?.scrollTo(0, 0);
     setMenu(false);
@@ -34,6 +47,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
   const frame = w.frame,
     snapshot = w.snapshot;
   const historical = w.index < w.latestIndex;
+  const activeSite = snapshot?.site_forecast?.site;
   return (
     <div className="workspace">
       <aside
@@ -73,7 +87,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
           <span className="w-status-dot" />
           Synthetic methane plant<small>Renewable power to fuel</small>
           <button className="w-button" onClick={() => setSetup(true)}>
-            Mission & recordings
+            Mission
           </button>
         </div>
       </aside>
@@ -87,22 +101,22 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
             ☰
           </button>
           <div>
-            <strong>Renewable methane</strong>
-            <span>240 kg every 6 hours · 7-day mission</span>
+            <strong>{scenarios ? "Scenario studio" : models ? "Plant replay" : activeSite ? `${activeSite.name} · renewable methane` : "Renewable methane"}</strong>
+            {!models && <span>{scenarios ? "Describe conditions. Review the plan. Run the plant." : siteStudy && !activeSite ? "10-day location study" : missionDescription(snapshot, w.recording)}</span>}
           </div>
-          <div className="w-header-status">
+          {models || scenarios ? null : siteStudy && !activeSite ? <div className="w-header-status"><span className="w-mode">Weather-driven plant simulation</span></div> : <div className="w-header-status">
             <span className="w-mode">
-              {w.recording ? "Recorded simulation" : "Interactive simulation"}
+              {activeSite ? "Site forecast simulation" : w.recording ? "Recorded simulation" : "Interactive simulation"}
             </span>
             <strong>
-              {frame ? time(frame.clock.elapsed_hours) : "Connecting…"}
+              {frame ? w.time(frame.clock.elapsed_hours) : "Connecting…"}
             </strong>
             <span>
               {snapshot?.controller.label ?? "Connecting…"}
             </span>
-          </div>
+          </div>}
         </header>
-        {(w.notice || (!w.recording && (w.live.error || snapshot?.error))) && (
+        {!configuration && (w.notice || (!w.recording && (w.live.error || snapshot?.error))) && (
           <div className="w-banner" role="alert">
             <span>{w.notice ?? w.live.error ?? snapshot?.error}</span>
             <button
@@ -114,20 +128,20 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
             </button>
           </div>
         )}
-        {w.recording?.snapshot.error && (
+        {!configuration && w.recording?.snapshot.error && (
           <div className="w-banner" role="status">
             <span>
               {snapshot?.controller.id} stopped at{" "}
-              {time(w.recording.snapshot.frame.clock.elapsed_hours)} ·{" "}
+              {w.time(w.recording.snapshot.frame.clock.elapsed_hours)} ·{" "}
               {w.recording.snapshot.error.match(/\(([^)]+)\)/)?.[1] ??
                 "Controller error"}{" "}
               · no fallback
             </span>
-            <NavLink to="/evidence">Failure details</NavLink>
+            <NavLink to="/events">View events</NavLink>
           </div>
         )}
-        <main className="workspace-main" aria-busy={w.reading}>
-          {!frame || !snapshot ? (
+        <main className="workspace-main" aria-busy={!configuration && w.reading}>
+          {!configuration && (!frame || !snapshot) ? (
             <div className="w-loading">
               <h1>Connecting</h1>
               <p>{w.live.error ?? "Loading state…"}</p>
@@ -142,7 +156,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
             children
           )}
         </main>
-        <footer className="workspace-timeline">
+        {!configuration && <footer className="workspace-timeline">
           <div className="w-transport">
             <span className="w-transport-state">
               {w.busy
@@ -157,25 +171,32 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
               <small>{duration(w.index / 4)} elapsed</small>
             </span>
             {w.recording ? (
+              <>
               <button
                 className="w-button w-button--primary"
                 disabled={w.busy || w.latestIndex === 0}
                 onClick={() => {
-                  if (w.index >= w.latestIndex) void w.selectFrame(0);
+                  if (!w.playing && w.index >= w.latestIndex) void w.selectFrame(0);
                   w.setPlaying(!w.playing);
                 }}
               >
                 {w.playing ? "Pause" : "Play recording"}
               </button>
+              <button className="w-button" disabled={w.busy || w.index >= w.latestIndex}
+                onClick={() => { w.setPlaying(false); void w.selectFrame(w.index + 1); }}>
+                +15 min
+              </button>
+              <button className="w-button w-hour" disabled={w.busy || w.index >= w.latestIndex}
+                onClick={() => { w.setPlaying(false); void w.selectFrame(Math.min(w.latestIndex, w.index + 4)); }}>
+                +1 hour
+              </button>
+              </>
             ) : (
               <>
                 <button
                   className="w-button w-button--primary"
                   disabled={
-                    (w.busy && !w.running) ||
-                    w.live.stale ||
-                    snapshot?.status !== "ready" ||
-                    historical
+                    !w.running && (w.busy || w.live.stale || snapshot?.status !== "ready" || historical)
                   }
                   onClick={() => w.setRunning(!w.running)}
                 >
@@ -202,7 +223,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
                     historical ||
                     w.live.stale ||
                     snapshot?.status !== "ready" ||
-                    w.latestIndex > 668
+                    w.latestIndex > (snapshot?.environment.horizon_hours ?? 168) * 4 - 4
                   }
                   onClick={() => void w.advance(4)}
                 >
@@ -214,7 +235,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
               <label htmlFor="mission-time">
                 {w.recording ? "Recording timeline" : "Completed history"}
                 <span>
-                  {time(0)} — {time(w.latestIndex / 4)}
+                  {w.time(0)} — {w.time(w.latestIndex / 4)}
                 </span>
               </label>
               <input
@@ -240,13 +261,13 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
                 void w.selectFrame(w.latestIndex);
               }}
             >
-              Latest
+              {w.recording ? "Final result" : "Latest"}
             </button>
             <button className="w-button" onClick={() => setSetup(true)}>
               Mission
             </button>
           </div>
-        </footer>
+        </footer>}
       </div>
       {setup && (
         <div
@@ -283,12 +304,13 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
             }}
           >
             <div className="w-panel-heading">
-              <h2 id="mission-title">Mission & recordings</h2>
+              <h2 id="mission-title">Mission</h2>
               <button className="w-button" onClick={() => setSetup(false)}>
                 Close
               </button>
             </div>
-            <p>168 hours · 240 kg CH₄ every 6 hours · inventory recovery</p>
+            <p>{activeSite ? `${activeSite.name} · ` : ""}{missionDescription(snapshot, w.recording)} · {snapshot?.frame.operating_policy ? "daily inventory review" : "daily inventory returns"}</p>
+            {w.recording?.schema === "plant-research-playback-v1" && <p className="w-note">Recorded playback is read-only. Open or reset a separate interactive simulation below.</p>}
             <div className="w-mission-actions">
               <button
                 className="w-button"
@@ -303,12 +325,12 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
                 className="w-button"
                 onClick={() => void w.exportRecording()}
               >
-                Download public recording
+                Download recording
               </button>
             </div>
-            <h3>New simulation</h3>
+            <h3>{activeSite ? "Restart site simulation" : "New simulation"}</h3>
             <p className="w-note">
-              Previous 3 runs retained until server restart.
+              {activeSite ? `Restart ${activeSite.name} with the same downloaded forecast and plant capacities. Select the controller below.` : "Interactive mission: 240 kg every 6 hours. Previous 3 runs retained until server restart."}
             </p>
             <div className="w-mission-actions">
               <label>
@@ -340,47 +362,12 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
                   setSetup(false);
                 }}
               >
-                Reset simulation
+                {activeSite ? "Restart site simulation" : "Reset simulation"}
               </button>
             </div>
-            <div className="w-panel-heading">
-              <h3>Available recordings</h3>
-              <button
-                className="w-button"
-                onClick={() => void w.reloadCatalog()}
-              >
-                Refresh list
-              </button>
-            </div>
-            <div className="w-recordings">
-              {w.catalog.length ? (
-                w.catalog.map((c) => (
-                  <button
-                    key={c.id}
-                    disabled={!c.available || w.reading}
-                    onClick={() => {
-                      void w.loadRecording(c.id);
-                      setSetup(false);
-                    }}
-                  >
-                    <strong>
-                      {c.controller ?? "Unreadable recording"}
-                      <span>
-                        {c.hours ?? 0} h · {c.status}
-                      </span>
-                    </strong>
-                    <small>
-                      {c.source === "saved"
-                        ? "Saved recording"
-                        : "Previous interactive run"}{" "}
-                      · {c.id.slice(0, 8)}
-                    </small>
-                  </button>
-                ))
-              ) : (
-                <p className="w-note">No saved recordings.</p>
-              )}
-            </div>
+            <NavLink className="w-link" to="/models" onClick={() => setSetup(false)}>
+              Choose a model replay
+            </NavLink>
           </section>
         </div>
       )}

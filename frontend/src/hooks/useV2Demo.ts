@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { fetchV2Demo, resetV2Demo, stepV2Demo } from '../lib/v2-api'
+import { activateSiteWorkspace, deactivateSiteWorkspace, fetchV2Demo, resetV2Demo, stepV2Demo } from '../lib/v2-api'
 import type { V2DemoSnapshot } from '../types/v2'
+import type { SiteActivationRequest } from '../workspace/siteTypes'
+import { activateScenarioWorkspace } from '../workspace/scenarioApi'
 
 type Pending = 'refresh' | 'step' | 'reset' | null
 
@@ -35,6 +37,7 @@ export function useV2Demo() {
       setSnapshot(next)
       staleRef.current = false
       setStale(false)
+      return next
     } catch (reason) {
       if (id !== generation.current) return
       // A failed write can have committed remotely. Read before another write;
@@ -72,10 +75,25 @@ export function useV2Demo() {
     busy.current = false
   }, [])
 
+  const activateSite = useCallback((config: SiteActivationRequest) => {
+    cancelPending()
+    return perform('reset', (signal) => activateSiteWorkspace(config, signal))
+  }, [cancelPending, perform])
+
+  const deactivateSite = useCallback(() => {
+    cancelPending()
+    return perform('reset', deactivateSiteWorkspace)
+  }, [cancelPending, perform])
+
+  const activateScenario = useCallback((previewId: string, controller: 'MPC' | 'H') => {
+    cancelPending()
+    return perform('reset', (signal) => activateScenarioWorkspace(previewId, controller, signal))
+  }, [cancelPending, perform])
+
   useEffect(() => {
     void refresh()
     return cancelPending
   }, [refresh, cancelPending])
 
-  return { snapshot, pending, error, stale, refresh, advance, reset }
+  return { snapshot, pending, error, stale, refresh, advance, reset, activateSite, deactivateSite, activateScenario }
 }

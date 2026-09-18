@@ -1,10 +1,11 @@
 import type { V2DemoSnapshot } from '../types/v2'
+import type { SiteActivationRequest } from '../workspace/siteTypes'
 
 const BASE = '/api/v2/demo'
 
 /** Only public presentation data crosses this boundary. */
-async function request(path: string, init: RequestInit = {}): Promise<V2DemoSnapshot> {
-  const response = await fetch(`${BASE}${path}`, {
+async function request(path: string, init: RequestInit = {}, base = BASE): Promise<V2DemoSnapshot> {
+  const response = await fetch(`${base}${path}`, {
     ...init,
     headers: { 'content-type': 'application/json', ...init.headers },
     cache: 'no-store',
@@ -23,7 +24,7 @@ async function request(path: string, init: RequestInit = {}): Promise<V2DemoSnap
   const snapshot = (await response.json()) as V2DemoSnapshot
   if (
     snapshot.schema !== 'plant-v2-demo-v1' ||
-    snapshot.mode !== 'interactive_fixture' ||
+    !['interactive_fixture', 'site_forecast'].includes(snapshot.mode) ||
     typeof snapshot.run_id !== 'string' ||
     !Number.isInteger(snapshot.revision) ||
     !snapshot.frame ||
@@ -32,6 +33,14 @@ async function request(path: string, init: RequestInit = {}): Promise<V2DemoSnap
     throw new Error('The V2 service returned an unsupported snapshot. Refresh after checking the service version.')
   }
   return snapshot
+}
+
+export function activateSiteWorkspace(config: SiteActivationRequest, signal?: AbortSignal): Promise<V2DemoSnapshot> {
+  return request('/activate', { method: 'POST', body: JSON.stringify(config), signal }, '/api/sites')
+}
+
+export function deactivateSiteWorkspace(signal?: AbortSignal): Promise<V2DemoSnapshot> {
+  return request('/deactivate', { method: 'POST', signal }, '/api/sites')
 }
 
 export function fetchV2Demo(signal?: AbortSignal): Promise<V2DemoSnapshot> {

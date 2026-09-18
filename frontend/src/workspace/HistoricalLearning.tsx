@@ -22,7 +22,7 @@ const origin = (actor: ResearchActor) => actor.evidence_origin === "fresh_batch0
 const count = (value: number | null, total: number) => value === null ? "Unavailable" : `${value} / ${total}`;
 const passed = (value: boolean | null | undefined) => value === null || value === undefined ? "Unavailable" : value ? "Passed" : "Failed";
 
-export function Learning() {
+export function HistoricalLearning() {
   const [data, setData] = useState<ResearchEvidence | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -68,7 +68,7 @@ export function Learning() {
   };
   return <>
     <div className="w-page-heading">
-      <h1>Learning</h1>
+      <h2>Earlier experiments</h2>
       <button className="w-button" disabled={loading} onClick={() => setRefresh((value) => value + 1)}>{loading ? "Loading evidence…" : "Refresh evidence"}</button>
     </div>
     {error && <p className="w-banner" role="alert">{error}{data ? " Showing the previously loaded evidence; the refresh did not succeed." : ""}</p>}
@@ -80,7 +80,7 @@ export function Learning() {
       <div className="w-learning-context">
         <span className="w-tag">Experimental</span>
         <p>{data.policies.length} trained policies · {data.task.development_seeds.length} development scenarios · {data.task.hours} hours per scenario</p>
-        <p>Held-out confirmation pending</p>
+        <p>Historical development results · separate from the current demo policy</p>
       </div>
       <div className="w-learning-tabs" role="tablist" aria-label="Learning views">
         {TABS.map((name, index) => <button

@@ -1,11 +1,15 @@
 import type { PlantConfig, PlantState } from "./plant";
+import type { SiteForecast, SiteActivationRequest, SiteCloudCover } from "../workspace/siteTypes";
+import type { ScenarioSpec } from "../workspace/scenarioTypes";
 
 /** Operator-safe presentation contract. Never contains future truth or an audit manifest. */
 export interface V2DemoSnapshot {
   schema: "plant-v2-demo-v1";
   run_id: string;
   revision: number;
-  mode: "interactive_fixture";
+  mode: "interactive_fixture" | "recorded_research" | "site_forecast";
+  site_forecast?: SiteForecast;
+  site_parameters?: Omit<SiteActivationRequest, "forecast_id" | "controller"> & { scenario?: ScenarioSpec };
   status: "ready" | "complete" | "failed";
   error: string | null;
   controller: { id: "H" | "MPC" | "E-beta" | "PPO"; label: string; uses_forecast: boolean; policy_id?: string; checkpoint?: Record<string, string | number> };
@@ -22,7 +26,7 @@ export interface V2DemoSnapshot {
     decision_minutes: number;
     physics_minutes: number;
     horizon_hours: number;
-    fixture_seed: number;
+    fixture_seed: number | null;
     interface_digest: string;
     task_digest: string;
   };
@@ -50,6 +54,9 @@ export interface V2DemoFrame {
     cycle_index: number;
     cycle_count: number;
     hours_to_cycle_end: number;
+    time_utc?: string;
+    local_time?: string;
+    timezone?: string;
   };
   delivery: {
     next_due_hours: number | null;
@@ -66,6 +73,14 @@ export interface V2DemoFrame {
     }[];
   };
   forecasts: {
+    kind?: "fixed_snapshot_projection_view";
+    forecast_id?: string;
+    forecast_issued_at?: string | null;
+    retrieved_at?: string;
+    view_start_utc?: string;
+    issue_age_hours?: number | null;
+    uncertainty?: string;
+    price_basis?: string;
     issued_at_hours: number;
     price_current_eur_mwh: number;
     prices: { offset_hours: number; mean: number; p10: number; p90: number }[];
@@ -95,7 +110,7 @@ export interface V2DemoFrame {
     operation?: OperatingOutlook | null;
     at_hours: number;
     controller_id: string;
-    computation_ms: number;
+    computation_ms: number | null;
     notes: string[];
     targets: {
       id: string;
@@ -103,8 +118,8 @@ export interface V2DemoFrame {
       requested_kw: number;
       applied_mean_kw: number;
     }[];
-    guard_adjustments: number;
-    execution_digest: string;
+    guard_adjustments: number | null;
+    execution_digest: string | null;
     command_digest: string;
     input_forecasts: V2DemoFrame["forecasts"];
     input_state: PlantState;
@@ -116,7 +131,7 @@ export interface V2DemoFrame {
       methanator_kw: number;
       battery_charge_kw: number;
       battery_support_kw: number;
-      adjustments: string[];
+      adjustments: string[] | null;
     }[];
   } | null;
   /** Only an actual retained MPC plan. H does not invent a future schedule. */
@@ -172,6 +187,22 @@ export interface V2DemoHistoryPoint {
 }
 
 export interface WeatherView {
+  reference_kind?: "forecast_pv";
+  stress_factor?: number;
+  scenario_name?: string;
+  scenario_forecast_scale?: number;
+  site_sample?: SiteCloudCover & {
+    conditions_time?: string;
+    time: string;
+    interval_start: string;
+    shortwave_w_m2: number;
+    temperature_c: number;
+    humidity_pct: number;
+    wind_m_s: number;
+    forecast_solar_kw: number;
+    simulated_solar_kw?: number;
+    daylight?: boolean;
+  };
   sample_end_hours: number;
   status: "observed" | "night" | "unattributed";
   clear_sky_kw: number;
@@ -210,13 +241,42 @@ export interface PlantEvent {
   unit: string | null;
 }
 
-export interface PublicRecording {
-  schema: "plant-public-recording-v1";
+export interface ResearchPlaybackProvenance {
+  source_recording_sha256: string;
+  benchmark_contract_sha256: string;
+  checkpoint_sha256: string;
+  scenario_seed: number;
+  optimizer_seed: number;
+  mission: {
+    delivery_rate_kg_h: number;
+    horizon_h: number;
+    deliveries_met: number;
+    deliveries_total: number;
+    daily_returns_met: number;
+    daily_returns_total: number;
+    mission_passed: boolean;
+    hard_safety_passed: boolean;
+  };
+  evaluation: { split: "held_out"; passed: number; total: number };
+  electricity: {
+    mode: "dedicated_pv_no_export";
+    marginal_eur_per_mwh: number;
+    fixed_costs_included: boolean;
+  };
+}
+
+interface RecordingEnvelope {
   snapshot: V2DemoSnapshot;
   frames: V2DemoFrame[];
   sha256: string;
   evidence_level: string;
 }
+
+export type PublicRecording = RecordingEnvelope & (
+  | { schema: "plant-public-recording-v1"; provenance?: never }
+  | { schema: "plant-site-recording-v1"; provenance?: never }
+  | { schema: "plant-research-playback-v1"; provenance: ResearchPlaybackProvenance }
+);
 
 export interface RecordingSummary {
   id: string;
@@ -232,4 +292,8 @@ export interface RecordingSummary {
   failed_cycles?: number;
   fallback_decisions?: number;
   recovery_decisions?: number;
+  mode?: "recorded_research" | "site_forecast";
+  featured?: boolean;
+  title?: string;
+  provenance?: ResearchPlaybackProvenance;
 }

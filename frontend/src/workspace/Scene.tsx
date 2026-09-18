@@ -58,9 +58,11 @@ export function ProcessDiagram({
 export function Scene({
   overhead = false,
   compact = false,
+  illustrativeClouds = false,
 }: {
   overhead?: boolean;
   compact?: boolean;
+  illustrativeClouds?: boolean;
 }) {
   const w = useWorkspace();
   if (!w.frame || !w.snapshot) return null;
@@ -79,15 +81,18 @@ export function Scene({
             state={w.frame.state}
             config={w.snapshot.config}
             weather={w.frame.weather}
+            site={w.snapshot.site_forecast?.site}
             commitment={w.frame.commitment}
             minLoadFrac={Number(
               w.frame.commitment_profile?.min_stable_load_frac ?? 0.4,
             )}
             playing={w.running || w.playing}
             overhead={overhead}
+            illustrativeClouds={illustrativeClouds}
             hideLabels={compact}
             selectedUnit={compact ? null : w.selectedUnit}
             onSelectUnit={compact ? undefined : w.setSelectedUnit}
+            agentAction={w.agent.visible && !overhead ? (w.agent.action ?? { unit: "hub", label: "Awaiting commands" }) : null}
           />
         </Suspense>
       </SceneBoundary>

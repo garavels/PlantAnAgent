@@ -12,4 +12,9 @@ export const time = (hours: number) => {
   const m = Math.round((hours + 6) * 60);
   return `D${Math.floor(m / 1440) + 1} ${String(Math.floor(m / 60) % 24).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 };
+/** The forecast's interval origin is shared by every site view and historical frame. */
+export const siteTime = (start: string, hours: number) => {
+  const value = new Date(Date.parse(start) + hours * 3_600_000);
+  return `${value.toLocaleString("en-GB", { timeZone: "UTC", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", hour12: false })} UTC`;
+};
 export const words = (value: string) => value.replaceAll("_", " ");

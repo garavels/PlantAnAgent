@@ -75,6 +75,9 @@ def test_single_attempt_retains_failure_without_fallback_or_retry(
 
     root = tmp_path / "recordings"
     monkeypatch.setattr(demo_recordings, "RECORDING_ROOT", root)
+    monkeypatch.setattr(
+        demo_recordings, "RESEARCH_RECORDING_ROOT", tmp_path / "research"
+    )
     identity = {"fixture_only": "synthetic admitted boundary, not real custody"}
 
     def recheck():
@@ -126,6 +129,9 @@ def test_attempt_markers_do_not_hide_a_saved_ppo_recording(
     loaded, monkeypatch, tmp_path
 ):
     monkeypatch.setattr(demo_recordings, "RECORDING_ROOT", tmp_path)
+    monkeypatch.setattr(
+        demo_recordings, "RESEARCH_RECORDING_ROOT", tmp_path / "research"
+    )
     demo = v2_demo.V2DemoSession()
     snapshot = demo.reset_ppo(loaded, {"fixture_only": "untrained"})
     try:

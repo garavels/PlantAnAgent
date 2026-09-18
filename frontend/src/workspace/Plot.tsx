@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { n } from "./format";
+import { plotValueAt } from "./plotModel";
 export interface Series {
   label: string;
   color: string;
@@ -18,6 +19,8 @@ export function Plot({
   cursor,
   onSelect,
   band,
+  markers = [],
+  markerLabel = "Delivery settlement",
   compact = false,
   xLabel = "Elapsed hours",
 }: {
@@ -31,6 +34,8 @@ export function Plot({
   cursor?: number;
   onSelect?: (x: number) => void;
   band?: { x: number; low: number; high: number }[];
+  markers?: { x: number; label: string; color?: string }[];
+  markerLabel?: string;
   compact?: boolean;
   xLabel?: string;
 }) {
@@ -52,18 +57,17 @@ export function Plot({
     start + 0.25,
     domain?.[1] ?? Math.max(1, ...pts.map((p) => p.x)),
   );
-  const validYDomain = yDomain && Number.isFinite(yDomain[0]) &&
-    Number.isFinite(yDomain[1]) && yDomain[0] < yDomain[1];
-  const lo = validYDomain ? yDomain[0] : Math.min(
-    0,
-    ...pts.map((p) => p.y),
-    ...(band?.map((p) => p.low) ?? []),
-  );
-  const hi = validYDomain ? yDomain[1] : Math.max(
-    1,
-    ...pts.map((p) => p.y),
-    ...(band?.map((p) => p.high) ?? []),
-  );
+  const validYDomain =
+    yDomain &&
+    Number.isFinite(yDomain[0]) &&
+    Number.isFinite(yDomain[1]) &&
+    yDomain[0] < yDomain[1];
+  const lo = validYDomain
+    ? yDomain[0]
+    : Math.min(0, ...pts.map((p) => p.y), ...(band?.map((p) => p.low) ?? []));
+  const hi = validYDomain
+    ? yDomain[1]
+    : Math.max(1, ...pts.map((p) => p.y), ...(band?.map((p) => p.high) ?? []));
   const bottom = compact ? 115 : 175,
     right = width - 15,
     left = 62;
@@ -71,7 +75,8 @@ export function Plot({
     left + ((v - start) / (end - start)) * (right - left);
   const y = (v: number) => bottom - ((v - lo) / (hi - lo)) * (bottom - 25);
   const valueLabel = (value: number, defaultDigits: number) =>
-    valueDigits !== undefined && value !== 0 &&
+    valueDigits !== undefined &&
+    value !== 0 &&
     Math.abs(value) < 0.5 * 10 ** -valueDigits
       ? value.toExponential(1)
       : n(value, valueDigits ?? defaultDigits);
@@ -88,14 +93,7 @@ export function Plot({
   const current = hover ?? cursor;
   const values = series.map((s) => ({
     ...s,
-    value: s.points.length
-      ? s.points.reduce((best, p) =>
-          Math.abs(p.x - (current ?? start)) <
-          Math.abs(best.x - (current ?? start))
-            ? p
-            : best,
-        )
-      : null,
+    value: plotValueAt(s.points, current ?? start, s.step),
   }));
   return (
     <figure ref={box} className="w-plot">
@@ -105,7 +103,7 @@ export function Plot({
       </figcaption>
       <svg
         viewBox={`0 0 ${width} ${bottom + 48}`}
-        role="img"
+        role={markers.length > 0 && onSelect ? "group" : "img"}
         aria-label={`${title}. ${unit}; ${xLabel}.`}
         onPointerMove={(e) => {
           const r = e.currentTarget.getBoundingClientRect();
@@ -147,6 +145,19 @@ export function Plot({
           </g>
         ))}
         <g clipPath={`url(#${id})`}>
+          {markers.map((marker) => (
+            <g key={`${marker.x}:${marker.label}`}>
+              <line
+                x1={x(marker.x)}
+                x2={x(marker.x)}
+                y1={25}
+                y2={bottom}
+                stroke={marker.color ?? "var(--ch4)"}
+                opacity=".3"
+                strokeDasharray="3 4"
+              />
+            </g>
+          ))}
           {band?.length ? (
             <path
               d={`${path(band.map((p) => ({ x: p.x, y: p.high })))} ${band
@@ -167,15 +178,16 @@ export function Plot({
                 strokeWidth="2"
                 strokeDasharray={s.dashed ? "5 4" : undefined}
               />
-              {(showPoints || s.points.length === 1) && s.points.map((point, index) => (
-                <circle
-                  key={index}
-                  cx={x(point.x)}
-                  cy={y(point.y)}
-                  r={showPoints ? 3 : 4}
-                  fill={s.color}
-                />
-              ))}
+              {(showPoints || s.points.length === 1) &&
+                s.points.map((point, index) => (
+                  <circle
+                    key={index}
+                    cx={x(point.x)}
+                    cy={y(point.y)}
+                    r={showPoints ? 3 : 4}
+                    fill={s.color}
+                  />
+                ))}
             </g>
           ))}
           {current !== undefined && current !== null && (
@@ -190,6 +202,42 @@ export function Plot({
             />
           )}
         </g>
+        {markers.map((marker) => (
+          <g
+            key={`${marker.x}:${marker.label}`}
+            className="w-plot-marker"
+            role={onSelect ? "button" : undefined}
+            tabIndex={onSelect ? 0 : undefined}
+            aria-label={marker.label}
+            style={{ cursor: onSelect ? "pointer" : undefined }}
+            onClick={(event) => {
+              event.stopPropagation();
+              onSelect?.(marker.x);
+            }}
+            onKeyDown={(event) => {
+              if (onSelect && (event.key === "Enter" || event.key === " ")) {
+                event.preventDefault();
+                event.stopPropagation();
+                onSelect(marker.x);
+              }
+            }}
+          >
+            <title>{marker.label}</title>
+            <rect
+              x={x(marker.x) - 12}
+              y={3}
+              width={24}
+              height={24}
+              fill="transparent"
+            />
+            <circle
+              cx={x(marker.x)}
+              cy={15}
+              r={4}
+              fill={marker.color ?? "var(--ch4)"}
+            />
+          </g>
+        ))}
         {[start, (start + end) / 2, end].map((v, i) => (
           <text
             key={i}
@@ -197,7 +245,7 @@ export function Plot({
             y={bottom + 23}
             textAnchor={i === 0 ? "start" : i === 2 ? "end" : "middle"}
           >
-            {n(v, 1)}
+            {n(v, end - start <= 1 ? 2 : 1)}
           </text>
         ))}
         <text x={right} y={bottom + 43} textAnchor="end">
@@ -209,10 +257,18 @@ export function Plot({
           <span key={s.label}>
             <i style={{ background: s.color }} />
             {s.label}
-            {hover !== null && s.value ? ` ${valueLabel(s.value.y, 1)} ${unit}` : ""}
+            {hover !== null && s.value
+              ? ` ${valueLabel(s.value.y, 1)} ${unit}`
+              : ""}
           </span>
         ))}
         {band && <span>p10–p90 range</span>}
+        {markers.length > 0 && (
+          <span>
+            <i style={{ background: "var(--ch4)" }} />
+            {markerLabel}
+          </span>
+        )}
       </div>
     </figure>
   );

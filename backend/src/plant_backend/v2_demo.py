@@ -88,6 +88,8 @@ class V2DemoSession:
         self._frames: list[dict[str, Any]] = []
         self._events: list[dict[str, Any]] = []
         self._archives: deque[dict[str, Any]] = deque(maxlen=3)
+        self._site_forecast: dict[str, Any] | None = None
+        self._site_parameters: dict[str, Any] | None = None
 
     def snapshot(self) -> dict[str, Any]:
         with self._lock:
@@ -97,8 +99,79 @@ class V2DemoSession:
 
     def reset(self, controller_id: ControllerId) -> dict[str, Any]:
         with self._lock:
+            if self._site_forecast is not None:
+                self._activate_site(
+                    self._site_forecast, controller_id, self._site_parameters or {}
+                )
+            else:
+                self._reset(controller_id)
+            return self._view()
+
+    def reset_fixture(self, controller_id: ControllerId = "H") -> dict[str, Any]:
+        with self._lock:
             self._reset(controller_id)
             return self._view()
+
+    def activate_site(
+        self,
+        forecast: dict[str, Any],
+        *,
+        controller_id: ControllerId = "MPC",
+        solar_kw: float = 5000,
+        battery_kwh: float = 8000,
+        solar_scale: float = 1.0,
+        inject_fault: bool = True,
+        scenario: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Install a live site plant at time zero; the shared player advances it."""
+        parameters = {
+            "solar_kw": solar_kw,
+            "battery_kwh": battery_kwh,
+            "solar_scale": solar_scale,
+            "inject_fault": inject_fault,
+        }
+        if scenario is not None:
+            from .scenario_authoring import ScenarioSpec
+
+            validated = ScenarioSpec.model_validate(scenario)
+            if validated.unsupported:
+                raise ValueError("Resolve unsupported scenario requests before running")
+            parameters["scenario"] = validated.model_dump()
+            parameters.update(
+                solar_kw=validated.solar_kw,
+                battery_kwh=validated.battery_kwh,
+                solar_scale=1.0,
+                inject_fault=False,
+            )
+        with self._lock:
+            self._activate_site(forecast, controller_id, parameters)
+            return self._view()
+
+    def _activate_site(
+        self,
+        forecast: dict[str, Any],
+        controller_id: ControllerId,
+        parameters: dict[str, Any],
+    ) -> None:
+        from .site_simulation import create_site_simulation
+
+        if controller_id == "MPC" and not _has_scipy():
+            raise HTTPException(
+                503, "Site MPC requires the optional optimisation runtime"
+            )
+        # Construct and validate before replacing the active run.
+        environment, controller = create_site_simulation(
+            forecast,
+            controller=controller_id,
+            **parameters,
+        )
+        self._install(
+            environment,
+            controller,
+            controller_id,
+            site_forecast=forecast,
+            site_parameters=parameters,
+        )
 
     def _reset(self, controller_id: ControllerId) -> None:
         if controller_id not in ("H", "MPC"):
@@ -151,6 +224,9 @@ class V2DemoSession:
         controller: Any,
         controller_id: Literal["H", "MPC", "PPO"],
         policy_identity: dict[str, Any] | None = None,
+        *,
+        site_forecast: dict[str, Any] | None = None,
+        site_parameters: dict[str, Any] | None = None,
     ) -> None:
         if self._committed is not None:
             self._archives.append(self._recording())
@@ -160,6 +236,8 @@ class V2DemoSession:
         self._controller = controller
         self._controller_id = controller_id
         self._policy_identity = deepcopy(policy_identity)
+        self._site_forecast = deepcopy(site_forecast)
+        self._site_parameters = deepcopy(site_parameters)
         self._run_id = str(uuid.uuid4())
         self._revision = 0
         self._status = "ready"
@@ -168,7 +246,7 @@ class V2DemoSession:
         self._frames.clear()
         self._events.clear()
         self._settlements.clear()
-        self._history.clear()
+        self._history = deque(maxlen=environment.episode_decisions + 1)
         self._remember()
         self._commit()
 
@@ -216,6 +294,9 @@ class V2DemoSession:
         observation = environment.cyclic_market_controller_observation
         at_hours = environment.physics_steps_taken * environment.config.dt_h
         input_forecasts = forecast_view(observation, environment.config.solar.peak_kw)
+        if self._site_forecast is not None:
+            # Use the same retained public view displayed before this command.
+            input_forecasts = deepcopy(self._frames[-1]["forecasts"])
         source = observation.plant if self._controller_id == "H" else observation
         started = time.perf_counter()
         decision = self._controller.compute_command(
@@ -255,6 +336,11 @@ class V2DemoSession:
             ),
         )
         notes = list(getattr(decision.evidence, "source_notes", ()))
+        if self._site_forecast is not None:
+            notes.append(
+                "Forecast PV comes from the retained downloaded site forecast. "
+                "Its original issue time is unchanged; solar stress is an explicit scenario assumption."
+            )
         notes.append(
             "Targets held for 15 minutes; dispatcher and safety guard run every minute."
         )
@@ -304,7 +390,9 @@ class V2DemoSession:
         self._plan = None
         if self._controller_id == "MPC" and decision.evidence.plan is not None:
             self._plan = {
-                "issued_at_hours": at_hours,
+                "issued_at_hours": decision.evidence.operation().get(
+                    "planned_at_hours", at_hours
+                ),
                 "points": [
                     {
                         "offset_hours": item.index
@@ -326,10 +414,9 @@ class V2DemoSession:
             }
         delivery = info["delivery"]
         if delivery["commitments_settled"]:
-            # The fixed public task has one recurring commitment every six hours,
-            # aligned to decision boundaries. Do not inspect the private schedule.
+            # Authored deadlines are unique and aligned to decision boundaries.
             if delivery["commitments_settled"] != 1:
-                raise RuntimeError("fixture delivery cadence changed")
+                raise RuntimeError("multiple deliveries at the same decision boundary")
             due = environment.physics_steps_taken * environment.config.dt_h
             self._settlements[due] = {
                 "due_hours": due,
@@ -379,16 +466,23 @@ class V2DemoSession:
         assert forecast is not None
         period = delivery.delivery_period_steps * environment.config.dt_h
         commitments = []
-        # sample_episode's contract stream is deliberately fixed-period and fixed-
-        # quantity. Project that PUBLIC configuration, never its private manifest.
-        for index in range(1, int(round(episode.horizon_h / period)) + 1):
-            due = index * period
+        # Authored obligations are public scenario inputs. Other missions retain
+        # their fixed recurring public configuration.
+        scenario = (self._site_parameters or {}).get("scenario")
+        obligations = (
+            scenario["deliveries"] if scenario is not None else [
+                {"due_hour": index * period, "kg": episode.delivery_amount_kg}
+                for index in range(1, int(round(episode.horizon_h / period)) + 1)
+            ]
+        )
+        for obligation in obligations:
+            due = obligation["due_hour"]
             commitments.append(
                 self._settlements.get(
                     due,
                     {
                         "due_hours": due,
-                        "requested_kg": episode.delivery_amount_kg,
+                        "requested_kg": obligation["kg"],
                         "delivered_kg": None,
                         "unmet_kg": None,
                         "status": "pending",
@@ -407,7 +501,7 @@ class V2DemoSession:
             ("co2", "Carbon dioxide", "kg", state.co2_level_kg, cycle.co2_margin_kg),
             ("ch4", "Methane", "kg", state.ch4_level_kg, cycle.ch4_margin_kg),
         )
-        return {
+        frame = {
             **(
                 {"operating_policy": "inventory-targets-v1"}
                 if self._controller_id != "PPO"
@@ -483,6 +577,16 @@ class V2DemoSession:
                 item.to_dict() for item in environment.cycle_settlements
             ],
         }
+        if self._site_forecast is not None:
+            from .site_workspace import annotate_site_frame
+
+            annotate_site_frame(
+                frame,
+                self._site_forecast,
+                self._site_parameters or {},
+                physics_dt_s=environment.config.dt_s,
+            )
+        return frame
 
     def _commit(self) -> None:
         candidate = self._snapshot()
@@ -525,23 +629,52 @@ class V2DemoSession:
         environment = self._env
         scipy_available = _has_scipy()
         config = environment.config
+        site_active = self._site_forecast is not None
+        task_digest = environment.checkpoint_contract_digest
+        if site_active:
+            from .site_workspace import task_identity
+
+            assert self._site_forecast is not None
+            task_digest = task_identity(
+                self._site_forecast, self._site_parameters or {}, task_digest
+            )
         return deepcopy(
             {
                 "schema": "plant-v2-demo-v1",
                 "run_id": self._run_id,
                 "revision": self._revision,
-                "mode": "interactive_fixture",
+                "mode": "site_forecast" if site_active else "interactive_fixture",
+                **(
+                    {
+                        "site_forecast": self._site_forecast,
+                        "site_parameters": self._site_parameters,
+                    }
+                    if site_active
+                    else {}
+                ),
                 "status": self._status,
                 "error": self._error,
                 "controller": {
                     "id": self._controller_id,
                     "label": {
                         "H": "Reactive heuristic",
-                        "MPC": "Economic MPC",
+                        "MPC": "Site forecast MPC" if site_active else "Economic MPC",
                         "PPO": "PPO · PI-Lagrangian · seed 101",
                     }[self._controller_id],
                     "uses_forecast": self._controller_id != "H",
                     "policy_id": self._controller.id,
+                    **(
+                        {
+                            "replanning_interval_hours": (
+                                3 if self._controller_id == "MPC" else None
+                            ),
+                            "planning_horizon_hours": (
+                                24 if self._controller_id == "MPC" else None
+                            ),
+                        }
+                        if site_active
+                        else {}
+                    ),
                     **(
                         {"checkpoint": self._policy_identity}
                         if self._policy_identity
@@ -557,7 +690,7 @@ class V2DemoSession:
                     },
                     {
                         "id": "MPC",
-                        "label": "Economic MPC",
+                        "label": "Site forecast MPC" if site_active else "Economic MPC",
                         "available": scipy_available,
                         "reason": (
                             None
@@ -567,16 +700,20 @@ class V2DemoSession:
                     },
                 ],
                 "environment": {
-                    "id": beta_spaces.ENVIRONMENT_ID,
+                    "id": (
+                        "plant-site-forecast-v1"
+                        if site_active
+                        else beta_spaces.ENVIRONMENT_ID
+                    ),
                     "observation_count": beta_spaces.OBSERVATION_SIZE,
                     "action_count": beta_spaces.ACTION_SIZE,
                     "decision_minutes": environment.episode_config.decision_interval_s
                     / 60.0,
                     "physics_minutes": config.dt_s / 60.0,
                     "horizon_hours": environment.episode_config.horizon_h,
-                    "fixture_seed": FIXTURE_SEED,
+                    "fixture_seed": None if site_active else FIXTURE_SEED,
                     "interface_digest": beta_spaces.ENVIRONMENT_CONTRACT_DIGEST,
-                    "task_digest": environment.checkpoint_contract_digest,
+                    "task_digest": task_digest,
                 },
                 "config": {
                     **config.to_dict(),

@@ -294,6 +294,27 @@
   letter-spacing: 0.01em;
 }
 
+/* The workspace inspector owns the readouts; its floating name stays legible
+   at every camera distance and sizes only to the visible title. */
+.unit-plate--inspected {
+  /* sqrt(0.75) per dimension makes the label 25% smaller in area. */
+  scale: 0.8660254;
+  padding: 11px 15px;
+  background: color-mix(in srgb, var(--ink) 94%, transparent);
+}
+
+.unit-plate--inspected .unit-plate__head {
+  gap: 9px;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.unit-plate--inspected .unit-plate__flag {
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
 .unit-plate__dot {
   width: 5px;
   height: 5px;

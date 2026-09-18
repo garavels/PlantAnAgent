@@ -25,6 +25,8 @@ export interface UnitSelection {
   flowsFrozen: boolean
   hideLabels?: boolean
   externalInspector?: boolean
+  /** The guide supplies its own label over this equipment. */
+  guidedUnit?: UnitId
 }
 
 export const UnitSelectionContext = createContext<UnitSelection>({

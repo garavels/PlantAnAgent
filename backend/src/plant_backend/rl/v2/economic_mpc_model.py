@@ -531,6 +531,7 @@ def _build_economic_mpc_model_from_prices(
     price_source_id: str,
     causal_current_dac_health: bool = False,
     mandatory_deliveries: bool = False,
+    delivery_targets: tuple[MPCDeliveryTargetV1, ...] | None = None,
 ) -> EconomicMPCModelV1:
     """Build the proven economic model from an explicitly supplied public price path.
 
@@ -564,6 +565,7 @@ def _build_economic_mpc_model_from_prices(
         horizon_intervals=horizon_intervals,
         causal_current_dac_health=causal_current_dac_health,
         mandatory_deliveries=mandatory_deliveries,
+        delivery_targets=delivery_targets,
     )
     prices = tuple(
         _finite(f"interval price[{index}]", value)

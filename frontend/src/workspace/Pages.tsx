@@ -3,21 +3,21 @@ import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import type { UnitId } from "../components/plant-3d/selection";
 import { useWorkspace } from "./context";
-import { Scene, ProcessDiagram } from "./Scene";
+import { Scene } from "./Scene";
+import { EquipmentInspector } from "./EquipmentInspector";
+import { EQUIPMENT } from "./equipmentCatalog";
 import { Plot } from "./Plot";
-import { duration, eur, n, time, words } from "./format";
+import { duration, n, words } from "./format";
 import type { V2DemoFrame } from "../types/v2";
+import { ResearchMissionSummary } from "./ResearchPlayback";
+import { featuredRecording } from "./recording";
+import { SiteWeatherPanel } from "./SiteWeatherPanel";
+import { AgentGuide, AgentViewToggle } from "./AgentGuide";
+import { cloudReadout, missionDays, weatherReadout } from "./siteWeatherModel";
+import { latestPlanDelivery, plannedInventoryAtFrame, retainedPlanTiming } from "./planningModel";
+import "./planning.css";
 
-const UNITS: [UnitId, string][] = [
-  ["solar", "Solar array"],
-  ["battery", "Battery"],
-  ["electrolyser", "Electrolyser"],
-  ["dac", "Direct air capture"],
-  ["h2Tank", "Hydrogen storage"],
-  ["co2Tank", "CO₂ storage"],
-  ["methanator", "Methanator"],
-  ["ch4Tank", "Methane storage"],
-];
+const UNITS = EQUIPMENT;
 const colors = ["var(--stored)", "var(--h2)", "var(--co2)", "var(--ch4)"];
 const CONTROL_MODES = { scheduled: "Scheduled", recovery: "Recovery", fallback: "Fallback" };
 const metric = (frame: V2DemoFrame, key: string) =>
@@ -50,24 +50,8 @@ function Stat({
   );
 }
 function WeatherLabel({ frame }: { frame: V2DemoFrame }) {
-  const weather = frame.weather;
-  return (
-    <>
-      <strong>
-        {weather.status === "night"
-          ? "Night at the plant"
-          : weather.attenuation === null
-            ? "Solar reduction unattributed"
-            : `${n(weather.attenuation * 100, 0)}% below clear-sky potential`}
-      </strong>
-      <span>
-        {n(weather.available_kw, 0)} kW available
-        {weather.status === "night"
-          ? " · cloud conditions unobserved"
-          : ` / ${n(weather.clear_sky_kw, 0)} kW clear-sky potential`}
-      </span>
-    </>
-  );
+  const readout = weatherReadout(frame.weather);
+  return <><strong>{readout.heading}</strong><span>{readout.detail}</span></>;
 }
 
 export function Overview() {
@@ -75,6 +59,7 @@ export function Overview() {
     f = w.frame!,
     s = f.state,
     d = f.delivery;
+  const featured = featuredRecording(w.catalog);
   const events = w
     .snapshot!.events.filter((e) => e.decision_index <= w.index)
     .slice(-3)
@@ -82,6 +67,17 @@ export function Overview() {
   return (
     <div className="w-overview">
       <Heading title="Overview" />
+      {w.recording?.schema === "plant-research-playback-v1" ? (
+        <ResearchMissionSummary provenance={w.recording.provenance} onInspectResult={() => {
+          w.setPlaying(false);
+          void w.selectFrame(w.latestIndex);
+        }} />
+      ) : !w.snapshot?.site_forecast && featured && (
+        <div className="w-featured-recording">
+          <div><strong>Successful trained PPO week</strong><p>25 kg CH₄/h · all deliveries and daily returns met · 14/16 untouched missions passed</p></div>
+          <button className="w-button w-button--primary" disabled={w.reading} onClick={() => void w.loadRecording(featured.id)}>Open PPO demo</button>
+        </div>
+      )}
       <div className="w-overview-hero">
         <div className="w-overview-mission">
           <span className="w-eyebrow">Next methane delivery</span>
@@ -97,7 +93,7 @@ export function Overview() {
           <p>
             {d.next_due_hours === null
               ? "Inspect the final delivery and resource settlements."
-              : `${time(d.next_due_hours)} · in ${duration(d.next_due_hours - f.clock.elapsed_hours)}`}
+              : `${w.time(d.next_due_hours)} · in ${duration(d.next_due_hours - f.clock.elapsed_hours)}`}
           </p>
           <div
             className="w-progress"
@@ -127,7 +123,7 @@ export function Overview() {
           <Link className="w-scene-open" to="/plant">
             Plant details ↗
           </Link>
-          <span className="w-scene-caption">Synthetic weather overlay</span>
+          <span className="w-scene-caption">{w.snapshot?.site_forecast ? `${w.snapshot.site_forecast.site.name} · forecast-driven sunlight` : "Synthetic weather overlay"}</span>
         </div>
       </div>
       <div className="w-overview-bottom">
@@ -161,7 +157,7 @@ export function Overview() {
                 if (e.unit) w.setSelectedUnit(e.unit as UnitId);
               }}
             >
-              <time>{time(e.at_hours)}</time>
+              <time>{w.time(e.at_hours)}</time>
               <span>{e.title}</span>
             </button>
           ))}
@@ -171,132 +167,19 @@ export function Overview() {
   );
 }
 
-function EquipmentInspector() {
-  const w = useWorkspace(),
-    f = w.frame!,
-    s = f.state,
-    unit = w.selectedUnit ?? "electrolyser",
-    c = f.commitment;
-  const label = UNITS.find((u) => u[0] === unit)?.[1] ?? "Power bus";
-  const rows: [string, string][] =
-    unit === "electrolyser"
-      ? [
-          ["Mode", words(c?.mode ?? "Unavailable")],
-          ["Actual power", `${n(s.electrolyser_power_kw)} kW`],
-          ["Hydrogen output", `${n(s.h2_production_kg_h)} kg/h`],
-          ["Startup remaining", duration((c?.startup_remaining_s ?? 0) / 3600)],
-          [
-            "Minimum up remaining",
-            duration((c?.min_up_remaining_s ?? 0) / 3600),
-          ],
-          [
-            "Minimum down remaining",
-            duration((c?.min_down_remaining_s ?? 0) / 3600),
-          ],
-          [
-            "Cooldown remaining",
-            duration((c?.cooldown_remaining_s ?? 0) / 3600),
-          ],
-          ["Ramp up headroom", `${n(c?.ramp_up_headroom_kw ?? 0)} kW`],
-          [
-            "Cold / hot starts",
-            `${c?.cold_starts ?? 0} / ${c?.hot_starts ?? 0}`,
-          ],
-          [
-            "Forced / aborted stops",
-            `${c?.forced_stops ?? 0} / ${c?.aborted_starts ?? 0}`,
-          ],
-          ["Startup energy", `${n(c?.startup_energy_kwh ?? 0)} kWh`],
-        ]
-      : unit === "solar"
-        ? [
-            ["Available power", `${n(s.solar_available_kw)} kW`],
-            ["Clear-sky potential", `${n(s.solar_potential_kw)} kW`],
-            ["Unused available power", `${n(s.solar_curtailed_kw)} kW`],
-            ["Weather observation", f.weather.status],
-          ]
-        : unit === "battery"
-          ? [
-              ["State of charge", `${n(s.battery_soc * 100)}%`],
-              ["Stored energy", `${n(s.battery_energy_kwh)} kWh`],
-              ["Signed battery power", `${n(s.battery_power_kw)} kW`],
-              ["Throughput", `${n(metric(f, "battery_throughput_kwh"))} kWh`],
-            ]
-          : unit === "dac"
-            ? [
-                ["Status", s.dac_online ? "Online" : "Offline"],
-                ["Power", `${n(s.dac_power_kw)} kW`],
-                ["CO₂ captured", `${n(s.co2_capture_kg_h)} kg/h`],
-              ]
-            : unit === "methanator"
-              ? [
-                  ["Status", s.methanator_online ? "Online" : "Offline"],
-                  ["Power", `${n(s.methanator_power_kw)} kW`],
-                  ["Methane output", `${n(s.ch4_production_kg_h)} kg/h`],
-                ]
-              : unit === "hub"
-                ? [
-                    ["Solar available", `${n(s.solar_available_kw)} kW`],
-                    [
-                      "Battery support",
-                      `${n(s.battery_to_electrolyser_kw)} kW`,
-                    ],
-                    ["Curtailed", `${n(s.solar_curtailed_kw)} kW`],
-                  ]
-                : [
-                    [
-                      "Stored",
-                      `${n(unit === "h2Tank" ? s.h2_level_kg : unit === "co2Tank" ? s.co2_level_kg : s.ch4_level_kg)} kg`,
-                    ],
-                    [
-                      "Capacity",
-                      `${n(unit === "h2Tank" ? s.h2_capacity_kg : unit === "co2Tank" ? s.co2_capacity_kg : s.ch4_capacity_kg)} kg`,
-                    ],
-                  ];
-  return (
-    <aside className="w-inspector">
-      <div className="w-panel-heading">
-        <h2>{label}</h2>
-        <span>{time(f.clock.elapsed_hours)}</span>
-      </div>
-      <dl className="w-properties">
-        {rows.map(([k, v]) => (
-          <div key={k}>
-            <dt>{k}</dt>
-            <dd>{v}</dd>
-          </div>
-        ))}
-      </dl>
-
-      <Link to="/planning" className="w-link">
-        Controller decision
-      </Link>
-    </aside>
-  );
-}
-
 export function Plant() {
   const w = useWorkspace();
-  const [diagram, setDiagram] = useState(false);
   return (
     <>
       <Heading title="Plant">
-        <div className="w-segment">
-          <button aria-pressed={!diagram} onClick={() => setDiagram(false)}>
-            3D plant
-          </button>
-          <button aria-pressed={diagram} onClick={() => setDiagram(true)}>
-            Process diagram
-          </button>
+        <div className="w-plant-view-controls">
+          <AgentViewToggle />
         </div>
       </Heading>
       <div className="w-plant-layout">
-        <section className="w-plant-main">
-          {diagram ? (
-            <ProcessDiagram frame={w.frame!} snapshot={w.snapshot!} />
-          ) : (
-            <Scene />
-          )}
+        <section className={`w-plant-main${w.agent.visible ? " w-plant-main--agent" : ""}`}>
+          <Scene />
+          <AgentGuide />
           <div className="w-unit-picker" aria-label="Select equipment">
             {UNITS.map(([id, label]) => (
               <button
@@ -309,16 +192,23 @@ export function Plant() {
             ))}
           </div>
           <p className="w-note">
-            {diagram ? "Process state" : "Synthetic weather overlay"}
+            {w.snapshot?.site_forecast ? `${w.snapshot.site_forecast.site.name} · Sun position follows the site and date; light follows simulated irradiance. ${cloudReadout(w.frame?.weather.site_sample).available ? cloudReadout(w.frame?.weather.site_sample).caption : "Cloud cover unavailable"}.` : "Synthetic weather overlay"}
           </p>
         </section>
-        <EquipmentInspector />
+        <EquipmentInspector key={w.selectedUnit ?? "electrolyser"} frame={w.frame!} config={w.snapshot!.config} unit={w.selectedUnit ?? "electrolyser"} />
       </div>
     </>
   );
 }
 
 export function Weather() {
+  const w = useWorkspace();
+  return w.snapshot?.site_forecast
+    ? <><Heading title="Weather" /><SiteWeatherPanel forecast={w.snapshot.site_forecast} /></>
+    : <SyntheticWeather />;
+}
+
+function SyntheticWeather() {
   const w = useWorkspace(),
     f = w.frame!,
     [windowIndex, setWindowIndex] = useState(0),
@@ -332,7 +222,7 @@ export function Weather() {
     compare && previous
       ? [
           {
-            label: `Previous issue (${time(previous.issued_at_hours)})`,
+            label: `Previous issue (${w.time(previous.issued_at_hours)})`,
             color: "var(--co2)",
             dashed: true,
             step: true,
@@ -349,6 +239,7 @@ export function Weather() {
   return (
     <>
       <Heading title="Weather" />
+      <div className="sw-connection"><p><strong>No geographic site is active.</strong> This mission uses synthetic weather. Choose a location and select “Use in workspace” to drive the plant with that site's forecast.</p><Link className="w-button" to="/site">Choose plant location</Link></div>
       <div className="w-weather-layout">
         <div className="w-weather-map">
           <Scene overhead />
@@ -364,7 +255,7 @@ export function Weather() {
         <aside className="w-weather-forecast">
           <div className="w-panel-heading">
             <h2>Solar forecast</h2>
-            <span>Issued {time(issue)}</span>
+            <span>{f.clock.elapsed_hours >= w.snapshot!.environment.horizon_hours ? "Last retained issue" : "Issued"} {w.time(issue)}</span>
           </div>
 
           <div className="w-forecast-windows">
@@ -392,8 +283,8 @@ export function Weather() {
           </div>
           <div className="w-forecast-selected">
             <span>
-              {time(issue + chosen.offset_hours)} —{" "}
-              {time(issue + chosen.end_offset_hours)}
+              {w.time(issue + chosen.offset_hours)} —{" "}
+              {w.time(issue + chosen.end_offset_hours)}
             </span>
             <strong>{n(chosen.mean_kw, 0)} kW expected mean</strong>
             <p>p10 {n(chosen.p10_kw, 0)} kW · window mean</p>
@@ -473,326 +364,169 @@ export function Weather() {
   );
 }
 
-function OperatingPlan({ frame }: { frame: V2DemoFrame }) {
-  const operation = frame.decision?.operation;
-  if (!operation) return null;
-  return (
-    <section className="w-section" aria-label="Operating outlook">
-      <div className="w-panel-heading">
-        <h2>Operating outlook</h2>
-        <span>Issued {time(operation.issued_at_hours)}</span>
-      </div>
-      <div className="w-stats w-stats--three">
-        <Stat label="Control mode" value={CONTROL_MODES[operation.mode]}
-          note={operation.mode === "fallback" ? `Planner: ${words(operation.solver_failure?.reason ?? "unavailable")}` : "Mean forecasts · operating targets"} />
-        <Stat label="Predicted delivery shortfall"
-          value={operation.projected_shortfall_kg === null ? "Unavailable" : `${n(operation.projected_shortfall_kg)} kg`}
-          note={`Next ${n(operation.horizon_hours, 1)} hours`} />
-        <Stat label="Inventory outlook" value={time(operation.issued_at_hours + operation.horizon_hours)}
-          note="Fixed opening references" />
-      </div>
-      <div className="w-table">
-        <table>
-          <thead><tr><th>Resource</th><th>Opening reference</th><th>Projected inventory</th><th>Projected deficit</th></tr></thead>
-          <tbody>{operation.resources.map((resource) => (
-            <tr key={resource.id}>
-              <th>{resource.label}</th>
-              <td>{n(resource.reference)} {resource.unit}</td>
-              <td>{resource.projected === null ? "—" : `${n(resource.projected)} ${resource.unit}`}</td>
-              <td className={(resource.projected_deficit ?? 0) > 1e-6 ? "w-amber" : undefined}>
-                {resource.projected_deficit === null ? "—" : `${n(resource.projected_deficit)} ${resource.unit}`}
-              </td>
-            </tr>
-          ))}</tbody>
-        </table>
-      </div>
-    </section>
-  );
-}
-
 export function Planning() {
-  const w = useWorkspace(),
-    f = w.frame!,
-    d = f.decision,
-    plan = f.plan,
-    forecast = d?.input_forecasts ?? f.forecasts;
-  const [detail, setDetail] = useState(false),
-    issue = forecast.issued_at_hours,
-    domain: [number, number] = [issue, issue + 24];
-  const predicted = plan?.points[0];
-  const comparison = predicted
-    ? ([
-        ["Battery", "kWh", predicted.battery_kwh, f.state.battery_energy_kwh],
-        ["Hydrogen", "kg", predicted.h2_kg, f.state.h2_level_kg],
-        ["Carbon dioxide", "kg", predicted.co2_kg, f.state.co2_level_kg],
-        ["Methane", "kg", predicted.ch4_kg, f.state.ch4_level_kg],
-      ] as const)
-    : [];
+  const w = useWorkspace();
+  const f = w.frame!;
+  const snapshot = w.snapshot!;
+  const plan = f.plan;
+  const operation = f.decision?.operation;
+  const timing = retainedPlanTiming(plan, snapshot.environment.decision_minutes);
+  const projection = latestPlanDelivery(f);
+  const predicted = plannedInventoryAtFrame(f, snapshot.environment.decision_minutes);
+  const now = f.clock.elapsed_hours;
+  const hasSchedule = plan && timing && timing.endHours > now && operation?.mode !== "fallback";
+  const decidesOneInterval = snapshot.controller.id === "PPO" || snapshot.controller.id === "H";
+  const nextDue = f.delivery.next_due_hours;
+  const comparison = predicted ? ([
+    ["Battery", "kWh", predicted.battery_kwh, f.state.battery_energy_kwh],
+    ["Hydrogen", "kg", predicted.h2_kg, f.state.h2_level_kg],
+    ["Carbon dioxide", "kg", predicted.co2_kg, f.state.co2_level_kg],
+    ["Methane", "kg", predicted.ch4_kg, f.state.ch4_level_kg],
+  ] as const) : [];
+
   return (
-    <>
+    <div className="w-planning">
       <Heading title="Planning">
-        <span className="w-tag">
-          {d ? `Decision ${time(d.at_hours)} · ` : ""}
-          {{ H: "Forecast-blind heuristic", MPC: "Economic MPC · mean forecasts", "E-beta": "Research E-beta", PPO: "PPO · public forecasts" }[w.snapshot!.controller.id]}
-        </span>
+        {plan && <span className="w-planning-stamp">Plan created {w.time(plan.issued_at_hours)}</span>}
       </Heading>
-      <OperatingPlan frame={f} />
-      <div className="w-plan-top">
-        <Plot
-          title="Public solar at decision time"
-          unit="kW"
-          domain={domain}
-          series={[
-            {
-              label: "Mean",
-              color: "var(--solar)",
-              step: true,
-              points: forecast.solar.flatMap((p) => [
-                { x: issue + p.offset_hours, y: p.mean_kw },
-                { x: issue + p.end_offset_hours, y: p.mean_kw },
-              ]),
-            },
-            {
-              label: "p10",
-              color: "var(--text-dim)",
-              dashed: true,
-              step: true,
-              points: forecast.solar.flatMap((p) => [
-                { x: issue + p.offset_hours, y: p.p10_kw },
-                { x: issue + p.end_offset_hours, y: p.p10_kw },
-              ]),
-            },
-          ]}
-        />
-        <Plot
-          title="Public market at decision time"
-          unit="EUR/MWh"
-          domain={domain}
-          series={[
-            {
-              label: "Mean price",
-              color: "var(--co2)",
-              step: true,
-              points: forecast.prices.flatMap((p) => [
-                { x: issue + p.offset_hours, y: p.mean },
-                { x: issue + p.offset_hours + 1, y: p.mean },
-              ]),
-            },
-          ]}
-          band={forecast.prices.flatMap((p) => [
-            { x: issue + p.offset_hours, low: p.p10, high: p.p90 },
-            { x: issue + p.offset_hours + 1, low: p.p10, high: p.p90 },
-          ])}
-        />
-      </div>
-      {plan ? (
-        <>
+
+      <section className="w-planning-objective" aria-label="Next delivery and expected outcome">
+        <div>
+          <h2>Next delivery</h2>
+          <p className="w-planning-delivery">{nextDue === null ? "All deliveries settled" : <>
+            <strong>{n(f.delivery.next_requested_kg, 0)} kg CH₄</strong>
+            <span>by {w.time(nextDue)}</span>
+          </>}</p>
+          <Link to="/deliveries" className="w-link">Delivery schedule</Link>
+        </div>
+        {hasSchedule && nextDue !== null && <div className="w-planning-outcome">
+          <h2>Latest plan predicts</h2>
+          {projection ? <>
+            <p className="w-planning-delivery"><strong>{n(projection.delivery.predicted_kg)} kg delivered</strong></p>
+            <p className={projection.delivery.shortfall_kg > 1e-6 ? "w-amber" : "w-planning-covered"}>
+              {projection.delivery.shortfall_kg > 1e-6
+                ? `${projection.delivery.shortfall_kg < 0.1 ? "<0.1" : n(projection.delivery.shortfall_kg)} kg shortfall for this delivery`
+                : "Full delivery expected"}
+            </p>
+          </> : <p>No prediction recorded for this delivery.</p>}
+        </div>}
+      </section>
+
+      {hasSchedule ? <>
+        <section className="w-planning-schedule" aria-label="Planned operation">
+          <p className="w-planning-range">{w.time(now)} to {w.time(timing.endHours)}</p>
           <Plot
-            title="Retained equipment schedule"
+            title="Equipment schedule"
             unit="kW target"
-            domain={domain}
-            cursor={f.clock.elapsed_hours}
-            series={(
-              [
-                "electrolyser_kw",
-                "dac_kw",
-                "methanator_kw",
-                "battery_charge_kw",
-              ] as const
-            ).map((key, i) => ({
-              label: [
-                "Electrolyser",
-                "DAC",
-                "Methanator",
-                "Battery charge ceiling",
-              ][i],
-              color: [
-                "var(--feed)",
-                "var(--co2)",
-                "var(--ch4)",
-                "var(--stored)",
-              ][i],
-              step: true,
-              points: plan.points.map((p) => ({
-                x: plan.issued_at_hours + p.offset_hours,
-                y: p[key],
-              })),
+            compact
+            markerLabel="Delivery deadline"
+            domain={[0, timing.endHours - now]}
+            cursor={0}
+            xLabel="Hours from selected time"
+            markers={[
+              { x: 0, label: `Selected time: ${w.time(now)}`, color: "var(--text)" },
+              ...f.delivery.commitments
+                .filter((delivery) => delivery.due_hours > now && delivery.due_hours <= timing.endHours)
+                .map((delivery) => ({
+                  x: delivery.due_hours - now,
+                  label: `${n(delivery.requested_kg, 0)} kg delivery at ${w.time(delivery.due_hours)}`,
+                  color: "var(--ch4)",
+                })),
+            ]}
+            series={([
+              ["electrolyser_kw", "Electrolyser", "var(--feed)"],
+              ["dac_kw", "Air capture", "var(--co2)"],
+              ["methanator_kw", "Methanator", "var(--ch4)"],
+              ["battery_charge_kw", "Battery charge ceiling", "var(--stored)"],
+            ] as const).map(([key, label, color]) => ({
+              label, color, step: true,
+              points: plan.points
+                .filter((point) => plan.issued_at_hours + point.offset_hours + timing.intervalHours > now)
+                .flatMap((point) => [
+                  { x: Math.max(0, plan.issued_at_hours + point.offset_hours - now), y: point[key] },
+                  { x: plan.issued_at_hours + point.offset_hours + timing.intervalHours - now, y: point[key] },
+                ]),
             }))}
           />
+          <p className="w-planning-caption"><span className="w-planning-deadline-dot" />Delivery deadlines · Targets may change when the controller replans.</p>
+        </section>
+
+        <details className="w-planning-details">
+          <summary>Plan details</summary>
+          <p className="w-note">Saved at {w.time(plan.issued_at_hours)}. These projections belong to that plan.</p>
           <div className="w-two-charts">
             <Plot
-              title="Planned gas inventories"
+              title="Predicted gas in storage"
               unit="kg"
-              domain={domain}
-              series={(["h2_kg", "co2_kg", "ch4_kg"] as const).map(
-                (key, i) => ({
-                  label: ["H₂", "CO₂", "CH₄"][i],
-                  color: colors[i + 1],
-                  points: plan.points.map((p) => ({
-                    x: plan.issued_at_hours + p.offset_hours + 0.25,
-                    y: p[key],
-                  })),
-                }),
-              )}
+              domain={timing.domain}
+              cursor={now}
+              series={(["h2_kg", "co2_kg", "ch4_kg"] as const).map((key, i) => ({
+                label: ["H₂", "CO₂", "CH₄"][i], color: colors[i + 1],
+                points: plan.points.map((point) => ({
+                  x: plan.issued_at_hours + point.offset_hours + timing.intervalHours, y: point[key],
+                })),
+              }))}
             />
             <Plot
-              title="Planned battery inventory"
+              title="Predicted battery energy"
               unit="kWh"
-              domain={domain}
-              series={[
-                {
-                  label: "Battery",
-                  color: "var(--stored)",
-                  points: plan.points.map((p) => ({
-                    x: plan.issued_at_hours + p.offset_hours + 0.25,
-                    y: p.battery_kwh,
-                  })),
-                },
-                {
-                  label: f.operating_policy ? "Opening inventory reference" : "Daily return minimum",
-                  color: "var(--text-dim)",
-                  dashed: true,
-                  points: [
-                    { x: issue, y: f.resources[0].required },
-                    { x: issue + 24, y: f.resources[0].required },
-                  ],
-                },
-              ]}
+              domain={timing.domain}
+              cursor={now}
+              series={[{
+                label: "Battery", color: "var(--stored)",
+                points: plan.points.map((point) => ({
+                  x: plan.issued_at_hours + point.offset_hours + timing.intervalHours, y: point.battery_kwh,
+                })),
+              }]}
             />
           </div>
-        </>
-      ) : (
-        <div className="w-empty">
-          <h2>
-            {d?.operation?.mode === "fallback" ? "Heuristic fallback" : d ? "Immediate targets" : "No active plan"}
-          </h2>
-          <p>
-            {w.snapshot!.controller.id === "PPO" ? "Policy targets use the public observation. No explicit forward schedule." : d?.operation?.mode === "fallback" ? "Planner unavailable for this interval. Next planning attempt at the following decision." : d
-              ? "It does not consume these forecasts or publish a forward schedule. Its requested and applied targets remain fully inspectable below."
-              : "Run the economic MPC to inspect a real 24-hour schedule."}
-          </p>
-        </div>
-      )}
-      {predicted && (
-        <section className="w-section">
-          <h2>Predicted / actual inventory</h2>
-          <p className="w-note">
-            Interval ending {time(f.clock.elapsed_hours)} · forecast/model and
-            execution differences combined
-          </p>
-          <div className="w-table">
-            <table>
-              <thead>
-                <tr>
-                  <th>Resource</th>
-                  <th>Predicted</th>
-                  <th>Actual</th>
-                  <th>Actual − predicted</th>
-                </tr>
-              </thead>
-              <tbody>
-                {comparison.map(([label, unit, expected, actual]) => (
-                  <tr key={label}>
-                    <th>{label}</th>
-                    <td>
-                      {n(expected)} {unit}
-                    </td>
-                    <td>
-                      {n(actual)} {unit}
-                    </td>
-                    <td>
-                      {n(actual - expected)} {unit}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {operation && operation.resources.length > 0 && <section className="w-planning-detail-section">
+            <h3>Inventory at the end of the plan</h3>
+            <p className="w-note">Projected for {w.time(operation.issued_at_hours + operation.horizon_hours)}. Opening references are the inventory levels at the start of the mission.</p>
+            <div className="w-table"><table>
+              <thead><tr><th scope="col">Resource</th><th scope="col">Opening reference</th><th scope="col">Projected inventory</th><th scope="col">Projected deficit</th></tr></thead>
+              <tbody>{operation.resources.map((resource) => <tr key={resource.id}>
+                <th scope="row">{resource.label}</th>
+                <td>{n(resource.reference)} {resource.unit}</td>
+                <td>{resource.projected === null ? "—" : `${n(resource.projected)} ${resource.unit}`}</td>
+                <td className={(resource.projected_deficit ?? 0) > 1e-6 ? "w-amber" : undefined}>
+                  {resource.projected_deficit === null ? "—" : `${n(resource.projected_deficit)} ${resource.unit}`}
+                </td>
+              </tr>)}</tbody>
+            </table></div>
+          </section>}
+          {predicted && <section className="w-planning-detail-section">
+            <h3>Plan compared with the simulation</h3>
+            <p className="w-note">Storage at {w.time(now)}. Both columns refer to the same time.</p>
+            <div className="w-table"><table>
+              <thead><tr><th scope="col">Resource</th><th scope="col">Plan predicted</th><th scope="col">Simulation result</th><th scope="col">Difference</th></tr></thead>
+              <tbody>{comparison.map(([label, unit, expected, actual]) => <tr key={label}>
+                <th scope="row">{label}</th><td>{n(expected)} {unit}</td><td>{n(actual)} {unit}</td><td>{n(actual - expected)} {unit}</td>
+              </tr>)}</tbody>
+            </table></div>
+          </section>}
+          <div className="w-planning-links">
+            <Link to="/weather" className="w-link">Weather forecasts</Link>
+            <Link to="/plant" className="w-link" onClick={() => w.setSelectedUnit("hub")}>Equipment commands</Link>
           </div>
-          <div className="w-plan-obligations">
-            {f.delivery.commitments
-              .filter((c) => c.due_hours > issue && c.due_hours <= issue + 24)
-              .map((c) => (
-                <span key={c.due_hours}>
-                  {time(c.due_hours)} · {n(c.requested_kg, 0)} kg due
-                </span>
-              ))}
-            <span>
-              {f.operating_policy ? "Inventory review: " : "Resource return: "}
-              {time(f.clock.elapsed_hours + f.clock.hours_to_cycle_end)}
-            </span>
-          </div>
-        </section>
-      )}
-      {d && (
-        <section className="w-decision">
-          <div className="w-panel-heading">
-            <h2>Command execution</h2>
-            <span>
-              {n(d.computation_ms, 0)} ms computation · {d.guard_adjustments}{" "}
-              guard adjustments
-            </span>
-          </div>
-          <div className="w-targets">
-            {d.targets.map((t) => (
-              <div key={t.id}>
-                <span>{t.label}</span>
-                <strong>
-                  {n(t.requested_kw)} <small>requested kW</small>
-                </strong>
-                <span>{n(t.applied_mean_kw)} kW applied mean</span>
-              </div>
-            ))}
-          </div>
-          <p className="w-note">
-            15-minute target · 1-minute dispatch and guard · battery ceiling
-            excludes recovered spill
-          </p>
-          <details className="w-section">
-            <summary>Controller notes</summary>
-            <ul className="w-explanations">
-              {d.notes.map((note, i) => (
-                <li key={i}>{note}</li>
-              ))}
-            </ul>
-          </details>
-          <button
-            className="w-button"
-            aria-expanded={detail}
-            onClick={() => setDetail(!detail)}
-          >
-            {detail ? "Hide minute execution" : "Minute execution"}
-          </button>
-          {detail && (
-            <div className="w-table">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Minute</th>
-                    <th>Solar</th>
-                    <th>Electrolyser</th>
-                    <th>DAC</th>
-                    <th>Methanator</th>
-                    <th>Guard notes</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {d.minutes.map((m, i) => (
-                    <tr key={i}>
-                      <th>{i + 1}</th>
-                      <td>{n(m.solar_kw)} kW</td>
-                      <td>{n(m.electrolyser_kw)} kW</td>
-                      <td>{n(m.dac_kw)} kW</td>
-                      <td>{n(m.methanator_kw)} kW</td>
-                      <td>{m.adjustments.join("; ") || "No adjustment"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
-      )}
-    </>
+        </details>
+      </> : <section className="w-planning-empty" aria-label="Plan availability">
+        <p>{decidesOneInterval
+          ? `This controller decides every ${snapshot.environment.decision_minutes} minutes and publishes no forward schedule.`
+          : operation?.mode === "fallback"
+            ? "The planner is unavailable. The plant is using fallback commands."
+            : !f.decision
+              ? w.recording && w.latestIndex === 0
+                ? "No plan was recorded. This recording contains only the initial state."
+                : w.recording || w.latestIndex > 0
+                  ? "No plan at the starting state. Move forward in the timeline to inspect a recorded plan."
+                  : "No plan yet. Advance the simulation."
+              : nextDue === null
+                ? "The mission has ended. Use the timeline to inspect earlier plans."
+                : "No forward schedule was recorded for this interval."}</p>
+        {(decidesOneInterval || f.decision) && <Link to="/plant" className="w-link" onClick={() => w.setSelectedUnit("hub")}>View equipment commands</Link>}
+      </section>}
+    </div>
   );
 }
 
@@ -800,7 +534,8 @@ export function Deliveries() {
   const w = useWorkspace(),
     f = w.frame!,
     [day, setDay] = useState<number | null>(null),
-    active = day ?? Math.min(7, Math.floor(f.clock.elapsed_hours / 24) + 1);
+    days = missionDays(w.snapshot!.environment.horizon_hours),
+    active = Math.min(days, day ?? Math.floor(f.clock.elapsed_hours / 24) + 1);
   const history = w.snapshot!.history.slice(0, w.index + 1);
   return (
     <>
@@ -824,7 +559,7 @@ export function Deliveries() {
         <div className="w-panel-heading">
           <h2>Delivery schedule</h2>
           <div className="w-days" aria-label="Select delivery day">
-            {Array.from({ length: 7 }, (_, i) => (
+            {Array.from({ length: days }, (_, i) => (
               <button
                 key={i}
                 aria-pressed={active === i + 1}
@@ -843,7 +578,7 @@ export function Deliveries() {
             )
             .map((d) => (
               <article key={d.due_hours}>
-                <time>{time(d.due_hours)}</time>
+                <time>{w.time(d.due_hours)}</time>
                 <span className={`w-outcome w-outcome--${d.status}`}>
                   {words(d.status)}
                 </span>
@@ -975,96 +710,7 @@ export function Deliveries() {
   );
 }
 
-export function Economics() {
-  const w = useWorkspace(),
-    f = w.frame!,
-    history = w.snapshot!.history.slice(0, w.index + 1),
-    max = Math.max(1, ...f.economics.entries.map((e) => Math.abs(e.value_eur)));
-  return (
-    <>
-      <Heading title="Economics" />
-      <div className="w-economics-layout">
-        <section className="w-value">
-          <span>Net simulated value</span>
-          <strong>{eur(f.economics.net_value_eur)}</strong>
-          <p>Cumulative at {time(f.clock.elapsed_hours)}</p>
-          <div className="w-properties">
-            <Stat
-              label="Delivered methane"
-              value={`${n(f.delivery.delivered_kg)} kg`}
-            />
-            <Stat
-              label="Battery throughput"
-              value={`${n(metric(f, "battery_throughput_kwh"))} kWh`}
-            />
-            <Stat
-              label="Startup & standby energy"
-              value={`${n((f.commitment?.startup_energy_kwh ?? 0) + (f.commitment?.standby_energy_kwh ?? 0))} kWh`}
-            />
-          </div>
-        </section>
-        <section className="w-value-breakdown">
-          <h2>Value contributions</h2>
-          {f.economics.entries.map((e) => (
-            <div key={e.id} className="w-value-row">
-              <span>{e.label}</span>
-              <strong className={e.value_eur > 0 ? "w-green" : ""}>
-                {eur(e.value_eur)}
-              </strong>
-              <div>
-                <i
-                  style={{
-                    width: `${(Math.abs(e.value_eur) / max) * 100}%`,
-                    background:
-                      e.value_eur > 0 ? "var(--stored)" : "var(--solar)",
-                  }}
-                />
-              </div>
-            </div>
-          ))}
-          <div className="w-value-total">
-            <span>Total</span>
-            <strong>{eur(f.economics.net_value_eur)}</strong>
-          </div>
-        </section>
-      </div>
-      <Plot
-        title="Realized operating value"
-        unit="EUR"
-        cursor={f.clock.elapsed_hours}
-        onSelect={(x) => void w.selectFrame(Math.round(x * 4))}
-        series={[
-          {
-            label: "Net value",
-            color: "var(--stored)",
-            points: history.map((p) => ({
-              x: p.elapsed_hours,
-              y: p.net_value_eur,
-            })),
-          },
-        ]}
-      />
-      <details className="w-section">
-        <summary>Economic assumptions and interpretation</summary>
-        <p>
-          {f.economics.assumption_note} Renewable opportunity cost values
-          accepted solar; it is not a grid trading settlement. Wear reserves are
-          model assumptions, not measured equipment life.
-        </p>
-        <dl className="w-assumptions">
-          {Object.entries(f.assumptions)
-            .filter(([, v]) => typeof v === "number")
-            .map(([k, v]) => (
-              <div key={k}>
-                <dt>{words(k)}</dt>
-                <dd>{n(Number(v), 4)}</dd>
-              </div>
-            ))}
-        </dl>
-      </details>
-    </>
-  );
-}
+export { Economics } from "./Economics";
 
 export function Events() {
   const w = useWorkspace(),
@@ -1137,7 +783,7 @@ export function Events() {
               }}
             >
               <time>
-                {time(e.at_hours)}
+                {w.time(e.at_hours)}
                 <small>{duration(e.at_hours)} elapsed</small>
               </time>
               <span className={`w-event-kind w-event-kind--${e.kind}`}>
@@ -1160,185 +806,6 @@ export function Events() {
         Health and mode changes sampled every 15 minutes. Guard detail:
         Planning.
       </p>
-    </>
-  );
-}
-
-export function Evidence() {
-  const w = useWorkspace(),
-    f = w.frame!,
-    snap = w.snapshot!;
-  return (
-    <>
-      <Heading title="Evidence" />
-      {snap.error && (
-        <details className="w-section">
-          <summary>
-            Controller stop · {time(snap.frame.clock.elapsed_hours)}
-          </summary>
-          <p>{snap.error}</p>
-        </details>
-      )}
-      <div className="w-evidence-status">
-        <span className="w-tag">Disposable synthetic fixture</span>
-        <h2>
-          {w.recording
-            ? "Public recording · integrity checked"
-            : "Interactive simulation · recorded boundaries"}
-        </h2>
-        <p>
-          {w.recording
-            ? "The server checked the recording checksum and boundary sequence. This does not establish controller superiority or verify a research experiment."
-            : "Commands cross the common dispatcher, independent guard and simulator. This run is for inspection and has not been admitted as research evidence."}
-        </p>
-      </div>
-      <div className="w-table">
-        <table>
-          <thead>
-            <tr>
-              <th>Controller</th>
-              <th>Information used</th>
-              <th>Current availability</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <th>Heuristic · H</th>
-              <td>Current physical observation</td>
-              <td>Interactive</td>
-            </tr>
-            <tr>
-              <th>Service MPC · M24</th>
-              <td>Physical observation + public solar forecast</td>
-              <td>Offline research implementation</td>
-            </tr>
-            <tr>
-              <th>Economic MPC · MPC</th>
-              <td>Public solar/market means · rolling inventory recovery</td>
-              <td>Interactive · explicit heuristic fallback</td>
-            </tr>
-            <tr>
-              <th>Research MPC · E-beta</th>
-              <td>Public p10 solar · hard daily resource returns</td>
-              <td>Offline research · historical recordings retained</td>
-            </tr>
-            <tr>
-              <th>PPO · three families</th>
-              <td>Full public beta observation</td>
-              <td><Link to="/learning">Training evidence</Link> · offline policy playback</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <section className="w-section">
-        <div className="w-panel-heading">
-          <h2>Recorded outcomes</h2>
-          <button className="w-button" onClick={() => void w.reloadCatalog()}>
-            Refresh recordings
-          </button>
-        </div>
-        <p className="w-note">
-          Same fixed scenario; different controller information. Descriptive
-          outcomes only. Failed cycles, shortfalls and stopped runs remain
-          visible; no winner is selected.
-        </p>
-        <div className="w-table">
-          <table>
-            <thead>
-              <tr>
-                <th>Controller</th>
-                <th>Run</th>
-                <th>Retained hours</th>
-                <th>Delivered / unmet kg</th>
-                <th>Daily deficits</th>
-                <th>Fallback decisions</th>
-                <th>Net simulated value</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {w.catalog.map((c) => (
-                <tr key={c.id}>
-                  <th>
-                    <button
-                      className="w-text-button"
-                      disabled={!c.available}
-                      onClick={() => void w.loadRecording(c.id)}
-                    >
-                      {c.controller ?? "Unavailable"}
-                    </button>
-                  </th>
-                  <td>{c.id.slice(0, 8)}</td>
-                  <td>{c.hours ?? "—"}</td>
-                  <td>
-                    {c.delivered_kg === undefined
-                      ? "—"
-                      : `${n(c.delivered_kg)} / ${n(c.unmet_kg ?? 0)}`}
-                  </td>
-                  <td>{c.failed_cycles ?? "—"}</td>
-                  <td>{c.fallback_decisions ?? "—"}</td>
-                  <td>
-                    {c.net_value_eur === undefined ? "—" : eur(c.net_value_eur)}
-                  </td>
-                  <td>{c.status}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-      <section className="w-section">
-        <h2>Run identity</h2>
-        <dl className="w-evidence-grid">
-          {Object.entries({
-            "Run identity": snap.run_id,
-            Controller: snap.controller.label,
-            Task: snap.environment.id,
-            "Task digest": snap.environment.task_digest,
-            "Interface digest": snap.environment.interface_digest,
-            "Public interface": `${snap.environment.observation_count} observations / ${snap.environment.action_count} actions`,
-            "Selected decision": `${w.index} / ${snap.environment.horizon_hours * 4}`,
-            "Command digest": f.decision?.command_digest ?? "No command yet",
-            "Execution digest":
-              f.decision?.execution_digest ?? "No execution yet",
-            "Recording checksum":
-              w.recording?.sha256 ??
-              "Export to seal the current public history",
-            ...(snap.controller.checkpoint ?? {}),
-          }).map(([k, v]) => (
-            <div key={k}>
-              <dt>{k}</dt>
-              <dd>{v}</dd>
-            </div>
-          ))}
-        </dl>
-        <button className="w-button" onClick={() => void w.exportRecording()}>
-          Download this public recording
-        </button>
-      </section>
-      <div className="w-capabilities">
-        <section>
-          <h3>Active capabilities</h3>
-          <p>
-            Plant physics, forecasts, recurring deliveries, daily inventory reviews,
-            heuristic/economic MPC, execution guard, observed events and public
-            replay.
-          </p>
-        </section>
-        <section>
-          <h3>Pending integration</h3>
-          <p>
-            Registered PPO training and selection, HEPA predictions,
-            natural-language scenario authoring, supervisory takeover, site
-            calibration and hardware-in-the-loop validation.
-          </p>
-          <p>
-            These layers are not acting on this plant. Offline
-            future-information planners and LP bounds retain their separate
-            research role.
-          </p>
-        </section>
-      </div>
     </>
   );
 }

@@ -16,7 +16,9 @@ let compiled = ts.transpileModule(source, {
 for (const specifier of ["react", "react/jsx-runtime"]) {
   compiled = compiled.replaceAll(`from "${specifier}"`, `from "${pathToFileURL(require.resolve(specifier))}"`);
 }
-compiled = compiled.replaceAll('from "./format"', `from "${new URL("../src/workspace/format.ts", import.meta.url)}"`);
+for (const module of ["format", "plotModel"]) {
+  compiled = compiled.replaceAll(`from "./${module}"`, `from "${new URL(`../src/workspace/${module}.ts`, import.meta.url)}"`);
+}
 const { Plot } = await import(`data:text/javascript;base64,${Buffer.from(compiled).toString("base64")}`);
 const render = (props = {}) => renderToStaticMarkup(createElement(Plot, {
   title: "Diagnostic", unit: "ratio", series: [{ label: "Recorded", color: "red", points: [{ x: 8192, y: 0.002 }, { x: 16384, y: 0.006 }] }], ...props,

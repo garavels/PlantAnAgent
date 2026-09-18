@@ -12,7 +12,9 @@ import { useEffect, useMemo, useState } from 'react'
 import * as THREE from 'three'
 
 import type { PlantConfig, PlantState } from '../../types/plant'
+import type { SiteLocation } from '../../workspace/siteTypes'
 import { BatteryUnit } from './BatteryUnit'
+import { AgentOrb } from './AgentOrb'
 import { DacUnit } from './DacUnit'
 import { ElectrolyserUnit } from './ElectrolyserUnit'
 import { FlowLine } from './FlowLine'
@@ -36,20 +38,24 @@ interface PlantSceneProps {
   /** When the sim clock is stopped, flow packets freeze with it. */
   playing: boolean
   weather?: WeatherView
+  site?: SiteLocation
   commitment?: CommitmentView | null
   minLoadFrac?: number
   overhead?: boolean
+  /** Opt into decorative fallback only when the forecast lacks cloud cover. */
+  illustrativeClouds?: boolean
   hideLabels?: boolean
   selectedUnit?: UnitId | null
   onSelectUnit?: (id: UnitId | null) => void
+  agentAction?: { unit: 'hub' | 'electrolyser' | 'battery' | 'dac' | 'methanator'; label: string } | null
 }
 
-export function PlantScene({ state, config, playing, weather, commitment, minLoadFrac: activeMinLoad, overhead = false, hideLabels = false, selectedUnit, onSelectUnit }: PlantSceneProps) {
+export function PlantScene({ state, config, playing, weather, site, commitment, minLoadFrac: activeMinLoad, overhead = false, illustrativeClouds = false, hideLabels = false, selectedUnit, onSelectUnit, agentAction }: PlantSceneProps) {
   const [localSelection, setLocalSelection] = useState<UnitId | null>(null)
   const selected = selectedUnit === undefined ? localSelection : selectedUnit
   const setSelected = onSelectUnit ?? setLocalSelection
   const reducedMotion = useReducedMotion()
-  const visuals = useMemo(() => deriveVisuals(state, config), [state, config])
+  const visuals = useMemo(() => deriveVisuals(state, config, weather, site), [state, config, weather, site])
 
   // Escape drops the pinned unit.
   useEffect(() => {
@@ -61,12 +67,12 @@ export function PlantScene({ state, config, playing, weather, commitment, minLoa
   }, [setSelected])
 
   const peakKw = config?.solar.peak_kw ?? 5000
-  const sun = weather ? { ...visuals.sun, dayFactor: Math.max(0, Math.min(1, weather.clear_sky_kw / (.22 * peakKw))) } : visuals.sun
+  const sun = weather && !visuals.sun.siteMode ? { ...visuals.sun, dayFactor: Math.max(0, Math.min(1, weather.clear_sky_kw / (.22 * peakKw))) } : visuals.sun
   const minLoadFrac = activeMinLoad ?? config?.electrolyser.min_load_frac ?? 0.15
 
   return (
     <UnitSelectionContext.Provider
-      value={{ selected, select: setSelected, flowsFrozen: !playing || reducedMotion, hideLabels: overhead || hideLabels, externalInspector: !!onSelectUnit }}
+      value={{ selected, select: setSelected, flowsFrozen: !playing || reducedMotion, hideLabels: overhead || hideLabels, externalInspector: !!onSelectUnit, guidedUnit: agentAction?.unit }}
     >
       <Canvas
         shadows
@@ -79,8 +85,8 @@ export function PlantScene({ state, config, playing, weather, commitment, minLoa
           scene.fog = new THREE.Fog(SKY.night, 55, 150)
         }}
       >
-        <SunRig sun={sun} attenuation={weather?.attenuation ?? 0} />
-        {weather && <WeatherClouds weather={weather} />}
+        <SunRig sun={sun} attenuation={sun.siteMode ? 0 : weather?.attenuation ?? 0} />
+        {weather && <WeatherClouds weather={weather} illustrativeClouds={illustrativeClouds} />}
         <Ground sun={sun} surroundings={!!weather} />
 
         <SolarField solar={visuals.solar} peakKw={peakKw} />
@@ -89,6 +95,7 @@ export function PlantScene({ state, config, playing, weather, commitment, minLoa
         <ElectrolyserUnit electrolyser={visuals.electrolyser} minLoadFrac={minLoadFrac} mode={commitment?.mode} />
         <DacUnit dac={visuals.dac} />
         <MethanatorUnit methanator={visuals.methanator} />
+        {agentAction && <AgentOrb target={agentAction.unit} label={agentAction.label} playing={playing} reducedMotion={reducedMotion} />}
         <GasVessel
           id="h2Tank"
           name="H₂ storage"

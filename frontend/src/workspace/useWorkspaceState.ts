@@ -7,11 +7,16 @@ import type {
 } from "../types/v2";
 import type { UnitId } from "../components/plant-3d/selection";
 import { checkRecording, readCatalog, readFrame, readRecording } from "./api";
+import { featuredRecording } from "./recording";
+import { siteTime, time as fixtureTime } from "./format";
+import type { SiteActivationRequest } from "./siteTypes";
+import { useAgentWalkthrough } from "./useAgentWalkthrough";
 
 export function useWorkspaceState() {
   const live = useV2Demo();
   const [recording, setRecording] = useState<PublicRecording | null>(null);
   const [catalog, setCatalog] = useState<RecordingSummary[]>([]);
+  const [catalogStatus, setCatalogStatus] = useState<"loading" | "ready" | "error">("loading");
   const [historical, setHistorical] = useState<V2DemoFrame | null>(null);
   const [selectedUnit, setSelectedUnit] = useState<UnitId | null>(
     "electrolyser",
@@ -21,14 +26,18 @@ export function useWorkspaceState() {
   const [reading, setReading] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const generation = useRef(0);
+  const catalogGeneration = useRef(0);
   const liveRun = useRef<string | undefined>(undefined);
   const cache = useRef(new Map<string, V2DemoFrame>());
-  const [defaultLoaded, setDefaultLoaded] = useState(false);
+  const defaultLoaded = useRef(false);
   const snapshot = recording?.snapshot ?? live.snapshot;
   const frame = historical ?? snapshot?.frame ?? null;
   const index = frame?.clock.decision_index ?? 0;
   const latestIndex = snapshot?.frame.clock.decision_index ?? 0;
-  const busy = live.pending !== null || reading;
+  const busy = (!recording && live.pending !== null) || reading;
+  const agent = useAgentWalkthrough(frame, snapshot?.run_id, (playing || running) && !busy);
+  const siteForecast = snapshot?.mode === "site_forecast" ? snapshot.site_forecast : undefined;
+  const time = (hours: number) => siteForecast ? siteTime(siteForecast.start_time, hours) : fixtureTime(hours);
 
   useEffect(() => {
     const id = live.snapshot?.run_id;
@@ -44,21 +53,29 @@ export function useWorkspaceState() {
   useEffect(
     () => () => {
       ++generation.current;
+      ++catalogGeneration.current;
     },
     [],
   );
 
   const reloadCatalog = useCallback(async () => {
+    const request = ++catalogGeneration.current;
+    setCatalogStatus("loading");
     try {
       const items = await readCatalog();
+      if (request !== catalogGeneration.current) return [] as RecordingSummary[];
       setCatalog(items);
+      setCatalogStatus("ready");
       return items;
     } catch {
+      if (request === catalogGeneration.current) setCatalogStatus("error");
       return [] as RecordingSummary[];
     }
   }, []);
 
-  const loadRecording = useCallback(async (id?: string, start = 0) => {
+  const loadRecording = useCallback(async (id?: string, start = 0): Promise<boolean> => {
+    // Claim selection synchronously so a delayed default effect cannot replace it.
+    defaultLoaded.current = true;
     const request = ++generation.current;
     setRunning(false);
     setPlaying(false);
@@ -66,11 +83,13 @@ export function useWorkspaceState() {
     setNotice(null);
     try {
       const result = checkRecording(await readRecording(id));
-      if (request !== generation.current) return;
+      if (request !== generation.current) return false;
       setRecording(result);
-      setHistorical(result.frames[Math.min(start, result.frames.length - 1)]);
+      setHistorical(result.frames[Math.max(0, Math.min(Math.trunc(start), result.frames.length - 1))]);
+      return true;
     } catch (e) {
       if (request === generation.current) setNotice(String(e));
+      return false;
     } finally {
       if (request === generation.current) setReading(false);
     }
@@ -80,19 +99,24 @@ export function useWorkspaceState() {
     void reloadCatalog();
   }, [reloadCatalog]);
   useEffect(() => {
-    if (defaultLoaded || !catalog.length) return;
-    setDefaultLoaded(true);
+    if (defaultLoaded.current || !live.snapshot) return;
+    if (live.snapshot.mode === "site_forecast") {
+      defaultLoaded.current = true;
+      return;
+    }
+    if (!catalog.length) return;
+    defaultLoaded.current = true;
     const featured =
-      catalog.find(
+      featuredRecording(catalog) ?? catalog.find(
         (c) => c.available && c.source === "saved" && c.controller === "MPC",
       ) ?? catalog.find((c) => c.available && c.source === "saved");
-    if (featured) void loadRecording(featured.id, 32);
-  }, [catalog, defaultLoaded, loadRecording]);
+    if (featured) void loadRecording(featured.id, featured.mode === "recorded_research" ? 0 : 32);
+  }, [catalog, loadRecording, live.snapshot]);
 
   const selectFrame = useCallback(
     async (target: number) => {
       if (
-        !snapshot ||
+        !snapshot || !Number.isInteger(target) ||
         target < 0 ||
         target > snapshot.frame.clock.decision_index
       )
@@ -136,28 +160,28 @@ export function useWorkspaceState() {
   );
 
   useEffect(() => {
-    if (!playing || !recording) return;
+    if (!playing || !recording || !agent.ready) return;
     if (index >= latestIndex) {
       setPlaying(false);
       return;
     }
     const timer = setTimeout(() => void selectFrame(index + 1), 600);
     return () => clearTimeout(timer);
-  }, [playing, recording, index, latestIndex, selectFrame]);
+  }, [playing, recording, index, latestIndex, selectFrame, agent.ready]);
 
   useEffect(() => {
-    if (!running || recording || live.pending || reading) return;
+    if (!running || recording || live.pending || reading || !agent.ready) return;
     if (live.error || live.stale || live.snapshot?.status !== "ready") {
       setRunning(false);
       return;
     }
     const timer = setTimeout(() => void live.advance(1), 350);
     return () => clearTimeout(timer);
-  }, [running, recording, reading, live]);
+  }, [running, recording, reading, live, agent.ready]);
 
   const useSimulation = () => {
     ++generation.current;
-    setDefaultLoaded(true);
+    defaultLoaded.current = true;
     setRecording(null);
     setHistorical(null);
     setReading(false);
@@ -168,7 +192,7 @@ export function useWorkspaceState() {
   };
   const reset = async (controller: "H" | "MPC") => {
     ++generation.current;
-    setDefaultLoaded(true);
+    defaultLoaded.current = true;
     setPlaying(false);
     setRunning(false);
     setRecording(null);
@@ -179,9 +203,27 @@ export function useWorkspaceState() {
     await reloadCatalog();
   };
   const advance = (count: number) => {
+    if (recording) return selectFrame(Math.min(latestIndex, index + count));
     setHistorical(null);
     setPlaying(false);
     return live.advance(count);
+  };
+  const changeSite = async (config?: SiteActivationRequest) => {
+    const request = ++generation.current;
+    defaultLoaded.current = true;
+    setPlaying(false);
+    setRunning(false);
+    setReading(true);
+    setNotice(null);
+    const next = await (config ? live.activateSite(config) : live.deactivateSite());
+    if (request !== generation.current) return false;
+    setReading(false);
+    if (!next) return false;
+    liveRun.current = next.run_id;
+    setRecording(null);
+    setHistorical(null);
+    cache.current.clear();
+    return true;
   };
   const exportRecording = async () => {
     try {
@@ -198,17 +240,39 @@ export function useWorkspaceState() {
       setNotice(String(e));
     }
   };
+  const activateScenario = async (previewId: string, controller: "MPC" | "H") => {
+    const request = ++generation.current;
+    defaultLoaded.current = true;
+    setPlaying(false);
+    setRunning(false);
+    setReading(true);
+    setNotice(null);
+    const next = await live.activateScenario(previewId, controller);
+    if (request !== generation.current) return false;
+    setReading(false);
+    if (!next) return false;
+    liveRun.current = next.run_id;
+    setRecording(null);
+    setHistorical(null);
+    cache.current.clear();
+    void reloadCatalog();
+    return true;
+  };
   return {
     live,
     snapshot,
+    siteForecast,
+    time,
     frame,
     index,
     latestIndex,
     recording,
     catalog,
+    catalogStatus,
     historical,
     selectedUnit,
     setSelectedUnit,
+    agent,
     playing,
     setPlaying,
     running,
@@ -222,6 +286,9 @@ export function useWorkspaceState() {
     useSimulation,
     reset,
     advance,
+    activateSite: (config: SiteActivationRequest) => changeSite(config),
+    deactivateSite: () => changeSite(),
+    activateScenario,
     exportRecording,
   };
 }

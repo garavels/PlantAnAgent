@@ -804,6 +804,7 @@ def build_service_mpc_model(
     horizon_intervals: int,
     causal_current_dac_health: bool = False,
     mandatory_deliveries: bool = False,
+    delivery_targets: tuple[MPCDeliveryTargetV1, ...] | None = None,
 ) -> ServiceMPCModelV1:
     """Build the frozen finite service-MPC model from public inputs only."""
 
@@ -881,12 +882,28 @@ def build_service_mpc_model(
     boundary = observation.state.boundary
     dt_h = settings.interval_s / SECONDS_PER_HOUR
     forecast_kw = forecast.prefix(horizon)
-    deliveries = infer_delivery_targets(
-        observation,
-        config=config,
-        interval_s=settings.interval_s,
-        horizon_intervals=horizon,
+    deliveries = (
+        infer_delivery_targets(
+            observation,
+            config=config,
+            interval_s=settings.interval_s,
+            horizon_intervals=horizon,
+        )
+        if delivery_targets is None
+        else delivery_targets
     )
+    if not isinstance(deliveries, tuple) or any(
+        not isinstance(item, MPCDeliveryTargetV1) for item in deliveries
+    ):
+        raise TypeError("delivery_targets must be an immutable typed tuple")
+    if any(
+        item.ordinal != index
+        or item.due_boundary > horizon
+        or not math.isclose(item.due_offset_s, item.due_boundary * settings.interval_s)
+        or (index > 0 and item.due_boundary <= deliveries[index - 1].due_boundary)
+        for index, item in enumerate(deliveries)
+    ):
+        raise ServiceMPCInputError("explicit delivery targets must be ordered within the planning horizon")
 
     battery_capacity = _finite(
         "battery effective capacity", boundary.battery_capacity_kwh, minimum=0.0

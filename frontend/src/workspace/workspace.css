@@ -521,7 +521,7 @@
 }
 .w-plant-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 260px;
+  grid-template-columns: minmax(0, 1fr) 300px;
   gap: 22px;
 }
 .w-plant-main {
@@ -552,6 +552,7 @@
   border-color: #b3cb9250;
 }
 .w-inspector {
+  min-width: 0;
   border-left: 1px solid var(--hairline);
   padding-left: 22px;
 }
@@ -586,8 +587,10 @@
   background: var(--card);
   border-radius: 9px;
 }
-.w-diagram > svg {
+.w-diagram > .flow-frame {
   min-width: 800px;
+  /* PlantFlow positions its SVG absolutely, so the frame needs a height. */
+  height: 340px;
 }
 .w-weather-layout {
   display: grid;
@@ -1290,7 +1293,7 @@
     display: none;
   }
   .w-plant-layout {
-    grid-template-columns: minmax(0, 1fr) 220px;
+    grid-template-columns: minmax(0, 1fr) 260px;
     gap: 16px;
   }
   .w-inspector {
@@ -1620,3 +1623,33 @@
 }
 
 .w-overview-mission .w-link { margin-top: 12px; }
+
+.w-research-mission {
+  flex-shrink: 0;
+  padding: 16px 20px;
+  margin-bottom: 18px;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--hairline));
+  border-radius: var(--r-card);
+  background: color-mix(in srgb, var(--accent) 5%, var(--card-raised));
+}
+.w-research-mission-heading,
+.w-featured-recording {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.w-research-mission h2 { font-size: 18px; margin: 5px 0 0; }
+.w-research-mission .w-eyebrow { font-size: 10px; }
+.w-research-mission p,
+.w-featured-recording p { font-size: 12px; line-height: 1.6; color: var(--text-dim); margin: 10px 0 0; }
+.w-research-outcomes { display: flex; flex-wrap: wrap; gap: 12px 24px; margin-top: 12px; font-size: 12px; }
+.w-research-outcomes strong { color: var(--accent); font-variant-numeric: tabular-nums; }
+.w-featured-recording { flex-shrink: 0; padding: 16px; background: var(--card-raised); border-radius: var(--r-card); margin-bottom: 18px; }
+.w-featured-recording p { margin-top: 4px; }
+@media (max-width: 700px) {
+  .w-research-mission { padding: 14px; }
+  .w-research-mission-heading, .w-featured-recording { align-items: flex-start; flex-direction: column; gap: 12px; }
+  .w-research-outcomes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .w-research-mission .w-eyebrow { line-height: 1.5; }
+}

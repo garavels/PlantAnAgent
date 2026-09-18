@@ -34,6 +34,8 @@ from .orchestration import Broadcaster, PlantRuntime, SimulationClock
 from .v2_demo import router as v2_demo_router
 from .ppo_evidence import router as ppo_evidence_router
 from .ppo_evaluation import router as ppo_evaluation_router
+from .site_api import router as site_router
+from .scenario_api import router as scenario_router
 
 #: Seconds without an update before the stream sends a keepalive comment.
 KEEPALIVE_S = 15.0
@@ -68,6 +70,8 @@ app.include_router(v2_demo_router)
 app.include_router(ppo_evidence_router)
 app.include_router(ppo_evaluation_router)
 app.include_router(adaptive_learning_router)
+app.include_router(site_router)
+app.include_router(scenario_router)
 
 # Dev only: the Vite dev server proxies /api, but allow direct calls too.
 app.add_middleware(

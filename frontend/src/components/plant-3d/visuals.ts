@@ -12,6 +12,9 @@
 
 import { clamp } from '../../lib/format'
 import type { PlantConfig, PlantState, PlantStatus, UnitStatus } from '../../types/plant'
+import type { WeatherView } from '../../types/v2'
+import type { SiteLocation } from '../../workspace/siteTypes'
+import { siteSunPosition } from './siteSun'
 
 /** How a unit is doing, straight from the simulator's health report. */
 export interface UnitCondition {
@@ -33,20 +36,28 @@ export interface PlantVisuals {
   /** Plant-level condition, as derived by the simulator. */
   status: PlantStatus
   sun: {
-    /** 0 at night, 1 at solar noon -- mirrors the simulator's half-sine. */
+    /** Positive vertical sun direction, 0 below the geometric horizon. */
     elevation: number
     /** Smoothed daylight factor used for sky, lamps and exposure. */
     dayFactor: number
-    /** Sun azimuth progress across the day, 0 at sunrise, 1 at sunset. */
+    /** Synthetic sunrise-to-sunset phase, or site apparent solar-day fraction. */
     phase: number
+    /** Site mode uses the selected location and dated sample, not fixed dawn/dusk. */
+    siteMode?: boolean
+    /** Approximate east/up/south sun direction for a known site/date. */
+    direction?: [number, number, number]
+    /** Site light brightness follows actual PV independently of geometric altitude. */
+    directFactor?: number
+    discVisible?: boolean
   }
   solar: UnitCondition & {
     kw: number
     /** vs peak array power, 0..1 */
     frac: number
     daylight: boolean
-    /** Clear-sky power: above `kw` while a weather disturbance is running. */
+    /** Nominal forecast PV in site mode, otherwise synthetic clear-sky power. */
     potentialKw: number
+    referenceKind?: 'forecast_pv' | 'clear_sky'
   }
   battery: UnitCondition & {
     soc: number
@@ -123,7 +134,12 @@ function condition(state: PlantState, unit: string): UnitCondition {
   return health ? { status: health.status, degradation: health.degradation } : HEALTHY
 }
 
-export function deriveVisuals(state: PlantState, config: PlantConfig | null): PlantVisuals {
+export function deriveVisuals(
+  state: PlantState,
+  config: PlantConfig | null,
+  weather?: WeatherView,
+  site?: SiteLocation,
+): PlantVisuals {
   const peakKw = config?.solar.peak_kw ?? 5000
   const ratedKw = config?.electrolyser.rated_kw ?? 3000
   const maxChargeKw = config?.battery.max_charge_kw ?? 2500
@@ -146,16 +162,31 @@ export function deriveVisuals(state: PlantState, config: PlantConfig | null): Pl
   // the twin's sun rides the same curve so light and generation never disagree.
   const elevation = Math.sin(Math.PI * phase)
   const dayFactor = clamp(state.solar_available_kw / (0.22 * peakKw))
+  const siteMode = weather?.reference_kind === 'forecast_pv' || !!site
+  const position = siteMode && site
+    ? siteSunPosition(site.latitude, site.longitude, weather?.site_sample?.time)
+    : null
+  const sun: PlantVisuals['sun'] = siteMode ? {
+    elevation: Math.max(0, position?.direction[1] ?? 0),
+    dayFactor,
+    phase: position?.solarDayFraction ?? 0.5,
+    siteMode: true,
+    direction: position?.direction,
+    directFactor: clamp(state.solar_available_kw / peakKw),
+    // A missing timestamp never silently falls back to synthetic solar geometry.
+    discVisible: position !== null && position.altitude > 0 && state.solar_available_kw > FLOW_EPSILON,
+  } : { elevation, dayFactor, phase }
 
   return {
     status: state.plant_status ?? 'normal',
-    sun: { elevation, dayFactor, phase },
+    sun,
     solar: {
       ...condition(state, 'solar'),
       kw: state.solar_available_kw,
       frac: clamp(state.solar_available_kw / peakKw),
       daylight: state.solar_available_kw > FLOW_EPSILON,
       potentialKw: state.solar_potential_kw ?? state.solar_available_kw,
+      referenceKind: siteMode ? 'forecast_pv' : 'clear_sky',
     },
     battery: {
       ...condition(state, 'battery'),

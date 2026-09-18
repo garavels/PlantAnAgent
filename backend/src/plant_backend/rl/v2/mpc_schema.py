@@ -304,11 +304,11 @@ class MPCDeliveryTargetV1:
         requested = _finite("requested_kg", self.requested_kg, minimum=0.0)
         if due_s <= 0.0 or requested <= 0.0:
             raise ValueError("delivery target offset and request must be positive")
-        if self.source not in {"announced", "inferred_recurring"}:
+        if self.source not in {"announced", "inferred_recurring", "scenario_schedule"}:
             raise ValueError("delivery target source is invalid")
-        if self.ordinal == 0 and self.source != "announced":
+        if self.ordinal == 0 and self.source not in {"announced", "scenario_schedule"}:
             raise ValueError("first delivery target must be the announced request")
-        if self.ordinal > 0 and self.source != "inferred_recurring":
+        if self.ordinal > 0 and self.source not in {"inferred_recurring", "scenario_schedule"}:
             raise ValueError("later delivery targets must be explicitly inferred")
 
     def to_dict(self) -> dict[str, int | float | str]:

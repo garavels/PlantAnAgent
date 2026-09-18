@@ -99,6 +99,9 @@ def test_recording_integrity_and_fixed_local_identity(monkeypatch, tmp_path):
     initial = demo.snapshot()
     record = demo.recording()
     monkeypatch.setattr(demo_recordings, "RECORDING_ROOT", tmp_path)
+    monkeypatch.setattr(
+        demo_recordings, "RESEARCH_RECORDING_ROOT", tmp_path / "research"
+    )
     path = tmp_path / f"{initial['run_id']}.json"
     path.write_text(json.dumps(record))
     assert demo_recordings.read_recording(initial["run_id"]) == record

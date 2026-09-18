@@ -75,7 +75,22 @@ def boundary_events(
         )
 
     if previous is None:
-        add("run", "Mission started", "Seven days; 240 kg methane every six hours.")
+        detail = (
+            "Ten days at the selected site; 150 kg methane every six hours. Weather follows the retained downloaded forecast."
+            if current.get("weather", {}).get("reference_kind") == "forecast_pv"
+            else "Seven days; 240 kg methane every six hours."
+        )
+        scenario_name = current.get("weather", {}).get("scenario_name")
+        if scenario_name:
+            obligations = current["delivery"]["commitments"]
+            days = current["clock"]["decision_count"] / 96
+            total = sum(item["requested_kg"] for item in obligations)
+            detail = (
+                f"{scenario_name}: {days:g} days, {len(obligations)} deliveries "
+                f"totaling {total:g} kg methane. Authored sunlight and equipment events "
+                "run against the retained site forecast."
+            )
+        add("run", "Mission started", detail)
         return events
     old_mode = (previous.get("commitment") or {}).get("mode")
     new_mode = (current.get("commitment") or {}).get("mode")
