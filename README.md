@@ -1,5 +1,7 @@
 # PlantAnAgent
 
+![3D view of the solar-powered methane plant.](assets/plant-banner.webp)
+
 A digital twin and learning environment for an off-grid, solar-powered methane plant.
 
 PlantAnAgent connects solar generation, battery storage, hydrogen production, direct air capture, methanation, and scheduled fuel deliveries. Its control room lets you inspect the plant in 3D, follow controller decisions, explore weather and faults, and compare learned policies with rule-based operation.
