@@ -6,7 +6,21 @@ A digital twin and learning environment for an off-grid, solar-powered methane p
 
 PlantAnAgent connects solar generation, battery storage, hydrogen production, direct air capture, methanation, and scheduled fuel deliveries. Its control room lets you inspect the plant in 3D, follow controller decisions, explore weather and faults, and compare learned policies with rule-based operation.
 
-**[Run the app](#run-the-app) · [Explore the demo](#a-five-minute-walkthrough) · [Reproduce the experiments](#reproduce-the-experiments) · [Verify the code](#verification)**
+**[Project website](#project-website) · [Run the app](#run-the-app) · [Explore the demo](#a-five-minute-walkthrough) · [Reproduce the experiments](#reproduce-the-experiments) · [Verify the code](#verification)**
+
+## Project website
+
+`site/` is a static showcase of the project and its results: a replay of the featured week, the learned-control results, findings, method and reproduction steps. It has no build step and no runtime dependencies, so it can be served from any static host (GitHub Pages, Cloudflare Pages, Netlify).
+
+```bash
+make site    # http://localhost:8080
+```
+
+Its data comes from `tools/build_showcase_data.py`, which exports the featured recording and, given a completed `tools/reproduce.py evaluate` directory, the evaluation results:
+
+```bash
+uv run python tools/build_showcase_data.py --evaluation out/eval
+```
 
 ## Run the app
 
@@ -144,6 +158,7 @@ The Python test targets install the locked training and optimization dependencie
 | `runs/authority-source-20260917/` | Frozen physical source required by the experiments |
 | `experiments/` | Portable recipes, selected checkpoint inputs and reference evaluation specification |
 | `tools/reproduce.py` | Fresh-directory reproduction entry point |
+| `site/`, `tools/build_showcase_data.py` | Static project website and its data export |
 | `tests/`, `backend/tests/`, `simulator/tests/`, `frontend/tests/` | Verification suites |
 
 Protocol files under `docs/research/` are immutable inputs whose bytes are checked by the experiment code. New training outputs and evaluation traces are written outside the tracked source. Third-party attribution is included beside the corresponding asset.

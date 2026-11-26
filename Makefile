@@ -1,4 +1,4 @@
-.PHONY: setup-research test-research research-smoke test-frontend help setup dev backend frontend sim test eval foresight-eval rl-eval rl-ceiling v2-eval v2-weather-eval v2-controller-eval v2-planner v2-mpc v2-mpc-report v2-mpc-setpoint v2-economic-smoke v2-economic-robustness v2-economic-robustness-verify v2-full-day-horizon-repair v2-full-day-horizon-repair-verify v2-train-dry v2-train v2-rl-eval v2-controller-benchmark v2-beta-controller-benchmark v2-beta-controller-benchmark-verify v2-beta-rl-capacity v2-beta-rl-capacity-verify train-dry train \
+.PHONY: site setup-research test-research research-smoke test-frontend help setup dev backend frontend sim test eval foresight-eval rl-eval rl-ceiling v2-eval v2-weather-eval v2-controller-eval v2-planner v2-mpc v2-mpc-report v2-mpc-setpoint v2-economic-smoke v2-economic-robustness v2-economic-robustness-verify v2-full-day-horizon-repair v2-full-day-horizon-repair-verify v2-train-dry v2-train v2-rl-eval v2-controller-benchmark v2-beta-controller-benchmark v2-beta-controller-benchmark-verify v2-beta-rl-capacity v2-beta-rl-capacity-verify train-dry train \
 	hepa-collect hepa-pretrain-dry hepa-pretrain hepa-finetune-dry hepa-finetune \
 	hepa-eval build clean
 
@@ -29,6 +29,9 @@ frontend:         ## run the control room on :5173
 
 dev:              ## run both (ctrl-c stops both)
 	@$(MAKE) -j2 backend frontend
+
+site:             ## serve the static project website on :8080
+	python3 -m http.server 8080 --directory site
 
 eval:             ## run the supervisory agent against the five scenarios
 	uv run python -m plant_backend.agent.evaluation
