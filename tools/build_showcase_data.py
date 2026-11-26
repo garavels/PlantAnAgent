@@ -49,7 +49,7 @@ def week(directory: Path, condition: str, seed: int):
         states = json.loads(gzip.decompress((case / "recording.json.gz").read_bytes()))["minute_truth_states"]
         if not states:
             raise ValueError(f"{case} has no retained minute states")
-        states = states[::STEP]
+        minutes, states = states, states[::STEP]
         forcing = {k: compact(s[k] for s in states) for k in ("solar_potential_kw", "solar_available_kw")}
         if solar is None:
             solar = forcing
@@ -58,7 +58,10 @@ def week(directory: Path, condition: str, seed: int):
             raise ValueError(f"{condition}: solar forcing differs between paired controllers")
         series = {k: compact(s[k] for s in states) for k in FLOWS}
         series["battery_soc"] = [round(s["battery_soc"] * 1000) for s in states]
-        series["ch4_production_kg_h"] = [round(s["ch4_production_kg_h"], 1) for s in states]
+        # Mean over each 15-minute window, so short production bursts between samples still show.
+        series["ch4_production_kg_h"] = [
+            round(sum(m["ch4_production_kg_h"] for m in minutes[i:i + STEP]) / len(minutes[i:i + STEP]), 1)
+            for i in range(0, len(minutes), STEP)]
         economic = result["economic_metrics"]
         out["controllers"][controller] = {
             "series": series,
