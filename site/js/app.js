@@ -19,13 +19,14 @@ const clockLabel = (t) => {
 };
 
 const series = () => week.controllers[view.controller].series;
-function at(values, t, holdBefore = []) {
+function at(values, t, deliveries = []) {
   const f = Math.min(t * 4, values.length - 1);
   const i = Math.floor(f);
   const a = values[i], b = values[Math.min(i + 1, values.length - 1)];
-  // A truck withdraws methane at its deadline, not gradually over the preceding sample.
-  if (holdBefore.some((h) => h > i / 4 && h <= (i + 1) / 4 && t < h)) return a;
-  return a + (b - a) * (f - i);
+  // The next sample is after a truck's withdrawal; until the deadline, rise towards the pre-withdrawal level.
+  const due = deliveries.find((d) => d.due_h > i / 4 && d.due_h <= (i + 1) / 4 && t < d.due_h);
+  const end = due ? b + due.delivered_kg : b;
+  return a + (end - a) * (f - i);
 }
 const event = () => (week.event.onset_h != null && week.event.end_h > week.event.onset_h ? week.event : null);
 const outage = (t) => {
@@ -43,7 +44,7 @@ function state(t) {
     methanator: v("solar_to_methanator_kw") + v("battery_to_methanator_kw"),
     soc: v("battery_soc") / 1000,
     h2: v("h2_level_kg"), co2: v("co2_level_kg"),
-    ch4: at(s.ch4_level_kg, t, week.controllers[view.controller].deliveries.map((d) => d.due_h)),
+    ch4: at(s.ch4_level_kg, t, week.controllers[view.controller].deliveries),
     ch4Rate: v("ch4_production_kg_h"),
     flows: {
       "sun-el": v("solar_to_electrolyser_kw"), "sun-dac": v("solar_to_dac_kw"), "sun-bat": v("solar_to_battery_kw"),
