@@ -117,7 +117,7 @@ async function resultsSheet() {
       <table class="data"><thead><tr><th>Controller</th><th>Ordinary</th><th>Mixture</th><th>Stress unmet</th><th>Stress success</th></tr></thead><tbody>
       ${CONTROLLERS.map((c) => `<tr class="${c.id === "refined" ? "hl" : ""}"><td style="font-family:var(--font)">${c.label}</td><td>${eur(t[c.id].ordinary)}</td><td>${eur(t[c.id].mixture)}</td><td>${kg(t[c.id].stressUnmet, 1)}</td><td>${pct(t[c.id].stressSuccess)}</td></tr>`).join("")}
       </tbody></table>
-      <p>Mixture: half ordinary weeks, half split equally across the five disruptions. Stress success: share of disrupted weeks in which all 28 deliveries were met.</p>`),
+      <p>Mixture: half ordinary weeks, half split equally across the five disruptions. Stress success: share of disrupted weeks in which all 28 deliveries were met. Recomputed from a fresh run of the published evaluation; it matches Table 1 of the <a href="${PAPER}">paper</a> up to rounding.</p>`),
     figure(groupedBars({
       groups: groups.map((k) => ({ label: CONDITIONS[k].short })),
       series: shown.map((c) => ({ label: c.label, color: c.color, values: groups.map((k) => t[c.id].conditions[k].unmet) })),

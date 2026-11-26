@@ -53,7 +53,7 @@ export async function findings() {
       name: "Reliability depends on the measure",
       render: () => [
         block(`<p class="kicker">Finding 4 · what counts as reliable</p><h3>More perfect weeks, but more missed trucks</h3>
-          <p>Under stress the refined policies meet every delivery in slightly more weeks (${pct(r.stressSuccess)} against ${pct(tuned.stressSuccess)}). Yet they miss more individual deliveries on average (<strong>${fmt1.format(r.stressMissed)}</strong> against <strong>${fmt1.format(tuned.stressMissed)}</strong> a week), and in the worst quarter of stress weeks their average shortfall is higher: <strong>${kg(r.stressWorstQuarter, 1)}</strong> against <strong>${kg(tuned.stressWorstQuarter, 1)}</strong>.</p>
+          <p>Under stress the refined policies meet every delivery in slightly more weeks (${pct(r.stressSuccess)} against ${pct(tuned.stressSuccess)}). Yet they miss more individual deliveries on average (<strong>${r.stressMissed.toFixed(2)}</strong> against <strong>${tuned.stressMissed.toFixed(2)}</strong> a week), and in the worst quarter of stress weeks their average shortfall is higher: <strong>${kg(r.stressWorstQuarter, 1)}</strong> against <strong>${kg(tuned.stressWorstQuarter, 1)}</strong>.</p>
           <div class="lead-stat">
             <div style="--c:var(--learned)"><b>${pct(r.stressSuccess)}</b><span>stress weeks with all 28 deliveries, refined</span></div>
             <div style="--c:var(--ink)"><b>${pct(tuned.stressSuccess)}</b><span>tuned storage</span></div>
