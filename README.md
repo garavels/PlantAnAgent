@@ -10,16 +10,16 @@ PlantAnAgent connects solar generation, battery storage, hydrogen production, di
 
 ## Project website
 
-`site/` is a static showcase of the project and its results: a replay of the featured week, the learned-control results, findings, method and reproduction steps. It has no build step and no runtime dependencies, so it can be served from any static host (GitHub Pages, Cloudflare Pages, Netlify).
+`site/` is a static showcase of the project and the paper (`site/paper/plantanagent.pdf`): replays of a final test week under every condition, the learned-control results, findings, method and reproduction steps. It has no build step and no runtime dependencies, so it can be served from any static host (GitHub Pages, Cloudflare Pages, Netlify).
 
 ```bash
 make site    # http://localhost:8080
 ```
 
-Its data comes from `tools/build_showcase_data.py`, which exports the featured recording and, given a completed `tools/reproduce.py evaluate` directory, the evaluation results:
+Its data comes from `tools/build_showcase_data.py`, which reads a completed `tools/reproduce.py evaluate` directory:
 
 ```bash
-uv run python tools/build_showcase_data.py --evaluation out/eval
+uv run python tools/build_showcase_data.py out/eval
 ```
 
 ## Run the app

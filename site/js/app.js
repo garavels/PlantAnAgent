@@ -161,7 +161,7 @@ function rebuild() {
   deliveries.forEach((d, k) => { truckRefs[k].title = `${clockLabel(d.due_h)} · ${d.delivered_kg} of ${d.requested_kg} kg`; });
   picker.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.condition === week.condition)));
   raceRefs.forEach((r) => r.li.classList.toggle("on", r.id === view.controller));
-  $("[data-week-title]").textContent = `Test week 1 · ${CONDITIONS[week.condition].short}`;
+  $("[data-week-title]").textContent = `Week 1 · ${CONDITIONS[week.condition].short}`;
   sunNode.g.classList.remove("down");
   methNode.g.classList.remove("down");
 }
