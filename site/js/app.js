@@ -260,7 +260,7 @@ function animatePipes(dt, { now, recent }) {
 }
 
 function frame(now) {
-  const dt = Math.min(100, now - last);
+  const dt = Math.min(250, now - last);
   last = now;
   if (playing) {
     if (t < HOURS) t = Math.min(HOURS, t + (dt / 1000) * speed);
