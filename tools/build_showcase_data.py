@@ -1,7 +1,9 @@
 """Export compact, read-only data for the static showcase site in site/data/.
 
-Inputs are the committed demo recording and, optionally, a completed
-`tools/reproduce.py evaluate` output directory (summary.json + analysis.json).
+Reads a `tools/reproduce.py evaluate` output directory. Week replays come from
+the first final seed, whose minute states the evaluation retains for every
+controller and condition; aggregate results need the completed
+summary.json and analysis.json.
 """
 from __future__ import annotations
 
@@ -11,56 +13,65 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-RECORDING = ROOT / "demo/recordings/cd1ff361-33ac-5f84-9c94-8363ffdbe12f.json"
 OUT = ROOT / "site/data"
+WEEK_CONTROLLERS = ("cem-ridge-bias-g16-5901", "storage-m48-b60-r3", "original-daylight")
+STEP = 15  # minutes per exported sample, one controller decision
+START_H = 6.0
+FLOWS = (
+    "solar_to_battery_kw", "solar_to_electrolyser_kw", "solar_to_dac_kw", "solar_to_methanator_kw",
+    "battery_to_electrolyser_kw", "battery_to_dac_kw", "battery_to_methanator_kw",
+    "h2_level_kg", "co2_level_kg", "ch4_level_kg",
+)
 
 
 def r(value, digits=1):
     return None if value is None else round(float(value), digits)
 
 
-def featured_week():
-    recording = json.loads(RECORDING.read_text())
-    frames = recording["frames"]
-    keys = {
-        "solar_potential_kw": 0, "solar_available_kw": 0, "solar_curtailed_kw": 0,
-        "electrolyser_power_kw": 0, "dac_power_kw": 0, "methanator_power_kw": 0,
-        "battery_power_kw": 0, "battery_soc": 4, "h2_level_kg": 1, "co2_level_kg": 1,
-        "ch4_level_kg": 1, "ch4_production_kg_h": 2, "h2_production_kg_h": 2, "co2_capture_kg_h": 2,
-    }
-    series = {k: [r(f["state"][k], d) for f in frames] for k, d in keys.items()}
-    series["t_h"] = [r(f["clock"]["elapsed_hours"], 2) for f in frames]
-    series["mode"] = [f["commitment"]["mode"] for f in frames]
-    series["delivered_kg"] = [r(f["delivery"]["delivered_kg"], 1) for f in frames]
-    series["unmet_kg"] = [r(f["delivery"]["unmet_kg"], 1) for f in frames]
-    series["net_value_eur"] = [r(f["economics"]["net_value_eur"], 0) for f in frames]
-    last = frames[-1]
-    config = recording["snapshot"]["config"]
-    return {
-        "source": RECORDING.relative_to(ROOT).as_posix(),
-        "evidence_level": recording["evidence_level"],
-        "provenance": recording["provenance"],
-        "capacities": {
-            "solar_peak_kw": config["solar"]["peak_kw"],
-            "battery_kwh": config["battery"]["capacity_kwh"],
-            "electrolyser_kw": config["electrolyser"]["rated_kw"],
-            "dac_kw": config["dac"]["rated_kw"],
-            "methanator_kw": config["methanator"]["rated_kw"],
-            "h2_kg": config["h2_tank"]["capacity_kg"],
-            "co2_kg": config["co2_tank"]["capacity_kg"],
-            "ch4_kg": config["ch4_tank"]["capacity_kg"],
-        },
-        "deliveries": [{"due_h": c["due_hours"], "requested_kg": c["requested_kg"],
-                        "delivered_kg": c["delivered_kg"], "status": c["status"]}
-                       for c in last["delivery"]["commitments"]],
-        "totals": last["metrics"],
-        "economics": last["economics"],
-        "series": series,
-    }
+def compact(values):
+    return [round(v) for v in values]
 
 
-TRACE_CONDITIONS = ("ordinary", "pv36", "meth48")
-TRACE_CONTROLLERS = ("cem-ridge-bias-g16-5901", "storage-m48-b60-r3", "original-daylight")
+def capacities():
+    spec = json.loads((ROOT / "experiments/reproduction.json").read_text())
+    p = spec["original-storage"]["teacher_parameters"]
+    keys = ("solar_peak_kw", "battery_capacity_kwh", "electrolyser_rated_kw", "dac_rated_kw",
+            "methanator_rated_kw", "h2_capacity_kg", "co2_capacity_kg", "ch4_capacity_kg")
+    return {k: p[k] for k in keys}
+
+
+def week(directory: Path, condition: str, seed: int):
+    out = {"condition": condition, "seed": seed, "start_h": START_H, "step_min": STEP, "controllers": {}}
+    solar = None
+    for controller in WEEK_CONTROLLERS:
+        case = directory / "cases" / f"{condition}--{controller}--{seed}"
+        result = json.loads((case / "result.json").read_text())
+        states = json.loads(gzip.decompress((case / "recording.json.gz").read_bytes()))["minute_truth_states"]
+        if not states:
+            raise ValueError(f"{case} has no retained minute states")
+        states = states[::STEP]
+        potential = compact(s["solar_potential_kw"] for s in states)
+        if solar is None:
+            solar = potential
+            out["solar_potential_kw"] = potential
+            out["solar_available"] = [int(s["solar_available_kw"] > 0 or s["solar_potential_kw"] <= 0) for s in states]
+        elif potential != solar:
+            raise ValueError(f"{condition}: solar forcing differs between paired controllers")
+        series = {k: compact(s[k] for s in states) for k in FLOWS}
+        series["battery_soc"] = [round(s["battery_soc"] * 1000) for s in states]
+        economic = result["economic_metrics"]
+        out["controllers"][controller] = {
+            "series": series,
+            "deliveries": [{"due_h": d["due_step"] / 60, "requested_kg": d["requested_kg"],
+                            "delivered_kg": r(d["delivered_kg"]), "unmet_kg": r(d["unmet_kg"])}
+                           for d in result["delivery"]["settlements"]],
+            "unmet_kg": r(economic["unmet_kg"]),
+            "delivered_kg": r(economic["delivered_kg"]),
+            "contribution_eur": r(economic["net_operating_value_eur"], 0),
+        }
+        event = result["event_metrics"] or {}
+        out["event"] = {"onset_h": event.get("onset_h"), "end_h": event.get("end_h")}
+    return out
 
 
 def _strip(value):
@@ -76,31 +87,14 @@ def evaluation(directory: Path):
     summary = json.loads((directory / "summary.json").read_text())
     rows = []
     for row in summary["rows"]:
-        economic = row["economic_metrics"] or {}
+        economic = row["economic_metrics"]
         rows.append({
             "seed": row["seed"], "condition": row["condition"], "controller": row["controller"],
-            "unmet_kg": r(economic.get("unmet_kg"), 2),
-            "contribution_eur": r(economic.get("net_operating_value_eur"), 1),
+            "unmet_kg": r(economic["unmet_kg"], 2),
+            "contribution_eur": r(economic["net_operating_value_eur"], 1),
             "missed": sum(d["unmet_kg"] > 1e-9 for d in row["delivery"]["settlements"]),
             "all_deliveries": row["every_delivery_passed"],
         })
-    first_seed = min(row["seed"] for row in summary["rows"])
-    traces = {}
-    for row in summary["rows"]:
-        if row["seed"] != first_seed or row["condition"] not in TRACE_CONDITIONS \
-                or row["controller"] not in TRACE_CONTROLLERS:
-            continue
-        case = directory / "cases" / f"{row['condition']}--{row['controller']}--{row['seed']}" / "recording.json.gz"
-        states = json.loads(gzip.decompress(case.read_bytes()))["minute_truth_states"][::15]
-        traces.setdefault(row["condition"], {})[row["controller"]] = {
-            "ch4_level_kg": [r(s["ch4_level_kg"]) for s in states],
-            "battery_soc": [r(s["battery_soc"], 3) for s in states],
-            "process_kw": [r(s["electrolyser_power_kw"] + s["dac_power_kw"] + s["methanator_power_kw"], 0)
-                           for s in states],
-            "delivered_kg": [r(d["delivered_kg"]) for d in row["delivery"]["settlements"]],
-            "event": {k: (row["event_metrics"] or {}).get(k)
-                      for k in ("onset_h", "end_h", "event_unmet_kg", "post_event_unmet_kg")},
-        }
     return {
         "case_count": analysis["case_count"],
         "all_cases_audited": analysis["all_cases_audited"],
@@ -108,21 +102,25 @@ def evaluation(directory: Path):
         "groups": analysis["groups"],
         "primary_claim": _strip(analysis["primary_claim"]),
         "distribution_caveat": analysis["distribution_caveat"],
-        "paired_forcing_and_openings_equal": summary.get("paired_forcing_and_openings_equal"),
         "rows": rows,
-        "trace_seed": first_seed,
-        "traces": traces,
     }
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--evaluation", type=Path, help="completed reproduce.py evaluate output directory")
+    parser.add_argument("evaluation", type=Path, help="reproduce.py evaluate output directory")
+    parser.add_argument("--weeks-only", action="store_true", help="export week replays before the evaluation completes")
     args = parser.parse_args()
-    OUT.mkdir(parents=True, exist_ok=True)
-    (OUT / "featured-week.json").write_text(json.dumps(featured_week(), separators=(",", ":")))
-    if args.evaluation:
-        (OUT / "evaluation.json").write_text(json.dumps(evaluation(args.evaluation), separators=(",", ":")))
+    spec = json.loads((ROOT / "experiments/reproduction.json").read_text())
+    seed, conditions = spec["seeds"][0], spec["conditions"]
+    (OUT / "weeks").mkdir(parents=True, exist_ok=True)
+    dump = lambda path, data: path.write_text(json.dumps(data, separators=(",", ":")))  # noqa: E731
+    dump(OUT / "plant.json", {"capacities": capacities(), "conditions": conditions, "week_seed": seed,
+                              "week_controllers": list(WEEK_CONTROLLERS)})
+    for condition in conditions:
+        dump(OUT / "weeks" / f"{condition}.json", week(args.evaluation, condition, seed))
+    if not args.weeks_only:
+        dump(OUT / "evaluation.json", evaluation(args.evaluation))
 
 
 if __name__ == "__main__":

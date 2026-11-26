@@ -3,17 +3,18 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Plant an Agent — learned control for an off-grid solar methane plant</title>
-    <meta name="description" content="A digital twin of an off-grid plant that turns sunlight, air and water into methane, and a study of whether learned controllers can run it through clouds, outages and fixed delivery deadlines." />
+    <title>PlantAnAgent — a digital twin for learning to operate a methane plant</title>
+    <meta name="description" content="A digital twin of an off-grid, solar-powered methane plant, and a study of whether learned controllers can keep its delivery schedule through weather, solar outages and methanator repairs." />
     <meta name="theme-color" content="#14160f" />
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Plant an Agent" />
-    <meta property="og:description" content="Sunlight, air and water in. Methane out, every six hours. Can a learned controller keep the promise?" />
+    <meta property="og:title" content="PlantAnAgent" />
+    <meta property="og:description" content="Sunlight in, 180 kg of methane out every six hours. Can a learned controller keep the schedule through outages?" />
     <meta property="og:image" content="./assets/plant-banner.webp" />
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='11' cy='11' r='8' fill='%23dcc084'/%3E%3Crect x='14' y='14' width='16' height='16' fill='%23d9a878'/%3E%3C/svg%3E" />
     <link rel="stylesheet" href="./css/site.css" />
-    <link rel="preload" href="./data/featured-week.json" as="fetch" crossorigin />
+    <link rel="preload" href="./data/plant.json" as="fetch" crossorigin />
+    <link rel="preload" href="./data/weeks/pv36.json" as="fetch" crossorigin />
     <script type="module" src="./js/app.js"></script>
   </head>
   <body>
@@ -30,21 +31,22 @@
         <a href="#/findings">Findings</a>
         <a href="#/method">Method</a>
         <a href="#/reproduce">Reproduce</a>
+        <a href="./paper/plantanagent.pdf">Paper</a>
       </nav>
 
       <header class="title">
-        <h1 aria-label="Plant an Agent">
+        <h1 aria-label="PlantAnAgent">
           <span class="ghost" aria-hidden="true">PLANT<i>an</i>AGENT</span>
           <span class="ghost g2" aria-hidden="true">PLANT<i>an</i>AGENT</span>
           <span class="solid">PLANT<i>an</i>AGENT</span>
         </h1>
-        <p class="lede">Sunlight, air and water in. <b>Methane out, every six hours.</b><br />Can a learned controller keep that promise through a week of clouds and breakdowns?</p>
+        <p class="lede">An off-grid solar plant that must hand over <b>180 kg of methane every six hours</b>, day and night, for a week.<br />Can a learned controller keep that schedule through clouds, solar outages and repairs?</p>
       </header>
 
-      <section class="panel state-panel" aria-label="Plant state during the featured week">
+      <section class="panel state-panel" aria-label="Plant state during the replayed test week">
         <header>
-          <p class="kicker">Featured week · trained policy</p>
-          <p class="clock"><span data-clock>Day 1 · 06:00</span><span data-mode class="chip">off</span></p>
+          <p class="kicker" data-week-title>Test week 1</p>
+          <p class="clock"><span data-clock>Day 1 · 06:00</span><span data-mode class="chip">sun</span></p>
         </header>
         <ol class="meters" data-meters></ol>
         <div class="deliveries" aria-label="Deliveries">
@@ -52,13 +54,15 @@
           <div class="trucks" data-trucks></div>
         </div>
         <footer>
-          <span>Contribution <b data-eur>€0</b></span>
-          <a href="#/week">Read this week ›</a>
+          <span>Unmet so far <b data-unmet>0 kg</b></span>
+          <a href="#/week">About this week ›</a>
         </footer>
       </section>
 
-      <aside class="panel replay" aria-label="Replay of the featured week">
-        <svg class="flow" data-flow viewBox="0 0 520 210" role="img" aria-label="Energy and material flows through the plant"></svg>
+      <aside class="panel replay" aria-label="Replay of one test week">
+        <div class="pick" role="group" aria-label="Condition" data-conditions></div>
+        <ol class="race" aria-label="Controllers on this week" data-race></ol>
+        <svg class="flow" data-flow viewBox="0 -6 520 226" role="img" aria-label="Energy and material flows through the plant"></svg>
         <div class="timeline" data-timeline></div>
         <p class="controls">
           <span class="speeds" aria-label="Replay speed">speed
@@ -72,8 +76,8 @@
       </aside>
 
       <footer class="foot">
-        <p>Filippo Gombac &amp; Vittorio Garavelli · simplified simulator, not a deployed plant</p>
-        <nav aria-label="About"><a href="#/about">About</a><a href="https://github.com/garavels/PlantAnAgent">Source</a></nav>
+        <p>Filippo Gombac &amp; Vittorio Garavelli · SoTA Commission II: Intermittent Abundance · a simulated plant, not a deployed one</p>
+        <nav aria-label="About"><a href="#/about">About</a><a href="./paper/plantanagent.pdf">Paper</a><a href="https://github.com/garavels/PlantAnAgent">Source</a></nav>
       </footer>
     </main>
 
