@@ -19,10 +19,12 @@ const clockLabel = (t) => {
 };
 
 const series = () => week.controllers[view.controller].series;
-function at(values, t) {
+function at(values, t, holdBefore = []) {
   const f = Math.min(t * 4, values.length - 1);
   const i = Math.floor(f);
   const a = values[i], b = values[Math.min(i + 1, values.length - 1)];
+  // A truck withdraws methane at its deadline, not gradually over the preceding sample.
+  if (holdBefore.some((h) => h > i / 4 && h <= (i + 1) / 4 && t < h)) return a;
   return a + (b - a) * (f - i);
 }
 const event = () => (week.event.onset_h != null && week.event.end_h > week.event.onset_h ? week.event : null);
@@ -34,13 +36,15 @@ function state(t) {
   const s = series();
   const v = (k) => at(s[k], t);
   return {
-    sun: outage(t) === "solar" ? 0 : at(week.solar_potential_kw, t),
+    sun: at(week.solar_available_kw, t),
     potential: at(week.solar_potential_kw, t),
     electrolyser: v("solar_to_electrolyser_kw") + v("battery_to_electrolyser_kw"),
     dac: v("solar_to_dac_kw") + v("battery_to_dac_kw"),
     methanator: v("solar_to_methanator_kw") + v("battery_to_methanator_kw"),
     soc: v("battery_soc") / 1000,
-    h2: v("h2_level_kg"), co2: v("co2_level_kg"), ch4: v("ch4_level_kg"),
+    h2: v("h2_level_kg"), co2: v("co2_level_kg"),
+    ch4: at(s.ch4_level_kg, t, week.controllers[view.controller].deliveries.map((d) => d.due_h)),
+    ch4Rate: v("ch4_production_kg_h"),
     flows: {
       "sun-el": v("solar_to_electrolyser_kw"), "sun-dac": v("solar_to_dac_kw"), "sun-bat": v("solar_to_battery_kw"),
       "sun-me": v("solar_to_methanator_kw"), "bat-el": v("battery_to_electrolyser_kw"), "bat-dac": v("battery_to_dac_kw"),
@@ -136,6 +140,7 @@ const raceRefs = controllers.map((id) => {
 const timeline = $("[data-timeline]");
 const TW = 520, TH = 62, BASE = TH - 12;
 const tx = scale(0, HOURS, 0, TW);
+let ch4Max = 1200;
 const tsvg = timeline.appendChild(el("svg", { viewBox: `0 0 ${TW} ${TH}`, preserveAspectRatio: "none", "aria-hidden": "true" }));
 const layer = tsvg.appendChild(el("g"));
 const head = tsvg.appendChild(el("line", { x1: 0, x2: 0, y1: 0, y2: TH, stroke: "var(--ink)", "stroke-width": 1.2, "vector-effect": "non-scaling-stroke" }));
@@ -152,9 +157,10 @@ function rebuild() {
   const e = event();
   const children = [];
   if (e) children.push(el("rect", { x: tx(e.onset_h), width: tx(e.end_h) - tx(e.onset_h), y: 0, height: BASE, class: "outage" }));
-  children.push(el("path", { d: `${line(week.solar_potential_kw, cap.solar_peak_kw)}L${TW},${BASE}L0,${BASE}Z`, fill: "var(--solar)", opacity: 0.2 }));
+  ch4Max = Math.ceil(Math.max(...Object.values(week.controllers).flatMap((c) => c.series.ch4_level_kg)) / 250) * 250 || 250;
+  children.push(el("path", { d: `${line(week.solar_available_kw, cap.solar_peak_kw)}L${TW},${BASE}L0,${BASE}Z`, fill: "var(--solar)", opacity: 0.2 }));
   for (let d = 1; d < 7; d++) children.push(el("line", { x1: tx(d * 24 - START_HOUR), x2: tx(d * 24 - START_HOUR), y1: 0, y2: BASE, stroke: "rgb(236 235 226 / .12)", "vector-effect": "non-scaling-stroke" }));
-  children.push(el("path", { d: line(s.ch4_level_kg, 1200), fill: "none", stroke: "var(--ch4)", "stroke-width": 1.4, "vector-effect": "non-scaling-stroke" }));
+  children.push(el("path", { d: line(s.ch4_level_kg, ch4Max), fill: "none", stroke: "var(--ch4)", "stroke-width": 1.4, "vector-effect": "non-scaling-stroke" }));
   const deliveries = week.controllers[view.controller].deliveries;
   tickRefs = deliveries.map((d) => el("rect", { x: tx(d.due_h) - 1, y: TH - 8, width: 2, height: 8 }));
   layer.replaceChildren(...children, ...tickRefs);
@@ -226,7 +232,7 @@ function render() {
   head.setAttribute("x2", tx(t));
   timeline.setAttribute("aria-valuenow", t.toFixed(1));
   timeline.setAttribute("aria-valuetext", clockLabel(t));
-  for (const [id, cap_] of [["h2", cap.h2_capacity_kg / 2], ["co2", cap.co2_capacity_kg / 2], ["ch4", 1200]]) {
+  for (const [id, cap_] of [["h2", cap.h2_capacity_kg / 2], ["co2", cap.co2_capacity_kg / 2], ["ch4", ch4Max]]) {
     const h = Math.min(1, now[id] / cap_) * tanks[id].h;
     tanks[id].level.setAttribute("height", h.toFixed(1));
     tanks[id].level.setAttribute("y", (tanks[id].y + 59 - h).toFixed(1));
@@ -240,15 +246,15 @@ function render() {
 function animatePipes(dt, { now, recent }) {
   const flows = {
     ...now.flows,
-    "el-h2": now.electrolyser, "dac-co2": now.dac, "h2-me": now.methanator > 30 ? now.methanator * 5 : 0,
-    "co2-me": now.methanator > 30 ? now.methanator * 5 : 0, "me-ch4": now.methanator > 30 ? now.methanator * 5 : 0,
+    "el-h2": now.electrolyser, "dac-co2": now.dac,
+    "h2-me": now.ch4Rate * 40, "co2-me": now.ch4Rate * 40, "me-ch4": now.ch4Rate * 40,
     "ch4-truck": recent && recent.delivered_kg > 0 ? 2000 : 0,
   };
   dash -= dt * 0.03;
   for (const [id, value] of Object.entries(flows)) {
     const on = value > 1;
     pipes[id].classList.toggle("on", on);
-    if (on) pipes[id].style.strokeDashoffset = (dash * (0.6 + Math.min(1.6, value / 1200))).toFixed(1);
+    if (on && !reduced) pipes[id].style.strokeDashoffset = (dash * (0.6 + Math.min(1.6, value / 1200))).toFixed(1);
   }
 }
 
@@ -261,7 +267,7 @@ function frame(now) {
     else if (now > holdUntil) { t = 0; holdUntil = 0; }
   }
   const frameState = render();
-  if (!reduced) animatePipes(dt, frameState);
+  animatePipes(dt, frameState);
   requestAnimationFrame(frame);
 }
 

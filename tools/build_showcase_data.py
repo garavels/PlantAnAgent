@@ -50,15 +50,15 @@ def week(directory: Path, condition: str, seed: int):
         if not states:
             raise ValueError(f"{case} has no retained minute states")
         states = states[::STEP]
-        potential = compact(s["solar_potential_kw"] for s in states)
+        forcing = {k: compact(s[k] for s in states) for k in ("solar_potential_kw", "solar_available_kw")}
         if solar is None:
-            solar = potential
-            out["solar_potential_kw"] = potential
-            out["solar_available"] = [int(s["solar_available_kw"] > 0 or s["solar_potential_kw"] <= 0) for s in states]
-        elif potential != solar:
+            solar = forcing
+            out.update(forcing)
+        elif forcing != solar:
             raise ValueError(f"{condition}: solar forcing differs between paired controllers")
         series = {k: compact(s[k] for s in states) for k in FLOWS}
         series["battery_soc"] = [round(s["battery_soc"] * 1000) for s in states]
+        series["ch4_production_kg_h"] = [round(s["ch4_production_kg_h"], 1) for s in states]
         economic = result["economic_metrics"]
         out["controllers"][controller] = {
             "series": series,

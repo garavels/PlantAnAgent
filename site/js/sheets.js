@@ -19,6 +19,7 @@ async function weekSheet() {
   const what = c.outage === "solar" ? `the solar field is offline from ${clock(e.onset_h)} to ${clock(e.end_h)}`
     : c.outage === "methanator" ? `the methanator is under repair from ${clock(e.onset_h)} until ${clock(e.end_h)}, four hours before a delivery` : c.note;
   const missed = (id) => week.controllers[id].deliveries.filter((d) => d.unmet_kg > 1e-6).length;
+  const top = Math.ceil(Math.max(...ids.flatMap((id) => week.controllers[id].series.ch4_level_kg)) / 250) * 250 || 250;
   return [
     block(html`
       <p class="kicker">Replay on the front page · ${c.label}</p>
@@ -27,15 +28,15 @@ async function weekSheet() {
       Pick a controller in the race panel to replay its decisions.</p>
       <div class="lead-stat">${ids.map((id) => `<div style="--c:${WEEK_COLORS[id]}"><b>${kg(week.controllers[id].unmet_kg)}</b><span>${WEEK_LABELS[id]}: unmet, ${missed(id)} of 28 deliveries short, ${eur(week.controllers[id].contribution_eur)} contribution</span></div>`).join("")}</div>`),
     figure(weekChart({
-      yMax: 1500, yLabel: "Methane stored (kg)",
+      yMax: top, yLabel: "Methane stored (kg)",
       bands: e ? [{ from: e.onset_h, to: e.end_h, label: c.outage === "solar" ? "solar offline" : "methanator in repair" }] : [],
       series: [
-        { values: week.solar_potential_kw.map((v) => (v / 5000) * 1500), color: "var(--solar)", area: true, opacity: 0.14 },
+        { values: week.solar_available_kw.map((v) => (v / 5000) * top), color: "var(--solar)", area: true, opacity: 0.14 },
         ...ids.map((id) => ({ values: week.controllers[id].series.ch4_level_kg, color: WEEK_COLORS[id], width: 1.8 })),
       ],
       ticks: week.controllers[ids[0]].deliveries.map((d) => ({ t: d.due_h, color: "var(--ink-3)" })),
       format: (v) => fmt.format(v),
-    }), "Methane in the tank. Each tick is a 180 kg collection; an empty tank at a tick means a short delivery. Shaded: available sunlight.",
+    }), "Methane in the tank. Each tick is a 180 kg collection; an empty tank at a tick means a short delivery. Shaded: solar power reaching the plant.",
     [...ids.map((id) => ({ label: WEEK_LABELS[id], color: WEEK_COLORS[id] })), { label: "Sunlight", color: "var(--solar)" }]),
     block(html`
       <h4>The same week under every condition</h4>
