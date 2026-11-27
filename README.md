@@ -12,6 +12,8 @@ PlantAnAgent connects solar generation, battery storage, hydrogen production, di
 
 `site/` is a static showcase of the project and the paper (`site/paper/plantanagent.pdf`): replays of a final test week under every condition, the learned-control results, findings, method and reproduction steps. It has no build step and no runtime dependencies, so it can be served from any static host (GitHub Pages, Cloudflare Pages, Netlify).
 
+On Cloudflare, `wrangler.jsonc` deploys `site/` as static assets (live at https://plantanagent.garavelliv04.workers.dev).
+
 ```bash
 make site    # http://localhost:8080
 ```
