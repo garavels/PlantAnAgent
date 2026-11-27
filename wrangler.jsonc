@@ -1,0 +1,6 @@
+// Cloudflare Workers deploy of the static project website (site/).
+{
+  "name": "plantanagent",
+  "compatibility_date": "2026-11-01",
+  "assets": { "directory": "./site" }
+}
